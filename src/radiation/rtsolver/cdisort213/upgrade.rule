@@ -1,0 +1,13 @@
+@@ cdisort.c.old -> cdisort.c
+  [r:0,first ~ tplanck = c_planck_func1
+    c_planck_func1 -> c_planck_func2
+  ];
+  [r:0,first ~ if (ds->wvnmlo < 0. || ds->wvnmhi <= ds->wvnmlo)
+    <= -> <
+  ];
+  [r:0,first ~ double c_planck_func2(double wnumlo
+    double -> double __attribute__((weak))
+  ];
+  [r:0,first ~ 1.1911e-18
+    1.1911e-18 -> 1.1911e-8
+  ];
