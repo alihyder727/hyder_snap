@@ -44,7 +44,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
     msg << "### FATAL ERROR in construction function RadiationBand"
         << std::endl << "Length of '" << name << "' "
         << "must be 3.";
-    throw std::runtime_error(msg.str().c_str());
+    ATHENA_ERROR(msg);
   }
 
   // wave number and weights

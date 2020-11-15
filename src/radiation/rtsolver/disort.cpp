@@ -12,6 +12,7 @@
 #include "../../mesh/mesh.hpp"
 #include "../../utils/utils.hpp" // StringToArray, ReadTabular
 #include "../radiation.hpp"
+#include "../../coordinates/coordinates.hpp"
 
 // DISORT headers
 
@@ -34,13 +35,9 @@ void RadiationBand::init_disort(ParameterInput *pin)
   ds->nphase = pin->GetInteger("disort", "nphase");
   ds->accur  = pin->GetOrAddReal("disort", "accur", 0.);
 
-  //ds->bc.btemp = pin->GetReal("disort", "btemp");
-  //ds->bc.ttemp = pin->GetReal("disort", "ttemp");
   ds->bc.fisot = pin->GetOrAddReal("disort", "fisot", 0.);
   ds->bc.albedo = pin->GetReal("disort", "albedo");
   ds->bc.temis = pin->GetReal("disort", "temis");
-  //ds->bc.umu0  = pmy_rad->GetInputMu();
-  //ds->bc.phi0  = pmy_rad->GetInputPhi();
 
   ds->flag.ibcnd = pin->GetOrAddBoolean("disort", "ibcnd", false);
   ds->flag.usrtau = pin->GetOrAddBoolean("disort", "usrtau", false);
@@ -121,6 +118,9 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     ATHENA_ERROR(msg);
   }
 
+  AthenaArray<Real> farea(iu+1);
+  pmy_rad->pmy_block->pcoord->Face1Area(k, j, il, iu, farea);
+
   std::fill(bflxup.data(), bflxup.data() + bflxup.GetSize(), 0.);
   std::fill(bflxdn.data(), bflxdn.data() + bflxdn.GetSize(), 0.);
    
@@ -133,8 +133,10 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
 
   ds->bc.umu0 = rin.mu > 1.E-3 ? rin.mu : 1.E-3;
   ds->bc.phi0 = rin.phi;
-  ds->bc.btemp = ds->temper[iu-il];
-  ds->bc.ttemp = ds->temper[0];
+  if (ds->flag.planck) {
+    ds->bc.btemp = ds->temper[iu-il];
+    ds->bc.ttemp = ds->temper[0];
+  }
 
   for (int n = 0; n < nspec; ++n) {
     // stellar source function
@@ -157,14 +159,6 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     for (int i = il; i < iu; ++i)
       ds->ssalb[iu-1-i] = ssa_[i][n];
 
-    //for (int i = 0; i < iu-il; ++i)
-    //  std::cout << i << " " << ds->temper[i] << " " << ds->dtauc[i] << " "
-    //            << ds->ssalb[i] << std::endl;
-    //std::cout << iu-il << " " << ds->temper[iu-il] << std::endl;
-    //std::cout << ds->bc.fbeam << std::endl;
-    //std::cout << ds->wvnmlo << std::endl;
-    //std::cout << ds->wvnmhi << std::endl;
-
     // Legendre coefficients
 #pragma omp simd
     for (int i = il; i < iu; ++i)
@@ -176,8 +170,9 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
 
     // save flux
     for (int i = il; i <= iu; ++i) {
-      flxup_[i][n] = ds_out->rad[iu-i].flup;   // flux up
-      flxdn_[i][n] = ds_out->rad[iu-i].rfldir + ds_out->rad[iu-i].rfldn;  // flux down
+      flxup_[i][n] = ds_out->rad[iu-i].flup*farea(il)/farea(i);   // flux up
+      flxdn_[i][n] = (ds_out->rad[iu-i].rfldir + ds_out->rad[iu-i].rfldn)
+                     *farea(il)/farea(i);  // flux down
       bflxup(k,j,i) += spec[n].wgt*flxup_[i][n];
       bflxdn(k,j,i) += spec[n].wgt*flxdn_[i][n];
     }
