@@ -6,6 +6,7 @@
 #include "../hydro/hydro.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../chemistry/chemistry.hpp"
+#include "../radiation/radiation.hpp"
 #include "task_list.hpp"
 
 //----------------------------------------------------------------------------------------
@@ -45,5 +46,25 @@ TaskStatus TimeIntegratorTaskList::IntegrateChemistry(MeshBlock *pmb, int stage)
   // do fast chemistry
   pmb->pthermo->SaturationAdjustment(ph->u);
 
+  return TaskStatus::next;
+}
+
+//----------------------------------------------------------------------------------------
+// Functions to calculate radiation flux
+TaskStatus TimeIntegratorTaskList::CalculateRadiationFlux(MeshBlock *pmb, int stage) {
+  // only do radiation at last rk step
+  if (stage != nstages) return TaskStatus::next;
+
+  Radiation *prad = pmb->prad;
+  Hydro *phydro=pmb->phydro;
+
+  if (prad->current > 0.) {
+    prad->current -= pmb->pmy_mesh->dt;  // radiation is in cool-down
+  } else {
+    prad->current = prad->cooldown;
+    for (int k = pmb->ks; k <= pmb->ke; ++k)
+      for (int j = pmb->js; j <= pmb->je; ++j)
+        prad->CalculateFluxes(phydro->w, pmb->pmy_mesh->time, k, j, pmb->is, pmb->ie+1);
+  }
   return TaskStatus::next;
 }

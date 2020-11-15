@@ -695,9 +695,9 @@ void c_disort(disort_state  *ds,
   }
   else {
     tplanck = c_planck_func2(ds->wvnmlo,ds->wvnmhi,ds->bc.ttemp)*ds->bc.temis;
-    bplanck = c_planck_func1(ds->wvnmlo,ds->wvnmhi,ds->bc.btemp);
+    bplanck = c_planck_func2(ds->wvnmlo,ds->wvnmhi,ds->bc.btemp);
     for (lev = 0; lev <= ds->nlyr; lev++) {
-      PKAG(lev) = c_planck_func1(ds->wvnmlo,ds->wvnmhi,TEMPER(lev));
+      PKAG(lev) = c_planck_func2(ds->wvnmlo,ds->wvnmhi,TEMPER(lev));
     }
   }
 

@@ -134,6 +134,7 @@ class TimeIntegratorTaskList : public TaskList {
 
   TaskStatus CalculateHydroFlux(MeshBlock *pmb, int stage);
   TaskStatus CalculateEMF(MeshBlock *pmb, int stage);
+  TaskStatus CalculateRadiationFlux(MeshBlock *pmb, int stage);
 
   TaskStatus SendHydroFlux(MeshBlock *pmb, int stage);
   TaskStatus SendEMF(MeshBlock *pmb, int stage);

@@ -98,6 +98,7 @@
 #include "../parameter_input.hpp"
 #include "../scalars/scalars.hpp"
 #include "../diagnostics/diagnostics.hpp"
+#include "../radiation/radiation.hpp"
 #include "outputs.hpp"
 
 //----------------------------------------------------------------------------------------
@@ -351,6 +352,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   PassiveScalars *psclr = pmb->pscalars;
   Gravity *pgrav = pmb->pgrav;
   Diagnostics *pdiag = pmb->pdiag;
+  Radiation *prad = pmb->prad;
   num_vars_ = 0;
   OutputData *pod;
 
@@ -736,7 +738,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     }
   }
 
-  /* radiation
+  // radiation
   if (output_params.variable.compare("rad") == 0 ||
       output_params.variable.compare("radtau") == 0) {
     RadiationBand *p = prad->pband;
@@ -745,7 +747,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->name = p->myname+"tau";
-      pod->data.InitWithShallowCopy(p->btau);
+      pod->data.InitWithShallowSlice(p->btau,4,0,1);
       AppendOutputDataNode(pod);
       num_vars_ += 1;
 
@@ -757,57 +759,22 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       output_params.variable.compare("radflux") == 0) {
     RadiationBand *p = prad->pband;
     while (p != NULL) {
-      // flux1
+      // flux up and down
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->grid = "CCF";
-      pod->name = p->myname+"flx1up";
-      pod->data.InitWithShallowSlice(p->bflx,4,0,1);
+      pod->name = p->myname+"flxup";
+      pod->data.InitWithShallowSlice(p->bflxup,4,0,1);
       AppendOutputDataNode(pod);
       num_vars_ += 1;
 
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->grid = "CCF";
-      pod->name = p->myname+"flx1dn";
-      pod->data.InitWithShallowSlice(p->bflx,4,1,1);
+      pod->name = p->myname+"flxdn";
+      pod->data.InitWithShallowSlice(p->bflxdn,4,0,1);
       AppendOutputDataNode(pod);
       num_vars_ += 1;
-
-      // flux2, flux3
-      if (!prad->plane_parallel) {
-        pod = new OutputData;
-        pod->type = "SCALARS";
-        pod->grid = "CFC";
-        pod->name = p->myname+"flx2up";
-        pod->data.InitWithShallowSlice(p->bflx,4,2,1);
-        AppendOutputDataNode(pod);
-        num_vars_ += 1;
-
-        pod = new OutputData;
-        pod->type = "SCALARS";
-        pod->grid = "CFC";
-        pod->name = p->myname+"flx2dn";
-        pod->data.InitWithShallowSlice(p->bflx,4,3,1);
-        AppendOutputDataNode(pod);
-        num_vars_ += 1;
-
-        pod = new OutputData;
-        pod->type = "SCALARS";
-        pod->grid = "FCC";
-        pod->name = p->myname+"flx3up";
-        pod->data.InitWithShallowSlice(p->bflx,4,4,1);
-        AppendOutputDataNode(pod);
-        num_vars_ += 1;
-
-        pod = new OutputData;
-        pod->type = "SCALARS";
-        pod->grid = "FCC";
-        pod->name = p->myname+"flx3dn";
-        pod->data.InitWithShallowSlice(p->bflx,4,5,1);
-        AppendOutputDataNode(pod);
-        num_vars_ += 1;
-      }
 
       p = p->next;
     }
@@ -823,13 +790,13 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod->type = "SCALARS";
       pod->grid = "-CC";
       pod->name = p->myname+"toa";
-      pod->data.InitWithShallowCopy(p->btoa);
+      pod->data.InitWithShallowSlice(p->btoa,3,0,p->btoa.GetDim3());
       AppendOutputDataNode(pod);
       num_vars_ += p->btoa.GetDim3();
 
       p = p->next;
     }
-  }*/
+  }
 
   // throw an error if output variable name not recognized
   if (num_vars_ == 0) {

@@ -104,22 +104,6 @@ CelestrialBody::~CelestrialBody()
   delete [] spec_;
 }
 
-void CelestrialBody::ParentZenithAngle(Real *mu, Real *phi, Real time, Real colat, Real lon)
-{
-  Real lat = M_PI/2. - colat;
-  *mu = cos((time*(omega - 2.*M_PI/orbit_p)) - lon + M_PI)*cos(lat);
-  *phi = 0.;
-}
-
-Real CelestrialBody::ParentInsolationFlux(Real wav)
-{
-  Real dx;
-  // assuming ascending in wav
-  if ((il_ >= 0) && (wav < parent->spec_[il_].x)) il_ = -1;
-  il_ = find_place_in_table(parent->nspec_, parent->spec_, wav, &dx, il_);
-  return splint(wav, parent->spec_ + il_, dx);
-}
-
 void CelestrialBody::ReadSpectraFile(std::string sfile)
 {
   AthenaArray<Real> spectrum;
@@ -135,4 +119,28 @@ void CelestrialBody::ReadSpectraFile(std::string sfile)
   }
 
   spline(nspec_, spec_, 0., 0.);
+}
+
+void CelestrialBody::ParentZenithAngle(Real *mu, Real *phi, Real time, Real colat, Real lon)
+{
+  Real lat = M_PI/2. - colat;
+  *mu = cos((time*(omega - 2.*M_PI/orbit_p)) - lon + M_PI)*cos(lat);
+  *phi = 0.;
+}
+
+Real CelestrialBody::ParentInsolationFlux(Real wav, Real dist)
+{
+  Real dx;
+  // assuming ascending in wav
+  if ((il_ >= 0) && (wav < parent->spec_[il_].x)) il_ = -1;
+  il_ = find_place_in_table(parent->nspec_, parent->spec_, wav, &dx, il_);
+  Real flux = splint(wav, parent->spec_ + il_, dx);
+  return flux/(dist*dist);
+}
+
+Real CelestrialBody::ParentDistanceInAu(Real time)
+{
+  Real orbit_b = sqrt(1. - orbit_e*orbit_e)*orbit_a;
+  Real orbit_c = orbit_b*orbit_b/orbit_a;
+  return orbit_c/(1. + orbit_e*cos(2.*M_PI/orbit_p*time - equinox - M_PI/2.));
 }

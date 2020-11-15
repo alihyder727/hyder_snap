@@ -22,7 +22,7 @@ void NetcdfOutput::CombineBlocks()
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
   if (Globals::my_rank == 0) {
-    char number[6];
+    char number[64];
     sprintf(number,"%05d",output_params.file_number - 1);
 
     std::string infile;

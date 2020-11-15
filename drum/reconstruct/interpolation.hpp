@@ -22,20 +22,20 @@ inline T minmod(T a, T b) {
 
 template<typename T>
 inline T superbee(T a, T b) {
-  Real r = b/a;
+  T r = b/a;
   return a*std::max(0., std::min(1., 2.*r), std::min(2., r));
 }
 
 template<typename T>
 inline T vanleer(T a, T b) {
-  Real r = b/a;
+  T r = b/a;
   return a*(r + fabs(r))/(1. + fabs(r));
 }
 
 template<typename T>
 inline T mclimiter(T a, T b) {
-  Real r = b/a;
-  Real c = (1. + r)/2.;
+  T r = b/a;
+  T c = (1. + r)/2.;
   return std::max(0., std::min(std::min(c, 2.), 2.*r));
 }
 

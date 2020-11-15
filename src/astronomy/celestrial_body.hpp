@@ -30,9 +30,11 @@ public:
   CelestrialBody(ParameterInput *pin);
   CelestrialBody(ParameterInput *pin, std::string myname);
   ~CelestrialBody();
-  void ParentZenithAngle(Real *mu, Real *phi, Real time, Real colat, Real lon);
-  Real ParentInsolationFlux(Real wav);
+
   void ReadSpectraFile(std::string sfile);
+  void ParentZenithAngle(Real *mu, Real *phi, Real time, Real colat, Real lon);
+  Real ParentInsolationFlux(Real wav, Real dist = 1.);
+  Real ParentDistanceInAu(Real time);
 
 protected:
   void ReadCelestrialData_(ParameterInput *pin, std::string myname);

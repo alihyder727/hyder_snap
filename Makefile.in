@@ -10,7 +10,10 @@ GENERAL_EOS_FILE = @GENERAL_EOS_FILE@
 RSOLVER_FILE = @RSOLVER_FILE@
 RSOLVER_DIR = @RSOLVER_DIR@
 MPIFFT_FILE = @MPIFFT_FILE@
-MATH_LIBRARY = src/math/libclimath.a
+MATH_DIR = src/math/
+MATH_LIBRARY = $(MATH_DIR)libclimath.a
+DISORT_DIR = src/radiation/rtsolver/cdisort213/
+DISORT_LIBRARY = $(DISORT_DIR)libcdisort.a
 
 # General compiler specifications
 
@@ -59,6 +62,10 @@ SRC_FILES := $(wildcard src/*.cpp) \
        $(wildcard src/thermodynamics/*.cpp) \
        $(wildcard src/chemistry/*.cpp) \
        $(wildcard src/diagnostics/*.cpp) \
+       $(wildcard src/astronomy/*.cpp) \
+       $(wildcard src/radiation/*.cpp) \
+       $(wildcard src/radiation/rtsolver/*.cpp) \
+       $(wildcard src/radiation/microwave/*.cpp) \
 	     $(MPIFFT_FILE)
 OBJ_DIR := obj/
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FILES:.cpp=.o)))
@@ -94,11 +101,14 @@ $(OBJ_DIR):
 
 # Link objects into executable
 
-$(EXECUTABLE) : $(OBJ_FILES) $(MATH_LIBRARY)
+$(EXECUTABLE) : $(OBJ_FILES) $(MATH_LIBRARY) $(DISORT_LIBRARY)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $(OBJ_FILES) $(LDFLAGS) $(LDLIBS)
 
 $(MATH_LIBRARY):
 	make -C src/math CC=$(CXX)
+
+$(DISORT_LIBRARY):
+	make -C src/radiation/rtsolver/cdisort213 -f Makefile_cdisort CC=gcc CFLAGS=-O3
 
 # Create objects from source files
 
@@ -113,6 +123,11 @@ $(OBJ_DIR)%.o : %.cpp
 # Cleanup
 
 clean :
+	rm -f $(MATH_LIBRARY)
+	rm -rf $(MATH_DIR)obj
+	rm -f $(DISORT_LIBRARY)
+	rm -f $(DISORT_DIR)*.o
+	rm -f $(DISORT_DIR)disotest
 	rm -rf $(OBJ_DIR)*
 	rm -rf $(EXECUTABLE)
 	rm -rf *.gcov

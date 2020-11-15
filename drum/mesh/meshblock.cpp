@@ -40,6 +40,7 @@
 #include "meshblock_tree.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../chemistry/chemistry.hpp"
+#include "../radiation/radiation.hpp"
 #include "../diagnostics/diagnostics.hpp"
 
 //----------------------------------------------------------------------------------------
@@ -175,11 +176,8 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
 
   peos = new EquationOfState(this, pin);
   pthermo = new Thermodynamics(this, pin);
-  if (std::strcmp(CHEMISTRY, "kessler94") == 0) {
-    pchem = new Kessler94(this, pin);
-  } else {
-    pchem = new Chemistry(this, pin);
-  }
+  pchem = new CHEMISTRY(this, pin);
+  prad = new Radiation(this, pin);
   pdiag = new Diagnostics(this, pin);
 
   // Create user mesh data
@@ -297,11 +295,8 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
 
   peos = new EquationOfState(this, pin);
   pthermo = new Thermodynamics(this, pin);
-  if (std::strcmp(CHEMISTRY, "kessler94") == 0) {
-    pchem = new Kessler94(this, pin);
-  } else {
-    pchem = new Chemistry(this, pin);
-  }
+  pchem = new CHEMISTRY(this, pin);
+  prad = new Radiation(this, pin);
   pdiag = new Diagnostics(this, pin);
 
   InitUserMeshBlockData(pin);
@@ -395,6 +390,7 @@ MeshBlock::~MeshBlock() {
 
   delete pthermo;
   delete pchem;
+  delete prad;
   delete pdiag;
 }
 

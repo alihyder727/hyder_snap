@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 import re
-#from termcolor import colored
 from io import StringIO
 
 # match file name

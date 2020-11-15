@@ -1,5 +1,5 @@
 @@ cdisort.c.old -> cdisort.c
-  [r:0,first ~ tplanck = c_planck_func1
+  [r:0,all ~ c_planck_func1(ds
     c_planck_func1 -> c_planck_func2
   ];
   [r:0,first ~ if (ds->wvnmlo < 0. || ds->wvnmhi <= ds->wvnmlo)

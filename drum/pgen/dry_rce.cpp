@@ -1,6 +1,5 @@
 // C/C++ header
 #include <ctime>
-#include <sstream>
 
 // Athena++ headers
 #include "../athena.hpp"
@@ -11,28 +10,22 @@
 #include "../field/field.hpp"
 #include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
-#include "../math/interpolation.h"
 #include "../globals.hpp"
+#include "../math/interpolation.h"
 #include "../utils/utils.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
+#include "../radiation/radiation.hpp"
+#include "../radiation/hydrogen_cia.hpp"
+#include "../radiation/freedman_mean.hpp"
 
-// molecules
-enum {iH2O = 1, iNH3 = 2, iH2Oc = 3, iNH3c = 4, iH2Op = 5, iNH3p = 6};
-Real grav, P0, T0, Tmin, prad, hrate, sponge_tau;
-
-// polar geometry parameters
-bool use_polar_beta;
-Real radius, omega, sponge_lat;
+// global parameters
+Real grav, P0, T0, Tmin;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
-  AllocateUserOutputVariables(6);
+  AllocateUserOutputVariables(2);
   SetUserOutputVariableName(0, "temp");
   SetUserOutputVariableName(1, "theta");
-  SetUserOutputVariableName(2, "thetav");
-  SetUserOutputVariableName(3, "mse");
-  SetUserOutputVariableName(4, "rh_h2o");
-  SetUserOutputVariableName(5, "rh_nh3");
 }
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
@@ -44,57 +37,6 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
       for (int i = is; i <= ie; ++i) {
         user_out_var(0,k,j,i) = pthermo->Temp(phydro->w.at(k,j,i));
         user_out_var(1,k,j,i) = pthermo->Theta(phydro->w.at(k,j,i), P0);
-        // theta_v
-        user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->Qeps(phydro->w.at(k,j,i));
-        user_out_var(3,k,j,i) = pthermo->MSE(phydro->w.at(k,j,i), grav*pcoord->x1v(i));
-        pthermo->SaturationSurplus(dq, phydro->w.at(k,j,i));
-        rh = phydro->w(iH2O,k,j,i)/(phydro->w(iH2O,k,j,i) - dq[iH2O]);
-        user_out_var(4,k,j,i) = rh;
-        rh = phydro->w(iNH3,k,j,i)/(phydro->w(iNH3,k,j,i) - dq[iNH3]);
-        user_out_var(5,k,j,i) = rh;
-      }
-}
-
-void Forcing(MeshBlock *pmb, Real const time, Real const dt,
-    AthenaArray<Real> const &w, AthenaArray<Real> const &bcc, AthenaArray<Real> &u)
-{
-  int is = pmb->is, js = pmb->js, ks = pmb->ks;
-  int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
-  Thermodynamics *pthermo = pmb->pthermo;
-
-  for (int k = ks; k <= ke; ++k)
-    for (int j = js; j <= je; ++j)
-      for (int i = is; i <= ie; ++i) {
-        // polar beta
-        if (use_polar_beta) {
-          Real x2 = pmb->pcoord->x2v(j);
-          Real x3 = pmb->pcoord->x3v(k);
-          Real dist = sqrt(x2*x2 + x3*x3);
-
-          // coriolis force
-          Real fcor = 2.*omega*cos(dist/radius);   //not approximated
-          u(IM2,k,j,i) += dt*fcor*w(IDN,k,j,i)*w(IM3,k,j,i);
-          u(IM3,k,j,i) -= dt*fcor*w(IDN,k,j,i)*w(IM2,k,j,i);
-
-          // sponge layer
-          Real s = (90. - dist/radius/M_PI*180.)/sponge_lat;
-          if (s < 1) {
-            u(IM1,k,j,i) -= dt*w(IDN,k,j,i)*w(IM1,k,j,i)*pow((1.-s), 2)/sponge_tau;
-            u(IM2,k,j,i) -= dt*w(IDN,k,j,i)*w(IM2,k,j,i)*pow((1.-s), 2)/sponge_tau;
-            u(IM3,k,j,i) -= dt*w(IDN,k,j,i)*w(IM3,k,j,i)*pow((1.-s), 2)/sponge_tau;
-          }
-        }
-
-        Real cv = pthermo->Cv(w.at(k,j,i));
-        if (w(IPR,k,j,i) < prad) {
-          u(IEN,k,j,i) += dt*hrate*w(IDN,k,j,i)*cv*(1. +
-                          1.E-4*sin(2.*M_PI*rand()/RAND_MAX));
-        }
-
-        Real temp = pthermo->Temp(w.at(k,j,i));
-        if (temp < Tmin) {
-          u(IEN,k,j,i) += w(IDN,k,j,i)*cv*(Tmin - temp)/sponge_tau*dt;
-        }
       }
 }
 
@@ -104,54 +46,52 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   P0 = pin->GetReal("problem", "P0");
   T0 = pin->GetReal("problem", "T0");
   Tmin = pin->GetReal("problem", "Tmin");
-  prad = pin->GetReal("problem", "prad");
-  hrate = pin->GetReal("problem", "hrate")/86400.;  // K/day to K/s
-  sponge_tau = pin->GetReal("problem", "sponge_tau");
+}
 
-  // polar beta geometry
-  use_polar_beta = pin->GetOrAddBoolean("problem", "use_polar_beta", false);
-  if (use_polar_beta) {
-    radius = pin->GetReal("problem", "radius");
-    omega = pin->GetReal("problem", "omega");
-    sponge_lat = pin->GetReal("problem", "sponge_lat");
+void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
+{
+  Real xHe = pin->GetOrAddReal("radiation", "xHe", 0.136);
+  Real xH2 = 1. - xHe;
+
+  std::stringstream msg;
+
+  if (name == "H2-H2") {
+    pabs->AddAbsorber(XizH2H2CIA(this, 0, xH2))
+        ->LoadCoefficient(file);
+  } else if (name == "H2-He") {
+    pabs->AddAbsorber(XizH2HeCIA(this, 0, xH2, xHe))
+        ->LoadCoefficient(file);
+  } else if (name == "FREEDMAN") {
+    pabs->AddAbsorber(FreedmanMean(this));
+  } else {
+    msg << "### FATAL ERROR in RadiationBand::AddAbsorber"
+        << std::endl << "unknow absorber: '" << name <<"' ";
+    ATHENA_ERROR(msg);
   }
-
-  EnrollUserExplicitSourceFunction(Forcing);
 }
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
-  Real qH2O = pin->GetReal("problem", "qH2O");
-  Real qNH3 = pin->GetReal("problem", "qNH3");
   Real gamma = pin->GetReal("hydro", "gamma");
 
-  // construct a 1D pseudo-moist adiabat with given relative humidity
+  // construct a 1D adiabat with given relative humidity
   Real x1min = pmy_mesh->mesh_size.x1min;
   Real x1max = pmy_mesh->mesh_size.x1max;
-  Real x1rat = pmy_mesh->mesh_size.x1rat;
-
-  Real dz, **w1, *z1, *p1, *t1;
-  if (x1rat != 1.0) {
-    dz = (x1max - x1min)*(x1rat - 1.)/(pow(x1rat, pmy_mesh->mesh_size.nx1) - 1.);
-    dz = std::min(dz, dz*pow(x1rat, pmy_mesh->mesh_size.nx1))/2.;
-  } else {
-    dz = (x1max - x1min)/pmy_mesh->mesh_size.nx1/2.;
-  }
-  int nx1 = (int)((x1max - x1min)/dz);
+  int nx1 = 2*pmy_mesh->mesh_size.nx1 + 1;
+  Real dz = (x1max - x1min)/(nx1 - 1);
+  Real **w1, *z1, *p1, *t1;
   NewCArray(w1, nx1, NHYDRO);
   z1 = new Real [nx1];
   p1 = new Real [nx1];
   t1 = new Real [nx1];
 
-  // 1.1 estimate surface temperature and pressure
+  // estimate surface temperature and pressure
   Real Rd = pthermo->GetRd();
   Real cp = gamma/(gamma - 1.)*Rd;
   Real Ts = T0 - grav/cp*x1min;
   Real Ps = P0*pow(Ts/T0, cp/Rd);
-  int max_iter = 200, iter = 0;
+  int max_iter = 20, iter = 0;
 
-  w1[0][iH2O] = qH2O;
-  w1[0][iNH3] = qNH3;
   z1[0] = x1min;
   for (int i = 1; i < nx1; ++i)
     z1[i] = z1[i-1] + dz;
@@ -203,7 +143,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     Real buf[NHYDRO];
     interpn(buf, &pcoord->x1v(i), *w1, z1, &nx1, 1, NHYDRO);
     buf[IVX] = buf[IVY] = buf[IVZ] = 0.;
-    // set cloud to zero
+    // set cloud to zeo
     for (int n = 1+NVAPOR; n < NMASS; ++n)
       buf[n] = 0.;
     for (int n = 0; n < NHYDRO; ++n)
@@ -229,7 +169,16 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
       }
   }
 
-  srand(Globals::my_rank + time(0));
+  // set spectral properties
+  RadiationBand *p = prad->pband;
+  while (p != NULL) {
+    for (int k = kl; k <= ku; ++k)
+      for (int j = jl; j <= ju; ++j)
+        p->SetSpectralProperties(phydro->w, k, j, is, ie);
+    p = p->next;
+  }
+
+
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
 
   FreeCArray(w1);

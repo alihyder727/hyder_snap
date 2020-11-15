@@ -116,6 +116,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
     // Optimal (in error bounds) explicit three-stage, third-order SSPRK
     nstages = 3;
     cfl_limit = 1.0;  // c_eff = c/nstages = 1/3 (Gottlieb (2009), pg 271)
+    if (pm->ndim == 1) cfl_limit = 10.;
     stage_wghts[0].delta = 1.0;
     stage_wghts[0].gamma_1 = 0.0;
     stage_wghts[0].gamma_2 = 1.0;
@@ -245,6 +246,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       } else { // Hydro
         AddTask(CALC_HYDFLX,DIFFUSE_HYD);
       }
+      AddTask(CALC_RADFLX,DIFFUSE_HYD);
       if (NSCALARS > 0) {
         AddTask(DIFFUSE_SCLR,NONE);
         AddTask(CALC_SCLRFLX,(CALC_HYDFLX|DIFFUSE_SCLR));
@@ -259,7 +261,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       AddTask(RECV_HYDFLX,CALC_HYDFLX);
       AddTask(INT_HYD,RECV_HYDFLX);
     } else {
-      AddTask(INT_HYD, CALC_HYDFLX);
+      AddTask(INT_HYD, (CALC_HYDFLX|CALC_RADFLX));
     }
     AddTask(SRCTERM_HYD,INT_HYD);
     AddTask(UPDATE_HYD,SRCTERM_HYD);
@@ -411,6 +413,11 @@ void TimeIntegratorTaskList::AddTask(const TaskID& id, const TaskID& dep) {
     task_list_[ntasks].TaskFunc=
         static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
         (&TimeIntegratorTaskList::CalculateEMF);
+    task_list_[ntasks].lb_time = true;
+  } else if (id == CALC_RADFLX) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::CalculateRadiationFlux);
     task_list_[ntasks].lb_time = true;
   } else if (id == SEND_HYDFLX) {
     task_list_[ntasks].TaskFunc=

@@ -237,9 +237,15 @@ parser.add_argument('--hdf5_path',
 
 # --chem=[name] argument
 parser.add_argument('--chem',
-                    default='OFF',
-                    choices=['OFF', 'kessler94'],
+                    default='chemistry',
+                    choices=['chemistry', 'kessler94'],
                     help='select chemistry')
+
+# --rt=[name] argument
+parser.add_argument('--rt',
+                    default='OFF',
+                    choices=['OFF','2sess','disort','lambert'],
+                    help='select radiative transfer solver')
 
 # --nvapor=[value] argument
 parser.add_argument('--nvapor',
@@ -261,7 +267,7 @@ parser.add_argument('--nh3',
                     default='-1',
                     help='ammonia vapor id')
 
-# --nh3=[value] argument
+# --x1rat=[value] argument
 parser.add_argument('--x1rat',
                     default='1.0',
                     help='x1 grid size ratio')
@@ -478,7 +484,7 @@ else:
   definitions['STRETCHED_GRID'] = 'STRETCHED_GRID'
 
 # --chem=[name] argument
-definitions['CHEMISTRY'] = args['chem']
+definitions['CHEMISTRY'] = args['chem'].capitalize()
 
 # --flux=[name] argument
 definitions['RSOLVER'] = makefile_options['RSOLVER_FILE'] = args['flux']
@@ -664,6 +670,22 @@ if args['cxx'] == 'clang++-apple':
     makefile_options['COMPILER_FLAGS'] = '-O3 -std=c++11'
     makefile_options['LINKER_FLAGS'] = '-Lsrc/math'
     makefile_options['LIBRARY_FLAGS'] = '-lclimath'
+
+# --rt=[name] argument
+if args['rt'] == 'OFF':
+  definitions['RT_SOLVER'] = 'RT_OFF'
+else:
+  if args['rt'] == '2sess':
+    definitions['RT_SOLVER'] = 'RT_2SESS'
+  elif args['rt'] == 'disort':
+    definitions['RT_SOLVER'] = 'RT_DISORT'
+    if args['cxx'] == 'g++' or args['cxx'] == 'icpc' or args['cxx'] == 'cray':
+      makefile_options['LINKER_FLAGS'] += ' -Lsrc/radiation/rtsolver/cdisort213'
+      makefile_options['LIBRARY_FLAGS'] += ' -lcdisort'
+  elif args['rt'] == 'lambert':
+    definitions['RT_SOLVER'] = 'RT_LAMBERT'
+  else:
+    definitions['RT_SOLVER'] = 'RT_UNKNOW'
 
 # -float argument
 if args['float']:

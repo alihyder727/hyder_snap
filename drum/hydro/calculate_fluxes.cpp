@@ -24,6 +24,7 @@
 #include "hydro.hpp"
 #include "hydro_diffusion/hydro_diffusion.hpp"
 #include "../chemistry/chemistry.hpp"
+#include "../radiation/radiation.hpp"
 
 // OpenMP header
 #ifdef OPENMP_PARALLEL
@@ -103,6 +104,7 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
       RiemannSolver(k, j, is, ie+1, IVX, b1, wl_, wr_, x1flux, e3x1, e2x1, w_x1f, dxw_);
 #endif
       pmb->pchem->AddSedimentationFlux(x1flux, wr_, k, j, is, ie+1);
+      pmb->prad->AddRadiativeFluxes(x1flux, k, j, is, ie+1);
 
       if (order == 4) {
         for (int n=0; n<NWAVE; n++) {
