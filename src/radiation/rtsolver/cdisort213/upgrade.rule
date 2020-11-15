@@ -6,8 +6,58 @@
     <= -> <
   ];
   [r:0,first ~ double c_planck_func2(double wnumlo
-    double -> double __attribute__((weak))
+    c_planck_func2 -> __attribute__((weak)) c_planck_func2
   ];
   [r:0,first ~ 1.1911e-18
     1.1911e-18 -> 1.1911e-8
+  ];
+  [r:0,all ~ char *
+    char -> char const
+  ];
+  [r:0,all ~ locate (
+    locate -> locate_disort
+  ];
+
+@@ cdisort.h.old -> cdisort.h
+  [r:-2,first ~ header[128]
+    struct -> struct disort_state
+  ];
+  [r:0,first ~ header[128]
+    128 -> 1024
+  ];
+  [r:-1,second ~ disort_radiant
+    struct -> struct disort_output
+  ];
+  [r:0,all ~ char *
+    char -> char const
+  ];
+
+@@ disotest.c.old -> disotest.c
+  [r:1,first ~ icas
+    extern -> //extern
+  ];
+  [r:2,first ~ icas
+    c_disort() -> //  c_disort()
+  ];
+  [r:-1,second ~ c_errmsg()
+    extern -> //extern
+  ];
+  [r:0,second ~ c_errmsg()
+    c_errmsg -> //  c_errmsg
+  ];
+  [r:1,second ~ c_errmsg()
+    extern -> //extern
+  ];
+  [r:2,second ~ c_errmsg()
+    c_ratio -> // c_ratio
+  ];
+
+@@ locate.h.old -> locate.h
+  [r:0,all ~ locate
+    locate -> locate_disort
+  ];
+
+@@ locate.c.old -> locate.c
+  [r:0,all ~ locate
+    locate -> locate_disort
   ];

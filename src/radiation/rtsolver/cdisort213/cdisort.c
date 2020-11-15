@@ -3005,7 +3005,7 @@ void c_new_intensity_correction(disort_state  *ds,
       /* BDE ** to actual phase function            */
 
       /* !!! +1: locate starts counting from 0! */
-      it = locate ( ds->mu_phase, ds->nphase, ctheta ) + 1;
+      it = locate_disort ( ds->mu_phase, ds->nphase, ctheta ) + 1;
 
       for (lc=1; lc<=ncut; lc++)
 	PHASA(lc) = DSPHASE(it,lc)
@@ -3363,7 +3363,7 @@ double calc_phase_squared (int           nphase,
     /* special case: second scattering angle does not depend on
        azimuth of first scattering angle */
     if (ctheta==1.0 || MU_EQ(j,lu)==1.0) {
-      it = locate ( mu_phase, nphase, MU_EQ(j,lu)*ctheta ) + 1;
+      it = locate_disort ( mu_phase, nphase, MU_EQ(j,lu)*ctheta ) + 1;
       phint = M_PI * ( PHAS2(it,lu)
 		       + ( MU_EQ(j,lu)*ctheta - MUP(it) )
 		       / ( MUP (it+1) - MUP(it) )
@@ -3389,8 +3389,8 @@ double calc_phase_squared (int           nphase,
 	cutting=FALSE;
 
       if (mumin<mumax) {
-	imin = locate ( mu_phase, nphase, mumin)+1;
-	imax = locate ( mu_phase, nphase, mumax)+1;
+	imin = locate_disort ( mu_phase, nphase, mumin)+1;
+	imax = locate_disort ( mu_phase, nphase, mumax)+1;
 
 	k=imin;
 	/* assuming SPF is linear in mu */
@@ -7944,7 +7944,7 @@ void c_albtrans_spherical(disort_state *ds,
 
 #define MAX_WARNINGS 100
 
-void c_errmsg(char *messag,
+void c_errmsg(char const *messag,
               int   type)
 {
   static int
@@ -7984,7 +7984,7 @@ void c_errmsg(char *messag,
  ----------------------------------------------------------------------*/
 
 int c_write_bad_var(int   quiet,
-                    char *varnam)
+                    char const *varnam)
 {
   const int
     maxmsg = 50;
@@ -8016,7 +8016,7 @@ int c_write_bad_var(int   quiet,
  ----------------------------------------------------------------------*/
 
 int c_write_too_small_dim(int   quiet,
-                          char *dimnam,
+                          char const *dimnam,
                           int   minval)
 {
   if (quiet != QUIET) {
@@ -11048,7 +11048,7 @@ void c_twostr_solve_bc(disort_state *ds,
 #define VCUT  (1.5)
 #define PLKF(x) ({const double _x = (x); _x*_x*_x/(exp(_x)-1.);})
 
-double __attribute__((weak)) c_planck_func2(double __attribute__((weak)) wnumlo,
+double __attribute__((weak)) c_planck_func2(double wnumlo,
                       double wnumhi,
                       double t)
 {
@@ -11513,7 +11513,7 @@ void c_twostr_out_free(disort_state  *ds,
 
 double *c_dbl_vector(int  nl, 
 		     int  nh,
-		     char *name)
+		     char const *name)
 {
   unsigned int  
     len_safe;
@@ -11553,7 +11553,7 @@ double *c_dbl_vector(int  nl,
 
 int *c_int_vector(int  nl, 
 		  int  nh,
-		  char *name)
+		  char const *name)
 {
   unsigned int  
     len_safe;

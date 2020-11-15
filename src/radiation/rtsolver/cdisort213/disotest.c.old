@@ -167,8 +167,8 @@ void disort_test01(void)
     out,good;
   register int
     icas;
-  //extern void
-    //  c_disort(),c_errmsg(),c_getmom();
+  extern void
+    c_disort(),c_errmsg(),c_getmom();
 
   ds.accur = 0.;
   ds.flag.prnt[0]=TRUE, ds.flag.prnt[1]=FALSE, ds.flag.prnt[2]=FALSE, ds.flag.prnt[3]=FALSE, ds.flag.prnt[4]=TRUE;
@@ -2877,10 +2877,10 @@ void print_test(disort_state  *ds_calc,
 {
   register int
     iu,j,lu,numbad;
-  //extern void
-    //  c_errmsg();
-  //extern double
-    // c_ratio();
+  extern void
+    c_errmsg();
+  extern double
+    c_ratio();
   double
     flxmax,umax,fnoise,unoise,
     rat1,rat2,rat3,rat4,

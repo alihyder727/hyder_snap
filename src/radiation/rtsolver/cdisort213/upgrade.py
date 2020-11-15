@@ -8,7 +8,7 @@ xstart = re.compile(r'^@@ ([^ ]+) -> (.+$)')
 
 # match the action header
 xheader = re.compile(
-  r'\[([adr]):(\d),(first\b|second\b|third\b|fourth\b|last3\b|last2\b|last\b|all\b) ~ (.+$)'
+  r'\[([adr]):([+-]?\d),(first\b|second\b|third\b|fourth\b|last3\b|last2\b|last\b|all\b) *~ (.+$)'
   )
 
 # match the replacement
@@ -18,7 +18,7 @@ xreplace = re.compile(r'([^ ]+) -> (.+$)')
 xfinish = re.compile(r'\];')
 
 def ErrorMsg(msg):
-  print(msg)
+  print("ERROR: " + msg)
   exit(1)
 
 def LogMsg(msg, em = ''):
@@ -42,6 +42,8 @@ def TakeAction(action, steps, src_lines, idx):
         LogMsg('Replacement done at line #%d' % (idx+1,), em = '====')
         LogMsg('Old code:\n%s' % old_code[:-1])
         LogMsg('New code:\n%s' % code)
+      else:
+        ErrorMsg('Replacement failed.\nCannot find "%s" in "%s"' % (old_str, old_code[:-1]))
     src_lines[idx] = code
 
 def UpgradeFile(src_fname, dst_fname, rules):
@@ -60,7 +62,7 @@ def UpgradeFile(src_fname, dst_fname, rules):
     action = find_header.group(1)
     offset = int(find_header.group(2))
     kind = find_header.group(3)
-    position = find_header.group(4)
+    position = find_header.group(4).strip()
 
     if kind == 'first':
       ncycle = 1
@@ -130,5 +132,6 @@ if __name__ == '__main__':
       while line and (not xstart.match(line)):
         rules += line
         line = file.readline()
+      LogMsg('... Upgrading File %s ...' % dst_fname)
       UpgradeFile(src_fname, dst_fname, rules)
-      find_file = xstart.match(file.readline())
+      find_file = xstart.match(line)
