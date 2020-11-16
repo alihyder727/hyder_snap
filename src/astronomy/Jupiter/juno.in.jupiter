@@ -1,0 +1,120 @@
+######################################################################
+#
+#  JUNO input file (see bottom for specification of syntax)
+#
+######################################################################
+
+############################   ATMOSPHERE MODEL
+
+planet    = Jupiter
+g         = 23.1143          # gravity (m/s^2)
+lat       = 0.0              # latitude in degrees
+
+# solar abundances relative to H2, enrichments
+X_He    = 0.1941     0.808   # Atreya's contribution to the MWR manuscript, 2012
+X_CH4   = 6.04e-04   3.92    # Atreya's contribution to the MWR manuscript, 2012
+X_H2O   = 1.10e-03   0.45    # Atreya's contribution to the MWR manuscript, 2012
+X_NH3   = 1.52e-04   4.38    # Atreya's contribution to the MWR manuscript, 2012
+X_H2S   = 2.96e-05   3.01    # Atreya's contribution to the MWR manuscript, 2012
+X_Ar    = 5.64e-06   3.23    # Atreya's contribution to the MWR manuscript, 2012
+X_PH3   = 5.76e-07   3.75    # Atreya's contribution to the MWR manuscript, 2012
+X_Ne    = 1.91e-04   0.13    # Atreya's contribution to the MWR manuscript, 2012
+
+# deep stratified layer: max pressure, d(log(X))/d(log(P)), final enrichment factor
+dsl_NH3   = 14    0.0   1.0  # 14 2.5e-9 1.0
+dsl_H2O   = 33    0.0   1.0  # 33 9.0e-9 1.0
+
+# reference values
+Tref      = 132.79           # Seiff, 1998
+Pref      = 0.5              # Seiff, 1998
+
+# para-hydrogen fraction: (para ratio, pressure)
+FPbottom  = 0.25   0.4
+FPtop     = 0.25   0.4
+
+# lapse rate adjustments (dry=0,wet=1):  (factor, P_bottom, P_top)
+lapse     = 1.0   6.0   3.2
+lapse     = 1.0  11.0   9.0
+lapse     = 1.0   0.8   0.4
+
+# Brunt-Väisälä frequency (1/s):  (frequency, P_bottom, P_top)
+brunt_vaisala  = 0.0   60.0   10.0
+
+# H2O supersaturation adjustments:  (factor, P_bottom, P_top)
+super_H2O = 1.0   5.0   3.2
+super_H2O = 1.0  11.0   9.0
+super_H2O = 1.0   0.8   0.4
+
+# NH3 supersaturation adjustments:  (factor, P_bottom, P_top)
+super_NH3 = 1.0   5.0   3.2
+super_NH3 = 1.0  11.0   9.0
+
+# algorithmic parameters for atmosphere model
+use_ideal_gas = true
+dz            = 1.0e+02        # mesh spacing (m)
+T_top         = 110.0          # temp (K) that defines TOA
+Pmax          = 1000.0         # pressure that defines bottom of atm
+tol_T         = 1.0e-6         # tolerance for convergence to Tref
+T_bot_guess   = 0              # initial guess for BOA temperature (0=no guess)
+
+# saturation vapor pressure adjustments:
+rel_humidity_NH3 = 1.0
+rel_humidity_H2O = 1.0
+
+############################   RADIATIVE TRANSFER MODEL
+
+freqs  = 0.6 1.25 2.6 5.2 10 22  # (GHz)
+angles = 0  1.335  2.668  4.000  5.329  6.656  7.979  9.298  10.612  11.921  13.224  14.519  15.808  17.088  18.358  19.617  20.864  22.100  23.324  24.536  25.735  26.920  28.092  29.250  30.393  31.523  32.638  33.737  34.822  35.891  36.945  37.982  39.005  40.012  41.003  41.980  42.940  43.885  44.813  45.726  46.623  47.504  48.370  49.219  50.051  50.867  51.666  52.449  53.217  53.969  54.707  55.430  56.139  56.834  57.516  58.186  58.842  59.486  60.118  60.737  61.345  61.941  62.525  63.099  63.661  64.213  64.754  65.286  65.807  66.319  66.819  67.309  67.788  68.257  68.716  69.164  69.602  70.031  70.450  70.861  71.263  71.656  72.041  72.418  72.788  73.150  73.505  73.852  74.193  74.527  74.855  75.176  75.490  75.799  76.102  76.399  76.691  76.976  77.256  77.531  77.799  78.062  78.319  78.571  78.817  79.059  79.295  79.527  79.753  79.974  80.190  80.400  80.606  80.807  81.003  81.195  81.382  81.565  81.744  81.919  82.089  82.256  82.418  82.577  82.731  82.882  83.029  83.172  83.312  83.448  83.581  83.710  83.835  83.957  84.076  84.192  84.304  84.413  84.519  84.621  84.719  84.814  84.905  85.000  86.000  87.000  88.000  89.000 # [0:5:85]  #  emission angles (degrees)
+
+absorption = H2_CIA NH3 PH3 H2S H2O H2O_NH3_soln=1.0 H2O_ice=1.0 NH3_ice=1.0 NH4SH_ice=1.0
+do_spherical_correction = true
+do_refraction = true
+
+############################   FORWARD MODEL TREE
+
+fmt_tolerance = 0.8
+fil_fmt = fwd.tbl  # contains forward model table
+dir_fmt = ./  # contains forward model table
+
+############################   ALGORITHMIC PARAMETERS
+
+statevector_range = enr_NH3  0.600  0.607  0.611  0.616  0.621  0.626  0.630  0.635  0.640  0.645  0.650  0.655  0.660  0.665  0.670  0.675  0.681  0.686  0.691  0.696  0.702  0.707  0.713  0.718  0.724  0.730  0.736  0.742  0.750  0.758  0.767  0.776  0.787  0.799  0.812  0.827  0.844  0.861  0.878  0.896  0.914  0.933  0.952  0.971  0.991  1.011  1.031  1.052  1.074  1.096  1.118  1.141  1.164  1.188  1.212  1.237  1.262  1.288  1.314  1.340  1.368  1.396  1.424  1.453  1.482  1.512  1.543  1.574  1.606  1.639  1.673  1.707  1.742  1.777  1.814  1.851  1.889  1.929  1.969  2.009  2.051  2.093  2.136  2.179  2.224  2.269  2.315  2.363  2.411  2.460  2.510  2.561  2.613  2.666  2.720  2.776  2.832  2.890  2.949  3.009  3.070  3.133  3.197  3.262  3.328  3.396  3.465  3.536  3.608  3.681  3.756  3.833  3.911  3.990  4.072  4.155  4.239  4.325  4.414  4.503  4.595  4.689  4.784  4.882  4.981  5.083  5.186  5.292  5.400  5.510  5.622  5.736  5.853  5.973  6.094  6.219  6.346  6.476  6.609  6.746  6.885  7.028  7.174  7.323  7.477  7.634  7.795  7.961  8.131  8.306  8.485  8.670  8.859  9.055  9.256  9.463  9.676  9.896  10.123  10.358  10.600  10.850  11.109  11.376  11.653  11.940  12.237  12.545  12.865  13.196  13.541  13.899  14.271  14.657  15.059  15.477  16.000 # default range of NH3 enrichment
+statevector_range = enr_H2O  0.100  0.259  0.335  0.410  0.511  0.594  0.698  0.797  0.903  1.009  1.035  1.056  1.075  1.093  1.111  1.127  1.144  1.162  1.182  1.205  1.232  1.266  1.297  1.325  1.352  1.380  1.410  1.441  1.475  1.509  1.545  1.583  1.623  1.664  1.707  1.751  1.796  1.843  1.891  1.941  1.992  2.045  2.099  2.156  2.214  2.274  2.337  2.401  2.468  2.537  2.606  2.677  2.749  2.822  2.896  2.972  3.048  3.126  3.205  3.286  3.368  3.451  3.536  3.622  3.710  3.799  3.890  3.982  4.076  4.172  4.269  4.369  4.469  4.572  4.676  4.783  4.892  5.003  5.116  5.233  5.352  5.473  5.597  5.723  5.851  5.981  6.114  6.249  6.387  6.527  6.671  6.818  6.969  7.123  7.280  7.441  7.606  7.775  7.947  8.124  8.305  8.491  8.680  8.871  9.055  9.233  9.405  9.573  9.737  9.897  10.000  # log[.1,10,100] # default range of H2O enrichment
+#statevector_range = lat  0  0.978  1.969  2.972  3.989  5.022  6.073  7.145  8.239  9.359  10.508  11.691  12.914  14.181  15.502  16.886  18.345  19.895  21.556  23.358  25.341  27.562  30.112  33.138  36.908  39.716  42.068  44.200  46.208  48.139  50.022  51.874  53.704  55.520  57.327  59.127  60.923  62.716  64.507  66.296  68.085  69.873  71.660  73.447  75.233  77.020  78.807  80.593  82.379  84.166  85.952  87.738  90.000  # lin[0,90,21] # default latitude range
+use_tabulated_fwd_model = false
+spice_kernel_metafile = naifmeta_juno_1.txt
+fil_orbit = orbit.in  # contains observation times
+fil_orbit_binary = orbit.h5  # contains all geometric information
+footprint = -180 180 -90 90  # ignore measurements outside this lon-lat box
+dir_refprop = ~/Juno # directory containing refprop data
+fil_antenna = ~/Juno/input/antenna/juno_antennae.h5
+
+h5_output = obs atm     # output file contains {obs, atm, absco, weight}
+
+
+######################################################################
+#   APPENDIX: GRAMMAR
+######################################################################
+#   This file is meant to be parsed according to the following rules:
+#      (1) First, within a line, any text following a '#'
+#          is ignored by the parser.
+#      (2) After the file has been stripped of comments, lines
+#          are parsed for <keyword> = <value#1> ... <value#n>.
+#      (3) keywords are matched with pre-defined ones the code
+#          understands.  The number of values to the right of '='
+#          depends on the specific keyword
+#      (4) lines which are not of the form specified in (2) or which
+#          contain unknown (or misspelt) keywords are ignored, but
+#          a warning is printed to stdout.
+#      (5) Finally, with the exception of repeated keywords, the
+#          line ordering is not important.
+#
+#   Quantities in this file have the following units unless specified 
+#   otherwise:
+#                angle       ~ degrees
+#                frequency   ~ GHz
+#                distance    ~ m
+#                temperature ~ K
+#                pressure    ~ bar
+#                
+######################################################################
