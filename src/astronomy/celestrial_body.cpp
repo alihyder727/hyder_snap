@@ -48,7 +48,7 @@ CelestrialBody::CelestrialBody(ParameterInput *pin):
   parent(NULL), spec_(NULL), il_(-1)
 {
   std::stringstream msg;
-  name = pin->GetString("astronomy", "planet");
+  name = pin->GetOrAddString("astronomy", "planet", "unknown");
   ReadCelestrialData_(pin, name);
 
   std::string parent_name = pin->GetOrAddString("astronomy", name + ".parent", "");

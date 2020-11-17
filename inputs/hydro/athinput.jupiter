@@ -93,8 +93,8 @@ T0          = 166.
 Tmin        = 70.
 prad        = 2.0E5
 hrate       = -0.1    # K/day
-qH2O        = 0.04
-qNH3        = 0.0027
+qH2O        = 40.
+qNH3        = 2.7
 diagnostics = curl div
 
 sponge_tau  = 1.E4

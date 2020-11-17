@@ -142,7 +142,7 @@ void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
 }
 
 void Radiation::CalculateRadiances(AthenaArray<Real> const& w, Real time,
-  Direction *rout, int nrout, int k, int j, int il, int iu)
+  int k, int j, int il, int iu)
 {
   Coordinates *pcoord = pmy_block->pcoord;
 

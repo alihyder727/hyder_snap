@@ -89,12 +89,10 @@ public:
   void CalculateFluxes(AthenaArray<Real> const& w, Real time,
     int k, int j, int il, int iu);
   void CalculateRadiances(AthenaArray<Real> const& w, Real time,
-    Direction *rout, int nrout, int k, int j, int il, int iu);
+    int k, int j, int il, int iu);
   void AddRadiativeFluxes(AthenaArray<Real>& x1flux,
     int k, int j, int il, int iu);
   bool IsDynamic() { return dynamic_; }
-  Real GetInputMu() { return rin_[0].mu; }
-  Real GetInputPhi() { return rin_[0].phi; }
   Real GetBeam() { return beam_; }
 
 protected:
