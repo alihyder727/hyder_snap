@@ -39,27 +39,45 @@ inline T mclimiter(T a, T b) {
   return std::max(0., std::min(std::min(c, 2.), 2.*r));
 }
 
-// 2-rd polynomial interpolation
-template<typename T>
-inline T interp_bp2(T phi, T phip1) {
-  return 1.5*phi - 0.5*phip1;
+// sign
+template <typename T> 
+inline int sign(T val) {
+  return (T(0) < val) - (val < T(0));
 }
 
+// 2-rd polynomial 
 template<typename T>
 inline T interp_cp2(T phim1, T phi) {
   return 0.5*phim1 + 0.5*phi;
 }
 
-// 3-rd polynomial interpolation
+// 1-rd upwind-biased polynomial 
+template<typename T>
+inline T interp_bp2(T phim1, T phi, int sgn) {
+  T phih = interp_cp2(phim1, phi);
+  T phid = 0.5*(phi - phim1);
+  return phih - sgn*phid;
+}
+
+// 3-th polynomial 
 template<typename T>
 inline T interp_cp3(T phim1, T phi, T phip1) {
   return 1./3.*phim1 + 5./6.*phi - 1./6.*phip1;
 };
 
+// 4-th polynomial 
 template<typename T>
-inline T interp_bp3(T phi, T phip1, T phip2) {
-  return 11./6.*phi - 7./6.*phip1 + 1./3.*phip2;
+inline T interp_cp4(T phim2, T phim1, T phi, T phip1) {
+  return -1./12.*phim2 + 7./12.*phim1 + 7./12.*phi - 1./12.*phip1;
 };
+
+// 3-rd upwind-biased polynomial 
+template<typename T>
+inline T interp_bp3(T phim2, T phim1, T phi, T phip1, int sgn) {
+  T phih = interp_cp4(phim2, phim1, phi, phip1);
+  T phid = ((phip1 - phim2) - 3.*(phi - phim1))/12.;
+  return phih + sgn*phid;
+}
 
 // WENO 3 interpolation
 template<typename T>
@@ -76,22 +94,24 @@ inline T interp_weno3(T phim1, T phi, T phip1) {
   return (alpha0*p0 + alpha1*p1)/(alpha0 + alpha1);
 };
 
-// 4-th polynomial interpolation
-template<typename T>
-inline T interp_cp4(T phim2, T phim1, T phi, T phip1) {
-  return -1./12.*phim2 + 7./12.*phim1 + 7./12.*phi - 1./12.*phip1;
-};
-
-// 5-th polynomial interpolation
+// 5-th polynomial 
 template<typename T>
 inline T interp_cp5(T phim2, T phim1, T phi, T phip1, T phip2) {
   return -1./20.*phim2 + 9./20.*phim1 + 47./60.*phi - 13./60.*phip1 + 1./30.*phip2;
 };
 
-// 6-th polynomial interpolation
+// 6-th polynomial 
 template<typename T>
 inline T interp_cp6(T phim3, T phim2, T phim1, T phi, T phip1, T phip2) {
   return 1./60.*phim3 - 2./15.*phim2 + 37./60.*phim1 + 37./60.*phi - 2./15.*phip1 + 1./60.*phip2;
+};
+
+// 5-th upwind-biased polynomial 
+template<typename T>
+inline T interp_bp5(T phim3, T phim2, T phim1, T phi, T phip1, T phip2, int sgn) {
+  T phih = interp_cp6(phim3, phim2, phim1, phi, phip1, phip2);
+  T phid = ((phip2 - phim3) - 5.*(phip1 - phim2) + 10.*(phi - phim1))/60.;
+  return phih - sgn*phid;
 };
 
 // WENO 5 interpolation
