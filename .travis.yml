@@ -1,6 +1,10 @@
 sudo:
   - required
 
+branches:
+  only:
+  - travis_build
+
 before_install:
   - sudo apt-get install libpnetcdf-dev
 
@@ -11,5 +15,6 @@ compiler:
   - g++
 
 script:
+  - ./patch.py
   - ./configure.py
   - make
