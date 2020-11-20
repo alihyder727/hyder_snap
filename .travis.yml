@@ -5,17 +5,14 @@ branches:
   only:
   - travis_build
 
+language:
+  - cpp
+
 before_install:
   - sudo apt-get install libpnetcdf-dev
   - sudo apt-get install libnetcdf-dev
   - sudo apt-get install mpich
-
-language:
-  - cpp
-  - python
-
-python:
-  - "3.8"
+  - pip3 install -r requirements.txt
 
 # compiler
 compiler:
