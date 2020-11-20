@@ -17,17 +17,19 @@ language:
 python:
   - "3.8"
 
+# compiler
 compiler:
   - g++
 
+# build steps
 script:
   - ./patch.py
 
   - |
     options=`head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-`
-    ./configure.py ${options}
-    ./bin/straka.ex -i ./inputs/hydro/athinput.straka
-    ./combine.py -o test
-    ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
+    ./configure.py ${options} 
 
   - make
+  - ./bin/straka.ex -i ./inputs/hydro/athinput.straka
+  - ./combine.py -o test
+  - ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
