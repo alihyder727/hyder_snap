@@ -12,7 +12,8 @@ before_install:
   - sudo apt-get install libnetcdf-dev
   - sudo apt-get install mpich
   - sudo apt-get install nco
-  - pip install -r requirements.txt
+  - sudo apt-get install python3-pip
+  - pip3 install -r requirements.txt
 
 # compiler
 compiler:
