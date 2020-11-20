@@ -5,18 +5,14 @@ branches:
   only:
   - travis_build
 
-matrix:
-  include:
-    - language: python
-    - python: '3.8'
-
-    - language: cpp
+language: cpp
 
 before_install:
   - sudo apt-get install libpnetcdf-dev
   - sudo apt-get install libnetcdf-dev
   - sudo apt-get install mpich
-  #- pip3 install -r requirements.txt
+  - sudo apt-get install nco
+  - pip install -r requirements.txt
 
 # compiler
 compiler:
@@ -24,6 +20,7 @@ compiler:
 
 # build steps
 script:
+  - pip --version
   - ./patch.py
 
   - |
