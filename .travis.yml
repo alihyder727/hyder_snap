@@ -7,6 +7,8 @@ branches:
 
 before_install:
   - sudo apt-get install libpnetcdf-dev
+  - sudo apt-get install libnetcdf-dev
+  - sudo apt-get install mpich
 
 language:
   - cpp
@@ -16,5 +18,9 @@ compiler:
 
 script:
   - ./patch.py
-  - ./configure.py
+
+  - |
+    options=`head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-`
+    ./configure.py ${options}
+
   - make
