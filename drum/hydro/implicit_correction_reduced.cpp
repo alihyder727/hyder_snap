@@ -6,8 +6,8 @@
 #include <vector>
 
 // Eigen headers
-#include <Eigen/Core>
-#include <Eigen/Dense>
+#include "../math/eigen335/Eigen/Core"
+#include "../math/eigen335/Eigen/Dense"
 
 // Athena++ headers
 #include "../math/core.h"  // sqr

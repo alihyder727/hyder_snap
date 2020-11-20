@@ -1,4 +1,5 @@
 // C/C++ headers
+#include <stdexcept>
 #include <sstream>
 
 // Athena++ headers

@@ -296,12 +296,6 @@ parser.add_argument('--pnetcdf_path',
                     default='',
                     help='path to parallel NETCDF libraries')
 
-# --eigen_path argument
-parser.add_argument('--eigen_path',
-                    type=str,
-                    default='../eigen335',
-                    help='path to EIGEN header files')
-
 # The main choices for --cxx flag, using "ctype[-suffix]" formatting, where "ctype" is the
 # major family/suite/group of compilers and "suffix" may represent variants of the
 # compiler version and/or predefined sets of compiler options. The C++ compiler front ends
@@ -879,9 +873,6 @@ if args['pnetcdf']:
     makefile_options['LIBRARY_FLAGS'] += ' -lpnetcdf'
 else:
   definitions['PNETCDF_OPTION'] = 'NO_PNETCDFOUTPUT'
-
-# --eigen_path argument
-makefile_options['PREPROCESSOR_FLAGS'] += ' -I%s' % args['eigen_path']
 
 # --cflag=[string] argument
 if args['cflag'] is not None:

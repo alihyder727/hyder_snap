@@ -6,9 +6,9 @@
 #include "../athena.hpp"
 
 // Eigen header files
-#include <Eigen/Core>
-#include <Eigen/Dense>
-#include <Eigen/LU>
+#include "../math/eigen335/Eigen/Core"
+#include "../math/eigen335/Eigen/Dense"
+#include "../math/eigen335/Eigen/LU"
 
 class ChemistrySolver {
 public:

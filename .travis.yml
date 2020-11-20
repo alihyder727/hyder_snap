@@ -1,0 +1,15 @@
+sudo:
+  - required
+
+before_install:
+  - sudo apt-get install libpnetcdf-dev
+
+language:
+  - cpp
+
+compiler:
+  - g++
+
+script:
+  - ./configure
+  - make
