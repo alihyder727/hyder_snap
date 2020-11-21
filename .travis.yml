@@ -6,7 +6,7 @@ dist: focal
 
 language: python
 
-python: "3.6"
+python: "3.8"
 
 compiler: g++
 
@@ -34,9 +34,8 @@ script:
   #- ./combine.py -o test
   #- ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
 
-  #- ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-) --lib_path=/usr/lib/x86_64-linux-gnu
   - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-)
   - make -j2
-  - mpiexec -np 4 ./bin/robert.ex -i ./inputs/hydro/athinput.robert time/tlim=200
+  - mpiexec -n 2 ./bin/robert.ex -i ./inputs/hydro/athinput.robert time/tlim=200
   - ./combine.py -o test
   - ./examples/2d.robert/compare.py robert-test-main.nc examples/2d.robert/robert-default-main.nc
