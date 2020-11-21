@@ -1,7 +1,7 @@
 <comment>
 problem   = Warm rising bubble test
 reference = Robert et al., 1992
-configure = --prob=robert --nghost=3 -pnetcdf -mpi
+configure = --prob=robert --nghost=3 -pnetcdf -mpi -netcdf
 
 <job>
 problem_id = robert # problem ID: basename of output filenames

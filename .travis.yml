@@ -35,7 +35,6 @@ script:
 
   # robert rising bubble
   - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-)
-  - rm -f obj/netcdf.o
   - make -j2
   - mpiexec -n 4 --oversubscribe ./bin/robert.ex -i ./inputs/hydro/athinput.robert time/tlim=400
   - ./combine.py -o test
@@ -43,7 +42,6 @@ script:
 
   # bryan rising bubble
   - ./configure.py $(head inputs/hydro/athinput.bryan | grep configure | cut -d' ' -f3-)
-  - rm -f obj/netcdf.o
   - make -j2
   - mpiexec -n 4 --oversubscribe ./bin/bryan.ex -i ./inputs/hydro/athinput.bryan time/tlim=350
   - ./combine.py -o test
