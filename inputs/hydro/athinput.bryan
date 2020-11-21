@@ -1,7 +1,7 @@
 <comment>
 problem   = Moist rising bubble test
 reference = Bryan and Fritsch, 2002
-configure = --prob=bryan --flux=lmars --nvapor=1 --nphase=2 --nghost=3 -pnetcdf -mpi -netcdf
+configure = --prob=bryan --flux=lmars --nvapor=1 --nphase=2 --nghost=3 -pnetcdf -mpi
 
 <job>
 problem_id  = bryan         # problem ID: basename of output filenames
