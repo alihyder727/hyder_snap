@@ -28,6 +28,7 @@ install:
 script:
   # straka sinking bubble
   - ./configure.py $(head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-)
+  - make clean
   - make -j2
   - ./bin/straka.ex -i ./inputs/hydro/athinput.straka time/tlim=300
   - ./combine.py -o test
@@ -35,7 +36,8 @@ script:
 
   # robert rising bubble
   - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-)
+  - make clean
   - make -j2
-  - mpiexec -n 2 --oversubscribe ./bin/robert.ex -i ./inputs/hydro/athinput.robert time/tlim=200
+  - mpiexec -n 4 --oversubscribe ./bin/robert.ex -i ./inputs/hydro/athinput.robert time/tlim=200
   - ./combine.py -o test
   - ./examples/2d.robert/compare.py robert-test-main.nc examples/2d.robert/robert-default-main.nc
