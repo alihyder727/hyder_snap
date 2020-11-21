@@ -26,6 +26,7 @@ nlim       = -1           # cycle limit
 tlim       = 900          # time limit
 xorder     = 5            # horizontal reconstruction order
 integrator = rk3          # integration method
+ncycle_out = 10           # output frequency
 
 <mesh>
 nx1        = 64           # Number of zones in X1-direction

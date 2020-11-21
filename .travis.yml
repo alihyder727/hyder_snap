@@ -5,27 +5,26 @@ branches:
   only:
   - travis_build
 
-matrix:
-  include:
-    - language: python
-      python:
-        - "3.8"
+language: python
 
-    - language: cpp
-      before_install:
-        - sudo apt-get install libpnetcdf-dev
-        - sudo apt-get install libnetcdf-dev
-        - sudo apt-get install mpich
-        - sudo apt-get install nco
-      compiler:
-        - g++
-      script:
-        - ./patch.py
-        - |
-          options=`head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-`
-          ./configure.py ${options} 
-      
-        - make
-        - ./bin/straka.ex -i ./inputs/hydro/athinput.straka
-        - ./combine.py -o test
-        - ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
+python: "3.6"
+
+before_install:
+  - sudo apt-get install libpnetcdf-dev
+  - sudo apt-get install libnetcdf-dev
+  - sudo apt-get install mpich
+  - sudo apt-get install nco
+
+compiler: g++
+
+script:
+  - ./patch.py
+  - |
+    options=`head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-`
+    ./configure.py ${options} 
+  - make
+
+  - ./bin/straka.ex -i ./inputs/hydro/athinput.straka
+  - ./combine.py -o test
+  - ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
+  
