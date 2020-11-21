@@ -26,6 +26,6 @@ script:
     options=$(head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-)
     ./configure.py ${options}
   - make
-  - ./bin/straka.ex -i ./inputs/hydro/athinput.straka
+  - ./bin/straka.ex -i ./inputs/hydro/athinput.straka mesh/ix1_bc=outflow
   - ./combine.py -o test
   - ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
