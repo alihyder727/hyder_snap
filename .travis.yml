@@ -28,16 +28,23 @@ install:
 script:
   # straka sinking bubble
   - ./configure.py $(head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-)
-  - make clean
   - make -j2
-  - ./bin/straka.ex -i ./inputs/hydro/athinput.straka time/tlim=300
+  - ./bin/straka.ex -i ./inputs/hydro/athinput.straka time/tlim=450
   - ./combine.py -o test
   - ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
 
   # robert rising bubble
   - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-)
-  - make clean
+  - rm -f obj/netcdf.o
   - make -j2
-  - mpiexec -n 4 --oversubscribe ./bin/robert.ex -i ./inputs/hydro/athinput.robert time/tlim=200
+  - mpiexec -n 4 --oversubscribe ./bin/robert.ex -i ./inputs/hydro/athinput.robert time/tlim=400
   - ./combine.py -o test
   - ./examples/2d.robert/compare.py robert-test-main.nc examples/2d.robert/robert-default-main.nc
+
+  # bryan rising bubble
+  - ./configure.py $(head inputs/hydro/athinput.bryan | grep configure | cut -d' ' -f3-)
+  - rm -f obj/netcdf.o
+  - make -j2
+  - mpiexec -n 4 --oversubscribe ./bin/bryan.ex -i ./inputs/hydro/athinput.bryan time/tlim=350
+  - ./combine.py -o test
+  - ./examples/2d.bryan/compare.py bryan-test-main.nc examples/2d.bryan/bryan-default-main.nc
