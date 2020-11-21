@@ -34,7 +34,7 @@ script:
   #- ./combine.py -o test
   #- ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
 
-  - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-) --pnetcdf_path=/usr/lib/x86_64-linux-gnu/
+  - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-) --lib_path=/usr/lib/x86_64-linux-gnu
   - make -j2
   - mpiexec -np 4 ./bin/robert.ex -i ./inputs/hydro/athinput.robert
   - ./combine.py -o test
