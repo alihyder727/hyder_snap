@@ -49,3 +49,11 @@ script:
   - mpiexec -n 4 --oversubscribe ./bin/bryan.ex -i ./inputs/hydro/athinput.bryan time/tlim=350
   - ./combine.py -o test
   - ./examples/2d.bryan/compare.py bryan-test-main.nc examples/2d.bryan/bryan-default-main.nc
+
+  # Hot Jupiter radiative equilibrium 
+  - ./configure.py $(head inputs/hydro/athinput.hjre | grep configure | cut -d' ' -f3-)
+  - make clean
+  - make -j2
+  - ./bin/hjre.ex -i ./inputs/hydro/athinput.hjre
+  - ./combine.py -o test
+  - ./examples/1d.hjre/compare.py hjre-test-main.nc examples/1d.hjre/hjre-default-main.nc

@@ -40,14 +40,6 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
       }
 }
 
-void Mesh::InitUserMeshData(ParameterInput *pin)
-{
-  grav = - pin->GetReal("hydro", "grav_acc1");
-  P0 = pin->GetReal("problem", "P0");
-  T0 = pin->GetReal("problem", "T0");
-  Tmin = pin->GetReal("problem", "Tmin");
-}
-
 void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
 {
   Real xHe = pin->GetOrAddReal("radiation", "xHe", 0.136);
@@ -68,6 +60,31 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
         << std::endl << "unknow absorber: '" << name <<"' ";
     ATHENA_ERROR(msg);
   }
+}
+
+void Forcing(MeshBlock *pmb, Real const time, Real const dt,
+    AthenaArray<Real> const &w, AthenaArray<Real> const &bcc, AthenaArray<Real> &u)
+{
+  int is = pmb->is, js = pmb->js, ks = pmb->ks;
+  int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
+  for (int k = ks; k <= ke; ++k)
+    for (int j = js; j <= je; ++j)
+      for (int i = is; i <= ie; ++i) {
+        // damp kinetic energy
+        u(IM1,k,j,i) -= w(IDN,k,j,i)*w(IM1,k,j,i)/5.;
+        u(IM2,k,j,i) -= w(IDN,k,j,i)*w(IM2,k,j,i)/5.;
+        u(IM3,k,j,i) -= w(IDN,k,j,i)*w(IM3,k,j,i)/5.;
+      }
+}
+
+void Mesh::InitUserMeshData(ParameterInput *pin)
+{
+  grav = - pin->GetReal("hydro", "grav_acc1");
+  P0 = pin->GetReal("problem", "P0");
+  T0 = pin->GetReal("problem", "T0");
+  Tmin = pin->GetReal("problem", "Tmin");
+
+  EnrollUserExplicitSourceFunction(Forcing);
 }
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)

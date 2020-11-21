@@ -1,0 +1,104 @@
+<comment>
+problem   = Hot Jupiter radiative equilibrium test
+reference = 
+configure = --prob=dry_rce --rt=disort --nghost=3 -netcdf
+
+<job>
+problem_id  = hjre      # problem ID: basename of output filenames
+
+<output1>
+file_type   = hst       # History data dump
+dt          = 1.E6      # time increment between outputs
+
+<output2>
+file_type   = netcdf    # Binary data dump
+variable    = prim      # variables to be output
+dt          = 5.E5      # time increment between outputs
+
+<output3>
+file_type   = netcdf
+variable    = uov
+dt          = 5.E5
+
+<output4>
+file_type   = netcdf
+variable    = rad
+dt          = 5.E5
+
+<time>
+cfl_number  = 10.           # The Courant, Friedrichs, & Lewy (CFL) Number
+nlim        = -1           # cycle limit
+tlim        = 1.E7         # time limit
+xorder      = 5            # horizontal reconstruction order
+integrator  = rk3          # integration method
+ncycle_out  = 100
+
+<mesh>
+nx1         = 32           # Number of zones in X1-direction
+x1min       = -3.5E6       # minimum value of X1
+x1max       = 5.E5         # maximum value of X1
+ix1_bc      = reflecting   # inner-X1 boundary flag
+ox1_bc      = reflecting   # outer-X1 boundary flag
+
+nx2         = 1           # Number of zones in X2-direction
+x2min       = -0.5        # minimum value of X2
+x2max       = 0.5         # maximum value of X2
+ix2_bc      = periodic    # inner-X2 boundary flag
+ox2_bc      = periodic    # outer-X2 boundary flag
+
+nx3         = 1           # Number of zones in X3-direction
+x3min       = -0.5        # minimum value of X3
+x3max       = 0.5         # maximum value of X3
+ix3_bc      = periodic    # inner-X3 boundary flag
+ox3_bc      = periodic    # outer-X3 boundary flag
+
+<meshblock>
+nx1         = 32
+nx2         = 1
+nx3         = 1
+
+<hydro>
+grav_acc1     = -10.0
+gamma         = 1.4         # gamma = C_p/C_v
+implicit_flag = 2
+
+<thermodynamics>
+Rd            = 3779.       # Gas constant
+
+<astronomy>
+planet        = HJ 
+HJ.parent     = Sun
+HJ.re         = 1.E5      # km
+HJ.rp         = 1.E5      # km
+HJ.obliq      = 0.        # deg
+HJ.omega      = 2.424E-5  # rad/s
+HJ.orbit_a    = 0.03      # au
+HJ.orbit_e    = 0.
+HJ.orbit_i    = 0.        # deg
+HJ.orbit_p    = 3.        # day
+HJ.grav_eq    = 10.       # m/s
+HJ.equinox    = 0.
+
+Sun.spec_file = ./src/radiation/spectra/sun.spec
+
+<radiation>
+dt            = 1.
+npmom         = 4
+distance      = 0.03
+indir         = (0,)
+dynamic       = false
+
+b1            = 100. 49100. 500.
+b1.absorbers  = FREEDMAN
+
+<disort>
+nstr          = 4
+nphase        = 4
+albedo        = 0.
+temis         = 0.
+planck        = true
+
+<problem>
+P0            = 1.E5
+T0            = 1500.
+Tmin          = 1000.   # isothermal temperature
