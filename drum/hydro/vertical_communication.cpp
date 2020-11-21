@@ -3,6 +3,11 @@
 #include "vertical_communication.hpp"
 #include "../utils/utils.hpp"
 
+// MPI headers
+#ifdef MPI_PARALLEL
+  #include <mpi.h>
+#endif
+
 #define MAX_DATA_SIZE 64
 
 VerticalCommunication::VerticalCommunication(Hydro *phydro) :
