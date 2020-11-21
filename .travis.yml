@@ -54,6 +54,6 @@ script:
   - ./configure.py $(head inputs/hydro/athinput.hjre | grep configure | cut -d' ' -f3-)
   - make clean
   - make -j2
-  - ./bin/hjre.ex -i ./inputs/hydro/athinput.hjre
+  - ./bin/dry_rce.ex -i ./inputs/hydro/athinput.hjre
   - ./combine.py -o test
-  - ./examples/1d.hjre/compare.py hjre-test-main.nc examples/1d.hjre/hjre-default-main.nc
+  - ./examples/1d.dry_rce/compare.py hjre-test-main.nc examples/1d.hjre/hjre-default-main.nc

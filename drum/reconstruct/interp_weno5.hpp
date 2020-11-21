@@ -51,7 +51,9 @@ namespace Weno5Coeff {
   double c4[5] = {-513./1440., -513./1440., -673./1440., 5087./1440., -3328./1440.};
 }
 
-inline Real interp_weno5x1(Real phim2, Real phim1, Real phi, Real phip1, Real phip2) {
+#ifdef STRETCHED_GRID
+
+inline Real interp_weno5(Real phim2, Real phim1, Real phi, Real phip1, Real phip2) {
   using namespace Weno5Coeff;
   Real p1 = 0, p2 = 0, p3 = 0;
   Real phis[5] = {phim2, phim1, phi, phip1, phip2};
@@ -80,7 +82,7 @@ inline Real interp_weno5x1(Real phim2, Real phim1, Real phi, Real phip1, Real ph
   return (a1*p1 + a2*p2 + a3*p3)/(a1 + a2 + a3);
 }
 
-inline Real interp_cp5x1(Real phim2, Real phim1, Real phi, Real phip1, Real phip2) {
+inline Real interp_cp5(Real phim2, Real phim1, Real phi, Real phip1, Real phip2) {
   using namespace Weno5Coeff;
   Real phis[5] = {phim2, phim1, phi, phip1, phip2};
   Real result = 0.;
@@ -89,5 +91,7 @@ inline Real interp_cp5x1(Real phim2, Real phim1, Real phi, Real phip1, Real phip
     result += (c1[i] + c2[i]*eps + c3[i]*eps*eps + c4[i]*eps*eps*eps)*phis[i];
   return result;
 }
+
+#endif  // STRETCHED_GRID
 
 #endif

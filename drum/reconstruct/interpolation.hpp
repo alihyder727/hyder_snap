@@ -1,5 +1,6 @@
 #ifndef INTERPOLATION_HPP_
 #define INTERPOLATION_HPP_
+#include "../defs.hpp"
 
 #define SQR(x) ( (x)*(x) )
 
@@ -58,6 +59,8 @@ inline T interp_bp2(T phim1, T phi, int sgn) {
   T phid = 0.5*(phi - phim1);
   return phih - sgn*phid;
 }
+
+#ifdef UNIFORM_GRID
 
 // 3-th polynomial 
 template<typename T>
@@ -131,6 +134,8 @@ inline T interp_weno5(T phim2, T phim1, T phi, T phip1, T phip2) {
 
   return (alpha0*p0 + alpha1*p1 + alpha2*p2)/(alpha0 + alpha1 + alpha2);
 };
+
+#endif  // UNIFORM_GRID
 
 // 3rd order polynomial with inflection point
 template<typename T>
