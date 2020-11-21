@@ -12,7 +12,7 @@ compiler: g++
 
 branches:
   only:
-  - travis_build
+  - dev
 
 before_install:
   - sudo apt-get install libopenmpi-dev
