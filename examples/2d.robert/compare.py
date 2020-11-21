@@ -7,10 +7,10 @@ case1 = sys.argv[1]
 case2 = sys.argv[2]
 
 data1 = Dataset(case1, 'r')
-theta1 = data1['theta'][-1,0,:,:]
+theta1 = data1['theta'][1,0,:,:]
 
 data2 = Dataset(case2, 'r')
-theta2 = data2['theta'][-1,0,:,:]
+theta2 = data2['theta'][1,0,:,:]
 
 diff = sqrt(sum((theta2 - theta1)*(theta2 - theta1)))
 
