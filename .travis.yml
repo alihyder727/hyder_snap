@@ -14,9 +14,9 @@ cache:
   - mpich
 
 before_install:
+  - sudo apt-get install libmpich-dev
   - sudo apt-get install libpnetcdf-dev
   - sudo apt-get install libnetcdf-dev
-  - sudo apt-get install libmpich-dev
   - sudo apt-get install nco
 
 compiler: g++
@@ -29,13 +29,13 @@ script:
   #- |
   #  options=$(head inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-)
   #  ./configure.py ${options}
-  #- make
+  #- make -j2
   #- ./bin/straka.ex -i ./inputs/hydro/athinput.straka
   #- ./combine.py -o test
   #- ./examples/2d.straka/compare.py straka-test-main.nc examples/2d.straka/straka-default-main.nc
 
-  - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-) --mpiccmd=/usr/bin/mpicxx
-  - make
-  - /usr/bin/mpiexec -np 4 ./bin/robert.ex -i ./inputs/hydro/athinput.robert
+  - ./configure.py $(head inputs/hydro/athinput.robert | grep configure | cut -d' ' -f3-)
+  - make -j2
+  - mpiexec -np 4 ./bin/robert.ex -i ./inputs/hydro/athinput.robert
   - ./combine.py -o test
   - ./examples/2d.robert/compare.py robert-test-main.nc examples/2d.straka/robert-default-main.nc
