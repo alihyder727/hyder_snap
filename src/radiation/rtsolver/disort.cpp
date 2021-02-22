@@ -120,9 +120,6 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
 
   AthenaArray<Real> farea(iu+1);
   pmy_rad->pmy_block->pcoord->Face1Area(k, j, il, iu, farea);
-
-  std::fill(bflxup.data(), bflxup.data() + bflxup.GetSize(), 0.);
-  std::fill(bflxdn.data(), bflxdn.data() + bflxdn.GetSize(), 0.);
    
   if (ds->flag.planck) {
     ds->temper[iu-il] = interp_weno5(tem_[il+1], tem_[il], tem_[il-1], tem_[il-2], tem_[il-3]);
@@ -138,6 +135,11 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     ds->bc.ttemp = ds->temper[0];
   }
 
+  // reset flx of this column 
+  for (int i = il; i <= iu; ++i)
+    bflxup(k,j,i) = bflxdn(k,j,i) = 0.;
+
+  // loop over lines in the band
   for (int n = 0; n < nspec; ++n) {
     // stellar source function
     if (pmy_rad->GetBeam() < 0.)
@@ -168,7 +170,7 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     // run disort
     c_disort(ds, ds_out);
 
-    // save flux
+    // accumulate flux from lines
     for (int i = il; i <= iu; ++i) {
       flxup_[i][n] = ds_out->rad[iu-i].flup*farea(il)/farea(i);   // flux up
       flxdn_[i][n] = (ds_out->rad[iu-i].rfldir + ds_out->rad[iu-i].rfldn)
