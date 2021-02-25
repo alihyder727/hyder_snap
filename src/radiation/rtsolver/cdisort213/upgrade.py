@@ -44,6 +44,15 @@ def TakeAction(action, steps, src_lines, idx):
       else:
         ErrorMsg('Replacement failed.\nCannot find "%s" in "%s"' % (old_str, old_code[:-1]))
     src_lines[idx] = code
+  elif action == 'a':
+    old_str = src_lines[idx-1]
+    new_str = ''
+    for step in steps:
+      src_lines[idx-1] += step
+      new_str += step
+    LogMsg('Added the following lines of code at line #%d' % idx, em = '====')
+    LogMsg('After "%s":' % old_str.lstrip().rstrip())
+    LogMsg(new_str)
 
 def UpgradeFile(src_fname, dst_fname, rules):
   src_lines = open(src_fname, 'r').readlines()

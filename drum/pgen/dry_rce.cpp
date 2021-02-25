@@ -19,7 +19,7 @@
 #include "../radiation/freedman_mean.hpp"
 
 // global parameters
-Real grav, P0, T0, Tmin;
+Real grav, P0, T0, Z0, Tmin;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -82,6 +82,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   grav = - pin->GetReal("hydro", "grav_acc1");
   P0 = pin->GetReal("problem", "P0");
   T0 = pin->GetReal("problem", "T0");
+  Z0 = pin->GetOrAddReal("problem", "Z0", 0.);
   Tmin = pin->GetReal("problem", "Tmin");
 
   EnrollUserExplicitSourceFunction(Forcing);
@@ -105,7 +106,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   // estimate surface temperature and pressure
   Real Rd = pthermo->GetRd();
   Real cp = gamma/(gamma - 1.)*Rd;
-  Real Ts = T0 - grav/cp*x1min;
+  Real Ts = T0 - grav/cp*(x1min - Z0);
   Real Ps = P0*pow(Ts/T0, cp/Rd);
   int max_iter = 20, iter = 0;
 
@@ -129,13 +130,13 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         w1[i][n] = w1[ii][n];
     }
 
-    // 1.3 find TP at z = 0
+    // 1.3 find TP at z = Z0
     for (int i = 0; i < nx1; ++i) {
       p1[i] = w1[i][IPR];
       t1[i] = pthermo->Temp(w1[i]);
     }
-    p0 = interp1(0., p1, z1, nx1);
-    t0 = interp1(0., t1, z1, nx1);
+    p0 = interp1(Z0, p1, z1, nx1);
+    t0 = interp1(Z0, t1, z1, nx1);
 
     Ts += T0 - t0;
     Ps *= P0/p0;

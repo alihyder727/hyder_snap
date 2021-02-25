@@ -3651,7 +3651,9 @@ void c_disort_set(disort_state *ds,
      */
     for (iq = 1; iq <= *nn; iq++) {      
       if (fabs(ds->bc.umu0-CMU(iq))/fabs(ds->bc.umu0) < 1.e-4) {
-        c_errmsg("cdisort_set--beam angle=computational angle; change ds.nstr",DS_ERROR);
+        // suppress error msg by adding a small difference
+        ds->bc.umu0 = (1. + 1.E-4)*CMU(iq);
+        // c_errmsg("cdisort_set--beam angle=computational angle; change ds.nstr",DS_ERROR);
       }
     }
   }

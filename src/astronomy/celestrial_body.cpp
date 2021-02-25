@@ -143,5 +143,5 @@ Real CelestrialBody::ParentDistanceInAu(Real time)
 {
   Real orbit_b = sqrt(1. - orbit_e*orbit_e)*orbit_a;
   Real orbit_c = orbit_b*orbit_b/orbit_a;
-  return orbit_c/(1. + orbit_e*cos(2.*M_PI/orbit_p*time - equinox - M_PI/2.));
+  return m2au(orbit_c/(1. + orbit_e*cos(2.*M_PI/orbit_p*time - equinox - M_PI/2.)));
 }

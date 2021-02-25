@@ -17,6 +17,13 @@
   [r:0,all ~ locate (
     locate -> locate_disort
   ];
+  [r:0,first ~ beam angle=computational angle
+    c_errmsg( -> // c_errmsg(
+  ];
+  [a:1,first ~ ds->bc.umu0-CMU(iq)
+        // suppress error msg by adding a small difference
+        ds->bc.umu0 = (1. + 1.E-4)*CMU(iq);
+  ];
 
 @@ cdisort.h.old -> cdisort.h
   [r:-2,first ~ header[128]
