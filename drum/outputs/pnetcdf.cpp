@@ -17,6 +17,7 @@
 #include "../globals.hpp"
 #include "../mesh/mesh.hpp"
 #include "../hydro/hydro.hpp"
+#include "../math/core.h"
 #include "../coordinates/coordinates.hpp"
 #include "outputs.hpp"
 
@@ -58,6 +59,20 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   fname.append(".");
   fname.append(number);
   fname.append(".nc");
+
+  // 0. reference radius for spherical polar geometry
+  Real radius;
+  if (COORDINATE_SYSTEM == "spherical_polar") {
+    try {
+      radius = pin->GetReal("problem", "radius");
+    } catch(std::runtime_error& e) {
+      std::stringstream msg; 
+      msg << "### FATAL ERROR in PnetcdfOutput::WriteOutputFile" << std::endl
+          << "Spherical polar coordinate system must define a reference radius in section <problem>" << std::endl
+          << "Use radius = XXX " << std::endl;
+      ATHENA_ERROR(msg);
+    }
+  }
 
   // 1. open file for output
   int ifile;
@@ -104,25 +119,75 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   ncmpi_def_var(ifile, "time", NC_FLOAT, 1, &idt, &ivt);
   ncmpi_put_att_text(ifile, ivt, "axis", 1, "T");
-  ncmpi_put_att_text(ifile, ivt, "units", 1, "s");
+  ncmpi_put_att_text(ifile, ivt, "long_name", 4, "time");
+  if (COORDINATE_SYSTEM == "spherical_polar") {
+    ncmpi_put_att_text(ifile, ivt, "units", 25, "seconds since 1-1-1 0:0:0");
+    //ncmpi_put_att_text(ifile, ivt, "calendar", 4, "none");
+  } else
+    ncmpi_put_att_text(ifile, ivt, "units", 1, "s");
 
   ncmpi_def_var(ifile, "x1", NC_FLOAT, 1, &idx1, &ivx1);
   ncmpi_put_att_text(ifile, ivx1, "axis", 1, "Z");
-  ncmpi_put_att_text(ifile, ivx1, "units", 1, "m");
-  if (nx1 > 1)
+  if (COORDINATE_SYSTEM == "spherical_polar") {
+    ncmpi_put_att_text(ifile, ivx1, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx1, "long_name", 8, "altitude");
+  } else {
+    ncmpi_put_att_text(ifile, ivx1, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx1, "long_name", 27, "z-coordinate at cell center");
+  }
+  if (nx1 > 1) {
     ncmpi_def_var(ifile, "x1f", NC_FLOAT, 1, &idx1f, &ivx1f);
+    ncmpi_put_att_text(ifile, ivx1f, "axis", 1, "Z");
+    if (COORDINATE_SYSTEM == "spherical_polar") {
+      ncmpi_put_att_text(ifile, ivx1f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx1f, "long_name", 8, "altitude");
+    } else {
+      ncmpi_put_att_text(ifile, ivx1f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx1f, "long_name", 25, "z-coordinate at cell face");
+    }
+  }
 
   ncmpi_def_var(ifile, "x2", NC_FLOAT, 1, &idx2, &ivx2);
   ncmpi_put_att_text(ifile, ivx2, "axis", 1, "Y");
-  ncmpi_put_att_text(ifile, ivx2, "units", 1, "m");
-  if (nx2 > 1)
+  if (COORDINATE_SYSTEM == "spherical_polar") {
+    ncmpi_put_att_text(ifile, ivx2, "units", 13, "degrees_north");
+    ncmpi_put_att_text(ifile, ivx2, "long_name", 8, "latitude");
+  } else {
+    ncmpi_put_att_text(ifile, ivx2, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx2, "long_name", 27, "y-coordinate at cell center");
+  }
+  if (nx2 > 1) {
     ncmpi_def_var(ifile, "x2f", NC_FLOAT, 1, &idx2f, &ivx2f);
+    ncmpi_put_att_text(ifile, ivx2f, "axis", 1, "Y");
+    if (COORDINATE_SYSTEM == "spherical_polar") {
+      ncmpi_put_att_text(ifile, ivx2f, "units", 13, "degrees_north");
+      ncmpi_put_att_text(ifile, ivx2f, "long_name", 8, "latitude");
+    } else {
+      ncmpi_put_att_text(ifile, ivx2f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx2f, "long_name", 25, "y-coordinate at cell face");
+    }
+  }
 
   ncmpi_def_var(ifile, "x3", NC_FLOAT, 1, &idx3, &ivx3);
   ncmpi_put_att_text(ifile, ivx3, "axis", 1, "X");
-  ncmpi_put_att_text(ifile, ivx3, "units", 1, "m");
-  if (nx3 > 1)
+  if (COORDINATE_SYSTEM == "spherical_polar") {
+    ncmpi_put_att_text(ifile, ivx3, "units", 12, "degrees_east");
+    ncmpi_put_att_text(ifile, ivx3, "long_name", 9, "longitude");
+  } else {
+    ncmpi_put_att_text(ifile, ivx3, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx3, "long_name", 27, "x-coordinate at cell center");
+  }
+  if (nx3 > 1) {
     ncmpi_def_var(ifile, "x3f", NC_FLOAT, 1, &idx3f, &ivx3f);
+    ncmpi_put_att_text(ifile, ivx3f, "axis", 1, "X");
+    if (COORDINATE_SYSTEM == "spherical_polar") {
+      ncmpi_put_att_text(ifile, ivx3f, "units", 12, "degrees_east");
+      ncmpi_put_att_text(ifile, ivx3f, "long_name", 9, "longitude");
+    } else {
+      ncmpi_put_att_text(ifile, ivx3f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx3f, "long_name", 25, "x-coordinate at cell face");
+    }
+  }
 
   MeshBlock *pmb = pm->pblock;
   LoadOutputData(pmb);
@@ -162,15 +227,40 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
           name = pdata->name + c;
       }
       if (pdata->grid == "CCF")
-        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis1, ivar++);
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis1, ivar);
       else if ((pdata->grid == "CFC") && (nx2 > 1))
-        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis2, ivar++);
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis2, ivar);
       else if ((pdata->grid == "FCC") && (nx3 > 1))
-        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis3, ivar++);
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis3, ivar);
       else if (pdata->grid == "--C")
-        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1, ivar++);
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1, ivar);
       else
-        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar++);
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar);
+
+      if (name == "rho") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 6, "kg/m^3");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 7, "density");
+      } else if (name == "press") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 2, "pa");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 8, "pressure");
+      } else if (name == "vel1") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in z-coordinate");
+      } else if (name == "vel2") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in y-coordinate");
+      } else if (name == "vel3") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in x-coordinate");
+      } else if (name == "temp") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 1, "K");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "temperature");
+      } else if (name == "theta") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 1, "K");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 21, "potential temperature");
+      }
+
+      ivar++;
     }
     pdata = pdata->pnext;
   }
@@ -237,38 +327,62 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     MPI_Offset start_ax1[2] = {0, ncells1*pmb->loc.lx1};
     MPI_Offset count_ax1[2] = {1, ncells1};
 
-    for (int i = out_is; i <= out_ie; ++i)
-      (*ib)[i-out_is] = (float)(pmb->pcoord->x1v(i));
+    if (COORDINATE_SYSTEM == "spherical_polar")
+      for (int i = out_is; i <= out_ie; ++i)
+        (*ib)[i-out_is] = (float)(pmb->pcoord->x1v(i)) - radius;
+    else
+      for (int i = out_is; i <= out_ie; ++i)
+        (*ib)[i-out_is] = (float)(pmb->pcoord->x1v(i));
     err = ncmpi_iput_vara_float(ifile, ivx1, start+3, count+3, *ib++, ir++);
     ERR
 
     if (nx1 > 1) {
-      for (int i = out_is; i <= out_ie + 1; ++i)
-        (*ib)[i-out_is] = (float)(pmb->pcoord->x1f(i));
+      if (COORDINATE_SYSTEM == "spherical_polar")
+        for (int i = out_is; i <= out_ie + 1; ++i)
+          (*ib)[i-out_is] = (float)(pmb->pcoord->x1f(i)) - radius;
+      else
+        for (int i = out_is; i <= out_ie + 1; ++i)
+          (*ib)[i-out_is] = (float)(pmb->pcoord->x1f(i));
       err = ncmpi_iput_vara_float(ifile, ivx1f, start+3, count1+3, *ib++, ir++);
       ERR
     }
 
-    for (int j = out_js; j <= out_je; ++j)
-      (*ib)[j-out_js] = (float)(pmb->pcoord->x2v(j));
+    if (COORDINATE_SYSTEM == "spherical_polar")
+      for (int j = out_js; j <= out_je; ++j)
+        (*ib)[j-out_js] = rad2deg(M_PI/2. - (float)(pmb->pcoord->x2v(j)));
+    else
+      for (int j = out_js; j <= out_je; ++j)
+        (*ib)[j-out_js] = (float)(pmb->pcoord->x2v(j));
     err = ncmpi_iput_vara_float(ifile, ivx2, start+2, count+2, *ib++, ir++);
     ERR
 
     if (nx2 > 1) {
-      for (int j = out_js; j <= out_je + 1; ++j)
-        (*ib)[j-out_js] = (float)(pmb->pcoord->x2f(j));
+      if (COORDINATE_SYSTEM == "spherical_polar")
+        for (int j = out_js; j <= out_je + 1; ++j)
+          (*ib)[j-out_js] = rad2deg(M_PI/2. - (float)(pmb->pcoord->x2f(j)));
+      else
+        for (int j = out_js; j <= out_je + 1; ++j)
+          (*ib)[j-out_js] = (float)(pmb->pcoord->x2f(j));
       err = ncmpi_iput_vara_float(ifile, ivx2f, start+2, count2+2, *ib++, ir++);
       ERR
     }
 
-    for (int k = out_ks; k <= out_ke; ++k)
-      (*ib)[k-out_ks] = (float)(pmb->pcoord->x3v(k));
+    if (COORDINATE_SYSTEM == "spherical_polar")
+      for (int k = out_ks; k <= out_ke; ++k)
+        (*ib)[k-out_ks] = rad2deg((float)(pmb->pcoord->x3v(k)));
+    else
+      for (int k = out_ks; k <= out_ke; ++k)
+        (*ib)[k-out_ks] = (float)(pmb->pcoord->x3v(k));
     err = ncmpi_iput_vara_float(ifile, ivx3, start+1, count+1, *ib++, ir++);
     ERR
 
     if (nx3 > 1) {
-      for (int k = out_ks; k <= out_ke + 1; ++k)
-        (*ib)[k-out_ks] = (float)(pmb->pcoord->x3f(k));
+      if (COORDINATE_SYSTEM == "spherical_polar")
+        for (int k = out_ks; k <= out_ke + 1; ++k)
+          (*ib)[k-out_ks] = rad2deg((float)(pmb->pcoord->x3f(k)));
+      else
+        for (int k = out_ks; k <= out_ke + 1; ++k)
+          (*ib)[k-out_ks] = (float)(pmb->pcoord->x3f(k));
       err = ncmpi_iput_vara_float(ifile, ivx3f, start+1, count3+1, *ib++, ir++);
       ERR
     }
