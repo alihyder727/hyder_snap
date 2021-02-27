@@ -122,27 +122,26 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   ncmpi_put_att_text(ifile, ivt, "long_name", 4, "time");
   if (COORDINATE_SYSTEM == "spherical_polar") {
     ncmpi_put_att_text(ifile, ivt, "units", 25, "seconds since 1-1-1 0:0:0");
-    //ncmpi_put_att_text(ifile, ivt, "calendar", 4, "none");
   } else
-    ncmpi_put_att_text(ifile, ivt, "units", 1, "s");
+    ncmpi_put_att_text(ifile, ivt, "units", 7, "seconds");
 
   ncmpi_def_var(ifile, "x1", NC_FLOAT, 1, &idx1, &ivx1);
   ncmpi_put_att_text(ifile, ivx1, "axis", 1, "Z");
   if (COORDINATE_SYSTEM == "spherical_polar") {
-    ncmpi_put_att_text(ifile, ivx1, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx1, "units", 6, "meters");
     ncmpi_put_att_text(ifile, ivx1, "long_name", 8, "altitude");
   } else {
-    ncmpi_put_att_text(ifile, ivx1, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx1, "units", 6, "meters");
     ncmpi_put_att_text(ifile, ivx1, "long_name", 27, "z-coordinate at cell center");
   }
   if (nx1 > 1) {
     ncmpi_def_var(ifile, "x1f", NC_FLOAT, 1, &idx1f, &ivx1f);
     ncmpi_put_att_text(ifile, ivx1f, "axis", 1, "Z");
     if (COORDINATE_SYSTEM == "spherical_polar") {
-      ncmpi_put_att_text(ifile, ivx1f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx1f, "units", 6, "meters");
       ncmpi_put_att_text(ifile, ivx1f, "long_name", 8, "altitude");
     } else {
-      ncmpi_put_att_text(ifile, ivx1f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx1f, "units", 6, "meters");
       ncmpi_put_att_text(ifile, ivx1f, "long_name", 25, "z-coordinate at cell face");
     }
   }
@@ -150,20 +149,20 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   ncmpi_def_var(ifile, "x2", NC_FLOAT, 1, &idx2, &ivx2);
   ncmpi_put_att_text(ifile, ivx2, "axis", 1, "Y");
   if (COORDINATE_SYSTEM == "spherical_polar") {
-    ncmpi_put_att_text(ifile, ivx2, "units", 13, "degrees_north");
-    ncmpi_put_att_text(ifile, ivx2, "long_name", 8, "latitude");
+    ncmpi_put_att_text(ifile, ivx2, "units", 7, "degrees");
+    ncmpi_put_att_text(ifile, ivx2, "long_name", 10, "colatitude");
   } else {
-    ncmpi_put_att_text(ifile, ivx2, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx2, "units", 6, "meters");
     ncmpi_put_att_text(ifile, ivx2, "long_name", 27, "y-coordinate at cell center");
   }
   if (nx2 > 1) {
     ncmpi_def_var(ifile, "x2f", NC_FLOAT, 1, &idx2f, &ivx2f);
     ncmpi_put_att_text(ifile, ivx2f, "axis", 1, "Y");
     if (COORDINATE_SYSTEM == "spherical_polar") {
-      ncmpi_put_att_text(ifile, ivx2f, "units", 13, "degrees_north");
-      ncmpi_put_att_text(ifile, ivx2f, "long_name", 8, "latitude");
+      ncmpi_put_att_text(ifile, ivx2f, "units", 7, "degrees");
+      ncmpi_put_att_text(ifile, ivx2f, "long_name", 10, "colatitude");
     } else {
-      ncmpi_put_att_text(ifile, ivx2f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx2f, "units", 6, "meters");
       ncmpi_put_att_text(ifile, ivx2f, "long_name", 25, "y-coordinate at cell face");
     }
   }
@@ -171,20 +170,20 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   ncmpi_def_var(ifile, "x3", NC_FLOAT, 1, &idx3, &ivx3);
   ncmpi_put_att_text(ifile, ivx3, "axis", 1, "X");
   if (COORDINATE_SYSTEM == "spherical_polar") {
-    ncmpi_put_att_text(ifile, ivx3, "units", 12, "degrees_east");
+    ncmpi_put_att_text(ifile, ivx3, "units", 7, "degrees");
     ncmpi_put_att_text(ifile, ivx3, "long_name", 9, "longitude");
   } else {
-    ncmpi_put_att_text(ifile, ivx3, "units", 1, "m");
+    ncmpi_put_att_text(ifile, ivx3, "units", 6, "meters");
     ncmpi_put_att_text(ifile, ivx3, "long_name", 27, "x-coordinate at cell center");
   }
   if (nx3 > 1) {
     ncmpi_def_var(ifile, "x3f", NC_FLOAT, 1, &idx3f, &ivx3f);
     ncmpi_put_att_text(ifile, ivx3f, "axis", 1, "X");
     if (COORDINATE_SYSTEM == "spherical_polar") {
-      ncmpi_put_att_text(ifile, ivx3f, "units", 12, "degrees_east");
+      ncmpi_put_att_text(ifile, ivx3f, "units", 7, "degrees");
       ncmpi_put_att_text(ifile, ivx3f, "long_name", 9, "longitude");
     } else {
-      ncmpi_put_att_text(ifile, ivx3f, "units", 1, "m");
+      ncmpi_put_att_text(ifile, ivx3f, "units", 6, "meters");
       ncmpi_put_att_text(ifile, ivx3f, "long_name", 25, "x-coordinate at cell face");
     }
   }
@@ -212,15 +211,14 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   while (pdata != NULL) {
     std::string name;
     for (int n = 0; n < pdata->data.GetDim4(); ++n) {
+      size_t pos = pdata->name.find('?');
       if (pdata->data.GetDim4() == 1) { // SCALARS
-        size_t pos = pdata->name.find('?');
         if (pos < pdata->name.length()) {  // find '?'
           name = pdata->name.substr(0, pos) + pdata->name.substr(pos + 1);
         } else
           name = pdata->name;
       } else {  // VECTORS
         char c[16]; sprintf(c, "%d", n + 1);
-        size_t pos = pdata->name.find('?');
         if (pos < pdata->name.length()) {  // find '?'
           name = pdata->name.substr(0, pos) + c + pdata->name.substr(pos + 1);
         } else
@@ -258,6 +256,15 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       } else if (name == "theta") {
         ncmpi_put_att_text(ifile, *ivar, "units", 1, "K");
         ncmpi_put_att_text(ifile, *ivar, "long_name", 21, "potential temperature");
+      } else if (name.substr(name.length()-3) == "tau") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 1, "1");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 13, "optical depth");
+      } else if (name.substr(name.length()-5) == "flxup") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 21, "upward radiative flux");
+      } else if (name.substr(name.length()-5) == "flxdn") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 23, "downward radiative flux");
       }
 
       ivar++;
@@ -349,7 +356,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
     if (COORDINATE_SYSTEM == "spherical_polar")
       for (int j = out_js; j <= out_je; ++j)
-        (*ib)[j-out_js] = rad2deg(M_PI/2. - (float)(pmb->pcoord->x2v(j)));
+        (*ib)[j-out_js] = (float)rad2deg(pmb->pcoord->x2v(j));
     else
       for (int j = out_js; j <= out_je; ++j)
         (*ib)[j-out_js] = (float)(pmb->pcoord->x2v(j));
@@ -359,7 +366,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     if (nx2 > 1) {
       if (COORDINATE_SYSTEM == "spherical_polar")
         for (int j = out_js; j <= out_je + 1; ++j)
-          (*ib)[j-out_js] = rad2deg(M_PI/2. - (float)(pmb->pcoord->x2f(j)));
+          (*ib)[j-out_js] = (float)rad2deg(pmb->pcoord->x2f(j));
       else
         for (int j = out_js; j <= out_je + 1; ++j)
           (*ib)[j-out_js] = (float)(pmb->pcoord->x2f(j));
@@ -369,7 +376,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
     if (COORDINATE_SYSTEM == "spherical_polar")
       for (int k = out_ks; k <= out_ke; ++k)
-        (*ib)[k-out_ks] = rad2deg((float)(pmb->pcoord->x3v(k)));
+        (*ib)[k-out_ks] = (float)rad2deg(pmb->pcoord->x3v(k));
     else
       for (int k = out_ks; k <= out_ke; ++k)
         (*ib)[k-out_ks] = (float)(pmb->pcoord->x3v(k));
@@ -379,7 +386,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     if (nx3 > 1) {
       if (COORDINATE_SYSTEM == "spherical_polar")
         for (int k = out_ks; k <= out_ke + 1; ++k)
-          (*ib)[k-out_ks] = rad2deg((float)(pmb->pcoord->x3f(k)));
+          (*ib)[k-out_ks] = (float)rad2deg(pmb->pcoord->x3f(k));
       else
         for (int k = out_ks; k <= out_ke + 1; ++k)
           (*ib)[k-out_ks] = (float)(pmb->pcoord->x3f(k));
