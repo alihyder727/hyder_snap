@@ -116,6 +116,17 @@ class OutputType {
 };
 
 //----------------------------------------------------------------------------------------
+//! \class DebugOutput
+//  \brief derived OutputType class for debug dumps
+
+class DebugOutput: public OutputType {
+public:
+  explicit DebugOutput(OutputParameters oparams) : OutputType(oparams) {} 
+  void WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag) override;
+};
+
+
+//----------------------------------------------------------------------------------------
 //! \class HistoryFile
 //  \brief derived OutputType class for history dumps
 

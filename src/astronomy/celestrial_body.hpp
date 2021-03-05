@@ -15,16 +15,16 @@ public:
 // data
   CelestrialBody *parent;
   std::string name;
-  Real re;        // equatorial radius [km]
-  Real rp;        // polar radius [km]
-  Real omega;     // rotation angular velocity [rad/s]
-  Real obliq;     // obliquity [deg]
-  Real orbit_a;   // orbital semi-major axis [au]
-  Real orbit_e;   // orbital eccentricity [deg]
-  Real orbit_i;   // orbital inclination to ecliptic [deg]
-  Real orbit_p;   // orbital period [day]
+  Real re;        // equatorial radius [km -> m]
+  Real rp;        // polar radius [km -> m]
+  Real obliq;     // obliquity [deg -> rad]
+  Real spinp;     // spin period [day -> s]
+  Real orbit_a;   // orbital semi-major axis [au -> m]
+  Real orbit_e;   // orbital eccentricity [1]
+  Real orbit_i;   // orbital inclination to ecliptic [deg -> rad]
+  Real orbit_p;   // orbital period [day -> s]
   Real equinox;   // vernal equinox
-  Real grav_eq;   // equatorial gravity at surface [m/s]
+  Real grav_eq;   // equatorial gravity at surface [m/s^2]
 
 // functions
   CelestrialBody(ParameterInput *pin);

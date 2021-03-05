@@ -23,11 +23,13 @@
 using Real = float;
 #ifdef MPI_PARALLEL
 #define MPI_ATHENA_REAL MPI_FLOAT
+#define MPI_ATHENA_REAL_INT MPI_FLOAT_INT
 #endif
 #else
 using Real = double;
 #ifdef MPI_PARALLEL
 #define MPI_ATHENA_REAL MPI_DOUBLE
+#define MPI_ATHENA_REAL_INT MPI_DOUBLE_INT
 #endif
 #endif
 

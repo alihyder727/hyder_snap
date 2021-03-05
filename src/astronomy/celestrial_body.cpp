@@ -23,8 +23,8 @@ void CelestrialBody::ReadCelestrialData_(ParameterInput *pin, std::string myname
   sprintf(entry, "%s.obliq", name.c_str());
   obliq = deg2rad(pin->GetOrAddReal("astronomy", entry, 0.));
 
-  sprintf(entry, "%s.omega", name.c_str());
-  omega = pin->GetOrAddReal("astronomy", entry, 0.);
+  sprintf(entry, "%s.spinp", name.c_str());
+  spinp = day2sec(pin->GetOrAddReal("astronomy", entry, 0.));
 
   sprintf(entry, "%s.orbit_a", name.c_str());
   orbit_a = au2m(pin->GetOrAddReal("astronomy", entry, 0.));
@@ -125,7 +125,14 @@ void CelestrialBody::ReadSpectraFile(std::string sfile)
 void CelestrialBody::ParentZenithAngle(Real *mu, Real *phi, Real time, Real colat, Real lon)
 {
   Real lat = M_PI/2. - colat;
-  *mu = cos((time*(omega - 2.*M_PI/orbit_p)) - lon + M_PI)*cos(lat);
+  if (spinp == 0. && orbit_p == 0.)
+    *mu = cos(- lon + M_PI)*cos(lat);
+  if (spinp == 0. && orbit_p != 0.)
+    *mu = cos((time*2.*M_PI*(- 1./orbit_p)) - lon + M_PI)*cos(lat);
+  if (spinp != 0. && orbit_p == 0.)
+    *mu = cos((time*2.*M_PI*(1./spinp)) - lon + M_PI)*cos(lat);
+  if (spinp != 0. && orbit_p != 0.)
+    *mu = cos((time*2.*M_PI*(1./spinp - 1./orbit_p)) - lon + M_PI)*cos(lat);
   *phi = 0.;
 }
 
