@@ -256,13 +256,13 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       } else if (name == "theta") {
         ncmpi_put_att_text(ifile, *ivar, "units", 1, "K");
         ncmpi_put_att_text(ifile, *ivar, "long_name", 21, "potential temperature");
-      } else if (name.substr(name.length()-3) == "tau") {
+      } else if (name.find("tau") != std::string::npos) {
         ncmpi_put_att_text(ifile, *ivar, "units", 1, "1");
         ncmpi_put_att_text(ifile, *ivar, "long_name", 13, "optical depth");
-      } else if (name.substr(name.length()-5) == "flxup") {
+      } else if (name.find("flxup") != std::string::npos) {
         ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
         ncmpi_put_att_text(ifile, *ivar, "long_name", 21, "upward radiative flux");
-      } else if (name.substr(name.length()-5) == "flxdn") {
+      } else if (name.find("flxdn") != std::string::npos) {
         ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
         ncmpi_put_att_text(ifile, *ivar, "long_name", 23, "downward radiative flux");
       }
