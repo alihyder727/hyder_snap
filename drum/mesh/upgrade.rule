@@ -2,10 +2,16 @@
   [+:in forward_declaration] {
     class Thermodynamics;
     class Chemistry;
+    class Radiation;
+    class Diagnostics;
+    class Debugger;
   }
   [+:after EquationOfState *peos] {
     Thermodynamics *pthermo;
     Chemistry *pchem;
+    Radiation *prad;
+    Diagnostics *pdiag;
+    Debugger *pdebug;
   }
 @@ mesh/mesh.cpp
   [+:after pmb->pbval->CheckUserBoundaries()] {
@@ -18,16 +24,21 @@
   [+:in header/Athena++] {
     #include "../thermodynamics/thermodynamics.hpp"
     #include "../chemistry/chemistry.hpp"
+    #include "../radiation/radiation.hpp"
+    #include "../diagnostics/diagnostics.hpp"
+    #include "../debugger/debugger.hpp"
   }
   [+:after,all peos = new EquationOfState]
     pthermo = new Thermodynamics(this, pin);
-    if (std::strcmp(CHEMISTRY, "kessler94") == 0) {
-      pchem = new Kessler94(this, pin);
-    } else {
-      pchem = new Chemistry(this, pin);
-    }
+    pchem = new CHEMISTRY(this, pin);
+    prad = new Radiation(this, pin);
+    pdiag = new Diagnostics(this, pin);
+    pdebug = new Debugger(this, pin);
   }
   [+:after delete peos] {
     delete pthermo;
     delete pchem;
+    delete prad;
+    delete pdiag;
+    delete pdebug;
   }

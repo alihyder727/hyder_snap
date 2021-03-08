@@ -42,6 +42,7 @@
 #include "../chemistry/chemistry.hpp"
 #include "../radiation/radiation.hpp"
 #include "../diagnostics/diagnostics.hpp"
+#include "../debugger/debugger.hpp"
 
 //----------------------------------------------------------------------------------------
 // MeshBlock constructor: constructs coordinate, boundary condition, hydro, field
@@ -179,6 +180,7 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   pchem = new CHEMISTRY(this, pin);
   prad = new Radiation(this, pin);
   pdiag = new Diagnostics(this, pin);
+  pdebug = new Debugger(this);
 
   // Create user mesh data
   InitUserMeshBlockData(pin);
@@ -298,6 +300,7 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   pchem = new CHEMISTRY(this, pin);
   prad = new Radiation(this, pin);
   pdiag = new Diagnostics(this, pin);
+  pdebug = new Debugger(this);
 
   InitUserMeshBlockData(pin);
 
@@ -392,6 +395,11 @@ MeshBlock::~MeshBlock() {
   delete pchem;
   delete prad;
   delete pdiag;
+  while (pdebug->prev != NULL)
+    delete pdebug->prev;
+  while (pdebug->next != NULL)
+    delete pdebug->next;
+  delete pdebug;
 }
 
 //----------------------------------------------------------------------------------------
