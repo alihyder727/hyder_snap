@@ -95,6 +95,7 @@
 
 // debug build macros (DEBUG or NOT_DEBUG)
 #define @DEBUG_OPTION@
+#define DEBUG_LEVEL @DEBUG_LEVEL@
 
 // try/throw/catch C++ exception handling (ENABLE_EXCEPTIONS or DISABLE_EXCEPTIONS)
 // (enabled by default)

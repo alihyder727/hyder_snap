@@ -177,6 +177,11 @@ parser.add_argument('-debug',
                     default=False,
                     help='enable debug flags; override other compiler options')
 
+# --dlevel=[value] argument
+parser.add_argument('--dlevel',
+                    default='0',
+                    help='set debug level')
+
 # -coverage argument
 parser.add_argument('-coverage',
                     action='store_true',
@@ -703,8 +708,12 @@ if args['debug']:
         makefile_options['COMPILER_FLAGS'] = '-O0 -g -qlanglvl=extended0x'
     if args['cxx'] == 'icpc-phi':
         makefile_options['COMPILER_FLAGS'] = '-O0 --std=c++11 -g -xMIC-AVX512'
+    args['dlevel'] = str(max(1, int(args['dlevel'])))
 else:
     definitions['DEBUG_OPTION'] = 'NOT_DEBUG'
+
+# --dlevel argument
+definitions['DEBUG_LEVEL'] = args['dlevel']
 
 # -coverage argument
 if args['coverage']:
@@ -951,7 +960,7 @@ print('  Frame transformations:      ' + ('ON' if args['t'] else 'OFF'))
 print('  Self-Gravity:               ' + self_grav_string)
 print('  Super-Time-Stepping:        ' + ('ON' if args['sts'] else 'OFF'))
 print('  Shearing Box BCs:           ' + ('ON' if args['shear'] else 'OFF'))
-print('  Debug flags:                ' + ('ON' if args['debug'] else 'OFF'))
+print('  Debug level:                ' + args['dlevel'])
 print('  Code coverage flags:        ' + ('ON' if args['coverage'] else 'OFF'))
 print('  Linker flags:               ' + makefile_options['LINKER_FLAGS'] + ' '
       + makefile_options['LIBRARY_FLAGS'])

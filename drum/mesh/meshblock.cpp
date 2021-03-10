@@ -395,9 +395,9 @@ MeshBlock::~MeshBlock() {
   delete pchem;
   delete prad;
   delete pdiag;
-  while (pdebug->prev != NULL)
+  while (pdebug->prev != nullptr)
     delete pdebug->prev;
-  while (pdebug->next != NULL)
+  while (pdebug->next != nullptr)
     delete pdebug->next;
   delete pdebug;
 }

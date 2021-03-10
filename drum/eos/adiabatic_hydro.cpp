@@ -22,6 +22,7 @@
 #include "../parameter_input.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../globals.hpp"
+#include "../debugger/debugger.hpp"
 #include "eos.hpp"
 
 // EquationOfState constructor
@@ -126,6 +127,13 @@ void EquationOfState::ConservedToPrimitive(
       }
     }
   }
+
+#if DEBUG_LEVEL > 0
+  Debugger *pdbg = pmy_block_->pdebug;
+  pdbg = pdbg->StartTracking("EquationOfStates::ConservedToPrimitive");
+  pdbg->Track3D("rho", IsPositive, prim, IDN);
+  pdbg->Track3D("pres", IsPositive, prim, IPR);
+#endif
 
   return;
 }

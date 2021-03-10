@@ -25,6 +25,7 @@
 #include "hydro_diffusion/hydro_diffusion.hpp"
 #include "../chemistry/chemistry.hpp"
 #include "../radiation/radiation.hpp"
+#include "../debugger/debugger.hpp"
 
 // OpenMP header
 #ifdef OPENMP_PARALLEL
@@ -41,6 +42,8 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
   int is = pmb->is; int js = pmb->js; int ks = pmb->ks;
   int ie = pmb->ie; int je = pmb->je; int ke = pmb->ke;
   int il, iu, jl, ju, kl, ku;
+
+  Debugger *pdbg = pmb->pdebug;
 
   // b,bcc are passed as fn parameters becausse clients may want to pass different bcc1,
   // b1, b2, etc., but the remaining members of the Field class are accessed directly via
@@ -79,6 +82,10 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
   // decompose pressure to pertubation pressure and hydrostatic pressure
   DecomposePressure(w, kl, ku, jl, ju);
 
+#if DEBUG_LEVEL > 1
+  pdbg = pdbg->StartTracking("Hydro::CalculateFluxes-ReconstructX1");
+#endif
+
   for (int k=kl; k<=ku; ++k) {
     for (int j=jl; j<=ju; ++j) {
       // reconstruct L/R states
@@ -94,6 +101,13 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
 
       // assemble pressure pertubation
       AssemblePressure(w, wl_, wr_, k, j, is-1, ie+1);
+
+#if DEBUG_LEVEL > 1
+      pdbg->Track1D("rho-l", IsPositive, wl_, IDN, k, j);
+      pdbg->Track1D("pres-l", IsPositive, wl_, IPR, k, j);
+      pdbg->Track1D("rho-r", IsPositive, wr_, IDN, k, j);
+      pdbg->Track1D("pres-r", IsPositive, wr_, IPR, k, j);
+#endif
 
       pmb->pcoord->CenterWidth1(k, j, is, ie+1, dxw_);
 #if !MAGNETIC_FIELDS_ENABLED  // Hydro:
@@ -116,6 +130,12 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
       }
     }
   }
+
+#if DEBUG_LEVEL > 0
+  pdbg = pdbg->StartTracking("Hydro::CalculateFluxes-x1flux");
+  pdbg->Track3D("rho", IsNumber, x1flux, IDN);
+  pdbg->Track3D("pres", IsNumber, x1flux, IPR);
+#endif
 
   if (order == 4) {
     // TODO(felker): assuming uniform mesh with dx1f=dx2f=dx3f, so this should factor out
@@ -186,6 +206,10 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
       kl = ks-1, ku = ke+1;
     //    }
 
+#if DEBUG_LEVEL > 1
+    pdbg = pdbg->StartTracking("Hydro::CalculateFluxes-ReconstructX2");
+#endif
+
     for (int k=kl; k<=ku; ++k) {
       // reconstruct the first row
       if (order == 1) {
@@ -209,6 +233,13 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
           pmb->precon->PiecewiseParabolicX2(k, j, il, iu, w, bcc, wlb_, wr_);
         }
 
+#if DEBUG_LEVEL > 1
+        pdbg->Track1D("rho-l", IsPositive, wl_, IDN, k, j);
+        pdbg->Track1D("pres-l", IsPositive, wl_, IPR, k, j);
+        pdbg->Track1D("rho-r", IsPositive, wr_, IDN, k, j);
+        pdbg->Track1D("pres-r", IsPositive, wr_, IPR, k, j);
+#endif
+
         pmb->pcoord->CenterWidth2(k, j, il, iu, dxw_);
 #if !MAGNETIC_FIELDS_ENABLED  // Hydro:
         RiemannSolver(k, j, il, iu, IVY, wl_, wr_, x2flux, dxw_);
@@ -231,6 +262,13 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
         wl_.SwapAthenaArray(wlb_);
       }
     }
+
+#if DEBUG_LEVEL > 0
+    pdbg = pdbg->StartTracking("Hydro::CalculateFluxes-x2flux");
+    pdbg->Track3D("rho", IsNumber, x2flux, IDN);
+    pdbg->Track3D("pres", IsNumber, x2flux, IPR);
+#endif
+
     if (order == 4) {
       // TODO(felker): assuming uniform mesh with dx1f=dx2f=dx3f, so factor this out
       // TODO(felker): also, this may need to be dx2v, since Laplacian is cell-centered
@@ -295,6 +333,10 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
     //    if (MAGNETIC_FIELDS_ENABLED)
     il = is-1, iu = ie+1, jl = js-1, ju = je+1;
 
+#if DEBUG_LEVEL > 1
+    pdbg = pdbg->StartTracking("Hydro::CalculateFluxes-ReconstructX3");
+#endif
+
     for (int j=jl; j<=ju; ++j) { // this loop ordering is intentional
       // reconstruct the first row
       if (order == 1) {
@@ -318,6 +360,13 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
           pmb->precon->PiecewiseParabolicX3(k, j, il, iu, w, bcc, wlb_, wr_);
         }
 
+#if DEBUG_LEVEL > 1
+        pdbg->Track1D("rho-l", IsPositive, wl_, IDN, k, j);
+        pdbg->Track1D("pres-l", IsPositive, wl_, IPR, k, j);
+        pdbg->Track1D("rho-r", IsPositive, wr_, IDN, k, j);
+        pdbg->Track1D("pres-r", IsPositive, wr_, IPR, k, j);
+#endif
+
         pmb->pcoord->CenterWidth3(k, j, il, iu, dxw_);
 #if !MAGNETIC_FIELDS_ENABLED  // Hydro:
         RiemannSolver(k, j, il, iu, IVZ, wl_, wr_, x3flux, dxw_);
@@ -326,6 +375,7 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
         // flx(IBZ) = (v3*b2 - v2*b3) =  EMFX
         RiemannSolver(k, j, il, iu, IVZ, b3, wl_, wr_, x3flux, e2x3, e1x3, w_x3f, dxw_);
 #endif
+
         if (order == 4) {
           for (int n=0; n<NWAVE; n++) {
             for (int i=il; i<=iu; i++) {
@@ -339,6 +389,13 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
         wl_.SwapAthenaArray(wlb_);
       }
     }
+
+#if DEBUG_LEVEL > 0
+    pdbg = pdbg->StartTracking("Hydro::CalculateFluxes-x3flux");
+    pdbg->Track3D("rho", IsNumber, x3flux, IDN);
+    pdbg->Track3D("pres", IsNumber, x3flux, IPR);
+#endif
+
     if (order == 4) {
       // TODO(felker): assuming uniform mesh with dx1f=dx2f=dx3f, so factor this out
       // TODO(felker): also, this may need to be dx3v, since Laplacian is cell-centered

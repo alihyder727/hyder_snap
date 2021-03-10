@@ -9,7 +9,7 @@
 #include "../coordinates/coordinates.hpp"
 
 Debugger::Debugger(MeshBlock *pmb):
-  pmy_block(pmb), prev(nullptr), next(nullptr), fname_("NULL")
+  pmy_block(pmb), prev(nullptr), next(nullptr), fname_("HEAD")
 {
   data_.NewAthenaArray(2*NHYDRO, pmb->ncells3, pmb->ncells2, pmb->ncells1);
 }
@@ -76,9 +76,10 @@ void Debugger::Track3D(std::string name, TestFunc_t test, AthenaArray<Real>& var
   if (!pass) {
     DumpTracking(name, c1, c2, c3, "w");
     msg << "### FATAL ERROR in function [Debugger::Track3D]"
-        << std::endl << "Debugger catched invalid " << name << " at "
+        << std::endl << "Invalid \033[0;32m" << name << "\033[0m at "
         << "(k=" << c3 << ", " << "j=" << c2 << ", " << "i=" << c1 << ") "
-        << "on rank " << Globals::my_rank << std::endl;
+        << "on rank \033[0;32m" << Globals::my_rank << "\033[0m called from function \033[0;32m"
+        << fname_ << "\033[0m" << std::endl;
     ATHENA_ERROR(msg);
   }
 }
@@ -119,9 +120,10 @@ void Debugger::Track1D(std::string name, TestFunc_t test, AthenaArray<Real>& var
   if (!pass) {
     DumpTracking(name, c1, c2, c3, "w");
     msg << "### FATAL ERROR in function [Debugger::Track1D]"
-        << std::endl << "Debugger catched invalid " << name << " at "
+        << std::endl << "Invalid \033[0;32m" << name << "\033[0m at "
         << "(k=" << c3 << ", " << "j=" << c2 << ", " << "i=" << c1 << ") "
-        << "on rank " << Globals::my_rank << std::endl;
+        << "on rank \033[0;32m" << Globals::my_rank << "\033[0m called from function \033[0;32m"
+        << fname_ << "\033[0m" << std::endl;
     ATHENA_ERROR(msg);
   }
 }
@@ -193,6 +195,8 @@ void Debugger::DumpTracking(std::string name, int c1, int c2, int c3, char const
     }
 
     fclose(pfile);
-    if (prev != nullptr) prev->DumpTracking(name, c1, c2, c3, "a");
   }
+
+  if (prev != nullptr) 
+    prev->DumpTracking(name, c1, c2, c3, "a");
 }
