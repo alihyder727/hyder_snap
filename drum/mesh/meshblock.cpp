@@ -41,6 +41,7 @@
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../chemistry/chemistry.hpp"
 #include "../radiation/radiation.hpp"
+#include "../physics/physics.hpp"
 #include "../diagnostics/diagnostics.hpp"
 #include "../debugger/debugger.hpp"
 
@@ -179,6 +180,7 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   pthermo = new Thermodynamics(this, pin);
   pchem = new CHEMISTRY(this, pin);
   prad = new Radiation(this, pin);
+  pphy = new Physics(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
 
@@ -299,6 +301,7 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   pthermo = new Thermodynamics(this, pin);
   pchem = new CHEMISTRY(this, pin);
   prad = new Radiation(this, pin);
+  pphy = new Physics(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
 
@@ -394,6 +397,7 @@ MeshBlock::~MeshBlock() {
   delete pthermo;
   delete pchem;
   delete prad;
+  delete pphy;
   delete pdiag;
   while (pdebug->prev != nullptr)
     delete pdebug->prev;

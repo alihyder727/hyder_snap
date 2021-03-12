@@ -54,6 +54,7 @@ class TurbulenceDriver;
 class Thermodynamics;
 class Chemistry;
 class Radiation;
+class Physics;
 class Diagnostics;
 class Debugger;
 
@@ -129,6 +130,7 @@ class MeshBlock {
   Thermodynamics *pthermo;
   Chemistry *pchem;
   Radiation *prad;
+  Physics *pphy;
   Diagnostics *pdiag;
   Debugger *pdebug;
 

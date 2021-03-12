@@ -66,6 +66,7 @@ SRC_FILES := $(wildcard src/*.cpp) \
 	     $(wildcard src/radiation/*.cpp) \
 	     $(wildcard src/radiation/rtsolver/*.cpp) \
 	     $(wildcard src/radiation/microwave/*.cpp) \
+	     $(wildcard src/physics/*.cpp) \
 	     $(wildcard src/debugger/*.cpp) \
 	     $(MPIFFT_FILE)
 OBJ_DIR := obj/
