@@ -61,7 +61,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       pkg.id = TOP_SPONGE_LAYER;
       pkg.dependency = 0LL;
       pkg.incompatible = 0LL;
-      // pkg.Function = &Physics::TopSpongeLayer;
+      pkg.Function = &Physics::TopSpongeLayer;
       ptm->AddPackage(pkg, "top_sponge_layer");
 
       tau_top_ = pin->GetReal("physics", "top_sponge_layer.tau");
@@ -70,7 +70,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       pkg.id = BOT_SPONGE_LAYER;
       pkg.dependency = 0LL;
       pkg.incompatible = 0LL;
-      // pkg.Function = &Physics::BotSpongeLayer;
+      pkg.Function = &Physics::BotSpongeLayer;
       ptm->AddPackage(pkg, "bot_sponge_layer");
 
       tau_bot_ = pin->GetReal("physics", "bot_sponge_layer.tau");

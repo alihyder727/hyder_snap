@@ -1,13 +1,16 @@
-#include "physics.hpp"
 #include "../mesh/mesh.hpp"
 #include "../eos/eos.hpp"
 #include "../hydro/hydro.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../globals.hpp"
+#include "physics.hpp"
 
 TaskStatus Physics::RelaxBotTemperature(AthenaArray<Real> &u,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
+  //if (Globals::my_rank == 0)
+  //  std::cout  << "I'm at relax tem" << std::endl;
   MeshBlock *pmb = pmy_block;
   Thermodynamics *pthermo = pmb->pthermo;
 
@@ -22,6 +25,7 @@ TaskStatus Physics::RelaxBotTemperature(AthenaArray<Real> &u,
       Real v1 = u(IM1,k,j,is);
       Real v2 = u(IM2,k,j,is);
       Real v3 = u(IM3,k,j,is);
+      //std::cout << tem_bot_(k,j) << std::endl;
       Real pres = u(IDN,k,j,is)*Rd*tem_bot_(k,j);
       Real KE = 0.5*(v1*v1+v2*v2+v3*v3)/u(IDN,k,j,is);
       Real LE = 0., fsig = 1., feps = 1.;

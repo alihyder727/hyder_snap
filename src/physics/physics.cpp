@@ -1,5 +1,6 @@
 // C/C++ headers
 #include <sstream>
+#include <iostream>
 
 // Athena++ headers
 #include "../task_list/task_manager.hpp"

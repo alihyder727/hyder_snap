@@ -85,7 +85,7 @@ TaskListStatus TaskManager<T>::DoNextTask(AthenaArray<Real> &u, AthenaArray<Real
 {
   bool first_task = true;
   TaskStatus ret;
-  if (num_tasks_left_ == 0) return TaskListStatus::nothing_to_do;
+  if (num_tasks_left_ == 0) return TaskListStatus::complete;
 
   for (int i=indx_first_task_; i <= indx_last_task_; i++) {
     Y const& todo = tlist[i];
