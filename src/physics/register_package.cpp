@@ -26,8 +26,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
   while (p != NULL) {
     if (std::strcmp(p, "fix_bot_temperature") == 0) {
       pkg.id = FIX_BOT_TEMPERATURE;
-      pkg.dependency = 0LL;
-      pkg.incompatible = 0LL;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
       pkg.Function = &Physics::RelaxBotTemperature;
       ptm->AddPackage(pkg, "fix_bot_temperature");
 
@@ -37,8 +37,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       tem_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1);
     } else if (std::strcmp(p, "fix_bot_velocity") == 0) {
       pkg.id = FIX_BOT_VELOCITY;
-      pkg.dependency = 0LL;
-      pkg.incompatible = 0LL;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
       // pkg.Function = &Physics::RelaxBotVelocity;
       ptm->AddPackage(pkg, "fix_bot_velocity");
 
@@ -48,8 +48,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       vel_bot_.InitWithShallowSlice(hydro_bot_, 3, IVX, 3);
     } else if (std::strcmp(p, "fix_bot_composition") == 0) {
       pkg.id = FIX_BOT_COMPOSITION;
-      pkg.dependency = 0LL;
-      pkg.incompatible = 0LL;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
       // pkg.Function = &Physics::RelaxBotComposition;
       ptm->AddPackage(pkg, "fix_bot_composition");
 
@@ -59,8 +59,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       com_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, NMASS);
     } else if (std::strcmp(p, "top_sponge_layer") == 0) {
       pkg.id = TOP_SPONGE_LAYER;
-      pkg.dependency = 0LL;
-      pkg.incompatible = 0LL;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
       pkg.Function = &Physics::TopSpongeLayer;
       ptm->AddPackage(pkg, "top_sponge_layer");
 
@@ -68,8 +68,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       width_top_ = pin->GetReal("physics", "top_sponge_layer.width");
     } else if (std::strcmp(p, "bot_sponge_layer") == 0) {
       pkg.id = BOT_SPONGE_LAYER;
-      pkg.dependency = 0LL;
-      pkg.incompatible = 0LL;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
       pkg.Function = &Physics::BotSpongeLayer;
       ptm->AddPackage(pkg, "bot_sponge_layer");
 

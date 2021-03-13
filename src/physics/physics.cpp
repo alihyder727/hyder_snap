@@ -18,7 +18,7 @@ void Physics::ApplyPhysicsPackages(AthenaArray<Real> &u,
   ptm->Reset();
 
   while (count < 100) {
-    TaskListStatus status = ptm->DoNextTask(u, w, time, dt, packages_);
+    TaskListStatus status = ptm->DoNextJob(u, w, time, dt, packages_);
     if (status == TaskListStatus::complete) break;
     count++;
   }

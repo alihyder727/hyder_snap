@@ -64,8 +64,8 @@ protected:
 //! \brief task to do on a meshblock
 struct PhysicsPackage {
   uint64_t id;            //!< encodes task using bit positions
-  uint64_t dependency;    //!< encodes dependencies to other tasks
-  uint64_t incompatible;  //!< encodes incompatible tasks
+  uint64_t dep;           //!< encodes dependencies to other tasks
+  uint64_t conflict;      //!< encodes conflict tasks
   int cost;               //!< cost of this task
   bool load_balance;      //!< whether to do load balance
 
