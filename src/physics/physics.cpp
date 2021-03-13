@@ -31,9 +31,22 @@ void Physics::ApplyPhysicsPackages(AthenaArray<Real> &u,
   }
 }
 
-void Physics::DumpRestartData(std::string fname)
-{}
+size_t Physics::RestartDataSizeInBytes()
+{
+  size_t size = 0;
+  size += hydro_bot_.GetSizeInBytes();
 
-void Physics::LoadRestartData(std::string fname)
-{}
+  return size;
+}
 
+size_t Physics::DumpRestartData(char *pdst)
+{
+  std::memcpy(pdst, hydro_bot_.data(), hydro_bot_.GetSizeInBytes());
+  return RestartDataSizeInBytes();
+}
+
+size_t Physics::LoadRestartData(char *psrc)
+{
+  std::memcpy(hydro_bot_.data(), psrc, hydro_bot_.GetSizeInBytes());
+  return RestartDataSizeInBytes();
+}

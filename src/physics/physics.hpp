@@ -27,8 +27,9 @@ public:
   Physics(MeshBlock *pmb, ParameterInput *pin);
   ~Physics();
   void Initialize(AthenaArray<Real> const& w);
-  void DumpRestartData(std::string fname);
-  void LoadRestartData(std::string fname);
+  size_t RestartDataSizeInBytes();
+  size_t DumpRestartData(char *pdst);
+  size_t LoadRestartData(char *psrc);
 
   void ApplyPhysicsPackages(AthenaArray<Real> &u,
     AthenaArray<Real> const& w, Real time, Real dt);
