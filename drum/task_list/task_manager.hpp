@@ -2,6 +2,7 @@
 #define TASK_MANAGER_HPP
 
 // C/C++ header
+#include <bitset>
 #include <vector>
 #include <sstream>
 
@@ -40,10 +41,11 @@ public:
   void Reset() {
     // hamming weight
     int ntasks = 0;
-    while (all_tasks_ > 0) {     // until all bits are zero
-      if ((all_tasks_ & 1) == 1) // check lower bit
+    uint64_t tmp = all_tasks_;
+    while (tmp > 0) {     // until all bits are zero
+      if ((tmp & 1) == 1) // check lower bit
         ntasks++;
-      all_tasks_ >>= 1;          // shift bits, removing lower bit
+      tmp >>= 1;          // shift bits, removing lower bit
     }
 
     indx_first_task_ = 0;
@@ -98,8 +100,6 @@ TaskListStatus TaskManager<T>::DoNextJob(AthenaArray<Real> &u, AthenaArray<Real>
   while (!(HasTask(tlist[indx_first_task_].id) && Unfinished(tlist[indx_first_task_].id)))
     indx_first_task_++;
 
-  std::cout << indx_first_task_ << std::endl;
-
   for (int i = indx_first_task_; i < tlist.size(); i++) {
     Y const& todo = tlist[i];
     // has this task, not done, and denpendency clear
@@ -107,7 +107,7 @@ TaskListStatus TaskManager<T>::DoNextJob(AthenaArray<Real> &u, AthenaArray<Real>
       ret = (pclass_->*todo.Function)(u, w, time, dt);
       if (ret != TaskStatus::fail) { // success
         num_tasks_left_--;
-        finished_tasks_ &= todo.id;
+        finished_tasks_ |= todo.id;
         if (num_tasks_left_ == 0) return TaskListStatus::complete;
         if (ret == TaskStatus::next) continue;
         return TaskListStatus::running;
