@@ -132,7 +132,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     ncmpi_put_att_text(ifile, ivx1, "long_name", 8, "altitude");
   } else {
     ncmpi_put_att_text(ifile, ivx1, "units", 6, "meters");
-    ncmpi_put_att_text(ifile, ivx1, "long_name", 27, "Z-coordinate at cell center");
+    ncmpi_put_att_text(ifile, ivx1, "long_name", 27, "z-coordinate at cell center");
   }
   if (nx1 > 1) {
     ncmpi_def_var(ifile, "x1f", NC_FLOAT, 1, &idx1f, &ivx1f);
@@ -142,49 +142,49 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       ncmpi_put_att_text(ifile, ivx1f, "long_name", 8, "altitude");
     } else {
       ncmpi_put_att_text(ifile, ivx1f, "units", 6, "meters");
-      ncmpi_put_att_text(ifile, ivx1f, "long_name", 25, "Z-coordinate at cell face");
+      ncmpi_put_att_text(ifile, ivx1f, "long_name", 25, "z-coordinate at cell face");
     }
   }
 
   ncmpi_def_var(ifile, "x2", NC_FLOAT, 1, &idx2, &ivx2);
   ncmpi_put_att_text(ifile, ivx2, "axis", 1, "Y");
   if (COORDINATE_SYSTEM == "spherical_polar") {
-    ncmpi_put_att_text(ifile, ivx2, "units", 13, "degrees_north");
-    ncmpi_put_att_text(ifile, ivx2, "long_name", 8, "latitude");
+    ncmpi_put_att_text(ifile, ivx2, "units", 7, "degrees");
+    ncmpi_put_att_text(ifile, ivx2, "long_name", 10, "colatitude");
   } else {
     ncmpi_put_att_text(ifile, ivx2, "units", 6, "meters");
-    ncmpi_put_att_text(ifile, ivx2, "long_name", 27, "Y-coordinate at cell center");
+    ncmpi_put_att_text(ifile, ivx2, "long_name", 27, "y-coordinate at cell center");
   }
   if (nx2 > 1) {
     ncmpi_def_var(ifile, "x2f", NC_FLOAT, 1, &idx2f, &ivx2f);
     ncmpi_put_att_text(ifile, ivx2f, "axis", 1, "Y");
     if (COORDINATE_SYSTEM == "spherical_polar") {
-      ncmpi_put_att_text(ifile, ivx2f, "units", 13, "degrees_north");
-      ncmpi_put_att_text(ifile, ivx2f, "long_name", 8, "latitude");
+      ncmpi_put_att_text(ifile, ivx2f, "units", 7, "degrees");
+      ncmpi_put_att_text(ifile, ivx2f, "long_name", 10, "colatitude");
     } else {
       ncmpi_put_att_text(ifile, ivx2f, "units", 6, "meters");
-      ncmpi_put_att_text(ifile, ivx2f, "long_name", 25, "Y-coordinate at cell face");
+      ncmpi_put_att_text(ifile, ivx2f, "long_name", 25, "y-coordinate at cell face");
     }
   }
 
   ncmpi_def_var(ifile, "x3", NC_FLOAT, 1, &idx3, &ivx3);
   ncmpi_put_att_text(ifile, ivx3, "axis", 1, "X");
   if (COORDINATE_SYSTEM == "spherical_polar") {
-    ncmpi_put_att_text(ifile, ivx3, "units", 12, "degrees_east");
+    ncmpi_put_att_text(ifile, ivx3, "units", 7, "degrees");
     ncmpi_put_att_text(ifile, ivx3, "long_name", 9, "longitude");
   } else {
     ncmpi_put_att_text(ifile, ivx3, "units", 6, "meters");
-    ncmpi_put_att_text(ifile, ivx3, "long_name", 27, "X-coordinate at cell center");
+    ncmpi_put_att_text(ifile, ivx3, "long_name", 27, "x-coordinate at cell center");
   }
   if (nx3 > 1) {
     ncmpi_def_var(ifile, "x3f", NC_FLOAT, 1, &idx3f, &ivx3f);
     ncmpi_put_att_text(ifile, ivx3f, "axis", 1, "X");
     if (COORDINATE_SYSTEM == "spherical_polar") {
-      ncmpi_put_att_text(ifile, ivx3f, "units", 12, "degrees_east");
+      ncmpi_put_att_text(ifile, ivx3f, "units", 7, "degrees");
       ncmpi_put_att_text(ifile, ivx3f, "long_name", 9, "longitude");
     } else {
       ncmpi_put_att_text(ifile, ivx3f, "units", 6, "meters");
-      ncmpi_put_att_text(ifile, ivx3f, "long_name", 25, "X-coordinate at cell face");
+      ncmpi_put_att_text(ifile, ivx3f, "long_name", 25, "x-coordinate at cell face");
     }
   }
 
@@ -200,10 +200,10 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   }
 
   int iax1[2]  = {idt, idx1};
-  int iaxis[4]  = {idt, idx1, idx2, idx3};
-  int iaxis1[4] = {idt, idx1f, idx2, idx3};
-  int iaxis2[4] = {idt, idx1, idx2f, idx3};
-  int iaxis3[4] = {idt, idx1, idx2, idx3f};
+  int iaxis[4]  = {idt, idx3, idx2, idx1};
+  int iaxis1[4] = {idt, idx3, idx2, idx1f};
+  int iaxis2[4] = {idt, idx3, idx2f, idx1};
+  int iaxis3[4] = {idt, idx3f, idx2, idx1};
   int *var_ids = new int [nvars];
   int *ivar = var_ids;
 
@@ -243,17 +243,13 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
         ncmpi_put_att_text(ifile, *ivar, "long_name", 8, "pressure");
       } else if (name == "vel1") {
         ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in Z-coordinate");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in z-coordinate");
       } else if (name == "vel2") {
         ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in Y-coordinate");
-        if (COORDINATE_SYSTEM == "spherical_polar") {
-          float minues_one = -1;
-          ncmpi_put_att_float(ifile, *ivar, "scale_factor", NC_FLOAT, 1, &minues_one);
-        }
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in y-coordinate");
       } else if (name == "vel3") {
         ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in X-coordinate");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in x-coordinate");
       } else if (name == "temp") {
         ncmpi_put_att_text(ifile, *ivar, "units", 1, "K");
         ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "temperature");
@@ -275,9 +271,6 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     }
     pdata = pdata->pnext;
   }
-
-  err = ncmpi_put_att_text(ifile, NC_GLOBAL, "Conventions", 6, "COARDS");
-  ERR
 
   err = ncmpi_enddef(ifile);
   ERR
@@ -332,11 +325,11 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     MPI_Offset nfaces2 = ncells2; if (ncells2 > 1) nfaces2++;
     MPI_Offset nfaces3 = ncells3; if (ncells3 > 1) nfaces3++;
 
-    MPI_Offset start[4] = {0, ncells1*pmb->loc.lx1, ncells2*pmb->loc.lx2, ncells3*pmb->loc.lx3};
-    MPI_Offset count[4]  = {1, ncells1, ncells2, ncells3};
-    MPI_Offset count1[4] = {1, nfaces1, ncells2, ncells3};
-    MPI_Offset count2[4] = {1, ncells1, nfaces2, ncells3};
-    MPI_Offset count3[4] = {1, ncells1, ncells2, nfaces3};
+    MPI_Offset start[4] = {0, ncells3*pmb->loc.lx3, ncells2*pmb->loc.lx2, ncells1*pmb->loc.lx1};
+    MPI_Offset count[4]  = {1, ncells3, ncells2, ncells1};
+    MPI_Offset count1[4] = {1, ncells3, ncells2, nfaces1};
+    MPI_Offset count2[4] = {1, ncells3, nfaces2, ncells1};
+    MPI_Offset count3[4] = {1, nfaces3, ncells2, ncells1};
 
     MPI_Offset start_ax1[2] = {0, ncells1*pmb->loc.lx1};
     MPI_Offset count_ax1[2] = {1, ncells1};
@@ -347,7 +340,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     else
       for (int i = out_is; i <= out_ie; ++i)
         (*ib)[i-out_is] = (float)(pmb->pcoord->x1v(i));
-    err = ncmpi_iput_vara_float(ifile, ivx1, start+1, count+1, *ib++, ir++);
+    err = ncmpi_iput_vara_float(ifile, ivx1, start+3, count+3, *ib++, ir++);
     ERR
 
     if (nx1 > 1) {
@@ -357,13 +350,13 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       else
         for (int i = out_is; i <= out_ie + 1; ++i)
           (*ib)[i-out_is] = (float)(pmb->pcoord->x1f(i));
-      err = ncmpi_iput_vara_float(ifile, ivx1f, start+1, count1+1, *ib++, ir++);
+      err = ncmpi_iput_vara_float(ifile, ivx1f, start+3, count1+3, *ib++, ir++);
       ERR
     }
 
     if (COORDINATE_SYSTEM == "spherical_polar")
       for (int j = out_js; j <= out_je; ++j)
-        (*ib)[j-out_js] = 90. - (float)rad2deg(pmb->pcoord->x2v(j));
+        (*ib)[j-out_js] = (float)rad2deg(pmb->pcoord->x2v(j));
     else
       for (int j = out_js; j <= out_je; ++j)
         (*ib)[j-out_js] = (float)(pmb->pcoord->x2v(j));
@@ -373,7 +366,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     if (nx2 > 1) {
       if (COORDINATE_SYSTEM == "spherical_polar")
         for (int j = out_js; j <= out_je + 1; ++j)
-          (*ib)[j-out_js] = 90. - (float)rad2deg(pmb->pcoord->x2f(j));
+          (*ib)[j-out_js] = (float)rad2deg(pmb->pcoord->x2f(j));
       else
         for (int j = out_js; j <= out_je + 1; ++j)
           (*ib)[j-out_js] = (float)(pmb->pcoord->x2f(j));
@@ -387,7 +380,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     else
       for (int k = out_ks; k <= out_ke; ++k)
         (*ib)[k-out_ks] = (float)(pmb->pcoord->x3v(k));
-    err = ncmpi_iput_vara_float(ifile, ivx3, start+3, count+3, *ib++, ir++);
+    err = ncmpi_iput_vara_float(ifile, ivx3, start+1, count+1, *ib++, ir++);
     ERR
 
     if (nx3 > 1) {
@@ -397,7 +390,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       else
         for (int k = out_ks; k <= out_ke + 1; ++k)
           (*ib)[k-out_ks] = (float)(pmb->pcoord->x3f(k));
-      err = ncmpi_iput_vara_float(ifile, ivx3f, start+3, count3+3, *ib++, ir++);
+      err = ncmpi_iput_vara_float(ifile, ivx3f, start+1, count3+1, *ib++, ir++);
       ERR
     }
 
@@ -408,9 +401,9 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       if (pdata->grid == "CCF") {
         for (int n = 0; n < nvar; n++) {
           float *it = *ib;
-          for (int i = out_is; i <= out_ie+1; ++i)
+          for (int k = out_ks; k <= out_ke; ++k)
             for (int j = out_js; j <= out_je; ++j)
-              for (int k = out_ks; k <= out_ke; ++k)
+              for (int i = out_is; i <= out_ie+1; ++i)
                 *it++ = (float)pdata->data(n,k,j,i);
           err = ncmpi_iput_vara_float(ifile, *ivar++, start, count1, *ib++, ir++);
           ERR
@@ -418,38 +411,38 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       } else if ((pdata->grid == "CFC") && (nx2 > 1)) {
         for (int n = 0; n < nvar; n++) {
           float *it = *ib;
-          for (int i = out_is; i <= out_ie; ++i)
+          for (int k = out_ks; k <= out_ke; ++k)
             for (int j = out_js; j <= out_je+1; ++j)
-              for (int k = out_ks; k <= out_ke; ++k)
-                *it++ = (float)pdata->data(n,k,j,i);
+              for (int i = out_is; i <= out_ie; ++i, ++it)
+                *it = (float)pdata->data(n,k,j,i);
           err = ncmpi_iput_vara_float(ifile, *ivar++, start, count2, *ib++, ir++);
           ERR
         }
       } else if ((pdata->grid == "FCC") && (nx3 > 1)) {
         for (int n = 0; n < nvar; n++) {
           float *it = *ib;
-          for (int i = out_is; i <= out_ie; ++i)
+          for (int k = out_ks; k <= out_ke+1; ++k)
             for (int j = out_js; j <= out_je; ++j)
-              for (int k = out_ks; k <= out_ke+1; ++k)
-                *it++ = (float)pdata->data(n,k,j,i);
+              for (int i = out_is; i <= out_ie; ++i, ++it)
+                *it = (float)pdata->data(n,k,j,i);
           err = ncmpi_iput_vara_float(ifile, *ivar++, start, count3, *ib++, ir++);
           ERR
         }
       } else if (pdata->grid == "--C") {
         for (int n = 0; n < nvar; n++) {
           float *it = *ib;
-          for (int i = out_is; i <= out_ie; ++i)
-            *it++ = (float)pdata->data(n,i);
+          for (int i = out_is; i <= out_ie; ++i, ++it)
+            *it = (float)pdata->data(n,i);
           err = ncmpi_iput_vara_float(ifile, *ivar++, start_ax1, count_ax1, *ib++, ir++);
           ERR
         }
       } else {
         for (int n = 0; n < nvar; n++) {
           float *it = *ib;
-          for (int i = out_is; i <= out_ie; ++i)
+          for (int k = out_ks; k <= out_ke; ++k)
             for (int j = out_js; j <= out_je; ++j)
-              for (int k = out_ks; k <= out_ke; ++k)
-                *it++ = (float)pdata->data(n,k,j,i);
+              for (int i = out_is; i <= out_ie; ++i, ++it)
+                *it = (float)pdata->data(n,k,j,i);
           err = ncmpi_iput_vara_float(ifile, *ivar++, start, count, *ib++, ir++);
           ERR
         }
@@ -457,7 +450,6 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
       pdata = pdata->pnext;
     }
-
 
     ClearOutputData();  // required when LoadOutputData() is used.
     pmb = pmb->next;
@@ -474,7 +466,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
           << std::endl << "Nonblocking write fails on request "
           << i << std::endl
           << ncmpi_strerror(stts[i]);
-      ATHENA_ERROR(msg);
+      throw std::runtime_error(msg.str().c_str());
     }
 
   // 8. close nc file
