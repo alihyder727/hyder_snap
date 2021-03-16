@@ -1,0 +1,120 @@
+<comment>
+problem     = Hot Jupiter radiative dynamics test
+reference   = 
+configure   = --coord=spherical_polar --prob=hjupiter --rt=disort --nghost=3 -pnetcdf --pnetcdf_path=/home/cli/opt -mpi
+
+<job>
+problem_id  = hjupiter    # problem ID: basename of output filenames
+
+<output0>
+file_type   = rst
+dt          = 1.E6
+
+<output1>
+file_type   = hst       # History data dump
+dt          = 1.E5      # time increment between outputs
+
+<output2>
+file_type   = pnetcdf    # Binary data dump
+variable    = prim      # variables to be output
+dt          = 1.E5      # time increment between outputs
+
+<output3>
+file_type   = pnetcdf
+variable    = uov
+dt          = 1.E5
+
+<output4>
+file_type   = pnetcdf
+variable    = rad
+dt          = 1.E5
+
+<time>
+cfl_number  = 1.           # The Courant, Friedrichs, & Lewy (CFL) Number
+nlim        = -1           # cycle limit
+tlim        = 1.E7         # time limit
+xorder      = 5            # horizontal reconstruction order
+integrator  = rk3          # integration method
+#ncycle_out  = 100
+
+<mesh>
+nx1         = 50            # Number of zones in X1-direction
+x1min       = 0.98E8        # minimum value of X1
+x1max       = 1.02E8        # maximum value of X1
+ix1_bc      = reflecting    # inner-X1 boundary flag
+ox1_bc      = reflecting    # outer-X1 boundary flag
+
+nx2         = 32         # Number of zones in X2-direction
+x2min       = 0.                 # minimum value of X2
+x2max       = 3.141592653589793  # maximum value of X2
+ix2_bc      = polar       # Inner-X2 boundary condition flag
+ox2_bc      = polar       # Outer-X2 boundary condition flag
+
+nx3         = 64        # Number of zones in X3-direction
+x3min       = 0.                 # minimum value of X3
+x3max       = 6.283185307179586  # maximum value of X3
+ix3_bc      = periodic    # Inner-X3 boundary condition flag
+ox3_bc      = periodic    # Outer-X3 boundary condition flag
+
+<meshblock>
+nx1         = 50
+nx2         = 8
+nx3         = 16
+
+<hydro>
+grav_acc1     = -10.0
+coriolis_accz = 2.42E-5
+gamma         = 1.4         # gamma = C_p/C_v
+implicit_flag = 1
+
+<physics>
+packages      = fix_bot_temperature, top_sponge_layer, bot_sponge_layer
+fix_bot_temperature.tau = 1.E3
+top_sponge_layer.tau = 1.E5
+top_sponge_layer.width = 200.E3
+bot_sponge_layer.tau = 1.E5
+bot_sponge_layer.width = 200.E3
+
+<thermodynamics>
+Rd            = 3779.       # Gas constant
+
+<astronomy>
+planet        = HJ 
+HJ.parent     = Sun
+HJ.re         = 1.E5      # km
+HJ.rp         = 1.E5      # km
+HJ.obliq      = 0.        # deg
+HJ.spinp      = 3.        # day
+HJ.orbit_a    = 0.03      # au
+HJ.orbit_e    = 0.
+HJ.orbit_i    = 0.        # deg
+HJ.orbit_p    = 3.        # day
+HJ.grav_eq    = 10.       # m/s^2
+HJ.equinox    = 0.
+
+Sun.spec_file = sun.spec
+
+<radiation>
+dt            = 300.
+npmom         = 4
+distance      = 0.03
+indir         = (0,)
+dynamic       = true
+#beam          = 0.
+
+b1            = 100. 49100. 500.
+b1.absorbers  = FREEDMAN
+
+<disort>
+nstr          = 4
+nphase        = 4
+albedo        = 0.
+temis         = 0.
+planck        = true
+
+<problem>
+P0            = 1.E5
+T0            = 1500.
+Z0            = 1.E8
+Tmin          = 800.   # isothermal temperature
+radius        = 1.E8
