@@ -140,4 +140,13 @@ protected:
   Real grav_;
 };
 
+// 10. total radiative flux
+class RadiativeFlux: public Diagnostics {
+public:
+  RadiativeFlux(MeshBlock *pmb);
+  virtual ~RadiativeFlux();
+  void Progress(AthenaArray<Real> const& w);
+  void Finalize(AthenaArray<Real> const& w);
+};
+
 #endif

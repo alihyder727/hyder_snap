@@ -200,6 +200,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   }
 
   int iax1[2]  = {idt, idx1};
+  int iax1f[2]  = {idt, idx1f};
   int iaxis[4]  = {idt, idx1, idx2, idx3};
   int iaxis1[4] = {idt, idx1f, idx2, idx3};
   int iaxis2[4] = {idt, idx1, idx2f, idx3};
@@ -232,6 +233,8 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis3, ivar);
       else if (pdata->grid == "--C")
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1, ivar);
+      else if (pdata->grid == "--F")
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1f, ivar);
       else
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar);
 
@@ -269,6 +272,12 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       } else if (name.find("flxdn") != std::string::npos) {
         ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
         ncmpi_put_att_text(ifile, *ivar, "long_name", 23, "downward radiative flux");
+      } else if (name == "radflux1") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 27, "total upward radiative flux");
+      } else if (name == "radflux2") {
+        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
+        ncmpi_put_att_text(ifile, *ivar, "long_name", 29, "total downward radiative flux");
       }
 
       ivar++;
@@ -340,6 +349,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
     MPI_Offset start_ax1[2] = {0, ncells1*pmb->loc.lx1};
     MPI_Offset count_ax1[2] = {1, ncells1};
+    MPI_Offset count_ax1f[2] = {1, nfaces1};
 
     if (COORDINATE_SYSTEM == "spherical_polar")
       for (int i = out_is; i <= out_ie; ++i)
@@ -441,6 +451,14 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
           for (int i = out_is; i <= out_ie; ++i)
             *it++ = (float)pdata->data(n,i);
           err = ncmpi_iput_vara_float(ifile, *ivar++, start_ax1, count_ax1, *ib++, ir++);
+          ERR
+        }
+      } else if (pdata->grid == "--F") {
+        for (int n = 0; n < nvar; n++) {
+          float *it = *ib;
+          for (int i = out_is; i <= out_ie+1; ++i)
+            *it++ = (float)pdata->data(n,i);
+          err = ncmpi_iput_vara_float(ifile, *ivar++, start_ax1, count_ax1f, *ib++, ir++);
           ERR
         }
       } else {

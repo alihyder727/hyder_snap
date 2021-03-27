@@ -9,7 +9,7 @@
 #include "../coordinates/coordinates.hpp"
 
 Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
-  myname("HEAD"), type("NONE"), grid("NONE"), prev(NULL), next(NULL), 
+  myname("HEAD"), type("NONE"), grid("NONE"), prev(nullptr), next(nullptr), 
   ncycle(0), pmy_block_(pmb)
 {
   std::stringstream msg;
@@ -37,6 +37,8 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
       AddDiagnostics(HorizontalDivergence(pmb));
     else if (name == "b") // 9.
       AddDiagnostics(Buoyancy(pmb));
+    else if (name == "radflux") // 9.
+      AddDiagnostics(RadiativeFlux(pmb));
     else {
       msg << "### FATAL ERROR in function Diagnostics::Diagnostics"
           << std::endl << "Diagnostic variable " << name << " not defined";
@@ -53,7 +55,7 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
 }
 
 Diagnostics::Diagnostics(MeshBlock *pmb, std::string name):
-  myname(name), prev(NULL), next(NULL), ncycle(0), pmy_block_(pmb)
+  myname(name), prev(nullptr), next(nullptr), ncycle(0), pmy_block_(pmb)
 {
   ncells1_ = pmb->block_size.nx1 + 2*(NGHOST);
   ncells2_ = 1; 
@@ -78,29 +80,14 @@ Diagnostics::Diagnostics(MeshBlock *pmb, std::string name):
 }
 
 Diagnostics::~Diagnostics() {
-  if (prev != NULL) prev->next = next;
-  if (next != NULL) next->prev = prev;
-
-  x1edge_.DeleteAthenaArray();
-  x1edge_p1_.DeleteAthenaArray();
-  x2edge_.DeleteAthenaArray();
-  x2edge_p1_.DeleteAthenaArray();
-  x3edge_.DeleteAthenaArray();
-  x3edge_p1_.DeleteAthenaArray();
-
-  x1area_.DeleteAthenaArray();
-  x2area_.DeleteAthenaArray();
-  x2area_p1_.DeleteAthenaArray();
-  x3area_.DeleteAthenaArray();
-  x3area_p1_.DeleteAthenaArray();
-
-  vol_.DeleteAthenaArray();
+  if (prev != nullptr) prev->next = next;
+  if (next != nullptr) next->prev = prev;
 }
 
 Diagnostics* Diagnostics::operator[](std::string name)
 {
   Diagnostics *p = this;
-  while (p != NULL) {
+  while (p != nullptr) {
     if (p->myname == name)
       return p;
     p = p->next;

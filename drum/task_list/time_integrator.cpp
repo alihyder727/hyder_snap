@@ -29,6 +29,7 @@
 #include "../parameter_input.hpp"
 #include "../reconstruct/reconstruction.hpp"
 #include "../scalars/scalars.hpp"
+#include "../diagnostics/diagnostics.hpp"
 #include "task_list.hpp"
 
 //----------------------------------------------------------------------------------------
@@ -1155,6 +1156,12 @@ TaskStatus TimeIntegratorTaskList::PhysicalBoundary(MeshBlock *pmb, int stage) {
 
 TaskStatus TimeIntegratorTaskList::UserWork(MeshBlock *pmb, int stage) {
   if (stage != nstages) return TaskStatus::success; // only do on last stage
+
+  Diagnostics *p = pmb->pdiag->next;
+  while (p != nullptr) {
+    p->Progress(pmb->phydro->w);
+    p = p->next;
+  }
 
   pmb->UserWorkInLoop();
   return TaskStatus::success;

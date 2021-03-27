@@ -37,8 +37,7 @@ void EddyFlux::Progress(AthenaArray<Real> const& w)
     for (int j = js; j <= je; ++j) {
       pcoord->CellVolume(k,j,is,ie,vol_);
       for (int i = is; i <= ie; ++i) {
-        data_sum[i] += vol_(i)*w(IDN,k,j,i);
-        for (int n = 1; n < IPR; ++n)
+        for (int n = 0; n < IPR; ++n)
           data_sum[n*ncells1_ + i] += vol_(i)*w(n,k,j,i);
         data_sum[IPR*ncells1_ + i] += vol_(i)*pthermo->Temp(w.at(k,j,i));
         data_sum[NHYDRO*ncells1_ + i] += vol_(i);
@@ -55,9 +54,7 @@ void EddyFlux::Progress(AthenaArray<Real> const& w)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
         Real vol = data_sum[NHYDRO*ncells1_ + i];
-        mean_(IDN,k,j,i) = data_sum[i]/vol;
-        eddy_(IDN,k,j,i) = w(IDN,k,j,i) - mean_(IDN,k,j,i);
-        for (int n = 1; n < IPR; ++n) {
+        for (int n = 0; n < IPR; ++n) {
           mean_(n,k,j,i) = data_sum[n*ncells1_+ i]/vol;
           eddy_(n,k,j,i) = w(n,k,j,i) - mean_(n,k,j,i);
         }

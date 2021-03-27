@@ -24,7 +24,10 @@ void TotalFlux::Progress(AthenaArray<Real> const& w)
   int is = pmb->is, js = pmb->js, ks = pmb->ks;
   int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
 
-  // calculate horizontal mean
+  if (ncycle == 0)
+    std::fill(data.data(), data.data() + data.GetSize(), 0.);
+
+  // sum over horizontal grids weighted by volume
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j) {
       pcoord->CellVolume(k,j,is,ie,vol_);
