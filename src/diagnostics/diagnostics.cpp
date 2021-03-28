@@ -38,8 +38,10 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
       AddDiagnostics(HorizontalDivergence(pmb));
     else if (name == "b") // 9.
       AddDiagnostics(Buoyancy(pmb));
-    else if (name == "radflux") // 9.
+    else if (name == "radflux") // 10.
       AddDiagnostics(RadiativeFlux(pmb));
+    else if (name == "am") // 11.
+      AddDiagnostics(AngularMomentum(pmb));
     else {
       msg << "### FATAL ERROR in function Diagnostics::Diagnostics"
           << std::endl << "Diagnostic variable " << name << " not defined";

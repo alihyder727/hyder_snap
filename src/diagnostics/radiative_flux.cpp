@@ -1,3 +1,9 @@
+// C/C++ headers
+// MPI headers
+#ifdef MPI_PARALLEL
+  #include <mpi.h>
+#endif
+
 #include "diagnostics.hpp"
 #include "../coordinates/coordinates.hpp"
 #include "../radiation/radiation.hpp"
@@ -6,16 +12,11 @@ RadiativeFlux::RadiativeFlux(MeshBlock *pmb):Diagnostics(pmb, "radflux")
 {
   type = "VECTORS";
   grid = "--F";
-  long_name = "total upward radiative flux, total downward radiative flux";
+  long_name = "total upward radiative flux,total downward radiative flux";
   units = "w/m^2";
   // 0: upward flux
   // 1: downward flux
   data.NewAthenaArray(2,1,1,ncells1_+1);
-}
-
-RadiativeFlux::~RadiativeFlux()
-{
-  data.DeleteAthenaArray();
 }
 
 void RadiativeFlux::Progress(AthenaArray<Real> const& w)

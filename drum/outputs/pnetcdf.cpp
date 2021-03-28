@@ -261,9 +261,11 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       else if ((pdata->grid == "FCC") && (nx3 > 1))
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis3, ivar);
       else if (pdata->grid == "--C")
-        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1, ivar);
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iaxis, ivar);
       else if (pdata->grid == "--F")
-        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1f, ivar);
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 2, iaxis1, ivar);
+      else if (pdata->grid == "---")
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 1, iaxis, ivar);
       else
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar);
 
@@ -467,7 +469,13 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
           float *it = *ib;
           for (int i = out_is; i <= out_ie+1; ++i)
             *it++ = (float)pdata->data(n,i);
-          err = ncmpi_iput_vara_float(ifile, *ivar++, start_ax1, count_ax1f, *ib++, ir++);
+          err = ncmpi_iput_vara_float(ifile, *ivar++, start, count1, *ib++, ir++);
+          ERR
+        }
+      } else if (pdata->grid == "---") {
+        for (int n = 0; n < nvar; n++) {
+          **ib = (float)pdata->data(n,0);
+          err = ncmpi_iput_vara_float(ifile, *ivar++, start, count, *ib++, ir++);
           ERR
         }
       } else {

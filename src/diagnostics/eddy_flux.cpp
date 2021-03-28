@@ -1,5 +1,10 @@
+// C/C++ headers
+// MPI headers
+#ifdef MPI_PARALLEL
+  #include <mpi.h>
+#endif
+
 #include "diagnostics.hpp"
-#include "../globals.hpp"
 #include "../reconstruct/interpolation.hpp"
 #include "../coordinates/coordinates.hpp"
 #include "../thermodynamics/thermodynamics.hpp"

@@ -145,8 +145,16 @@ protected:
 class RadiativeFlux: public Diagnostics {
 public:
   RadiativeFlux(MeshBlock *pmb);
-  virtual ~RadiativeFlux();
+  virtual ~RadiativeFlux() {}
   void Progress(AthenaArray<Real> const& w);
+  void Finalize(AthenaArray<Real> const& w);
+};
+
+// 10. total radiative flux
+class AngularMomentum: public Diagnostics {
+public:
+  AngularMomentum(MeshBlock *pmb);
+  virtual ~AngularMomentum() {}
   void Finalize(AthenaArray<Real> const& w);
 };
 
