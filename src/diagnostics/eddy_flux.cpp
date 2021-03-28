@@ -8,6 +8,7 @@ EddyFlux::EddyFlux(MeshBlock *pmb):Diagnostics(pmb, "eddyflux")
 {
   type = "VECTORS";
   grid = "--C";
+  long_name = "Z-coordinate eddy flux";
   eddy_.NewAthenaArray(NHYDRO,ncells3_,ncells2_,ncells1_);
   mean_.NewAthenaArray(NHYDRO,ncells3_,ncells2_,ncells1_);
   data.NewAthenaArray(2*NHYDRO,1,1,ncells1_);

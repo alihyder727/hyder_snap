@@ -378,6 +378,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     pod = new OutputData;
     pod->type = "SCALARS";
     pod->name = "rho";
+    pod->long_name = "density";
+    pod->units = "kg/m^3";
     pod->data.InitWithShallowSlice(phyd->w, 4, IDN, 1);
     AppendOutputDataNode(pod);
     num_vars_++;
@@ -401,6 +403,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->name = "press";
+      pod->long_name = "pressure";
+      pod->units = "pa";
       pod->data.InitWithShallowSlice(phyd->w, 4, IPR, 1);
       AppendOutputDataNode(pod);
       num_vars_++;
@@ -462,6 +466,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     pod = new OutputData;
     pod->type = "VECTORS";
     pod->name = "vel";
+    pod->long_name = "velocity";
+    pod->units = "m/s";
     pod->data.InitWithShallowSlice(phyd->w, 4, IVX, 3);
     AppendOutputDataNode(pod);
     num_vars_ += 3;
@@ -485,6 +491,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     pod = new OutputData;
     pod->type = "SCALARS";
     pod->name = "vel1";
+    pod->long_name = "velocity in Z-coordinate";
+    pod->units = "m/s";
     pod->data.InitWithShallowSlice(phyd->w, 4, IVX, 1);
     AppendOutputDataNode(pod);
     num_vars_++;
@@ -494,6 +502,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     pod = new OutputData;
     pod->type = "SCALARS";
     pod->name = "vel2";
+    pod->long_name = "velocity in Y-coordinate";
+    pod->units = "m/s";
     pod->data.InitWithShallowSlice(phyd->w, 4, IVY, 1);
     AppendOutputDataNode(pod);
     num_vars_++;
@@ -503,6 +513,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     pod = new OutputData;
     pod->type = "SCALARS";
     pod->name = "vel3";
+    pod->long_name = "velocity in X-coordinate";
+    pod->units = "m/s";
     pod->data.InitWithShallowSlice(phyd->w, 4, IVZ, 1);
     AppendOutputDataNode(pod);
     num_vars_++;
@@ -644,6 +656,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod->type = "SCALARS";
       if (pmb->user_out_var_names_[n].length() != 0) {
         pod->name = pmb->user_out_var_names_[n];
+        pod->long_name = pmb->user_out_var_longnames_[n];
+        pod->units = pmb->user_out_var_units_[n];
       } else {
         char vn[16];
         std::snprintf(vn, sizeof(vn), "user_out_var%d", n);
@@ -675,6 +689,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod = new OutputData;
       pod->type = "VECTORS";
       pod->name = "vapor";
+      pod->long_name = "mass mixing ratio of " + pod->name;
+      pod->units = "kg/kg";
       pod->data.InitWithShallowSlice(phyd->w,4,1,NVAPOR);
       AppendOutputDataNode(pod);
       num_vars_+=NVAPOR;
@@ -700,6 +716,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
         pod->type = "VECTORS";
         char c = '1' + i - 1;
         pod->name = str + c;
+        pod->long_name = "mass mixing ratio of " + pod->name;
+        pod->units = "kg/kg";
         pod->data.InitWithShallowSlice(phyd->w,4,1+i*NVAPOR,NVAPOR);
         AppendOutputDataNode(pod);
         num_vars_+=NVAPOR;
@@ -720,15 +738,24 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   // diagnostic
   if (output_params.variable.compare("diag") == 0) {
     Diagnostics *p = pdiag->next;
-    while (p != NULL) {
+    while (p != nullptr) {
       pod = new OutputData;
       pod->type = p->type;
       pod->grid = p->grid;
       pod->name = p->myname;
+      pod->long_name = p->long_name;
+      pod->units = p->units;
       p->Finalize(phyd->w);
 
       if (p->myname == "eddyflux")  {
         pod->data.InitWithShallowSlice(p->data,4,0,NHYDRO);
+        AppendOutputDataNode(pod);
+        num_vars_ += NHYDRO;
+
+        pod = new OutputData;
+        pod->name = "meanflux";
+        pod->long_name = "Z-coordinate mean flux";
+        pod->data.InitWithShallowSlice(p->data,4,NHYDRO,NHYDRO);
         AppendOutputDataNode(pod);
         num_vars_ += NHYDRO;
       } else {
@@ -750,6 +777,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->name = p->myname+"tau";
+      pod->long_name = "optical depth";
+      pod->units = "1";
       pod->data.InitWithShallowSlice(p->btau,4,0,1);
       AppendOutputDataNode(pod);
       num_vars_ += 1;
@@ -767,6 +796,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod->type = "SCALARS";
       pod->grid = "CCF";
       pod->name = p->myname+"flxup";
+      pod->long_name = "upward radiative flux";
+      pod->units = "w/m^2";
       pod->data.InitWithShallowSlice(p->bflxup,4,0,1);
       AppendOutputDataNode(pod);
       num_vars_ += 1;
@@ -775,6 +806,8 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod->type = "SCALARS";
       pod->grid = "CCF";
       pod->name = p->myname+"flxdn";
+      pod->long_name = "downward radiative flux";
+      pod->units = "w/m^2";
       pod->data.InitWithShallowSlice(p->bflxdn,4,0,1);
       AppendOutputDataNode(pod);
       num_vars_ += 1;

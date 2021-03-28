@@ -25,8 +25,8 @@ Real grav, P0, T0, Z0, Tmin;
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
   AllocateUserOutputVariables(2);
-  SetUserOutputVariableName(0, "temp");
-  SetUserOutputVariableName(1, "theta");
+  SetUserOutputVariableName(0, "temp", "temperature", "K");
+  SetUserOutputVariableName(1, "theta", "potential temperature", "K");
 }
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)

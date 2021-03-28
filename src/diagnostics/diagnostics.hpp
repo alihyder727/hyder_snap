@@ -14,6 +14,7 @@ class Diagnostics {
 public:
   // data
   std::string myname, type, grid;
+  std::string long_name, units;
   Diagnostics *prev, *next;
   AthenaArray<Real> data;
   int ncycle;

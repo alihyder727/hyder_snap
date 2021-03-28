@@ -62,11 +62,14 @@ struct OutputData {
   std::string type;        // one of (SCALARS,VECTORS) used for vtk outputs
   std::string grid;        // (CCC,CCF,CFC,...)
   std::string name;
+  std::string long_name;
+  std::string units;
   AthenaArray<Real> data;  // array containing data (usually shallow copy/slice)
   // ptrs to previous and next nodes in doubly linked list:
   OutputData *pnext, *pprev;
 
-  OutputData() : grid("CCC"), pnext(nullptr),  pprev(nullptr) {}
+  OutputData() : type("SCALARS"), grid("CCC"), name(""), long_name(""), units(""),
+    pnext(nullptr),  pprev(nullptr) {}
 };
 
 //----------------------------------------------------------------------------------------

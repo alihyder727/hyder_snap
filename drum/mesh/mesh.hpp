@@ -108,6 +108,8 @@ class MeshBlock {
   int nuser_out_var;
   AthenaArray<Real> user_out_var;
   std::string *user_out_var_names_;
+  std::string *user_out_var_longnames_;
+  std::string *user_out_var_units_;
 
   // user MeshBlock data that can be stored in restart files
   AthenaArray<Real> *ruser_meshblock_data;
@@ -171,7 +173,8 @@ class MeshBlock {
   void AllocateRealUserMeshBlockDataField(int n);
   void AllocateIntUserMeshBlockDataField(int n);
   void AllocateUserOutputVariables(int n);
-  void SetUserOutputVariableName(int n, const char *name);
+  void SetUserOutputVariableName(int n, const char *name,
+    const char *long_name = "", const char *units = "");
   void SetCostForLoadBalancing(double cost);
 
   // defined in either the prob file or default_pgen.cpp in ../pgen/

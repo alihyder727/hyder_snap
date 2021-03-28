@@ -6,6 +6,8 @@ RadiativeFlux::RadiativeFlux(MeshBlock *pmb):Diagnostics(pmb, "radflux")
 {
   type = "VECTORS";
   grid = "--F";
+  long_name = "total upward radiative flux, total downward radiative flux";
+  units = "w/m^2";
   // 0: upward flux
   // 1: downward flux
   data.NewAthenaArray(2,1,1,ncells1_+1);

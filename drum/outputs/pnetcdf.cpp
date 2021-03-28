@@ -19,6 +19,7 @@
 #include "../hydro/hydro.hpp"
 #include "../math/core.h"
 #include "../coordinates/coordinates.hpp"
+#include "../utils/utils.hpp"
 #include "outputs.hpp"
 
 // Only proceed if PNETCDF output enabled
@@ -61,10 +62,10 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   fname.append(".nc");
 
   // 0. reference radius for spherical polar geometry
-  Real radius;
+  float radius;
   if (COORDINATE_SYSTEM == "spherical_polar") {
     try {
-      radius = pin->GetReal("problem", "radius");
+      radius = (float)pin->GetReal("problem", "radius");
     } catch(std::runtime_error& e) {
       std::stringstream msg; 
       msg << "### FATAL ERROR in PnetcdfOutput::WriteOutputFile" << std::endl
@@ -210,7 +211,35 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   pdata = pfirst_data_;
   while (pdata != NULL) {
-    std::string name;
+    std::string name, attr;
+    std::vector<std::string> longnames, units;
+
+    // vectorize long_name
+    if (pdata->long_name.find(',') != std::string::npos) {
+      longnames = Vectorize<std::string>(pdata->long_name.c_str(), ",");
+      std::stringstream msg; 
+      if (longnames.size() != pdata->data.GetDim4()) {
+        msg << "### FATAL ERROR in PnetcdfOutput::WriteOutputFile"
+            << std::endl << "Size of long_names: " << longnames.size()
+            << " does not equal number of fields: " << pdata->data.GetDim4()
+            << std::endl;
+        ATHENA_ERROR(msg);
+      }
+    }
+
+    // vectorize units
+    if (pdata->units.find(',') != std::string::npos) {
+      units = Vectorize<std::string>(pdata->units.c_str(), ",");
+      std::stringstream msg; 
+      if (units.size() != pdata->data.GetDim4()) {
+        msg << "### FATAL ERROR in PnetcdfOutput::WriteOutputFile"
+            << std::endl << "Size of units: " << units.size()
+            << " does not equal number of fields: " << pdata->data.GetDim4()
+            << std::endl;
+        ATHENA_ERROR(msg);
+      }
+    }
+
     for (int n = 0; n < pdata->data.GetDim4(); ++n) {
       size_t pos = pdata->name.find('?');
       if (pdata->data.GetDim4() == 1) { // SCALARS
@@ -238,46 +267,22 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       else
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar);
 
-      if (name == "rho") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 6, "kg/m^3");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 7, "density");
-      } else if (name == "press") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 2, "pa");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 8, "pressure");
-      } else if (name == "vel1") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in Z-coordinate");
-      } else if (name == "vel2") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in Y-coordinate");
-        if (COORDINATE_SYSTEM == "spherical_polar") {
-          float minues_one = -1;
-          ncmpi_put_att_float(ifile, *ivar, "scale_factor", NC_FLOAT, 1, &minues_one);
-        }
-      } else if (name == "vel3") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 3, "m/s");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "velocity in X-coordinate");
-      } else if (name == "temp") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 1, "K");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 24, "temperature");
-      } else if (name == "theta") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 1, "K");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 21, "potential temperature");
-      } else if (name.find("tau") != std::string::npos) {
-        ncmpi_put_att_text(ifile, *ivar, "units", 1, "1");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 13, "optical depth");
-      } else if (name.find("flxup") != std::string::npos) {
-        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 21, "upward radiative flux");
-      } else if (name.find("flxdn") != std::string::npos) {
-        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 23, "downward radiative flux");
-      } else if (name == "radflux1") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 27, "total upward radiative flux");
-      } else if (name == "radflux2") {
-        ncmpi_put_att_text(ifile, *ivar, "units", 5, "w/m^2");
-        ncmpi_put_att_text(ifile, *ivar, "long_name", 29, "total downward radiative flux");
+      // set units
+      if (pdata->units != "") {
+        if (units.empty())
+          attr = pdata->units;
+        else
+          attr = units[n];
+        ncmpi_put_att_text(ifile, *ivar, "units", attr.length(), attr.c_str());
+      }
+
+      // set long_name
+      if (pdata->long_name != "") {
+        if (longnames.empty())
+          attr = pdata->long_name;
+        else
+          attr = longnames[n];
+        ncmpi_put_att_text(ifile, *ivar, "long_name", attr.length(), attr.c_str());
       }
 
       ivar++;
@@ -287,6 +292,10 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   err = ncmpi_put_att_text(ifile, NC_GLOBAL, "Conventions", 6, "COARDS");
   ERR
+  if (COORDINATE_SYSTEM == "spherical_polar") {
+    err = ncmpi_put_att_float(ifile, NC_GLOBAL, "PlanetRadius", NC_FLOAT, 1, &radius);
+    ERR
+  }
 
   err = ncmpi_enddef(ifile);
   ERR

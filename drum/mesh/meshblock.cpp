@@ -392,6 +392,8 @@ MeshBlock::~MeshBlock() {
   // delete user output variables array
   if (nuser_out_var > 0) {
     delete [] user_out_var_names_;
+    delete [] user_out_var_longnames_;
+    delete [] user_out_var_units_;
   }
   // delete user MeshBlock data
   if (nreal_user_meshblock_data_ > 0) delete [] ruser_meshblock_data;
@@ -464,6 +466,8 @@ void MeshBlock::AllocateUserOutputVariables(int n) {
   nuser_out_var = n;
   user_out_var.NewAthenaArray(nuser_out_var, ncells3, ncells2, ncells1);
   user_out_var_names_ = new std::string[n];
+  user_out_var_longnames_ = new std::string[n];
+  user_out_var_units_ = new std::string[n];
   return;
 }
 
@@ -472,7 +476,8 @@ void MeshBlock::AllocateUserOutputVariables(int n) {
 //! \fn void MeshBlock::SetUserOutputVariableName(int n, const char *name)
 //  \brief set the user-defined output variable name
 
-void MeshBlock::SetUserOutputVariableName(int n, const char *name) {
+void MeshBlock::SetUserOutputVariableName(int n, const char *name,
+  const char *long_name, const char *units) {
   if (n >= nuser_out_var) {
     std::stringstream msg;
     msg << "### FATAL ERROR in MeshBlock::SetUserOutputVariableName"
@@ -481,6 +486,8 @@ void MeshBlock::SetUserOutputVariableName(int n, const char *name) {
     return;
   }
   user_out_var_names_[n] = name;
+  user_out_var_longnames_[n] = long_name;
+  user_out_var_units_[n] = units;
   return;
 }
 

@@ -9,7 +9,8 @@
 #include "../coordinates/coordinates.hpp"
 
 Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
-  myname("HEAD"), type("NONE"), grid("NONE"), prev(nullptr), next(nullptr), 
+  myname("HEAD"), type(""), grid(""), long_name(""), units(""),
+  prev(nullptr), next(nullptr), 
   ncycle(0), pmy_block_(pmb)
 {
   std::stringstream msg;
