@@ -15,8 +15,8 @@ AngularMomentum::AngularMomentum(MeshBlock *pmb) : Diagnostics(pmb, "am")
 {
   type = "VECTORS";
   grid = "---";
-  long_name = "mass,moment of inertia,mean angular velocity";
-  units = "kg,kg m^2,1/s";
+  long_name = "mass,moment of inertia relative to a thin spherical shell,mean angular velocity";
+  units = "kg,1,1/s";
   data.NewAthenaArray(3,1,1,1);
   if (COORDINATE_SYSTEM != "spherical_polar") {
     std::stringstream msg; 
@@ -39,6 +39,10 @@ void AngularMomentum::Finalize(AthenaArray<Real> const& w)
   mass_moi_am[1] = 0.;
   mass_moi_am[2] = 0.;
 
+  Real xmin = pmb->pmy_mesh->mesh_size.x1min;
+  Real xmax = pmb->pmy_mesh->mesh_size.x1max;
+  Real mean_radius = (xmin + xmax)/2.;
+
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j) {
       pcoord->CellVolume(k,j,is,ie,vol_);
@@ -57,7 +61,7 @@ void AngularMomentum::Finalize(AthenaArray<Real> const& w)
     MPI_Allreduce(MPI_IN_PLACE, mass_moi_am, 3, MPI_ATHENA_REAL, MPI_SUM, MPI_COMM_WORLD);
 #endif
     data(0) = mass_moi_am[0];
-    data(1) = mass_moi_am[1];
+    data(1) = mass_moi_am[1]/(2./3.*mass_moi_am[0]*mean_radius*mean_radius);
     if (mass_moi_am[1] != 0)
       data(2) = mass_moi_am[2]/mass_moi_am[1];
 }

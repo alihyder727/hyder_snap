@@ -753,8 +753,11 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
         num_vars_ += NHYDRO;
 
         pod = new OutputData;
+        pod->type = p->type;
+        pod->grid = p->grid;
         pod->name = "meanflux";
         pod->long_name = "Z-coordinate mean flux";
+        pod->units = p->units;
         pod->data.InitWithShallowSlice(p->data,4,NHYDRO,NHYDRO);
         AppendOutputDataNode(pod);
         num_vars_ += NHYDRO;
