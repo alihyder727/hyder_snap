@@ -75,6 +75,22 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
 
       tau_bot_ = pin->GetReal("physics", "bot_sponge_layer.tau");
       width_bot_ = pin->GetReal("physics", "bot_sponge_layer.width");
+    } else if (std::strcmp(p, "top_cooling") == 0) {
+      pkg.id = TOP_COOLING;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
+      pkg.Function = &Physics::TopCooling;
+      ptm->AddPackage(pkg, "top_cooling");
+
+      Jcool_ = pin->GetReal("physics", "top_cooling.KperDay")/86400.; // K/day to K/s
+    } else if (std::strcmp(p, "bot_heating") == 0) {
+      pkg.id = TOP_COOLING;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
+      pkg.Function = &Physics::BotHeating;
+      ptm->AddPackage(pkg, "bot_heating");
+
+      Jheat_ = pin->GetReal("physics", "bot_heating.KperDay")/86400.; // K/day to K/s
     } else {
       msg << "### FATAL ERROR in function Physics::Physics"
           << std::endl << "Package '" << p << "' "
@@ -106,7 +122,11 @@ void Physics::Initialize(AthenaArray<Real> const& w)
   }
 
   if (has_bot_neighbor)
-    ptm->RemoveTask(FIX_BOT_TEMPERATURE | FIX_BOT_VELOCITY | FIX_BOT_COMPOSITION);
+    ptm->RemoveTask(FIX_BOT_TEMPERATURE | FIX_BOT_VELOCITY | FIX_BOT_COMPOSITION
+                  | BOT_HEATING);
+
+  if (has_top_neighbor)
+    ptm->RemoveTask(TOP_COOLING);
 
   for (int k = pmb->ks; k <= pmb->ke; ++k)
     for (int j = pmb->js; j <= pmb->je; ++j) {

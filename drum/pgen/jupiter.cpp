@@ -15,6 +15,7 @@
 #include "../globals.hpp"
 #include "../utils/utils.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
+#include "../physics/physics.hpp"
 
 // molecules
 enum {iH2O = 1, iNH3 = 2, iH2Oc = 3, iNH3c = 4, iH2Op = 5, iNH3p = 6};
@@ -231,6 +232,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   srand(Globals::my_rank + time(0));
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
+  pphy->Initialize(phydro->w);
 
   FreeCArray(w1);
   delete[] z1;

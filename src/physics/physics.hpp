@@ -41,9 +41,15 @@ public:
     AthenaArray<Real> const& w, Real time, Real dt);
   TaskStatus RelaxBotComposition(AthenaArray<Real> &u,
     AthenaArray<Real> const& w, Real time, Real dt);
+
   TaskStatus TopSpongeLayer(AthenaArray<Real> &u,
     AthenaArray<Real> const& w, Real time, Real dt);
   TaskStatus BotSpongeLayer(AthenaArray<Real> &u,
+    AthenaArray<Real> const& w, Real time, Real dt);
+
+  TaskStatus TopCooling(AthenaArray<Real> &u,
+    AthenaArray<Real> const& w, Real time, Real dt);
+  TaskStatus BotHeating(AthenaArray<Real> &u,
     AthenaArray<Real> const& w, Real time, Real dt);
 
 protected:
@@ -60,6 +66,9 @@ protected:
   // parameters for sponge layer
   Real tau_top_, tau_bot_;
   Real width_top_, width_bot_;
+
+  // parameters for cooling and heating;
+  Real Jcool_, Jheat_;
 };
 
 //! \brief task to do on a meshblock
@@ -82,6 +91,8 @@ namespace PhysicsPackageNames {
   const uint64_t FIX_BOT_COMPOSITION=1LL << 2;
   const uint64_t TOP_SPONGE_LAYER=1LL << 3;
   const uint64_t BOT_SPONGE_LAYER=1LL << 4;
+  const uint64_t TOP_COOLING=1LL << 5;
+  const uint64_t BOT_HEATING=1LL << 6;
 }
 
 #endif
