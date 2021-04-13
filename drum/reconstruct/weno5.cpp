@@ -25,6 +25,7 @@ void Reconstruction::Weno5X1(const int k, const int j, const int il, const int i
   const AthenaArray<Real> &w, const AthenaArray<Real> &bcc,
   AthenaArray<Real> &wl, AthenaArray<Real> &wr)
 {
+  MeshBlock *pmb = pmy_block_;
   for (int n=0; n<=NVAPOR; ++n) 
 #pragma omp simd
     for (int i=il; i<=iu; ++i) {
@@ -51,30 +52,42 @@ void Reconstruction::Weno5X1(const int k, const int j, const int il, const int i
     }
 
   for (int n=NMASS; n<NHYDRO; ++n) {
-    for (int i=il; i<il+NGHOST; ++i) {
-      wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
-      wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
-    }
+    if (pmb->pbval->block_bcs[inner_x1] != BoundaryFlag::block)
+      for (int i=il; i<il+NGHOST; ++i) {
+        wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
+        wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
+      }
+    else
+      for (int i=il; i<il+NGHOST; ++i) {
+        wl(n,i+1) = interp_cp5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
+        wr(n,i  ) = interp_cp5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
+      }
 
-    if (n == IVX || n == IPR)
+    //if (n == IVX || n == IPR)
 #pragma omp simd
       for (int i=il+NGHOST; i<=iu-NGHOST; ++i) {
         wl(n,i+1) = interp_cp5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
         wr(n,i  ) = interp_cp5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
       }
-    else
+    /*else
 #pragma omp simd
       for (int i=il+NGHOST; i<=iu-NGHOST; ++i) {
         wl(n,i+1) = interp_bp5(w(n,k,j,i+3),w(n,k,j,i+2),w(n,k,j,i+1),
                                w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2),-sign(w(IVX,k,j,i)));
         wr(n,i  ) = interp_bp5(w(n,k,j,i-3),w(n,k,j,i-2),w(n,k,j,i-1),
                                w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2), sign(w(IVX,k,j,i)));
-      }
+      }*/
 
-    for (int i=iu-NGHOST+1; i<=iu; ++i) {
-      wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
-      wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
-    }
+    if (pmb->pbval->block_bcs[outer_x1] == BoundaryFlag::block)
+      for (int i=iu-NGHOST+1; i<=iu; ++i) {
+        wl(n,i+1) = interp_cp5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
+        wr(n,i  ) = interp_cp5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
+      }
+    else
+      for (int i=iu-NGHOST+1; i<=iu; ++i) {
+        wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
+        wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
+      }
   }
 
   return;
@@ -113,20 +126,20 @@ void Reconstruction::Weno5X2(const int k, const int j, const int il, const int i
     }
 
   for (int n=NMASS; n<NHYDRO; ++n) {
-    if (n == IVY || n == IPR)
+    //if (n == IVY || n == IPR)
 #pragma omp simd
       for (int i=il; i<=iu; ++i) {
         wl(n,i) = interp_cp5(w(n,k,j+2,i),w(n,k,j+1,i),w(n,k,j,i),w(n,k,j-1,i),w(n,k,j-2,i));
         wr(n,i) = interp_cp5(w(n,k,j-2,i),w(n,k,j-1,i),w(n,k,j,i),w(n,k,j+1,i),w(n,k,j+2,i));
       }
-    else 
+    /*else 
 #pragma omp simd
       for (int i=il; i<=iu; ++i) {
         wl(n,i) = interp_bp5(w(n,k,j+3,i),w(n,k,j+2,i),w(n,k,j+1,i),
                              w(n,k,j,i),w(n,k,j-1,i),w(n,k,j-2,i),-sign(w(IVY,k,j,i)));
         wr(n,i) = interp_bp5(w(n,k,j-3,i),w(n,k,j-2,i),w(n,k,j-1,i),
                              w(n,k,j,i),w(n,k,j+1,i),w(n,k,j+2,i), sign(w(IVY,k,j,i)));
-      }
+      }*/
   }
 
   return;
@@ -165,20 +178,20 @@ void Reconstruction::Weno5X3(const int k, const int j, const int il, const int i
     }
 
   for (int n=NMASS; n<NHYDRO; ++n) {
-    if (n == IVZ || n == IPR)
+    //if (n == IVZ || n == IPR)
 #pragma omp simd
       for (int i=il; i<=iu; ++i) {
         wl(n,i) = interp_cp5(w(n,k+2,j,i),w(n,k+1,j,i),w(n,k,j,i),w(n,k-1,j,i),w(n,k-2,j,i));
         wr(n,i) = interp_cp5(w(n,k-2,j,i),w(n,k-1,j,i),w(n,k,j,i),w(n,k+1,j,i),w(n,k+2,j,i));
       }
-    else
+    /*else
 #pragma omp simd
       for (int i=il; i<=iu; ++i) {
         wl(n,i) = interp_bp5(w(n,k+3,j,i),w(n,k+2,j,i),w(n,k+1,j,i),
                              w(n,k,j,i),w(n,k-1,j,i),w(n,k-2,j,i),-sign(w(IVZ,k,j,i)));
         wr(n,i) = interp_bp5(w(n,k-3,j,i),w(n,k-2,j,i),w(n,k-1,j,i),
                              w(n,k,j,i),w(n,k+1,j,i),w(n,k+2,j,i), sign(w(IVZ,k,j,i)));
-      }
+      }*/
   }
 
   return;
