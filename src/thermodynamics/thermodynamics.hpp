@@ -78,6 +78,21 @@ public:
   void PolytropicIndex(AthenaArray<Real> &gamma, AthenaArray<Real> &w,
     int kl, int ku, int jl, int ju, int il, int iu) const;
 
+  template<typename T>
+  Real GetPolytropicIndex(T w) {
+    Real gamma = pmy_block_->peos->GetGamma();
+    Real fsig = 1., feps = 1.;
+    for (int n = 1 + NVAPOR; n < NMASS; ++n) {
+      fsig += w[n]*(rcv_[n] - 1.);
+      feps -= w[n];
+    }
+    for (int n = 1; n <= NVAPOR; ++n) {
+      fsig += w[n]*(rcv_[n] - 1.);
+      feps += w[n]*(1./eps_[n] - 1.);
+    }
+    return 1. + (gamma - 1.)*feps/fsig;
+  }
+
   // Conserved variables to thermodynamic variables
   void ConservedToThermodynamic(AthenaArray<Real> &q, AthenaArray<Real> const& u,
     int il, int iu, int jl, int ju, int kl, int ku) const;

@@ -26,6 +26,7 @@
 #include "../chemistry/chemistry.hpp"
 #include "../radiation/radiation.hpp"
 #include "../debugger/debugger.hpp"
+#include "decomposition/decomposition.hpp"
 
 // OpenMP header
 #ifdef OPENMP_PARALLEL
@@ -80,7 +81,8 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
   //  }
 
   // decompose pressure to pertubation pressure and hydrostatic pressure
-  DecomposePressure(w, kl, ku, jl, ju);
+  pdec->ChangeToPerturbation(w, kl, ku, jl, ju);
+  //pdec->ChangeToBuoyancy(w, kl, ku, jl, ju);
 
 #if DEBUG_LEVEL > 1
   pdbg = pdbg->StartTracking("Hydro::CalculateFluxes-ReconstructX1");
@@ -100,7 +102,8 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
       }
 
       // assemble pressure pertubation
-      AssemblePressure(w, wl_, wr_, k, j, is-1, ie+1);
+      pdec->RestoreFromPerturbation(w, wl_, wr_, k, j, is, ie+1);
+      //pdec->RestoreFromBuoyancy(w, wl_, wr_, k, j, is, ie+1);
 
 #if DEBUG_LEVEL > 1
       pdbg->Track1D("rho-l", IsPositive, wl_, IDN, k, j);

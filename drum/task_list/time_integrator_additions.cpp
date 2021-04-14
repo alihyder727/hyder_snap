@@ -2,7 +2,7 @@
 #include <iostream>
 
 // Athena++ headers
-#include "../athena.hpp"
+#include "../hydro/implicit/implicit_solver.hpp"
 #include "../hydro/hydro.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../chemistry/chemistry.hpp"
@@ -16,10 +16,16 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   Real dt = pmb->pmy_mesh->dt;
 
   // do implicit coorection at every stage
-  if (ph->implicit_flag == 1)
-    ph->ImplicitCorrectionFull(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
-  else if (ph->implicit_flag == 2)
-    ph->ImplicitCorrectionReduced(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+  //if (ph->implicit_flag == 1)
+  //  ph->ImplicitCorrectionFull(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+  if (ph->implicit_flag == 2) {
+    ph->pimp1->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+  } else if (ph->implicit_flag == 3) {
+    ph->pimp1->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+    ph->pimp2->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+    ph->pimp3->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+  }
+  ph->ImplicitUpdate(ph->du);
   Real wghts[3];
   wghts[0] = 1.;
   wghts[1] = 1.;

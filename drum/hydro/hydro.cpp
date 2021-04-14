@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <sstream>
 
 // Athena++ headers
 #include "../athena.hpp"
@@ -21,10 +22,12 @@
 #include "../field/field.hpp"
 #include "../mesh/mesh.hpp"
 #include "../reconstruct/reconstruction.hpp"
+#include "../thermodynamics/thermodynamics.hpp"
 #include "hydro.hpp"
 #include "hydro_diffusion/hydro_diffusion.hpp"
 #include "srcterms/hydro_srcterms.hpp"
-#include "vertical_communication.hpp"
+#include "implicit/implicit_solver.hpp"
+#include "decomposition/decomposition.hpp"
 
 // constructor, initializes data structures and parameters
 
@@ -142,22 +145,17 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
 
   UserTimeStep_ = pmb->pmy_mesh->UserTimeStep_;
 
-  // allocate hydrostatic and nonhydrostatic pressure
-  psf_.NewAthenaArray(nc3, nc2, nc1 + 1);
-  psv_.NewAthenaArray(nc3, nc2, nc1);
-  dsv_.NewAthenaArray(nc3, nc2, nc1);
-  psbuf_ = new Real [3*nc3*nc2];
-
-  // allocate polytropic index and pseudo entropy
-  gamma_.NewAthenaArray(nc3, nc2, nc1);
-  entropy_.NewAthenaArray(nc3, nc2, nc1);
-
   // du stores the change of the conservative variable in a substep
   du.NewAthenaArray(NHYDRO, nc3, nc2, nc1);
 
+  // decomposition
+  pdec = new Decomposition(this);
+
   // implicit correction
   implicit_flag = pin->GetOrAddInteger("hydro", "implicit_flag", 0);
-  pvc = new VerticalCommunication(this);
+  pimp1 = new ImplicitSolver(this, X1DIR);
+  pimp2 = new ImplicitSolver(this, X2DIR);
+  pimp3 = new ImplicitSolver(this, X3DIR);
 }
 
 //----------------------------------------------------------------------------------------
@@ -168,4 +166,52 @@ Real Hydro::GetWeightForCT(Real dflx, Real rhol, Real rhor, Real dx, Real dt) {
   Real v_over_c = (1024.0)* dt * dflx / (dx * (rhol + rhor));
   Real tmp_min = std::min(static_cast<Real>(0.5), v_over_c);
   return 0.5 + std::max(static_cast<Real>(-0.5), tmp_min);
+}
+
+Hydro::~Hydro() {
+  delete pdec;
+  delete pimp1;
+  delete pimp2;
+  delete pimp3;
+}
+
+void Hydro::CheckHydro() {
+  MeshBlock *pmb = pmy_block->pmy_mesh->pblock;
+  std::stringstream msg;
+  int myrank = Globals::my_rank;
+
+  for (int k = pmb->ks; k <= pmb->ke; ++k)
+    for (int j = pmb->js; j <= pmb->je; ++j)
+      for (int i = pmb->is; i <= pmb->ie; ++i) {
+        for (int n = 0; n < NMASS; ++n)
+          if (w(n,k,j,i) < 0.) {
+            msg << "### FATAL ERROR in Hydro::CheckHydro" << std::endl
+                << "Density variable is negative at position ("
+                << k << "," << j << "," << i << ") in rank " << myrank;
+            ATHENA_ERROR(msg);
+          }
+        if (w(IPR,k,j,i) < 0.) {
+          msg << "### FATAL ERROR in Hydro::CheckHydro" << std::endl
+              << "Pressure is negative at position ("
+              << k << "," << j << "," << i << ") in rank " << myrank;
+          ATHENA_ERROR(msg);
+        }
+        Real temp = pmb->pthermo->Temp(w.at(k,j,i));
+        Real grav = -hsrc.GetG1();
+        if (grav != 0) {
+          Real Tmin = 2.*grav*pmb->pcoord->dx1f(i)/pmb->pthermo->GetRd();
+          if (temp < Tmin) {
+            msg << "### FATAL ERROR in Hydro::CheckHydro" << std::endl
+                << "Vertical spacing is less than half scale height at position ("
+                << k << "," << j << "," << i << ") in rank " << myrank << std::endl
+                << "Minimum allowed temperature is " << Tmin << " K";
+            ATHENA_ERROR(msg);
+          }
+        }
+      }
+
+  // make a copy of w, needed for outflow boundary condition
+  w1 = w;
+  if (myrank == 0)
+    std::cout << "Hydro check passed. ";
 }
