@@ -98,7 +98,8 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du, AthenaArray<
 
   // 0. forcing and volume matrix
   FindNeighbors();
-  SynchronizeConserved(du_);
+  SynchronizeConserved(du_, ks, ke, js, je, is, ie);
+  WaitToFinishSync(ks, ke, js, je, is, ie);
 
   Real gamma = pmb->peos->GetGamma();
   Real grav = pmy_hydro->hsrc.GetG1();
@@ -221,7 +222,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du, AthenaArray<
     }
 
   BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
-  WaitToFinish(ks, ke, js, je);
+  WaitToFinishSend(ks, ke, js, je);
 
   delete [] gamma_m1;
 }

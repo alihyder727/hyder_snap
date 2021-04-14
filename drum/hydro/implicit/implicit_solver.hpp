@@ -29,13 +29,17 @@ public:
   ImplicitSolver(Hydro *phydro, CoordinateDirection dir);
   ~ImplicitSolver();
   void FindNeighbors();
-  void WaitSendTop(int kl, int ku, int jl, int ju);
-  void WaitSendBot(int kl, int ku, int jl, int ju);
-  void WaitToFinish(int kl, int ku, int jl, int ju);
   int CreateMPITag(int lid, int bufid, int phy);
 
+  void WaitSendTop(int kl, int ku, int jl, int ju);
+  void WaitSendBot(int kl, int ku, int jl, int ju);
+  void WaitToFinishSend(int kl, int ku, int jl, int ju);
+
+  void SynchronizeConserved(AthenaArray<Real> const& du,
+    int kl, int ku, int jl, int ju, int is, int ie);
+  void WaitToFinishSync(int kl, int ku, int jl, int ju, int is, int ie);
+
   void PartialCorrection(AthenaArray<Real> const& du, AthenaArray<Real> const& w, Real dt);
-  void SynchronizeConserved(AthenaArray<Real> &du_);
 
   template<typename T1, typename T2>
   void ForwardSweep(std::vector<T1> &a, std::vector<T1> &b, std::vector<T1> &c, 
@@ -137,13 +141,19 @@ public:
   }
 
 private:
-  Real *buffer_;
+  Real *buffer_;                  // MPI data buffer
+  Real *usend_top_, *urecv_top_;  // MPI data buffer
+  Real *usend_bot_, *urecv_bot_;  // MPI data buffer
   Real ****coefficients_; // archive of coefficients in the tri-diagonal matrix
   AthenaArray<Real> du_;  // stores implicit solution
 
 #ifdef MPI_PARALLEL
   MPI_Request **req_send_bot_data_;
   MPI_Request **req_send_top_data_;
+  MPI_Request req_send_sync_top_;
+  MPI_Request req_send_sync_bot_;
+  MPI_Request req_recv_sync_top_;
+  MPI_Request req_recv_sync_bot_;
 #endif
 };
 
