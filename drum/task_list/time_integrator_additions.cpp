@@ -16,11 +16,13 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   Real dt = pmb->pmy_mesh->dt;
 
   // do implicit coorection at every stage
-  //if (ph->implicit_flag == 1)
-  //  ph->ImplicitCorrectionFull(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
-  if (ph->implicit_flag == 2) {
+  if (ph->implicit_flag == 1)
     ph->pimp1->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
-  } else if (ph->implicit_flag == 3) {
+  else if (ph->implicit_flag == 2)
+    ph->pimp2->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+  else if (ph->implicit_flag == 3)
+    ph->pimp3->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+  else { // full implicit
     ph->pimp1->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
     ph->pimp2->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
     ph->pimp3->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);

@@ -9,6 +9,26 @@
 #include "../../math/eigen335/Eigen/Core"
 #include "../../math/eigen335/Eigen/Dense"
 
+inline void CopyPrimitives(Real wl[], Real wr[], AthenaArray<Real> const& w,
+  int k, int j, int i, CoordinateDirection dir)
+{
+  if (dir == X1DIR)
+    for (int n = 0; n < NHYDRO; ++n) {
+      wl[n] = w(n,k,j,i-1);
+      wr[n] = w(n,k,j,i);
+    }
+  else if (dir == X2DIR)
+    for (int n = 0; n < NHYDRO; ++n) {
+      wl[n] = w(n,j,i-1,k);
+      wr[n] = w(n,j,i,k);
+    }
+  else // X3DIR
+    for (int n = 0; n < NHYDRO; ++n) {
+      wl[n] = w(n,i-1,k,j);
+      wr[n] = w(n,i,k,j);
+    }
+}
+
 inline void RoeAverage(Real prim[], Real gm1, Real wl[], Real wr[])
 {
   Real sqrtdl = sqrt(wl[IDN]);
@@ -55,12 +75,12 @@ inline void Eigenvalue(Eigen::MatrixBase<Derived>& Lambda, Real u, Real cs)
 
 template<typename Derived1, typename Derived2>
 inline void Eigenvector(Eigen::DenseBase<Derived1>& Rmat, Eigen::DenseBase<Derived2>& Rimat,
-  Real prim[], Real cs, Real gm1)
+  Real prim[], Real cs, Real gm1, CoordinateDirection dir)
 {
   Real r = prim[IDN];
-  Real u = prim[IVX];
-  Real v = prim[IVY];
-  Real w = prim[IVZ];
+  Real u = prim[IVX+dir];
+  Real v = prim[IVX+(IVY-IVX+dir)%3];
+  Real w = prim[IVX+(IVZ-IVX+dir)%3];
   Real p = prim[IPR];
   
   Real ke = 0.5*(u*u + v*v + w*w);

@@ -18,36 +18,17 @@
 #include "implicit_solver.hpp"
 #include "forward_backward.hpp"
 
-void inline CopyPrimitives(Real wl[], Real wr[], AthenaArray<Real> const& w,
-  int k, int j, int i, CoordinateDirection dir)
-{
-  if (dir == X1DIR)
-    for (int n = 0; n < NHYDRO; ++n) {
-      wl[n] = w(n,k,j,i-1);
-      wr[n] = w(n,k,j,i);
-    }
-  else if (dir == X2DIR)
-    for (int n = 0; n < NHYDRO; ++n) {
-      wl[n] = w(n,j,i-1,k);
-      wr[n] = w(n,j,i,k);
-    }
-  else // X3DIR
-    for (int n = 0; n < NHYDRO; ++n) {
-      wl[n] = w(n,i-1,k,j);
-      wr[n] = w(n,i,k,j);
-    }
-}
-
-void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du, AthenaArray<Real> const& w, Real dt)
+void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du,
+  AthenaArray<Real> const& w, Real dt)
 { 
   MeshBlock *pmb = pmy_hydro->pmy_block;
   Coordinates *pcoord = pmb->pcoord;
   Thermodynamics *pthermo = pmb->pthermo;
 
   int is, ie, js, je, ks, ke;
-  int ivx, ivy, ivz, idn = 0, ien = 4;
+  //int ivx, ivy, ivz, idn = 0, ien = 4;
+  int idn = 0, ivx = 1, ivy = 2, ivz = 3, ien = 4;
   if (mydir == X1DIR) {
-    ivx = 1, ivy = 2, ivz = 3;
     ks = pmb->ks, js = pmb->js, is = pmb->is;
     ke = pmb->ke, je = pmb->je, ie = pmb->ie;
     for (int n = 0; n < NHYDRO; ++n)
@@ -56,7 +37,6 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du, AthenaArray<
           for (int i = is; i <= ie; ++i)
             du_(n,k,j,i) = du(n,k,j,i);
   } else if (mydir == X2DIR) {
-    ivx = 2, ivy = 3, ivz = 1;
     ks = pmb->is, js = pmb->ks, is = pmb->js;
     ke = pmb->ie, je = pmb->ke, ie = pmb->je;
     for (int n = 0; n < NHYDRO; ++n)
@@ -65,7 +45,6 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du, AthenaArray<
           for (int i = is; i <= ie; ++i)
             du_(n,k,j,i) = du(n,j,i,k);
   } else { // X3DIR
-    ivx = 3, ivy = 1, ivz = 2;
     ks = pmb->js, js = pmb->is, is = pmb->ks;
     ke = pmb->je, je = pmb->ie, ie = pmb->ke;
     for (int n = 0; n < NHYDRO; ++n)
@@ -156,7 +135,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du, AthenaArray<
       RoeAverage(prim, gm1, wl, wr);
       Real cs = pmb->peos->SoundSpeed(prim);
       Eigenvalue(Lambda, prim[IVX+mydir], cs);
-      Eigenvector(Rmat, Rimat, prim, cs, gm1);
+      Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
       Am = Rmat*Lambda*Rimat;
       Am1 << Am(idn,ivy), Am(idn,ivz),
              Am(ivx,ivy), Am(ivx,ivz),
@@ -170,7 +149,8 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du, AthenaArray<
         gm1 = 0.5*(gamma_m1[i] + gamma_m1[i+1]);
         RoeAverage(prim, gm1, wl, wr);
         Real cs = pmb->peos->SoundSpeed(prim);
-        Eigenvector(Rmat, Rimat, prim, cs, gm1);
+        Eigenvalue(Lambda, prim[IVX+mydir], cs);
+        Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
         Ap = Rmat*Lambda*Rimat;
         Ap1 << Ap(idn,ivy), Ap(idn,ivz),
                Ap(ivx,ivy), Ap(ivx,ivz),

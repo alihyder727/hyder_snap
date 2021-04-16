@@ -40,6 +40,7 @@ public:
   void WaitToFinishSync(int kl, int ku, int jl, int ju, int is, int ie);
 
   void PartialCorrection(AthenaArray<Real> const& du, AthenaArray<Real> const& w, Real dt);
+  void FullCorrection(AthenaArray<Real> const& du, AthenaArray<Real> const& w, Real dt);
 
   template<typename T1, typename T2>
   void ForwardSweep(std::vector<T1> &a, std::vector<T1> &b, std::vector<T1> &c, 

@@ -17,12 +17,18 @@ void ImplicitSolver::ForwardSweep(
   std::vector<T2> &delta, std::vector<T2> &corr, Real dt,
   int k, int j, int il, int iu)
 {
-  Eigen::Matrix<Real,3,1> rhs;
+  T2 rhs;
 
-  rhs(0) = du_(IDN,k,j,il)/dt;
-  rhs(1) = du_(IVX+mydir,k,j,il)/dt;
-  rhs(2) = du_(IEN,k,j,il)/dt;
-  rhs -= corr[il];
+  if (T2::RowsAtCompileTime == 3) {  // partial matrix
+    rhs(0) = du_(IDN,k,j,il)/dt;
+    rhs(1) = du_(IVX+mydir,k,j,il)/dt;
+    rhs(2) = du_(IEN,k,j,il)/dt;
+    rhs -= corr[il];
+  } else {  // full matrix
+    rhs(0) = du_(IDN,k,j,il)/dt;
+    for (int n = NMASS; n <= NMASS+3; ++n)
+      rhs(n-NMASS+1) = du_(n,k,j,il)/dt;
+  }
 
   if (has_bot_neighbor) {
     RecvBotBuffer(a[il-1], delta[il-1], k, j, bblock);
@@ -36,10 +42,16 @@ void ImplicitSolver::ForwardSweep(
   }
 
   for (int i = il+1; i <= iu; ++i) {
-    rhs(0) = du_(IDN,k,j,i)/dt;
-    rhs(1) = du_(IVX+mydir,k,j,i)/dt;
-    rhs(2) = du_(IEN,k,j,i)/dt;
-    rhs -= corr[i];
+    if (T2::RowsAtCompileTime == 3) {  // partial matrix
+      rhs(0) = du_(IDN,k,j,i)/dt;
+      rhs(1) = du_(IVX+mydir,k,j,i)/dt;
+      rhs(2) = du_(IEN,k,j,i)/dt;
+      rhs -= corr[i];
+    } else {
+      rhs(0) = du_(IDN,k,j,il)/dt;
+      for (int n = NMASS; n <= NMASS+3; ++n)
+        rhs(n-NMASS+1) = du_(n,k,j,i)/dt;
+    }
 
     a[i] = (a[i] - b[i]*a[i-1]).inverse().eval();
     delta[i] = a[i]*(rhs - b[i]*delta[i-1]);
@@ -72,9 +84,15 @@ void ImplicitSolver::BackwardSubstitution(
 
       // 7. update conserved variables, i = iu
       for (int i = il; i <= iu; ++i) {
-        du_(IDN,k,j,i) = delta[i](0);
-        du_(IVX+mydir,k,j,i) = delta[i](1);
-        du_(IEN,k,j,i) = delta[i](2);
+        if (T2::RowsAtCompileTime == 3) {  // partial matrix
+          du_(IDN,k,j,i) = delta[i](0);
+          du_(IVX+mydir,k,j,i) = delta[i](1);
+          du_(IEN,k,j,i) = delta[i](2);
+        } else { // full matrix
+          du_(IDN,k,j,i) = delta[i](0);
+          for (int n = NMASS; n <= NMASS+3; ++n)
+            du_(n,k,j,i) = delta[i](n-NMASS+1);
+        }
       }
 
       if (has_bot_neighbor)
