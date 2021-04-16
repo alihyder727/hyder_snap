@@ -101,14 +101,15 @@ inline void Eigenvector(Eigen::DenseBase<Derived1>& Rmat, Eigen::DenseBase<Deriv
 }
 
 template<typename Derived1>
-inline void FluxJacobian(Eigen::DenseBase<Derived1>& dfdq, Real gm1, Real w[])
+inline void FluxJacobian(Eigen::DenseBase<Derived1>& dfdq, Real gm1, Real w[],
+  CoordinateDirection dir)
 {
   // flux derivative
   // Input variables are density, velocity field and energy.
   // The primitives of cell (n,i)
-  Real v1  = w[IVX];
-  Real v2  = w[IVY];
-  Real v3  = w[IVZ];
+  Real v1  = w[IVX+dir];
+  Real v2  = w[IVX+(IVY-IVX+dir)%3];
+  Real v3  = w[IVX+(IVZ-IVX+dir)%3];
   Real rho = w[IDN];
   Real pres = w[IPR];
   Real s2 = v1*v1 + v2*v2 + v3*v3;

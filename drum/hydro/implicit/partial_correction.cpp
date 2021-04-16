@@ -119,7 +119,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du,
 
         gamma_m1[i] = (gamma - 1.)*feps/fsig;
         //FluxJacobian(dfdq1[i], dfdq2[i], gamma_m1[i], w, k, j, i);
-        FluxJacobian(dfdq, gamma_m1[i], wr);
+        FluxJacobian(dfdq, gamma_m1[i], wr, mydir);
         dfdq1[i] << dfdq(idn,ivy), dfdq(idn,ivz),
                     dfdq(ivx,ivy), dfdq(ivx,ivz),
                     dfdq(ien,ivy), dfdq(ien,ivz);
