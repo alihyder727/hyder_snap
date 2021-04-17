@@ -22,6 +22,7 @@ public:
 // data
   Hydro *pmy_hydro;
   bool has_top_neighbor, has_bot_neighbor;
+  bool first_block, last_block;
   NeighborBlock tblock, bblock;
   CoordinateDirection mydir;
 
@@ -39,8 +40,8 @@ public:
     int kl, int ku, int jl, int ju, int is, int ie);
   void WaitToFinishSync(int kl, int ku, int jl, int ju, int is, int ie);
 
-  void PartialCorrection(AthenaArray<Real> const& du, AthenaArray<Real> const& w, Real dt);
-  void FullCorrection(AthenaArray<Real> const& du, AthenaArray<Real> const& w, Real dt);
+  void PartialCorrection(AthenaArray<Real>& du, AthenaArray<Real> const& w, Real dt);
+  void FullCorrection(AthenaArray<Real>& du, AthenaArray<Real> const& w, Real dt);
 
   template<typename T1, typename T2>
   void ForwardSweep(std::vector<T1> &a, std::vector<T1> &b, std::vector<T1> &c, 
@@ -49,6 +50,15 @@ public:
 
   template<typename T1, typename T2>
   void BackwardSubstitution(std::vector<T1> &a, std::vector<T2> &delta, 
+    int kl, int ku, int jl, int ju, int il, int iu);
+
+  template<typename T1, typename T2>
+  void PeriodicForwardSweep(std::vector<T1> &a, std::vector<T1> &b, std::vector<T1> &c,
+    std::vector<T2> &delta, std::vector<T2> &corr, Real dt,
+    int k, int j, int il, int iu);
+
+  template<typename T1, typename T2>
+  void PeriodicBackwardSubstitution(std::vector<T1> &a, std::vector<T2> &delta,
     int kl, int ku, int jl, int ju, int il, int iu);
 
   template<typename T>

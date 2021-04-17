@@ -106,7 +106,7 @@ void Hydro::NewBlockTimeStep() {
       }
 
       // compute minimum of (v1 +/- C)
-      if ((!implicit_flag) || (pmb->block_size.nx2 == 1))
+      if (!(implicit_flag & 1) || (pmb->block_size.nx2 == 1))
         for (int i=is; i<=ie; ++i) {
           Real& dt_1 = dt1(i);
           min_dt_hyperbolic = std::min(min_dt_hyperbolic, dt_1);

@@ -92,8 +92,7 @@ class Hydro {
   void CalculateGravityFlux(AthenaArray<Real> &phi_in);
 
   void CheckHydro();
-  void ImplicitCorrectionFull(AthenaArray<Real> &du, AthenaArray<Real> const& w, Real dt);
-  void ImplicitUpdate(AthenaArray<Real> &du);
+  //void ImplicitUpdate(AthenaArray<Real> &du);
 
  private:
   AthenaArray<Real> dt1_, dt2_, dt3_;  // scratch arrays used in NewTimeStep

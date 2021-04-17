@@ -26,8 +26,10 @@ void ImplicitSolver::ForwardSweep(
     rhs -= corr[il];
   } else {  // full matrix
     rhs(0) = du_(IDN,k,j,il)/dt;
-    for (int n = NMASS; n <= NMASS+3; ++n)
-      rhs(n-NMASS+1) = du_(n,k,j,il)/dt;
+    rhs(1) = du_(IVX+mydir,k,j,il)/dt;
+    rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,il)/dt;
+    rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,il)/dt;
+    rhs(4) = du_(IEN,k,j,il)/dt;
   }
 
   if (has_bot_neighbor) {
@@ -48,9 +50,11 @@ void ImplicitSolver::ForwardSweep(
       rhs(2) = du_(IEN,k,j,i)/dt;
       rhs -= corr[i];
     } else {
-      rhs(0) = du_(IDN,k,j,il)/dt;
-      for (int n = NMASS; n <= NMASS+3; ++n)
-        rhs(n-NMASS+1) = du_(n,k,j,i)/dt;
+      rhs(0) = du_(IDN,k,j,i)/dt;
+      rhs(1) = du_(IVX+mydir,k,j,i)/dt;
+      rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,i)/dt;
+      rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,i)/dt;
+      rhs(4) = du_(IEN,k,j,i)/dt;
     }
 
     a[i] = (a[i] - b[i]*a[i-1]).inverse().eval();
@@ -90,8 +94,10 @@ void ImplicitSolver::BackwardSubstitution(
           du_(IEN,k,j,i) = delta[i](2);
         } else { // full matrix
           du_(IDN,k,j,i) = delta[i](0);
-          for (int n = NMASS; n <= NMASS+3; ++n)
-            du_(n,k,j,i) = delta[i](n-NMASS+1);
+          du_(IVX+mydir,k,j,i) = delta[i](1);
+          du_(IVX+(IVY-IVX+mydir)%3,k,j,i) = delta[i](2);
+          du_(IVX+(IVZ-IVX+mydir)%3,k,j,i) = delta[i](3);
+          du_(IEN,k,j,i) = delta[i](4);
         }
       }
 

@@ -116,8 +116,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
     // SSPRK (3,3): Gottlieb (2009) equation 3.2
     // Optimal (in error bounds) explicit three-stage, third-order SSPRK
     nstages = 3;
-    cfl_limit = 1.5;  // c_eff = c/nstages = 1/3 (Gottlieb (2009), pg 271)
-    if (pm->ndim == 1) cfl_limit = 10.;
+    cfl_limit = 20.;  // implicit scheme allows larger cfl limit
     stage_wghts[0].delta = 1.0;
     stage_wghts[0].gamma_1 = 0.0;
     stage_wghts[0].gamma_2 = 1.0;

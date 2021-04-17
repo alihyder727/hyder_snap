@@ -18,7 +18,7 @@
 #include "implicit_solver.hpp"
 #include "forward_backward.hpp"
 
-void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du,
+void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
   AthenaArray<Real> const& w, Real dt)
 { 
   MeshBlock *pmb = pmy_hydro->pmy_block;
@@ -26,7 +26,6 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du,
   Thermodynamics *pthermo = pmb->pthermo;
 
   int is, ie, js, je, ks, ke;
-  //int ivx, ivy, ivz, idn = 0, ien = 4;
   int idn = 0, ivx = 1, ivy = 2, ivz = 3, ien = 4;
   if (mydir == X1DIR) {
     ks = pmb->ks, js = pmb->js, is = pmb->is;
@@ -203,6 +202,32 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real> const& du,
 
   BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
   WaitToFinishSend(ks, ke, js, je);
+
+  if (mydir == X1DIR) {
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i) {
+          du(IDN,k,j,i) = du_(IDN,k,j,i);
+          du(IVX,k,j,i) = du_(IVX,k,j,i);
+          du(IEN,k,j,i) = du_(IEN,k,j,i);
+        }
+  } else if (mydir == X2DIR) {
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i) {
+          du(IDN,j,i,k) = du_(IDN,k,j,i);
+          du(IVY,j,i,k) = du_(IVY,k,j,i);
+          du(IEN,j,i,k) = du_(IEN,k,j,i);
+        }
+  } else {  // X3DIR
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i) {
+          du(IDN,i,k,j) = du_(IDN,k,j,i);
+          du(IVZ,i,k,j) = du_(IVZ,k,j,i);
+          du(IEN,i,k,j) = du_(IEN,k,j,i);
+        }
+  }
 
   delete [] gamma_m1;
 }
