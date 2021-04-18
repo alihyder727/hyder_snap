@@ -18,6 +18,7 @@
 #include "flux_decomposition.hpp"
 #include "implicit_solver.hpp"
 #include "forward_backward.hpp"
+#include "../jacobian_functions.hpp"
 
 inline void ThomasTriDiag(std::vector<Eigen::Matrix<Real,5,5>>& diag, std::vector<Eigen::Matrix<Real,5,5>>& diagL,
                           std::vector<Eigen::Matrix<Real,5,5>>& diagU,std::vector<Eigen::Matrix<Real,5,1>>& rhs,
@@ -157,14 +158,14 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
   WaitToFinishSync(ks, ke, js, je, is, ie);
 
   Real gamma = pmb->peos->GetGamma();
-  Real grav = pmy_hydro->hsrc.GetG1();
+  //Real grav = pmy_hydro->hsrc.GetG1();
   Eigen::Matrix<Real,5,5> Phi, Dt, Bnd;
 
-  Phi.setZero();
-  if (mydir == X1DIR) {
-    Phi(ivx,idn) = grav;
-    Phi(ien,ivx) = grav;
-  }
+  //Phi.setZero();
+  //if (mydir == X1DIR) {
+  //  Phi(ivx,idn) = grav;
+  //  Phi(ien,ivx) = grav;
+  //}
 
   Dt.setIdentity();
   Dt *= 1./dt;
@@ -192,15 +193,13 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
 
         gamma_m1[i] = (gamma - 1.)*feps/fsig;
         FluxJacobian(dfdq[i], gamma_m1[i], wr, mydir);
-      }
-
-      // 5. set up diffusion matrix and tridiagonal coefficients
+      } // 5. set up diffusion matrix and tridiagonal coefficients
       // left edge
       CopyPrimitives(wl, wr, w, k, j, is, mydir);
       Real gm1 = 0.5*(gamma_m1[is-1] + gamma_m1[is]);
       RoeAverage(prim, gm1, wl, wr);
       Real cs = pmb->peos->SoundSpeed(prim);
-      Eigenvalue(Lambda, prim[IVX], cs);
+      Eigenvalue(Lambda, prim[IVX+mydir], cs);
       Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
       Am = Rmat*Lambda*Rimat;
 
@@ -214,21 +213,25 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
         Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
         Ap = Rmat*Lambda*Rimat;
 
-        // set up diagonals a, b, c.
+        // set up diagonals a, b, c, and Jacobian of the forcing function
         Real aleft, aright, vol;
         if (mydir == X1DIR) {
           aleft = pcoord->GetFace1Area(k,j,i);
           aright = pcoord->GetFace1Area(k,j,i+1);
           vol = pcoord->GetCellVolume(k,j,i);
+          JACOBIAN_FUNCTION(Phi,k,j,i,pmy_hydro,mydir);
         } else if (mydir == X2DIR) {
           aleft = pcoord->GetFace2Area(j,i,k);
           aright = pcoord->GetFace2Area(j,i+1,k);
           vol = pcoord->GetCellVolume(j,i,k);
+          JACOBIAN_FUNCTION(Phi,j,i,k,pmy_hydro,mydir);
         } else { // X3DIR
           aleft = pcoord->GetFace3Area(i,k,j);
           aright = pcoord->GetFace3Area(i+1,k,j);
           vol = pcoord->GetCellVolume(i,k,j);
+          JACOBIAN_FUNCTION(Phi,i,k,j,pmy_hydro,mydir);
         }
+
         a[i] = (Am*aleft + Ap*aright + (aright - aleft)*dfdq[i])/(2.*vol) 
                + Dt - Phi;
         b[i] = -(Am + dfdq[i-1])*aleft/(2.*vol);
@@ -246,32 +249,6 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
 
       // 6. solve tridiagonal system
       ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
-      /* comment out
-      for (int i = is; i <= ie; ++i) {
-        rhs[i](0) = du(IDN,k,j,i)/dt;
-        for (int n = NMASS; n <= NMASS+3; ++n) {
-          rhs[i](n-NMASS+1) = du(n,k,j,i)/dt;
-        }
-      }
-
-      if ( (pmb->pbval->block_bcs[inner_x1] == BoundaryFlag::periodic) &&
-           (pmb->pbval->block_bcs[outer_x1] == BoundaryFlag::periodic) ) {
-        // LU decomposition for periodic (i.e., circuit) linear system
-        PeriodicLinearSys(a,b,c,rhs,delta,c[ie],b[is],is,ie);
-      } else {
-        // TDMA for tridiagonal linear system
-        ThomasTriDiag(a,b,c,rhs,delta,is,ie);
-      }
-
-      // 7. update conserved variables, i = ie
-      for (int i = is; i <= ie; ++i) {
-        //for (int n = 0; n < 5; ++n)
-        //  du(n,k,j,i) = delta[i](n);
-        du(IDN,k,j,i) = delta[i](0);
-        for (int n = NMASS; n <= NMASS+3; ++n) {
-          du(n,k,j,i) = delta[i](n-NMASS+1);
-        }
-      }*/
     }
 
   BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);

@@ -102,13 +102,25 @@ void ImplicitSolver::FindNeighbors() {
     }
   }
 
-  int myid = pmy_hydro->pmy_block->gid;
+  MeshBlock *pmb = pmy_hydro->pmy_block;
+  int myid = pmb->gid;
   if (has_top_neighbor && has_bot_neighbor) {
     if ((tblock.snb.gid >= myid) && (bblock.snb.gid >= myid))
       first_block = true;
     if ((tblock.snb.gid <= myid) && (bblock.snb.gid <= myid))
       last_block = true;
   }
+
+  if (first_block)
+    has_bot_neighbor = false;
+
+  if (last_block)
+    has_top_neighbor = false;
+
+  if (pmb->pbval->block_bcs[2*mydir] == BoundaryFlag::polar)
+    has_bot_neighbor = false;
+  if (pmb->pbval->block_bcs[2*mydir+1] == BoundaryFlag::polar)
+    has_top_neighbor = false;
 }
 
 void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,

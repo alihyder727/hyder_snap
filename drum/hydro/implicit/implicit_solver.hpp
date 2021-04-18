@@ -22,16 +22,16 @@ public:
 // functions
   ImplicitSolver(Hydro *phydro, CoordinateDirection dir);
   ~ImplicitSolver();
+
+// utility functions
   void FindNeighbors();
   int CreateMPITag(int lid, int bufid, int phy);
 
-  void SynchronizeConserved(AthenaArray<Real> const& du,
-    int kl, int ku, int jl, int ju, int is, int ie);
-  void WaitToFinishSync(int kl, int ku, int jl, int ju, int is, int ie);
-
+// correction methods
   void PartialCorrection(AthenaArray<Real>& du, AthenaArray<Real> const& w, Real dt);
   void FullCorrection(AthenaArray<Real>& du, AthenaArray<Real> const& w, Real dt);
 
+// tri-diagonal solver
   template<typename T1, typename T2>
   void ForwardSweep(std::vector<T1> &a, std::vector<T1> &b, std::vector<T1> &c, 
     std::vector<T2> &delta, std::vector<T2> &corr, Real dt,
@@ -52,6 +52,10 @@ public:
     int kl, int ku, int jl, int ju, int il, int iu);
 
 // communications
+  void SynchronizeConserved(AthenaArray<Real> const& du,
+    int kl, int ku, int jl, int ju, int is, int ie);
+  void WaitToFinishSync(int kl, int ku, int jl, int ju, int is, int ie);
+
   template<typename T>
   void SendBuffer(T const& a, int k, int j, NeighborBlock nb);
 

@@ -246,6 +246,12 @@ parser.add_argument('--chem',
                     choices=['chemistry', 'kessler94'],
                     help='select chemistry')
 
+# --jacobian=[name] argument
+parser.add_argument('--jacobian',
+                    default='JacobianGravityCoriolis',
+                    choices=['JacobianGravityCoriolis'],
+                    help='select the Jacobian function of forcing')
+
 # --rt=[name] argument
 parser.add_argument('--rt',
                     default='OFF',
@@ -484,6 +490,7 @@ else:
 
 # --chem=[name] argument
 definitions['CHEMISTRY'] = args['chem'].capitalize()
+definitions['JACOBIAN'] = args['jacobian']
 
 # --flux=[name] argument
 definitions['RSOLVER'] = makefile_options['RSOLVER_FILE'] = args['flux']
@@ -950,6 +957,7 @@ print('  Ammonia vapor id:           ' + args['nh3'])
 print('  Water vapor id:             ' + args['h2o'])
 print('  Riemann solver:             ' + args['flux'])
 print('  Chemistry:                  ' + args['chem'])
+print('  Forcing Jacobian:           ' + args['jacobian'])
 print('  Magnetic fields:            ' + ('ON' if args['b'] else 'OFF'))
 print('  Number of vapors:           ' + args['nvapor'])
 print('  Number of phases:           ' + args['nphase'])

@@ -33,6 +33,9 @@ class HydroSourceTerms {
   Real GetG1() const {return g1_;}
   Real GetG2() const {return g2_;}
   Real GetG3() const {return g3_;}
+  Real GetOmegaX() const {return omegax_;}
+  Real GetOmegaY() const {return omegay_;}
+  Real GetOmegaZ() const {return omegaz_;}
 
   // data
   bool hydro_sourceterms_defined;
