@@ -4,7 +4,9 @@
 
 // Athena++ headers
 #include "../hydro.hpp"
+#include "../../mesh/mesh.hpp"
 #include "../../utils/utils.hpp"
+#include "../../globals.hpp"
 #include "implicit_solver.hpp"
 
 // MPI headers
@@ -15,7 +17,8 @@
 #define MAX_DATA_SIZE 64
 
 ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
-    pmy_hydro(phydro), mydir(dir), has_bot_neighbor(false), has_top_neighbor(false)
+    pmy_hydro(phydro), mydir(dir), has_bot_neighbor(false), has_top_neighbor(false),
+    first_block(false), last_block(false), periodic_boundary(false)
 {
   MeshBlock *pmb = phydro->pmy_block;
   int nc1, nc2, nc3;
@@ -29,17 +32,23 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
 
   du_.NewAthenaArray(NHYDRO, nc3, nc2, nc1);
   du_.ZeroClear();
-  buffer_ = new Real [MAX_DATA_SIZE];
+  buffer_ = new Real [6*MAX_DATA_SIZE];
   usend_top_ = new Real [NHYDRO*nc3*nc2];
   urecv_bot_ = new Real [NHYDRO*nc3*nc2];
   usend_bot_ = new Real [NHYDRO*nc3*nc2];
   urecv_top_ = new Real [NHYDRO*nc3*nc2];
-  NewCArray(coefficients_, nc3, nc2, nc1, MAX_DATA_SIZE);
+  NewCArray(coefficients_, nc3, nc2, nc1, 3*MAX_DATA_SIZE);
 
 #ifdef MPI_PARALLEL
-  NewCArray(req_send_bot_data_, nc3, nc2);
-  NewCArray(req_send_top_data_, nc3, nc2);
+  NewCArray(req_send_data1_, nc3, nc2);
+  NewCArray(req_send_data2_, nc3, nc2);
+  NewCArray(req_send_data6_, nc3, nc2);
 #endif
+
+  if ((pmb->pmy_mesh->mesh_bcs[2*dir] == BoundaryFlag::periodic) &&
+     (pmb->pmy_mesh->mesh_bcs[2*dir+1] == BoundaryFlag::periodic)) {
+    periodic_boundary = true;
+  }
 }
 
 ImplicitSolver::~ImplicitSolver() {
@@ -51,8 +60,9 @@ ImplicitSolver::~ImplicitSolver() {
   FreeCArray(coefficients_);
 
 #ifdef MPI_PARALLEL
-  FreeCArray(req_send_bot_data_);
-  FreeCArray(req_send_top_data_);
+  FreeCArray(req_send_data1_);
+  FreeCArray(req_send_data2_);
+  FreeCArray(req_send_data6_);
 #endif
 }
 
@@ -60,6 +70,9 @@ void ImplicitSolver::FindNeighbors() {
   // find top and bot neighbor
   has_top_neighbor = false;
   has_bot_neighbor = false;
+  first_block = false;
+  last_block = false;
+
   for (int n = 0; n < pmy_hydro->pmy_block->pbval->nneighbor; ++n) {
     NeighborBlock& nb = pmy_hydro->pmy_block->pbval->neighbor[n];
     if (mydir == X1DIR) {
@@ -87,6 +100,14 @@ void ImplicitSolver::FindNeighbors() {
         has_top_neighbor = true;
       }
     }
+  }
+
+  int myid = pmy_hydro->pmy_block->gid;
+  if (has_top_neighbor && has_bot_neighbor) {
+    if ((tblock.snb.gid >= myid) && (bblock.snb.gid >= myid))
+      first_block = true;
+    if ((tblock.snb.gid <= myid) && (bblock.snb.gid <= myid))
+      last_block = true;
   }
 }
 
@@ -188,33 +209,6 @@ void ImplicitSolver::WaitToFinishSync(int kl, int ku, int jl, int ju, int is, in
         for (int n = 0; n < NHYDRO; ++n)
           du_(n,k,j,ie+1) = du_(n,k,j,ie);
   }
-}
-
-void ImplicitSolver::WaitSendTop(int kl, int ku, int jl, int ju) {
-#ifdef MPI_PARALLEL
-  MPI_Status status;
-  for (int k = kl; k <= ku; ++k)
-    for (int j = jl; j <= ju; ++j)
-      MPI_Wait(&req_send_top_data_[k][j], &status);
-#endif
-}
-
-void ImplicitSolver::WaitSendBot(int kl, int ku, int jl, int ju) {
-#ifdef MPI_PARALLEL
-  MPI_Status status;
-  for (int k = kl; k <= ku; ++k)
-    for (int j = jl; j <= ju; ++j)
-      MPI_Wait(&req_send_bot_data_[k][j], &status);
-#endif
-}
-
-void ImplicitSolver::WaitToFinishSend(int kl, int ku, int jl, int ju)
-{
-  if (has_top_neighbor)
-    WaitSendTop(kl, ku, jl, ju);
-
-  if (has_bot_neighbor)
-    WaitSendBot(kl, ku, jl, ju);
 }
 
 int ImplicitSolver::CreateMPITag(int recvid, int sendid, int phys) {

@@ -15,8 +15,8 @@
 #include "../../thermodynamics/thermodynamics.hpp"
 #include "../hydro.hpp"
 #include "flux_decomposition.hpp"
-#include "implicit_solver.hpp"
 #include "forward_backward.hpp"
+#include "periodic_forward_backward.hpp"
 
 void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
   AthenaArray<Real> const& w, Real dt)
@@ -196,12 +196,17 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
       if (!has_top_neighbor)
         a[ie] += c[ie]*Bnd;
 
-      // 6. Thomas algorithm: solve tridiagonal system
-      ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
+      // 6. solve tridiagonal system using LU decomposition
+      if (periodic_boundary)
+        PeriodicForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
+      else
+        ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
     }
 
-  BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
-  WaitToFinishSend(ks, ke, js, je);
+  if (periodic_boundary)
+    PeriodicBackwardSubstitution(c, delta, ks, ke, js, je, is, ie);
+  else
+    BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
 
   if (mydir == X1DIR) {
     for (int k = ks; k <= ke; ++k)

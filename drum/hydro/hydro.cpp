@@ -23,6 +23,7 @@
 #include "../mesh/mesh.hpp"
 #include "../reconstruct/reconstruction.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
+#include "../globals.hpp"
 #include "hydro.hpp"
 #include "hydro_diffusion/hydro_diffusion.hpp"
 #include "srcterms/hydro_srcterms.hpp"

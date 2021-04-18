@@ -9,7 +9,7 @@
 #include "../../math/eigen335/Eigen/Dense"
 
 // Athena++ headers
-#include "implicit_solver.hpp"
+#include "communication.hpp"
 
 template<typename T1, typename T2>
 void ImplicitSolver::ForwardSweep(
@@ -33,7 +33,7 @@ void ImplicitSolver::ForwardSweep(
   }
 
   if (has_bot_neighbor) {
-    RecvBotBuffer(a[il-1], delta[il-1], k, j, bblock);
+    RecvBuffer(a[il-1], delta[il-1], k, j, bblock);
     a[il] = (a[il] - b[il]*a[il-1]).inverse().eval();
     delta[il] = a[il]*(rhs - b[il]*delta[il-1]);
     a[il] *= c[il];
@@ -65,7 +65,7 @@ void ImplicitSolver::ForwardSweep(
   SaveCoefficients(a, delta, k, j, il, iu);
 
   if (has_top_neighbor)
-    SendTopBuffer(a[iu], delta[iu], k, j, tblock);
+    SendBuffer(a[iu], delta[iu], k, j, tblock);
 }
 
 template<typename T1, typename T2>
@@ -78,7 +78,7 @@ void ImplicitSolver::BackwardSubstitution(
     for (int j = jl; j <= ju; ++j) {
       LoadCoefficients(a, delta, k, j, il, iu);
       if (has_top_neighbor) {
-        RecvTopBuffer(delta[iu+1], k, j, tblock);
+        RecvBuffer(delta[iu+1], k, j, tblock);
         delta[iu] -= a[iu]*delta[iu+1];
       }
 
@@ -102,8 +102,26 @@ void ImplicitSolver::BackwardSubstitution(
       }
 
       if (has_bot_neighbor)
-        SendBotBuffer(delta[il], k, j, bblock);
+        SendBuffer(delta[il], k, j, bblock);
     }
+
+#ifdef MPI_PARALLEL
+  MPI_Status status;
+
+  if (has_top_neighbor) {
+    MPI_Status status;
+    for (int k = kl; k <= ku; ++k)
+      for (int j = jl; j <= ju; ++j)
+        MPI_Wait(&req_send_data2_[k][j], &status);
+  }
+
+  if (has_bot_neighbor) {
+    MPI_Status status;
+    for (int k = kl; k <= ku; ++k)
+      for (int j = jl; j <= ju; ++j)
+        MPI_Wait(&req_send_data1_[k][j], &status);
+  }
+#endif
 }
 
 #endif
