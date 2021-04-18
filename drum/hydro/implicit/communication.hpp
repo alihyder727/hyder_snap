@@ -64,11 +64,12 @@ void ImplicitSolver::SendBuffer(T1 const &a, T2 const &b, int k, int j, Neighbor
   }
 }
 
-template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+template<typename T1, typename T2, typename T3, 
+         typename T4, typename T5, typename T6, typename T7>
 void ImplicitSolver::SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& d,
-  T5 const& e, T6 const& f, int k, int j, NeighborBlock nb) {
+  T5 const& e, T6 const& f, T7 const& g, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size(), s3 = c.size(), s4 = d.size();
-  int s5 = e.size(), s6 = f.size();
+  int s5 = e.size(), s6 = f.size(), s7 = g.size();
   int phy = k << 10 | j << 3 | 5;
 
   Real *it = buffer_;
@@ -83,14 +84,16 @@ void ImplicitSolver::SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& 
   memcpy(it, e.data(), s5*sizeof(Real));
   it += s5;
   memcpy(it, f.data(), s6*sizeof(Real));
+  it += s6;
+  memcpy(it, g.data(), s7*sizeof(Real));
 
-  int st = s1+s2+s3+s4+s5+s6;
+  int st = s1+s2+s3+s4+s5+s6+s7;
 
   if (nb.snb.rank != Globals::my_rank) { // MPI boundary
 #ifdef MPI_PARALLEL
     int tag = CreateMPITag(nb.snb.gid, pmy_hydro->pmy_block->gid, phy);
     MPI_Isend(buffer_, st, MPI_ATHENA_REAL, nb.snb.rank, tag, MPI_COMM_WORLD,
-      &req_send_data6_[k][j]);
+      &req_send_data7_[k][j]);
 #endif
   } else { // local boundary
     MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
@@ -141,17 +144,18 @@ void ImplicitSolver::RecvBuffer(T1 &a, T2 &b, int k, int j, NeighborBlock nb) {
   memcpy(b.data(), buffer_ + s1, s2*sizeof(Real));
 }
 
-template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+template<typename T1, typename T2, typename T3,
+         typename T4, typename T5, typename T6, typename T7>
 void ImplicitSolver::RecvBuffer(T1 &a, T2 &b, T3 &c, T4 &d, 
-  T5 &e, T6 &f, int k, int j, NeighborBlock nb) {
+  T5 &e, T6 &f, T7 &g, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size(), s3 = c.size(), s4 = d.size();
-  int s5 = e.size(), s6 = f.size();
+  int s5 = e.size(), s6 = f.size(), s7 = g.size();
   int phy = k << 10 | j << 3 | 5;
 #ifdef MPI_PARALLEL
   MPI_Status status;
 #endif
 
-  int st = s1+s2+s3+s4+s5+s6;
+  int st = s1+s2+s3+s4+s5+s6+s7;
 
   if (nb.snb.rank != Globals::my_rank) { // MPI boundary
 #ifdef MPI_PARALLEL
@@ -172,6 +176,8 @@ void ImplicitSolver::RecvBuffer(T1 &a, T2 &b, T3 &c, T4 &d,
   memcpy(e.data(), it, s5*sizeof(Real));
   it += s5;
   memcpy(f.data(), it, s6*sizeof(Real));
+  it += s6;
+  memcpy(g.data(), it, s7*sizeof(Real));
 }
 
 template<typename T1, typename T2>

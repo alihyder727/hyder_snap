@@ -32,7 +32,7 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
 
   du_.NewAthenaArray(NHYDRO, nc3, nc2, nc1);
   du_.ZeroClear();
-  buffer_ = new Real [6*MAX_DATA_SIZE];
+  buffer_ = new Real [7*MAX_DATA_SIZE];
   usend_top_ = new Real [NHYDRO*nc3*nc2];
   urecv_bot_ = new Real [NHYDRO*nc3*nc2];
   usend_bot_ = new Real [NHYDRO*nc3*nc2];
@@ -42,7 +42,7 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
 #ifdef MPI_PARALLEL
   NewCArray(req_send_data1_, nc3, nc2);
   NewCArray(req_send_data2_, nc3, nc2);
-  NewCArray(req_send_data6_, nc3, nc2);
+  NewCArray(req_send_data7_, nc3, nc2);
 #endif
 
   if ((pmb->pmy_mesh->mesh_bcs[2*dir] == BoundaryFlag::periodic) &&
@@ -62,7 +62,7 @@ ImplicitSolver::~ImplicitSolver() {
 #ifdef MPI_PARALLEL
   FreeCArray(req_send_data1_);
   FreeCArray(req_send_data2_);
-  FreeCArray(req_send_data6_);
+  FreeCArray(req_send_data7_);
 #endif
 }
 

@@ -58,9 +58,10 @@ public:
   template<typename T1, typename T2>
   void SendBuffer(T1 const& a, T2 const& b, int k, int j, NeighborBlock nb);
 
-  template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+  template<typename T1, typename T2, typename T3, 
+           typename T4, typename T5, typename T6, typename T7>
   void SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& d,
-    T5 const& e, T6 const& f, int k, int j, NeighborBlock ntop);
+    T5 const& e, T6 const& f, T7 const& g, int k, int j, NeighborBlock ntop);
 
   template<typename T>
   void RecvBuffer(T &a, int k, int j, NeighborBlock nb);
@@ -68,9 +69,10 @@ public:
   template<typename T1, typename T2>
   void RecvBuffer(T1 &a, T2 &b, int k, int j, NeighborBlock nb);
 
-  template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+  template<typename T1, typename T2, typename T3,
+           typename T4, typename T5, typename T6, typename T7>
   void RecvBuffer(T1 &a, T2 &b, T3 &c, T4 &d, 
-    T5 &e, T6 &f, int k, int j, NeighborBlock nb);
+    T5 &e, T6 &f, T7 &g, int k, int j, NeighborBlock nb);
 
   template<typename T1, typename T2>
   void SaveCoefficients(std::vector<T1> &a, std::vector<T2> &b,
@@ -98,7 +100,7 @@ private:
 #ifdef MPI_PARALLEL
   MPI_Request **req_send_data1_;
   MPI_Request **req_send_data2_;
-  MPI_Request **req_send_data6_;
+  MPI_Request **req_send_data7_;
   MPI_Request req_send_sync_top_;
   MPI_Request req_send_sync_bot_;
   MPI_Request req_recv_sync_top_;

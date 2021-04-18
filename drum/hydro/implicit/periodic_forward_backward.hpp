@@ -41,7 +41,7 @@ void ImplicitSolver::PeriodicForwardSweep(
   if (first_block)
     RecvBuffer(corner, 0, 0, bblock);
   else
-    RecvBuffer(ainv[il-1], gamma[il-1], beta[il-1], zeta[il-1], 
+    RecvBuffer(ainv[il-1], gamma[il-1], beta[il-1], zeta[il-1], diagU[il-1],
       sum_beta_gamma, sum_beta_zeta, k, j, bblock);
 
   for (int i = il; i <= iu; ++i) {
@@ -50,6 +50,12 @@ void ImplicitSolver::PeriodicForwardSweep(
       rhs(1) = du_(IVX+mydir,k,j,i)/dt;
       rhs(2) = du_(IEN,k,j,i)/dt;
       rhs -= corr[i];
+      /*if ((i == il) || (i == iu)) {
+        rhs << 2,2,2;
+      } else {
+        rhs << 0,0,0;
+      }
+      rhs << i-il, i-il, i-il;*/
     } else {
       rhs(0) = du_(IDN,k,j,i)/dt;
       rhs(1) = du_(IVX+mydir,k,j,i)/dt;
@@ -81,9 +87,9 @@ void ImplicitSolver::PeriodicForwardSweep(
     //                   -1
     // v[i] = -b[i]*c[i-1]*v[i-1]
     gamma[i] = -diagL[i]*ainv[i-1]*gamma[i-1];
-    //                   -1
-    // h[i] = -a[i-1]*c[i]*h[i-1]
-    beta[i] = -diagU[i-1]*ainv[i]*beta[i-1];
+    //                          -1
+    // h[i] = -h[i-1]*a[i-1]*c[i]
+    beta[i] = -beta[i-1]*diagU[i-1]*ainv[i];
     //                       -1
     // r[i] = k[i] - b[i]*c[i]*r[i-1]
     zeta[i] = rhs - diagL[i]*ainv[i-1]*zeta[i-1];
@@ -119,7 +125,7 @@ void ImplicitSolver::PeriodicForwardSweep(
       // h[i]*r[i]
       sum_beta_zeta += beta[i]*zeta[i];
     }
-    SendBuffer(ainv[iu], gamma[iu], beta[iu], zeta[iu], 
+    SendBuffer(ainv[iu], gamma[iu], beta[iu], zeta[iu], diagU[iu],
       sum_beta_gamma, sum_beta_zeta, k, j, tblock);
   }
 
@@ -189,7 +195,7 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
     if (tblock.snb.rank != Globals::my_rank)
       for (int k = kl; k <= ku; ++k)
         for (int j = jl; j <= ju; ++j)
-          MPI_Wait(&req_send_data6_[k][j], &status);
+          MPI_Wait(&req_send_data7_[k][j], &status);
   else
     if (tblock.snb.rank != Globals::my_rank)
       MPI_Wait(&req_send_data1_[0][0], &status);
