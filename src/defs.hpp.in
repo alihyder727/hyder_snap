@@ -57,6 +57,9 @@
 // radiation
 #define @RT_SOLVER@
 
+// forcing jacobian
+#define JACOBIAN_FUNCTION @JACOBIAN@
+
 // enable special or general relativity? default=0 (false)
 #define RELATIVISTIC_DYNAMICS @RELATIVISTIC_DYNAMICS@
 
