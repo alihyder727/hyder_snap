@@ -108,19 +108,15 @@ void ImplicitSolver::BackwardSubstitution(
 #ifdef MPI_PARALLEL
   MPI_Status status;
 
-  if (has_top_neighbor) {
-    MPI_Status status;
+  if (has_top_neighbor && (tblock.snb.rank != Globals::my_rank))
     for (int k = kl; k <= ku; ++k)
       for (int j = jl; j <= ju; ++j)
         MPI_Wait(&req_send_data2_[k][j], &status);
-  }
 
-  if (has_bot_neighbor) {
-    MPI_Status status;
+  if (has_bot_neighbor && (bblock.snb.rank != Globals::my_rank))
     for (int k = kl; k <= ku; ++k)
       for (int j = jl; j <= ju; ++j)
         MPI_Wait(&req_send_data1_[k][j], &status);
-  }
 #endif
 }
 
