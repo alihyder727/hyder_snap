@@ -17,9 +17,9 @@ void ImplicitSolver::PeriodicForwardSweep(
   std::vector<T2> &delta, std::vector<T2> &corr, Real dt,
   int k, int j, int il, int iu)
 {
-  T1 corner, sum_beta_gamma;
+  T1 sum_beta_gamma;
   T2 rhs, sum_beta_zeta;
-  std::vector<T1> alpha(diag.size()), beta(diag.size()), gamma(diag.size());
+  std::vector<T1> beta(diag.size()), gamma(diag.size());
   std::vector<T1> ainv(diag.size());
   std::vector<T2> zeta(diag.size());
 
@@ -35,27 +35,56 @@ void ImplicitSolver::PeriodicForwardSweep(
   // gamma -> v
   // beta -> h
   // zeta -> k
-  if (last_block)
-    SendBuffer(diagU[iu], 0, 0, tblock);
 
-  if (first_block)
-    RecvBuffer(corner, 0, 0, bblock);
-  else
-    RecvBuffer(ainv[il-1], gamma[il-1], beta[il-1], zeta[il-1], diagU[il-1],
+  if (T2::RowsAtCompileTime == 3) {  // partial matrix
+    rhs(0) = du_(IDN,k,j,il)/dt;
+    rhs(1) = du_(IVX+mydir,k,j,il)/dt;
+    rhs(2) = du_(IEN,k,j,il)/dt;
+    rhs -= corr[il];
+  } else {  // full matrix
+    rhs(0) = du_(IDN,k,j,il)/dt;
+    rhs(1) = du_(IVX+mydir,k,j,il)/dt;
+    rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,il)/dt;
+    rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,il)/dt;
+    rhs(4) = du_(IEN,k,j,il)/dt;
+  }
+
+  if (first_block) {
+    // c[1] = d[1]
+    ainv[il] = diag[il].inverse().eval();
+    // v[1] = t (upper corner)
+    gamma[il] = diagL[il];
+    //             -1
+    // h[1] = s*c[1]  (lower corner)
+    beta[il] = diagU[il-1]*ainv[il];
+    // r[1] = k[1]
+    zeta[il] = rhs;
+    sum_beta_gamma.setZero();
+    sum_beta_zeta.setZero();
+  } else {
+    RecvBuffer(ainv[il-1], gamma[il-1], beta[il-1], zeta[il-1],
       sum_beta_gamma, sum_beta_zeta, k, j, bblock);
+    //                             -1
+    // c[il] = d[il] - b[il]*c[il-1]*a[il-1]
+    ainv[il] = diag[il] - diagL[il]*ainv[il-1]*diagU[il-1];
+    ainv[il] = ainv[il].inverse().eval();
+    //                      -1
+    // v[il] = -b[il]*c[il-1]*v[il-1]
+    gamma[il] = -diagL[il]*ainv[il-1]*gamma[il-1];
+    //                              -1
+    // h[il] = -h[il-1]*a[il-1]*c[il]
+    beta[il] = -beta[il-1]*diagU[il-1]*ainv[il];
+    //                           -1
+    // r[il] = k[il] - b[il]*c[il]*r[il-1]
+    zeta[il] = rhs - diagL[il]*ainv[il-1]*zeta[il-1];
+  }
 
-  for (int i = il; i <= iu; ++i) {
+  for (int i = il+1; i <= iu; ++i) {
     if (T2::RowsAtCompileTime == 3) {  // partial matrix
       rhs(0) = du_(IDN,k,j,i)/dt;
       rhs(1) = du_(IVX+mydir,k,j,i)/dt;
       rhs(2) = du_(IEN,k,j,i)/dt;
       rhs -= corr[i];
-      /*if ((i == il) || (i == iu)) {
-        rhs << 2,2,2;
-      } else {
-        rhs << 0,0,0;
-      }
-      rhs << i-il, i-il, i-il;*/
     } else {
       rhs(0) = du_(IDN,k,j,i)/dt;
       rhs(1) = du_(IVX+mydir,k,j,i)/dt;
@@ -64,26 +93,10 @@ void ImplicitSolver::PeriodicForwardSweep(
       rhs(4) = du_(IEN,k,j,i)/dt;
     }
     
-    if ((i == il) && first_block) { // I'm the first row of the first block
-      // c[1] = d[1]
-      alpha[il] = diag[il]; 
-      ainv[il] = alpha[il].inverse().eval();
-      // v[1] = t (upper corner)
-      gamma[il] = diagL[il];
-      //             -1
-      // h[1] = s*c[1]
-      beta[il] = corner*ainv[il];
-      // r[1] = k[1]
-      zeta[il] = rhs;
-      sum_beta_gamma.setZero();
-      sum_beta_zeta.setZero();
-      continue;
-    }
-
     //                         -1
     // c[i] = d[i] - b[i]*c[i-1]*a[i-1]
-    alpha[i] = diag[i] - diagL[i]*ainv[i-1]*diagU[i-1];
-    ainv[i] = alpha[i].inverse().eval();
+    ainv[i] = diag[i] - diagL[i]*ainv[i-1]*diagU[i-1];
+    ainv[i] = ainv[i].inverse().eval();
     //                   -1
     // v[i] = -b[i]*c[i-1]*v[i-1]
     gamma[i] = -diagL[i]*ainv[i-1]*gamma[i-1];
@@ -112,8 +125,8 @@ void ImplicitSolver::PeriodicForwardSweep(
     //                 n-1
     // c[n] = d[n] - Sum {h[i]*v[i]}
     //                 i=1
-    alpha[iu] = diag[iu] - sum_beta_gamma;
-    ainv[iu] = alpha[iu].inverse().eval();
+    ainv[iu] = diag[iu] - sum_beta_gamma;
+    ainv[iu] = ainv[iu].inverse().eval();
     //                 n-1
     // r[n] = k[n] - Sum {h[i]*r[i]}
     //                 i=1
@@ -125,7 +138,7 @@ void ImplicitSolver::PeriodicForwardSweep(
       // h[i]*r[i]
       sum_beta_zeta += beta[i]*zeta[i];
     }
-    SendBuffer(ainv[iu], gamma[iu], beta[iu], zeta[iu], diagU[iu],
+    SendBuffer(ainv[iu], gamma[iu], beta[iu], zeta[iu],
       sum_beta_gamma, sum_beta_zeta, k, j, tblock);
   }
 
@@ -195,7 +208,7 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
     if (tblock.snb.rank != Globals::my_rank)
       for (int k = kl; k <= ku; ++k)
         for (int j = jl; j <= ju; ++j)
-          MPI_Wait(&req_send_data7_[k][j], &status);
+          MPI_Wait(&req_send_data6_[k][j], &status);
   else
     if (tblock.snb.rank != Globals::my_rank)
       MPI_Wait(&req_send_data1_[0][0], &status);

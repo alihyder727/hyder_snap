@@ -204,7 +204,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
       Am = Rmat*Lambda*Rimat;
 
-      for (int i = is; i <= ie; ++i) {
+      for (int i = is-1; i <= ie+1; ++i) {
         CopyPrimitives(wl, wr, w, k, j, i+1, mydir);
         // right edge
         gm1 = 0.5*(gamma_m1[i] + gamma_m1[i+1]);

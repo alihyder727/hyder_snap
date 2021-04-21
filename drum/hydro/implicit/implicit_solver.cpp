@@ -42,6 +42,7 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
 #ifdef MPI_PARALLEL
   NewCArray(req_send_data1_, nc3, nc2);
   NewCArray(req_send_data2_, nc3, nc2);
+  NewCArray(req_send_data6_, nc3, nc2);
   NewCArray(req_send_data7_, nc3, nc2);
 #endif
 
@@ -62,6 +63,7 @@ ImplicitSolver::~ImplicitSolver() {
 #ifdef MPI_PARALLEL
   FreeCArray(req_send_data1_);
   FreeCArray(req_send_data2_);
+  FreeCArray(req_send_data6_);
   FreeCArray(req_send_data7_);
 #endif
 }
