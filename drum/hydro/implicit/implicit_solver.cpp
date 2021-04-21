@@ -18,7 +18,7 @@
 
 ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
     pmy_hydro(phydro), mydir(dir), has_bot_neighbor(false), has_top_neighbor(false),
-    first_block(false), last_block(false), periodic_boundary(false)
+    first_block(true), last_block(true), periodic_boundary(false)
 {
   MeshBlock *pmb = phydro->pmy_block;
   int nc1, nc2, nc3;
@@ -70,8 +70,8 @@ void ImplicitSolver::FindNeighbors() {
   // find top and bot neighbor
   has_top_neighbor = false;
   has_bot_neighbor = false;
-  first_block = false;
-  last_block = false;
+  first_block = true;
+  last_block = true;
 
   for (int n = 0; n < pmy_hydro->pmy_block->pbval->nneighbor; ++n) {
     NeighborBlock& nb = pmy_hydro->pmy_block->pbval->neighbor[n];
@@ -79,48 +79,54 @@ void ImplicitSolver::FindNeighbors() {
       if ((nb.ni.ox1 == -1) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == 0)) {
         bblock = nb;
         has_bot_neighbor = true;
+        first_block = false;
       } if ((nb.ni.ox1 == 1) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == 0)) {
         tblock = nb;
         has_top_neighbor = true;
+        last_block = false;
       }
     } else if (mydir == X2DIR) {
       if ((nb.ni.ox1 == 0) && (nb.ni.ox2 == -1) && (nb.ni.ox3 == 0)) {
         bblock = nb;
         has_bot_neighbor = true;
+        first_block = false;
       } if ((nb.ni.ox1 == 0) && (nb.ni.ox2 == 1) && (nb.ni.ox3 == 0)) {
         tblock = nb;
         has_top_neighbor = true;
+        last_block = false;
       }
     } else { // X3DIR
       if ((nb.ni.ox1 == 0) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == -1)) {
         bblock = nb;
         has_bot_neighbor = true;
+        first_block = false;
       } if ((nb.ni.ox1 == 0) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == 1)) {
         tblock = nb;
         has_top_neighbor = true;
+        last_block = false;
       }
     }
   }
 
   MeshBlock *pmb = pmy_hydro->pmy_block;
   int myid = pmb->gid;
-  if (has_top_neighbor && has_bot_neighbor) {
+  if (periodic_boundary) {
     if ((tblock.snb.gid >= myid) && (bblock.snb.gid >= myid))
       first_block = true;
     if ((tblock.snb.gid <= myid) && (bblock.snb.gid <= myid))
       last_block = true;
   }
 
-  if (first_block)
-    has_bot_neighbor = false;
+  //if (first_block)
+  //  has_bot_neighbor = false;
 
-  if (last_block)
-    has_top_neighbor = false;
+  //if (last_block)
+  //  has_top_neighbor = false;
 
   if (pmb->pbval->block_bcs[2*mydir] == BoundaryFlag::polar)
-    has_bot_neighbor = false;
+    first_block = true;
   if (pmb->pbval->block_bcs[2*mydir+1] == BoundaryFlag::polar)
-    has_top_neighbor = false;
+    last_block = true;
 }
 
 void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
@@ -138,7 +144,10 @@ void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
       int tag = CreateMPITag(bblock.snb.gid, pmb->gid, 17);
       MPI_Isend(usend_bot_, sbot, MPI_ATHENA_REAL, bblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_send_sync_bot_);
-      tag = CreateMPITag(pmb->gid, bblock.snb.gid, 19);
+      if (pmb->pbval->block_bcs[2*mydir] == BoundaryFlag::polar)
+        tag = CreateMPITag(pmb->gid, bblock.snb.gid, 17);
+      else
+        tag = CreateMPITag(pmb->gid, bblock.snb.gid, 19);
       MPI_Irecv(urecv_bot_, sbot, MPI_ATHENA_REAL, bblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_recv_sync_bot_);
 #endif
@@ -164,7 +173,10 @@ void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
       int tag = CreateMPITag(tblock.snb.gid, pmb->gid, 19);
       MPI_Isend(usend_top_, stop, MPI_ATHENA_REAL, tblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_send_sync_top_);
-      tag = CreateMPITag(pmb->gid, tblock.snb.gid, 17);
+      if (pmb->pbval->block_bcs[2*mydir+1] == BoundaryFlag::polar)
+        tag = CreateMPITag(pmb->gid, tblock.snb.gid, 19);
+      else
+        tag = CreateMPITag(pmb->gid, tblock.snb.gid, 17);
       MPI_Irecv(urecv_top_, stop, MPI_ATHENA_REAL, tblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_recv_sync_top_);
 #endif

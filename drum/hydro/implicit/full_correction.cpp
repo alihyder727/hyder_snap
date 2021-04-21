@@ -18,6 +18,7 @@
 #include "flux_decomposition.hpp"
 #include "implicit_solver.hpp"
 #include "forward_backward.hpp"
+#include "periodic_forward_backward.hpp"
 #include "../jacobian_functions.hpp"
 
 inline void ThomasTriDiag(std::vector<Eigen::Matrix<Real,5,5>>& diag, std::vector<Eigen::Matrix<Real,5,5>>& diagL,
@@ -242,16 +243,22 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       }
 
       // 5. fix boundary condition
-      if (!has_bot_neighbor)
+      if (first_block && !periodic_boundary)
         a[is] += b[is]*Bnd;
-      if (!has_top_neighbor)
+      if (last_block && !periodic_boundary)
         a[ie] += c[ie]*Bnd;
 
       // 6. solve tridiagonal system
-      ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
+      if (periodic_boundary)
+        PeriodicForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
+      else
+        ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
     }
 
-  BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
+  if (periodic_boundary)
+    PeriodicBackwardSubstitution(c, delta, ks, ke, js, je, is, ie);
+  else
+    BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
 
   if (mydir == X1DIR) {
     for (int k = ks; k <= ke; ++k)

@@ -191,21 +191,29 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
       }
 
       // 5. fix boundary condition
-      if (!has_bot_neighbor)
-        a[is] += b[is]*Bnd;
-      if (!has_top_neighbor)
-        a[ie] += c[ie]*Bnd;
+      //if (first_block)
+        //if (periodic_boundary)
+        //  a[is] += c[is-1];
+        //else
+      if (first_block && !periodic_boundary)
+          a[is] += b[is]*Bnd;
+      //if (last_block)
+        //if (periodic_boundary)
+        //  a[ie] += b[ie+1];
+        //else
+      if (last_block && !periodic_boundary)
+          a[ie] += c[ie]*Bnd;
 
       // 6. solve tridiagonal system using LU decomposition
-      //if (periodic_boundary)
-      //  PeriodicForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
-      //else
+      if (periodic_boundary)
+        PeriodicForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
+      else
         ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
     }
 
-  //if (periodic_boundary)
-  //  PeriodicBackwardSubstitution(c, delta, ks, ke, js, je, is, ie);
-  //else
+  if (periodic_boundary)
+    PeriodicBackwardSubstitution(c, delta, ks, ke, js, je, is, ie);
+  else
     BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
 
   if (mydir == X1DIR) {

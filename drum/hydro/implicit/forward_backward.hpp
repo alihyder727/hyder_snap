@@ -32,7 +32,7 @@ void ImplicitSolver::ForwardSweep(
     rhs(4) = du_(IEN,k,j,il)/dt;
   }
 
-  if (has_bot_neighbor) {
+  if (!first_block) {
     RecvBuffer(a[il-1], delta[il-1], k, j, bblock);
     a[il] = (a[il] - b[il]*a[il-1]).inverse().eval();
     delta[il] = a[il]*(rhs - b[il]*delta[il-1]);
@@ -64,7 +64,7 @@ void ImplicitSolver::ForwardSweep(
 
   SaveCoefficients(a, delta, k, j, il, iu);
 
-  if (has_top_neighbor)
+  if (!last_block)
     SendBuffer(a[iu], delta[iu], k, j, tblock);
 }
 
@@ -77,7 +77,7 @@ void ImplicitSolver::BackwardSubstitution(
   for (int k = kl; k <= ku; ++k)
     for (int j = jl; j <= ju; ++j) {
       LoadCoefficients(a, delta, k, j, il, iu);
-      if (has_top_neighbor) {
+      if (!last_block) {
         RecvBuffer(delta[iu+1], k, j, tblock);
         delta[iu] -= a[iu]*delta[iu+1];
       }
@@ -101,19 +101,19 @@ void ImplicitSolver::BackwardSubstitution(
         }
       }
 
-      if (has_bot_neighbor)
+      if (!first_block)
         SendBuffer(delta[il], k, j, bblock);
     }
 
 #ifdef MPI_PARALLEL
   MPI_Status status;
 
-  if (has_top_neighbor && (tblock.snb.rank != Globals::my_rank))
+  if (!last_block && (tblock.snb.rank != Globals::my_rank))
     for (int k = kl; k <= ku; ++k)
       for (int j = jl; j <= ju; ++j)
         MPI_Wait(&req_send_data2_[k][j], &status);
 
-  if (has_bot_neighbor && (bblock.snb.rank != Globals::my_rank))
+  if (!first_block && (bblock.snb.rank != Globals::my_rank))
     for (int k = kl; k <= ku; ++k)
       for (int j = jl; j <= ju; ++j)
         MPI_Wait(&req_send_data1_[k][j], &status);

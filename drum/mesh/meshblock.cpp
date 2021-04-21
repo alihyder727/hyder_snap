@@ -405,9 +405,9 @@ MeshBlock::~MeshBlock() {
   delete pphy;
 
   while (pdiag->prev != nullptr)
-    delete pdiag;
+    delete pdiag->prev;
   while (pdiag->next != nullptr)
-    delete pdiag;
+    delete pdiag->next;
   delete pdiag;
 
   while (pdebug->prev != nullptr)
