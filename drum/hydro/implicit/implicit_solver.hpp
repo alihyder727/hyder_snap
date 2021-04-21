@@ -16,6 +16,7 @@ public:
   bool has_top_neighbor, has_bot_neighbor;
   bool first_block, last_block;
   bool periodic_boundary;
+  bool pole_at_bot, pole_at_top;
   NeighborBlock tblock, bblock;
   CoordinateDirection mydir;
 

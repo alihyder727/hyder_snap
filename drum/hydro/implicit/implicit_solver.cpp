@@ -18,7 +18,8 @@
 
 ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
     pmy_hydro(phydro), mydir(dir), has_bot_neighbor(false), has_top_neighbor(false),
-    first_block(true), last_block(true), periodic_boundary(false)
+    first_block(true), last_block(true), periodic_boundary(false),
+    pole_at_bot(false), pole_at_top(false)
 {
   MeshBlock *pmb = phydro->pmy_block;
   int nc1, nc2, nc3;
@@ -50,6 +51,11 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
      (pmb->pmy_mesh->mesh_bcs[2*dir+1] == BoundaryFlag::periodic)) {
     periodic_boundary = true;
   }
+
+  if (pmb->pbval->block_bcs[2*dir] == BoundaryFlag::polar)
+    pole_at_bot = true;
+  if (pmb->pbval->block_bcs[2*dir+1] == BoundaryFlag::polar)
+    pole_at_top = true;
 }
 
 ImplicitSolver::~ImplicitSolver() {
