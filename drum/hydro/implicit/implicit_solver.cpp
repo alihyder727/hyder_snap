@@ -37,7 +37,7 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
   urecv_bot_ = new Real [NHYDRO*nc3*nc2];
   usend_bot_ = new Real [NHYDRO*nc3*nc2];
   urecv_top_ = new Real [NHYDRO*nc3*nc2];
-  NewCArray(coefficients_, nc3, nc2, nc1, 3*MAX_DATA_SIZE);
+  NewCArray(coefficients_, nc3, nc2, nc1, 4*MAX_DATA_SIZE);
 
 #ifdef MPI_PARALLEL
   NewCArray(req_send_data1_, nc3, nc2);

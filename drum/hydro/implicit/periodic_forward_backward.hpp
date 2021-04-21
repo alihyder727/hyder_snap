@@ -142,7 +142,7 @@ void ImplicitSolver::PeriodicForwardSweep(
       sum_beta_gamma, sum_beta_zeta, k, j, tblock);
   }
 
-  SaveCoefficients(ainv, gamma, zeta, k, j, il, iu);
+  SaveCoefficients(ainv, gamma, zeta, diagU, k, j, il, iu);
 }
 
 // delta -> x
@@ -153,17 +153,18 @@ void ImplicitSolver::PeriodicForwardSweep(
 
 template<typename T1, typename T2>
 void ImplicitSolver::PeriodicBackwardSubstitution(
+  std::vector<T1> &ainv,
   std::vector<T1> &diagU,
   std::vector<T2> &delta, 
   int kl, int ku, int jl, int ju, int il, int iu)
 {
   T2 delta_last;
-  std::vector<T1> gamma(diagU.size()), ainv(diagU.size());
+  std::vector<T1> gamma(diagU.size());
   std::vector<T2> zeta(diagU.size());
 
   for (int k = kl; k <= ku; ++k)
     for (int j = jl; j <= ju; ++j) {
-      LoadCoefficients(ainv, gamma, zeta, k, j, il, iu);
+      LoadCoefficients(ainv, gamma, zeta, diagU, k, j, il, iu);
       if (last_block) {  // I'm the last block
         // a[n-1] = 0
         diagU[iu-1].setZero();

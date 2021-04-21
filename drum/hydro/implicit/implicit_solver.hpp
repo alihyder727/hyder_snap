@@ -48,8 +48,8 @@ public:
     int k, int j, int il, int iu);
 
   template<typename T1, typename T2>
-  void PeriodicBackwardSubstitution(std::vector<T1> &a, std::vector<T2> &delta,
-    int kl, int ku, int jl, int ju, int il, int iu);
+  void PeriodicBackwardSubstitution(std::vector<T1> &a, std::vector<T1> &c,
+    std::vector<T2> &delta, int kl, int ku, int jl, int ju, int il, int iu);
 
 // communications
   void SynchronizeConserved(AthenaArray<Real> const& du,
@@ -90,17 +90,17 @@ public:
   void SaveCoefficients(std::vector<T1> &a, std::vector<T2> &b,
     int k, int j, int il, int iu);
 
-  template<typename T1, typename T2, typename T3>
+  template<typename T1, typename T2, typename T3, typename T4>
   void SaveCoefficients(std::vector<T1> &a, std::vector<T2> &b,
-    std::vector<T3> &c, int k, int j, int il, int iu);
+    std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu);
 
   template<typename T1, typename T2>
   void LoadCoefficients(std::vector<T1> &a, std::vector<T2> &b,
     int k, int j, int il, int iu);
 
-  template<typename T1, typename T2, typename T3>
+  template<typename T1, typename T2, typename T3, typename T4>
   void LoadCoefficients(std::vector<T1> &a, std::vector<T2> &b,
-    std::vector<T3> &c, int k, int j, int il, int iu);
+    std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu);
 
 private:
   Real *buffer_;                  // MPI data buffer

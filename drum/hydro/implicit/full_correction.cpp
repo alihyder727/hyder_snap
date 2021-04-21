@@ -256,7 +256,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
     }
 
   if (periodic_boundary)
-    PeriodicBackwardSubstitution(c, delta, ks, ke, js, je, is, ie);
+    PeriodicBackwardSubstitution(a, c, delta, ks, ke, js, je, is, ie);
   else
     BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
 
