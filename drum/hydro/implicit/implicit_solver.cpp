@@ -33,11 +33,12 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
 
   du_.NewAthenaArray(NHYDRO, nc3, nc2, nc1);
   du_.ZeroClear();
-  buffer_ = new Real [7*MAX_DATA_SIZE];
   usend_top_ = new Real [NHYDRO*nc3*nc2];
   urecv_bot_ = new Real [NHYDRO*nc3*nc2];
   usend_bot_ = new Real [NHYDRO*nc3*nc2];
   urecv_top_ = new Real [NHYDRO*nc3*nc2];
+
+  NewCArray(buffer_, nc3, nc2, 7*MAX_DATA_SIZE);
   NewCArray(coefficients_, nc3, nc2, nc1, 4*MAX_DATA_SIZE);
 
 #ifdef MPI_PARALLEL
@@ -59,11 +60,12 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
 }
 
 ImplicitSolver::~ImplicitSolver() {
-  delete[] buffer_;
   delete[] usend_top_;
   delete[] urecv_bot_;
   delete[] usend_bot_;
   delete[] urecv_top_;
+
+  FreeCArray(buffer_);
   FreeCArray(coefficients_);
 
 #ifdef MPI_PARALLEL
@@ -157,13 +159,13 @@ void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
           usend_bot_[sbot++] = du(n,k,j,is);
     if (bblock.snb.rank != Globals::my_rank) { // MPI boundary
 #ifdef MPI_PARALLEL
-      int tag = CreateMPITag(bblock.snb.gid, pmb->gid, 17);
+      int tag = CreateMPITag(bblock.snb.gid, pmb->gid, "b");
       MPI_Isend(usend_bot_, sbot, MPI_ATHENA_REAL, bblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_send_sync_bot_);
       if (pmb->pbval->block_bcs[2*mydir] == BoundaryFlag::polar)
-        tag = CreateMPITag(pmb->gid, bblock.snb.gid, 17);
+        tag = CreateMPITag(pmb->gid, bblock.snb.gid, "b");
       else
-        tag = CreateMPITag(pmb->gid, bblock.snb.gid, 19);
+        tag = CreateMPITag(pmb->gid, bblock.snb.gid, "t");
       MPI_Irecv(urecv_bot_, sbot, MPI_ATHENA_REAL, bblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_recv_sync_bot_);
 #endif
@@ -186,13 +188,13 @@ void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
           usend_top_[stop++] = du(n,k,j,ie);
     if (tblock.snb.rank != Globals::my_rank) { // MPI boundary
 #ifdef MPI_PARALLEL
-      int tag = CreateMPITag(tblock.snb.gid, pmb->gid, 19);
+      int tag = CreateMPITag(tblock.snb.gid, pmb->gid, "t");
       MPI_Isend(usend_top_, stop, MPI_ATHENA_REAL, tblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_send_sync_top_);
       if (pmb->pbval->block_bcs[2*mydir+1] == BoundaryFlag::polar)
-        tag = CreateMPITag(pmb->gid, tblock.snb.gid, 19);
+        tag = CreateMPITag(pmb->gid, tblock.snb.gid, "t");
       else
-        tag = CreateMPITag(pmb->gid, tblock.snb.gid, 17);
+        tag = CreateMPITag(pmb->gid, tblock.snb.gid, "b");
       MPI_Irecv(urecv_top_, stop, MPI_ATHENA_REAL, tblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_recv_sync_top_);
 #endif
@@ -251,11 +253,13 @@ void ImplicitSolver::WaitToFinishSync(int kl, int ku, int jl, int ju, int is, in
   }
 }
 
-int ImplicitSolver::CreateMPITag(int recvid, int sendid, size_t phys) {
+int ImplicitSolver::CreateMPITag(int recvid, int sendid, std::string phys) {
   //return (lid<<17) | (bufid<<11) | phys;
   std::string str = std::to_string(recvid);
+  str += "x";
   str += std::to_string(sendid);
-  str += std::to_string(phys);
+  str += "x";
+  str += phys;
   return std::hash<std::string>{}(str)%(1<<24);
 }
 

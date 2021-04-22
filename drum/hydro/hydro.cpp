@@ -157,6 +157,9 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   pimp1 = new ImplicitSolver(this, X1DIR);
   pimp2 = new ImplicitSolver(this, X2DIR);
   pimp3 = new ImplicitSolver(this, X3DIR);
+  pimps[X1DIR] = pimp1;
+  pimps[X2DIR] = pimp2;
+  pimps[X3DIR] = pimp3;
 }
 
 //----------------------------------------------------------------------------------------

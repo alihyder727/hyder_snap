@@ -40,7 +40,9 @@ Decomposition::~Decomposition()
 int Decomposition::CreateMPITag(int recvid, int sendid, int phys)
 {
   std::string str = std::to_string(recvid);
+  str += "x";
   str += std::to_string(sendid);
+  str += "x";
   str += std::to_string(phys);
   return std::hash<std::string>{}(str)%(1<<24);
   //return (recvid<<11) | (sendid<<5) | phys;

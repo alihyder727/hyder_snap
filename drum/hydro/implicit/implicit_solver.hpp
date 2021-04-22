@@ -26,7 +26,7 @@ public:
 
 // utility functions
   void FindNeighbors();
-  int CreateMPITag(int lid, int bufid, size_t phy);
+  int CreateMPITag(int lid, int bufid, std::string phy);
 
 // correction methods
   void PartialCorrection(AthenaArray<Real>& du, AthenaArray<Real> const& w, Real dt);
@@ -104,9 +104,10 @@ public:
     std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu);
 
 private:
-  Real *buffer_;                  // MPI data buffer
   Real *usend_top_, *urecv_top_;  // MPI data buffer
   Real *usend_bot_, *urecv_bot_;  // MPI data buffer
+
+  Real ***buffer_;                  // MPI data buffer
   Real ****coefficients_; // archive of coefficients in the tri-diagonal matrix
   AthenaArray<Real> du_;  // stores implicit solution
 
