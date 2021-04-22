@@ -155,18 +155,9 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
 
   // 0. forcing and volume matrix
   FindNeighbors();
-  SynchronizeConserved(du_, ks, ke, js, je, is, ie);
-  WaitToFinishSync(ks, ke, js, je, is, ie);
 
   Real gamma = pmb->peos->GetGamma();
-  //Real grav = pmy_hydro->hsrc.GetG1();
   Eigen::Matrix<Real,5,5> Phi, Dt, Bnds, Bnde;
-
-  //Phi.setZero();
-  //if (mydir == X1DIR) {
-  //  Phi(ivx,idn) = grav;
-  //  Phi(ien,ivx) = grav;
-  //}
 
   Dt.setIdentity();
   Dt *= 1./dt;

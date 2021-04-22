@@ -26,7 +26,7 @@ public:
 
 // utility functions
   void FindNeighbors();
-  int CreateMPITag(int lid, int bufid, int phy);
+  int CreateMPITag(int lid, int bufid, size_t phy);
 
 // correction methods
   void PartialCorrection(AthenaArray<Real>& du, AthenaArray<Real> const& w, Real dt);

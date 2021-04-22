@@ -18,7 +18,7 @@
 template<typename T>
 void ImplicitSolver::SendBuffer(T const& a, int k, int j, NeighborBlock nb) {
   int s1 = a.size();
-  int phy = k << 10 | j << 3 | 0;
+  size_t phy = k << 10 | j << 2 | 0;
 
   memcpy(buffer_, a.data(), s1*sizeof(Real));
 
@@ -42,7 +42,7 @@ void ImplicitSolver::SendBuffer(T const& a, int k, int j, NeighborBlock nb) {
 template<typename T1, typename T2>
 void ImplicitSolver::SendBuffer(T1 const &a, T2 const &b, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size();
-  int phy = k << 10 | j << 3 | 1;
+  size_t phy = k << 10 | j << 2 | 1;
 
   memcpy(buffer_, a.data(), s1*sizeof(Real));
   memcpy(buffer_ + s1, b.data(), s2*sizeof(Real));
@@ -69,7 +69,7 @@ void ImplicitSolver::SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& 
   T5 const& e, T6 const& f, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size(), s3 = c.size(), s4 = d.size();
   int s5 = e.size(), s6 = f.size();
-  int phy = k << 10 | j << 3 | 5;
+  size_t phy = k << 10 | j << 2 | 2;
 
   Real *it = buffer_;
   memcpy(it, a.data(), s1*sizeof(Real));
@@ -109,7 +109,7 @@ void ImplicitSolver::SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& 
   T5 const& e, T6 const& f, T7 const& g, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size(), s3 = c.size(), s4 = d.size();
   int s5 = e.size(), s6 = f.size(), s7 = g.size();
-  int phy = k << 10 | j << 3 | 5;
+  size_t phy = k << 10 | j << 2 | 3;
 
   Real *it = buffer_;
   memcpy(it, a.data(), s1*sizeof(Real));
@@ -148,7 +148,7 @@ void ImplicitSolver::SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& 
 template<typename T>
 void ImplicitSolver::RecvBuffer(T &a, int k, int j, NeighborBlock nb) {
   int s1 = a.size();
-  int phy = k << 10 | j << 3 | 0;
+  size_t phy = k << 10 | j << 2 | 0;
 #ifdef MPI_PARALLEL
   MPI_Status status;
 #endif
@@ -167,7 +167,7 @@ void ImplicitSolver::RecvBuffer(T &a, int k, int j, NeighborBlock nb) {
 template<typename T1, typename T2>
 void ImplicitSolver::RecvBuffer(T1 &a, T2 &b, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size();
-  int phy = k << 10 | j << 3 | 1;
+  size_t phy = k << 10 | j << 2 | 1;
 #ifdef MPI_PARALLEL
   MPI_Status status;
 #endif
@@ -188,7 +188,7 @@ void ImplicitSolver::RecvBuffer(T1 &a, T2 &b, T3 &c, T4 &d,
   T5 &e, T6 &f, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size(), s3 = c.size(), s4 = d.size();
   int s5 = e.size(), s6 = f.size();
-  int phy = k << 10 | j << 3 | 5;
+  size_t phy = k << 10 | j << 2 | 2;
 #ifdef MPI_PARALLEL
   MPI_Status status;
 #endif
@@ -222,7 +222,7 @@ void ImplicitSolver::RecvBuffer(T1 &a, T2 &b, T3 &c, T4 &d,
   T5 &e, T6 &f, T7 &g, int k, int j, NeighborBlock nb) {
   int s1 = a.size(), s2 = b.size(), s3 = c.size(), s4 = d.size();
   int s5 = e.size(), s6 = f.size(), s7 = g.size();
-  int phy = k << 10 | j << 3 | 5;
+  size_t phy = k << 10 | j << 2 | 3;
 #ifdef MPI_PARALLEL
   MPI_Status status;
 #endif

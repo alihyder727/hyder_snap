@@ -53,12 +53,12 @@ void JacobianGravityCoriolis(T &jac, int k, int j, int i,
     omega1 = tmp;
   }
 
-  jac(ivx,ivy) = -2.*omega3;
-  jac(ivx,ivz) = 2*omega2;
-  jac(ivy,ivx) = 2*omega3;
-  jac(ivy,ivz) = -2*omega1;
-  jac(ivz,ivx) = -2*omega2;
-  jac(ivz,ivy) = 2*omega1;
+  jac(ivx,ivy) = 2.*omega3;
+  jac(ivx,ivz) = -2*omega2;
+  jac(ivy,ivx) = -2*omega3;
+  jac(ivy,ivz) = 2*omega1;
+  jac(ivz,ivx) = 2*omega2;
+  jac(ivz,ivy) = -2*omega1;
 }
 
 #endif
