@@ -149,6 +149,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
           vol = pcoord->GetCellVolume(i,k,j);
           JACOBIAN_FUNCTION(Phi,i,k,j,pmy_hydro,mydir);
         }
+        SaveForcingJacobian(Phi,k,j,i);
 
         a[i] = (Am*aleft + Ap*aright + (aright - aleft)*dfdq[i])/(2.*vol) 
                + Dt - Phi;
@@ -168,7 +169,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
 
       // 6. solve tridiagonal system
       if (periodic_boundary)
-        PeriodicForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
+        PeriodicForwardSweep(a, b, c, corr, dt, k, j, is, ie);
       else
         ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
     }
@@ -203,6 +204,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
             du(n,i,k,j) = du_(n,k,j,i);
         }
   }
+  pmy_hydro->implicit_done = this;
 
   delete [] gamma_m1;
 }

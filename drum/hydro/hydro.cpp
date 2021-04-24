@@ -160,6 +160,7 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   pimps[X1DIR] = pimp1;
   pimps[X2DIR] = pimp2;
   pimps[X3DIR] = pimp3;
+  implicit_done = nullptr;
 }
 
 //----------------------------------------------------------------------------------------

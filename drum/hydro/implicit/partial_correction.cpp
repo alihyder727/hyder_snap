@@ -206,7 +206,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
 
       // 6. solve tridiagonal system using LU decomposition
       if (periodic_boundary)
-        PeriodicForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
+        PeriodicForwardSweep(a, b, c, corr, dt, k, j, is, ie);
       else
         ForwardSweep(a, b, c, delta, corr, dt, k, j, is, ie);
     }

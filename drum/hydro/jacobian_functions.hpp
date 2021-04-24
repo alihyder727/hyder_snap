@@ -42,17 +42,20 @@ void JacobianGravityCoriolis(T &jac, int k, int j, int i,
     jac(ivx,idn) = grav;
     jac(ien,ivx) = grav;
   } else if (dir == X2DIR) {
+    jac(ivz,idn) = grav;
+    jac(ien,ivz) = grav;
     Real tmp = omega1;
     omega1 = omega2;
     omega2 = omega3;
     omega3 = tmp;
   } else { // X3DIR
+    jac(ivy,idn) = grav;
+    jac(ien,ivy) = grav;
     Real tmp = omega3;
     omega3 = omega2;
     omega2 = omega1;
     omega1 = tmp;
   }
-
   jac(ivx,ivy) = 2.*omega3;
   jac(ivx,ivz) = -2*omega2;
   jac(ivy,ivx) = -2*omega3;

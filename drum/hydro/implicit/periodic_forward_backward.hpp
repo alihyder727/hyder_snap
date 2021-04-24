@@ -14,10 +14,10 @@
 template<typename T1, typename T2>
 void ImplicitSolver::PeriodicForwardSweep(
   std::vector<T1> &diag, std::vector<T1> &diagL, std::vector<T1> &diagU,
-  std::vector<T2> &delta, std::vector<T2> &corr, Real dt,
+  std::vector<T2> &corr, Real dt,
   int k, int j, int il, int iu)
 {
-  T1 sum_beta_gamma;
+  T1 sum_beta_gamma, phi;
   T2 rhs, sum_beta_zeta;
   std::vector<T1> beta(diag.size()), gamma(diag.size());
   std::vector<T1> ainv(diag.size());
@@ -47,6 +47,10 @@ void ImplicitSolver::PeriodicForwardSweep(
     rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,il)/dt;
     rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,il)/dt;
     rhs(4) = du_(IEN,k,j,il)/dt;
+    if (pmy_hydro->implicit_done != nullptr) {
+      pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,il,mydir);
+      rhs -= dt*phi*rhs;
+    }
   }
 
   if (first_block) {
@@ -91,6 +95,10 @@ void ImplicitSolver::PeriodicForwardSweep(
       rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,i)/dt;
       rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,i)/dt;
       rhs(4) = du_(IEN,k,j,i)/dt;
+      if (pmy_hydro->implicit_done != nullptr) {
+        pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,i,mydir);
+        rhs -= dt*phi*rhs;
+      }
     }
     
     //                         -1

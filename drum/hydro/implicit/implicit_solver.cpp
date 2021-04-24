@@ -25,10 +25,13 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
   int nc1, nc2, nc3;
   if (dir == X1DIR) {
     nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
+    NewCArray(jacobian_, nc3, nc2, nc1, MAX_DATA_SIZE);
   } else if (dir == X2DIR) {
     nc1 = pmb->ncells2, nc2 = pmb->ncells3, nc3 = pmb->ncells1;
+    NewCArray(jacobian_, nc2, nc1, nc3, MAX_DATA_SIZE);
   } else { // X3DIR
     nc1 = pmb->ncells3, nc2 = pmb->ncells1, nc3 = pmb->ncells2;
+    NewCArray(jacobian_, nc1, nc3, nc2, MAX_DATA_SIZE);
   }
 
   du_.NewAthenaArray(NHYDRO, nc3, nc2, nc1);
@@ -67,6 +70,7 @@ ImplicitSolver::~ImplicitSolver() {
 
   FreeCArray(buffer_);
   FreeCArray(coefficients_);
+  FreeCArray(jacobian_);
 
 #ifdef MPI_PARALLEL
   FreeCArray(req_send_data1_);

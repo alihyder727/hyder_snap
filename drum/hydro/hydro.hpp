@@ -64,7 +64,7 @@ class Hydro {
   HydroSourceTerms hsrc;
   HydroDiffusion hdif;
   ImplicitSolver *pimp1, *pimp2, *pimp3;
-  ImplicitSolver *pimps[3];
+  ImplicitSolver *pimps[3], *implicit_done;
   Decomposition *pdec;
 
   // functions
@@ -93,7 +93,6 @@ class Hydro {
   void CalculateGravityFlux(AthenaArray<Real> &phi_in);
 
   void CheckHydro();
-  //void ImplicitUpdate(AthenaArray<Real> &du);
 
  private:
   AthenaArray<Real> dt1_, dt2_, dt3_;  // scratch arrays used in NewTimeStep

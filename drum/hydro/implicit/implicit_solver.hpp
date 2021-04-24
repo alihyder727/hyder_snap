@@ -45,7 +45,7 @@ public:
 // periodic solver
   template<typename T1, typename T2>
   void PeriodicForwardSweep(std::vector<T1> &a, std::vector<T1> &b, std::vector<T1> &c,
-    std::vector<T2> &delta, std::vector<T2> &corr, Real dt,
+    std::vector<T2> &corr, Real dt,
     int k, int j, int il, int iu);
 
   template<typename T1, typename T2>
@@ -103,12 +103,19 @@ public:
   void LoadCoefficients(std::vector<T1> &a, std::vector<T2> &b,
     std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu);
 
+  template<typename T>
+  void SaveForcingJacobian(T &phi, int k, int j ,int i);
+
+  template<typename T>
+  void LoadForcingJacobian(T &phi, int k, int j ,int i, CoordinateDirection dir);
+
 private:
   Real *usend_top_, *urecv_top_;  // MPI data buffer
   Real *usend_bot_, *urecv_bot_;  // MPI data buffer
 
   Real ***buffer_;                  // MPI data buffer
   Real ****coefficients_; // archive of coefficients in the tri-diagonal matrix
+  Real ****jacobian_;     // archive of forcing jacobian
   AthenaArray<Real> du_;  // stores implicit solution
 
 #ifdef MPI_PARALLEL
