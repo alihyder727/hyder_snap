@@ -54,8 +54,14 @@ void Reconstruction::Weno5X1(const int k, const int j, const int il, const int i
   for (int n=NMASS; n<NHYDRO; ++n) {
     if (pmb->pbval->block_bcs[inner_x1] != BoundaryFlag::block)
       for (int i=il; i<il+NGHOST; ++i) {
-        wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
-        wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
+        Real scale = 0.;
+        for (int m = -2; m <= 2; ++m) scale += (w(n,k,j,i+m) + 1.E-16)/5.;
+        wl(n,i+1) = interp_weno5(w(n,k,j,i+2)/scale, w(n,k,j,i+1)/scale, w(n,k,j,i)/scale,
+                                 w(n,k,j,i-1)/scale, w(n,k,j,i-2)/scale);
+        wl(n,i+1) *= scale;
+        wr(n,i  ) = interp_weno5(w(n,k,j,i-2)/scale, w(n,k,j,i-1)/scale, w(n,k,j,i)/scale,
+                                 w(n,k,j,i+1)/scale, w(n,k,j,i+2)/scale);
+        wr(n,i  ) *= scale;
       }
     else
       for (int i=il; i<il+NGHOST; ++i) {
@@ -85,8 +91,14 @@ void Reconstruction::Weno5X1(const int k, const int j, const int il, const int i
       }
     else
       for (int i=iu-NGHOST+1; i<=iu; ++i) {
-        wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
-        wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
+        Real scale = 0.;
+        for (int m = -2; m <= 2; ++m) scale += (w(n,k,j,i+m) + 1.E-16)/5.;
+        wl(n,i+1) = interp_weno5(w(n,k,j,i+2)/scale, w(n,k,j,i+1)/scale, w(n,k,j,i)/scale,
+                                 w(n,k,j,i-1)/scale, w(n,k,j,i-2)/scale);
+        wl(n,i+1) *= scale;
+        wr(n,i  ) = interp_weno5(w(n,k,j,i-2)/scale, w(n,k,j,i-1)/scale, w(n,k,j,i)/scale,
+                                 w(n,k,j,i+1)/scale, w(n,k,j,i+2)/scale);
+        wr(n,i  ) *= scale;
       }
   }
 
