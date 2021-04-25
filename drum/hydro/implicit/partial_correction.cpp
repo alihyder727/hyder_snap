@@ -143,7 +143,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
              Am(ivx,idn), Am(ivx,ivx), Am(ivx,ien),
              Am(ien,idn), Am(ien,ivx), Am(ien,ien);
 
-      for (int i = is-1; i <= ie+1; ++i) {
+      for (int i = is; i <= ie; ++i) {
         CopyPrimitives(wl, wr, w, k, j, i+1, mydir);
         gm1 = 0.5*(gamma_m1[i] + gamma_m1[i+1]);
         RoeAverage(prim, gm1, wl, wr);

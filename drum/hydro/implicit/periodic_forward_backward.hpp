@@ -218,22 +218,24 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
 #ifdef MPI_PARALLEL
   MPI_Status status;
 
-  if (!last_block)
+  if (!last_block) {
     if (tblock.snb.rank != Globals::my_rank)
       for (int k = kl; k <= ku; ++k)
         for (int j = jl; j <= ju; ++j)
           MPI_Wait(&req_send_data7_[k][j], &status);
-  else
+  } else {
     if (tblock.snb.rank != Globals::my_rank)
       for (int k = kl; k <= ku; ++k)
         for (int j = jl; j <= ju; ++j)
           MPI_Wait(&req_send_data1_[k][j], &status);
+  }
 
-  if (!first_block)
+  if (!first_block) {
     if (bblock.snb.rank != Globals::my_rank)
       for (int k = kl; k <= ku; ++k)
         for (int j = jl; j <= ju; ++j)
           MPI_Wait(&req_send_data2_[k][j], &status);
+  }
 #endif
 }
 
