@@ -121,7 +121,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
       Am = Rmat*Lambda*Rimat;
 
-      for (int i = is-1; i <= ie+1; ++i) {
+      for (int i = is; i <= ie; ++i) {
         CopyPrimitives(wl, wr, w, k, j, i+1, mydir);
         // right edge
         gm1 = 0.5*(gamma_m1[i] + gamma_m1[i+1]);
@@ -137,17 +137,19 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
           aleft = pcoord->GetFace1Area(k,j,i);
           aright = pcoord->GetFace1Area(k,j,i+1);
           vol = pcoord->GetCellVolume(k,j,i);
-          JACOBIAN_FUNCTION(Phi,k,j,i,pmy_hydro,mydir);
+          JACOBIAN_FUNCTION(Phi,wl,k,j,i,pmy_hydro);
         } else if (mydir == X2DIR) {
           aleft = pcoord->GetFace2Area(j,i,k);
           aright = pcoord->GetFace2Area(j,i+1,k);
           vol = pcoord->GetCellVolume(j,i,k);
-          JACOBIAN_FUNCTION(Phi,j,i,k,pmy_hydro,mydir);
+          Phi.setZero();
+          //JACOBIAN_FUNCTION(Phi,wl,j,i,k,pmy_hydro,mydir);
         } else { // X3DIR
           aleft = pcoord->GetFace3Area(i,k,j);
           aright = pcoord->GetFace3Area(i+1,k,j);
           vol = pcoord->GetCellVolume(i,k,j);
-          JACOBIAN_FUNCTION(Phi,i,k,j,pmy_hydro,mydir);
+          Phi.setZero();
+          //JACOBIAN_FUNCTION(Phi,wl,i,k,j,pmy_hydro,mydir);
         }
         SaveForcingJacobian(Phi,k,j,i);
 
