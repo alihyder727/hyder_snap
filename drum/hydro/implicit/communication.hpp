@@ -284,57 +284,34 @@ void ImplicitSolver::LoadCoefficients(std::vector<T1> &a, std::vector<T2> &b,
   }
 }
 
-template<typename T>
+/*template<typename T>
 void inline ImplicitSolver::SaveForcingJacobian(T &phi, int k, int j ,int i) {
-  int s = phi.size();
-  T tmp;
-  int idn = 0, ien = 4;
-  if (mydir == X1DIR)
-    memcpy(jacobian_[k][j][i], phi.data(), s*sizeof(Real));
-  else if (mydir == X2DIR) {
-    int ivy = 1, ivz = 2, ivx = 3;
-    tmp << phi(idn,idn), phi(idn,ivx), phi(idn,ivy), phi(idn,ivz), phi(idn,ien),
-           phi(ivx,idn), phi(ivx,ivx), phi(ivx,ivy), phi(ivx,ivz), phi(ivx,ien),
-           phi(ivy,idn), phi(ivy,ivx), phi(ivy,ivy), phi(ivy,ivz), phi(ivy,ien),
-           phi(ivz,idn), phi(ivz,ivx), phi(ivz,ivy), phi(ivz,ivz), phi(ivz,ien),
-           phi(ien,idn), phi(ien,ivx), phi(ien,ivy), phi(ien,ivz), phi(ien,ien);
-    memcpy(jacobian_[j][i][k], tmp.data(), s*sizeof(Real));
-  } else  { // X3DIR
-    int ivz = 1, ivx = 2, ivy = 3;
-    tmp << phi(idn,idn), phi(idn,ivx), phi(idn,ivy), phi(idn,ivz), phi(idn,ien),
-           phi(ivx,idn), phi(ivx,ivx), phi(ivx,ivy), phi(ivx,ivz), phi(ivx,ien),
-           phi(ivy,idn), phi(ivy,ivx), phi(ivy,ivy), phi(ivy,ivz), phi(ivy,ien),
-           phi(ivz,idn), phi(ivz,ivx), phi(ivz,ivy), phi(ivz,ivz), phi(ivz,ien),
-           phi(ien,idn), phi(ien,ivx), phi(ien,ivy), phi(ien,ivz), phi(ien,ien);
-    memcpy(jacobian_[i][k][j], tmp.data(), s*sizeof(Real));
+  if (mydir == X1DIR) {
+  } else if (mydir == X2DIR) {
+    memcpy(jacobian_[j][i][k], phi.data(), phi.size()*sizeof(Real));
+  } else {
+    memcpy(jacobian_[i][k][j], phi.data(), phi.size()*sizeof(Real));
   }
-}
+}*/
 
 template<typename T>
 void inline ImplicitSolver::LoadForcingJacobian(T &phi, int k, int j ,int i,
   CoordinateDirection dir) {
-  int s = phi.size();
-  T tmp;
-  int idn = 0, ien = 4;
-  if (dir == X1DIR)
-    memcpy(phi.data(), jacobian_[k][j][i], s*sizeof(Real));
-  else if (dir == X2DIR) {
-    int ivx = 2, ivy = 3, ivz = 1;
-    memcpy(tmp.data(), jacobian_[j][i][k], s*sizeof(Real));
-    phi << tmp(idn,idn), tmp(idn,ivx), tmp(idn,ivy), tmp(idn,ivz), tmp(idn,ien),
-           tmp(ivx,idn), tmp(ivx,ivx), tmp(ivx,ivy), tmp(ivx,ivz), tmp(ivx,ien),
-           tmp(ivy,idn), tmp(ivy,ivx), tmp(ivy,ivy), tmp(ivy,ivz), tmp(ivy,ien),
-           tmp(ivz,idn), tmp(ivz,ivx), tmp(ivz,ivy), tmp(ivz,ivz), tmp(ivz,ien),
-           tmp(ien,idn), tmp(ien,ivx), tmp(ien,ivy), tmp(ien,ivz), tmp(ien,ien);
+  Eigen::Matrix<Real,5,5> tmp;
+
+  if (dir == X1DIR) {
+    memcpy(tmp.data(), jacobian_[k][j][i], tmp.size()*sizeof(Real));
+  } else if (dir == X2DIR) {
+    memcpy(tmp.data(), jacobian_[j][i][k], tmp.size()*sizeof(Real));
+    tmp = p2_*tmp*p3_;
   } else { // X3DIR
-    int ivx = 3, ivy = 1, ivz = 2;
-    memcpy(tmp.data(), jacobian_[i][k][j], s*sizeof(Real));
-    phi << tmp(idn,idn), tmp(idn,ivx), tmp(idn,ivy), tmp(idn,ivz), tmp(idn,ien),
-           tmp(ivx,idn), tmp(ivx,ivx), tmp(ivx,ivy), tmp(ivx,ivz), tmp(ivx,ien),
-           tmp(ivy,idn), tmp(ivy,ivx), tmp(ivy,ivy), tmp(ivy,ivz), tmp(ivy,ien),
-           tmp(ivz,idn), tmp(ivz,ivx), tmp(ivz,ivy), tmp(ivz,ivz), tmp(ivz,ien),
-           tmp(ien,idn), tmp(ien,ivx), tmp(ien,ivy), tmp(ien,ivz), tmp(ien,ien);
+    memcpy(tmp.data(), jacobian_[i][k][j], tmp.size()*sizeof(Real));
+    tmp = p3_*tmp*p2_;
   }
+
+  for (int i = 0; i < 5; ++i)
+    for (int j = 0; j < 5; ++j)
+      phi(i,j) = tmp(i,j);
 }
 
 #endif

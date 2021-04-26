@@ -60,6 +60,21 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
     pole_at_bot = true;
   if (pmb->pbval->block_bcs[2*dir+1] == BoundaryFlag::polar)
     pole_at_top = true;
+
+  int idn = 0, ivx = 1, ivy = 2, ivz = 3, ien = 4;
+  p2_.setZero();
+  p2_(idn,idn) = 1.;
+  p2_(ivx,ivy) = 1.;
+  p2_(ivy,ivz) = 1.;
+  p2_(ivz,ivx) = 1.;
+  p2_(ien,ien) = 1.;
+
+  p3_.setZero();
+  p3_(idn,idn) = 1.;
+  p3_(ivx,ivz) = 1.;
+  p3_(ivy,ivx) = 1.;
+  p3_(ivz,ivy) = 1.;
+  p3_(ien,ien) = 1.;
 }
 
 ImplicitSolver::~ImplicitSolver() {

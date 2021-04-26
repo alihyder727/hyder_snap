@@ -1,24 +1,24 @@
-#ifndef JACOBIAN_FUNCTIONS_HPP
-#define JACOBIAN_FUNCTIONS_HPP
+#ifndef FORCING_JACOBIANS_HPP
+#define FORCING_JACOBIANS_HPP
 
 // Athena++ header
-#include "../mesh/mesh.hpp"
-#include "../coordinates/coordinates.hpp"
-#include "hydro.hpp"
+#include "../../mesh/mesh.hpp"
+#include "../../coordinates/coordinates.hpp"
+#include "implicit_solver.hpp"
 
 inline double cot(double x) { return(1./tan(x));}
 
 template<typename T>
-void JacobianGravityCoriolis(T &jac, Real const prim[],
-  int k, int j, int i, Hydro *phydro) {
+void ImplicitSolver::JacobianGravityCoriolis(T &jac, Real const prim[],
+  int k, int j, int i) {
   Real omega1 = 0, omega2 = 0, omega3 = 0, theta, phi;
-  Real omegax = phydro->hsrc.GetOmegaX();
-  Real omegay = phydro->hsrc.GetOmegaY();
-  Real omegaz = phydro->hsrc.GetOmegaZ();
-  Real grav = phydro->hsrc.GetG1();
+  Real omegax = pmy_hydro->hsrc.GetOmegaX();
+  Real omegay = pmy_hydro->hsrc.GetOmegaY();
+  Real omegaz = pmy_hydro->hsrc.GetOmegaZ();
+  Real grav = pmy_hydro->hsrc.GetG1();
   int idn = 0, ivx = 1, ivy = 2, ivz = 3, ien = 4;
 
-  MeshBlock *pmb = phydro->pmy_block;
+  MeshBlock *pmb = pmy_hydro->pmy_block;
 
   jac.setZero();
   if (COORDINATE_SYSTEM == "cartesian") {
@@ -72,6 +72,11 @@ void JacobianGravityCoriolis(T &jac, Real const prim[],
   jac(ivy,ivz) += 2*omega1;
   jac(ivz,ivx) += 2*omega2;
   jac(ivz,ivy) += -2*omega1;
+
+  if (mydir == X2DIR)
+    jac = p2_*jac*p3_;
+  else if (mydir == X3DIR)
+    jac = p3_*jac*p2_;
 
   /*} else if (dir == X2DIR) {
     jac(ivz,idn) = grav;

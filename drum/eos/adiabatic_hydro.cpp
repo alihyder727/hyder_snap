@@ -65,6 +65,9 @@ void EquationOfState::ConservedToPrimitive(
         Real& w_vz = prim(IVZ,k,j,i);
         Real& w_p  = prim(IPR,k,j,i);
 
+        // apply density floor, without changing momentum or energy
+        u_d = (u_d > density_floor_) ?  u_d : density_floor_;
+
         Real density = 0.;
         for (int n = 0; n < NMASS; ++n)
           density += cons(n,k,j,i);
@@ -113,6 +116,10 @@ void EquationOfState::ConservedToPrimitive(
           feps += prim(n,k,j,i)*(1./pthermo->GetMassRatio(n) - 1.);
         }
         w_p = gm1*(u_e - KE - LE)*feps/fsig;
+
+        // apply pressure floor, correct total energy
+        u_e = (w_p > pressure_floor_) ?  u_e : ((pressure_floor_/gm1)*fsig/feps + KE + LE);
+        w_p = (w_p > pressure_floor_) ?  w_p : pressure_floor_;
 
         #ifdef DEBUG
         if (std::isnan(w_p) || (w_p < pressure_floor_)) {

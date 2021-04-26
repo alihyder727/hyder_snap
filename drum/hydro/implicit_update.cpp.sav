@@ -1,0 +1,87 @@
+//! \file implicit_update.cpp
+//  \brief final step of full implicit solver
+#include <iostream>
+
+// Eigen headers
+#include "../math/eigen335/Eigen/Core"
+#include "../math/eigen335/Eigen/Dense"
+
+// Athena++ headers
+#include "../mesh/mesh.hpp"
+#include "hydro.hpp"
+#include "implicit/implicit_solver.hpp"
+
+void Hydro::ImplicitUpdate(AthenaArray<Real> &du)
+{
+  MeshBlock *pmb = pmy_block;
+  int is = pmb->is; int js = pmb->js; int ks = pmb->ks;
+  int ie = pmb->ie; int je = pmb->je; int ke = pmb->ke;
+
+  if (implicit_flag == 1) {
+    for (int n = 0; n < NHYDRO; ++n)
+      for (int k = ks; k <= ke; ++k)
+        for (int j = js; j <= je; ++j)
+          for (int i = is; i <= ie; ++i)
+            du(n,k,j,i) = pimp1->du_(n,k,j,i);
+  } else if (implicit_flag == 2) {
+    for (int n = 0; n < NHYDRO; ++n)
+      for (int k = ks; k <= ke; ++k)
+        for (int j = js; j <= je; ++j)
+          for (int i = is; i <= ie; ++i)
+            du(n,k,j,i) = pimp2->du_(n,i,k,j);
+  } else if (implicit_flag == 3) {
+    for (int n = 0; n < NHYDRO; ++n)
+      for (int k = ks; k <= ke; ++k)
+        for (int j = js; j <= je; ++j)
+          for (int i = is; i <= ie; ++i)
+            du(n,k,j,i) = pimp3->du_(n,j,i,k);
+  } else if (implicit_flag == 4) {
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i) {
+          /*du(IDN,k,j,i) = pimp1->du_(IDN,k,j,i) + pimp2->du_(IDN,i,k,j)
+            + pimp3->du_(IDN,j,i,k) - 2*du(IDN,k,j,i);
+          du(IVX,k,j,i) = pimp1->du_(IVX,k,j,i);
+          du(IVY,k,j,i) = pimp2->du_(IVY,i,k,j);
+          du(IVZ,k,j,i) = pimp3->du_(IVZ,j,i,k);
+          du(IEN,k,j,i) = pimp1->du_(IEN,k,j,i) + pimp2->du_(IEN,i,k,j)
+            + pimp3->du_(IEN,j,i,k) - 2*du(IEN,k,j,i);*/
+          /*Real a0, a1, a2, eps = 1.E-6;
+          for (int n = 0; n < NHYDRO; ++n) {
+            a0 = 1./(du(n,k,j,i)+eps);
+            a1 = 1./(pimp1->du_(n,k,j,i)+eps);
+            a2 = 1./(pimp2->du_(n,k,j,i)+eps);
+            //if (Globals::my_rank == 0)
+            //  std::cout << n << " " << a1/(a1+a2-a0) << " " << a2/(a1+a2-a0) 
+            //            << " " << a0/(a1+a2-a0) << std::endl;
+            du(n,k,j,i) = a1/(a1+a2-a0)*pimp1->du_(n,k,j,i) + 
+                          a2/(a1+a2-a0)*pimp2->du_(n,i,k,j) -
+                          a0/(a1+a2-a0)*du(n,k,j,i);
+          }*/
+          Eigen::MatrixXd A(2*NHYDRO,2);
+          Eigen::VectorXd b(2*NHYDRO);
+          for (int n = 0; n < NHYDRO; ++n) {
+            A(n,0) = du(n,k,j,i) + pimp1->du_(n,k,j,i);
+            A(n,1) = du(n,k,j,i);
+            A(NHYDRO+n,0) = du(n,k,j,i);
+            A(NHYDRO+n,1) = du(n,k,j,i) + pimp2->du_(n,i,k,j);
+            b(n) = du(n,k,j,i);
+            b(NHYDRO+n) = du(n,k,j,i);
+          }
+          Eigen::MatrixXd At = A.transpose();
+          Eigen::VectorXd a = (At*A).colPivHouseholderQr().solve(At*b);
+          //if (Globals::my_rank == 0)
+          //  std::cout << a(0) << " " << a(1) << std::endl;
+
+          for (int n = 0; n < NHYDRO; ++n)
+            du(n,k,j,i) = a(0)*pimp1->du_(n,k,j,i) + a(1)*pimp2->du_(n,i,k,j) 
+                + (1.-a(0)-a(1))*du(n,k,j,i);
+
+          /*du(IDN,k,j,i) = pimp1->du_(IDN,k,j,i) + pimp2->du_(IDN,i,k,j) - du(IDN,k,j,i);
+          du(IVX,k,j,i) = pimp1->du_(IVX,k,j,i);
+          du(IVY,k,j,i) = pimp2->du_(IVY,i,k,j);
+          du(IEN,k,j,i) = pimp1->du_(IEN,k,j,i) + pimp2->du_(IEN,i,k,j) - du(IEN,k,j,i);
+          */
+        }
+  }
+}

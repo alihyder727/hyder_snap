@@ -19,7 +19,7 @@
 #include "implicit_solver.hpp"
 #include "forward_backward.hpp"
 #include "periodic_forward_backward.hpp"
-#include "../jacobian_functions.hpp"
+#include "forcing_jacobians.hpp"
 
 
 void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
@@ -76,7 +76,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
   FindNeighbors();
 
   Real gamma = pmb->peos->GetGamma();
-  Eigen::Matrix<Real,5,5> Phi, Dt, Bnds, Bnde;
+  Eigen::Matrix<Real,5,5> Phi, Dt, Bnds, Bnde, tmp;
 
   Dt.setIdentity();
   Dt *= 1./dt;
@@ -137,21 +137,25 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
           aleft = pcoord->GetFace1Area(k,j,i);
           aright = pcoord->GetFace1Area(k,j,i+1);
           vol = pcoord->GetCellVolume(k,j,i);
-          JACOBIAN_FUNCTION(Phi,wl,k,j,i,pmy_hydro);
+          JACOBIAN_FUNCTION(Phi,wl,k,j,i);
+          memcpy(jacobian_[k][j][i], Phi.data(), Phi.size()*sizeof(Real));
         } else if (mydir == X2DIR) {
           aleft = pcoord->GetFace2Area(j,i,k);
           aright = pcoord->GetFace2Area(j,i+1,k);
           vol = pcoord->GetCellVolume(j,i,k);
-          Phi.setZero();
-          //JACOBIAN_FUNCTION(Phi,wl,j,i,k,pmy_hydro,mydir);
+          //Phi.setZero();
+          JACOBIAN_FUNCTION(Phi,wl,j,i,k);
+          tmp = p3_*Phi*p2_;
+          memcpy(jacobian_[j][i][k], tmp.data(), tmp.size()*sizeof(Real));
         } else { // X3DIR
           aleft = pcoord->GetFace3Area(i,k,j);
           aright = pcoord->GetFace3Area(i+1,k,j);
           vol = pcoord->GetCellVolume(i,k,j);
-          Phi.setZero();
-          //JACOBIAN_FUNCTION(Phi,wl,i,k,j,pmy_hydro,mydir);
+          //Phi.setZero();
+          JACOBIAN_FUNCTION(Phi,wl,i,k,j);
+          tmp = p2_*Phi*p3_;
+          memcpy(jacobian_[i][k][j], tmp.data(), tmp.size()*sizeof(Real));
         }
-        SaveForcingJacobian(Phi,k,j,i);
 
         a[i] = (Am*aleft + Ap*aright + (aright - aleft)*dfdq[i])/(2.*vol) 
                + Dt - Phi;

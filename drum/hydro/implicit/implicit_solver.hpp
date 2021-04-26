@@ -4,6 +4,10 @@
 // C/C++ headers
 #include <vector>
 
+// Eigen headers
+#include "../../math/eigen335/Eigen/Core"
+//#include "../../math/eigen335/Eigen/Dense"
+
 // Athena++ headers
 #include "../../athena.hpp"
 #include "../../bvals/bvals_interfaces.hpp"
@@ -11,6 +15,7 @@
 class ImplicitSolver {
   friend class Hydro;
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 // data
   Hydro *pmy_hydro;
   bool has_top_neighbor, has_bot_neighbor;
@@ -51,6 +56,10 @@ public:
   template<typename T1, typename T2>
   void PeriodicBackwardSubstitution(std::vector<T1> &a, std::vector<T1> &c,
     std::vector<T2> &delta, int kl, int ku, int jl, int ju, int il, int iu);
+
+// forcing jacobians
+  template<typename T>
+  void JacobianGravityCoriolis(T &jac, Real const prim[], int k, int j, int i);
 
 // communications
   void SynchronizeConserved(AthenaArray<Real> const& du,
@@ -104,9 +113,6 @@ public:
     std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu);
 
   template<typename T>
-  void SaveForcingJacobian(T &phi, int k, int j ,int i);
-
-  template<typename T>
   void LoadForcingJacobian(T &phi, int k, int j ,int i, CoordinateDirection dir);
 
 private:
@@ -117,6 +123,8 @@ private:
   Real ****coefficients_; // archive of coefficients in the tri-diagonal matrix
   Real ****jacobian_;     // archive of forcing jacobian
   AthenaArray<Real> du_;  // stores implicit solution
+
+  Eigen::Matrix<Real,5,5> p2_, p3_;  // perturbation matrices
 
 #ifdef MPI_PARALLEL
   MPI_Request **req_send_data1_;
