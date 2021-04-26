@@ -99,7 +99,8 @@ inline T interp_weno3(T phim1, T phi, T phip1) {
 
 // 5-th polynomial 
 template<typename T>
-inline T interp_cp5(T phim2, T phim1, T phi, T phip1, T phip2) {
+inline T interp_cp5(T const& phim2, T const& phim1, T const& phi, T const& phip1, T
+const& phip2) {
   return -1./20.*phim2 + 9./20.*phim1 + 47./60.*phi - 13./60.*phip1 + 1./30.*phip2;
 };
 
@@ -119,7 +120,7 @@ inline T interp_bp5(T phim3, T phim2, T phim1, T phi, T phip1, T phip2, int sgn)
 
 // WENO 5 interpolation
 template<typename T>
-inline T interp_weno5(T phim2, T phim1, T phi, T phip1, T phip2) {
+inline T interp_weno5(T const& phim2, T const& phim1, T const& phi, T const& phip1, T const& phip2) {
   T p0 = (1./3.)*phi + (5./6.)*phim1 - (1./6.)*phim2;
   T p1 = (-1./6.)*phip1 + (5./6.)*phi + (1./3.)*phim1;
   T p2 = (1./3.)*phip2 - (7./6.)*phip1 + (11./6.)*phi;
