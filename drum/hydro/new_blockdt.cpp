@@ -93,7 +93,10 @@ void Hydro::NewBlockTimeStep() {
               dt3(i) /= (std::abs(wi[IVZ]) + cf);
             } else {
               Real cs = pmb->peos->SoundSpeed(wi);
-              dt1(i) /= (std::abs(wi[IVX]) + cs);
+              if (implicit_flag & 1)
+                dt1(i) /= pmb->pmy_mesh->cfl_number*std::abs(wi[IVX]);
+              else
+                dt1(i) /= (std::abs(wi[IVX]) + cs);
               dt2(i) /= (std::abs(wi[IVY]) + cs);
               dt3(i) /= (std::abs(wi[IVZ]) + cs);
             }
@@ -106,11 +109,10 @@ void Hydro::NewBlockTimeStep() {
       }
 
       // compute minimum of (v1 +/- C)
-      if (!(implicit_flag & 1) || (pmb->block_size.nx2 == 1))
-        for (int i=is; i<=ie; ++i) {
-          Real& dt_1 = dt1(i);
-          min_dt_hyperbolic = std::min(min_dt_hyperbolic, dt_1);
-        }
+      for (int i=is; i<=ie; ++i) {
+        Real& dt_1 = dt1(i);
+        min_dt_hyperbolic = std::min(min_dt_hyperbolic, dt_1);
+      }
 
       // if grid is 2D/3D, compute minimum of (v2 +/- C)
       if (pmb->block_size.nx2 > 1) {
