@@ -106,7 +106,7 @@ void Reconstruction::Weno5X2(const int k, const int j, const int il, const int i
     }
   }
 
-  int ng1 = 0, ng2 = 0;
+  /*int ng1 = 0, ng2 = 0;
   if (pmb->pbval->block_bcs[inner_x2] != BoundaryFlag::block)
     ng1 = NGHOST;
   if (pmb->pbval->block_bcs[outer_x2] != BoundaryFlag::block)
@@ -127,7 +127,7 @@ void Reconstruction::Weno5X2(const int k, const int j, const int il, const int i
         scale += w(n,k,j,i+3) - w(n,k,j,i-2);
       }
     }
-  } else {
+  } else*/
     for (int n=NMASS; n<NHYDRO; ++n) {
 #pragma omp simd
       for (int i=il; i<=iu; ++i) {
@@ -135,7 +135,6 @@ void Reconstruction::Weno5X2(const int k, const int j, const int il, const int i
         wr(n,i) = interp_cp5(w(n,k,j-2,i),w(n,k,j-1,i),w(n,k,j,i),w(n,k,j+1,i),w(n,k,j+2,i));
       }
     }
-  }
 
   return;
 }
@@ -165,7 +164,7 @@ void Reconstruction::Weno5X3(const int k, const int j, const int il, const int i
     }
   }
 
-  int ng1 = 0, ng2 = 0;
+  /*int ng1 = 0, ng2 = 0;
   if (pmb->pbval->block_bcs[inner_x2] != BoundaryFlag::block)
     ng1 = NGHOST;
   if (pmb->pbval->block_bcs[outer_x2] != BoundaryFlag::block)
@@ -186,7 +185,7 @@ void Reconstruction::Weno5X3(const int k, const int j, const int il, const int i
         scale += w(n,k,j,i+3) - w(n,k,j,i-2);
       }
     }
-  } else {
+  } else*/
     for (int n=NMASS; n<NHYDRO; ++n) {
 #pragma omp simd
       for (int i=il; i<=iu; ++i) {
@@ -194,7 +193,6 @@ void Reconstruction::Weno5X3(const int k, const int j, const int il, const int i
         wr(n,i) = interp_cp5(w(n,k-2,j,i),w(n,k-1,j,i),w(n,k,j,i),w(n,k+1,j,i),w(n,k+2,j,i));
       }
     }
-  }
 
   return;
 }

@@ -22,9 +22,9 @@ void ImplicitSolver::JacobianGravityCoriolis(T &jac, Real const prim[],
 
   jac.setZero();
   if (COORDINATE_SYSTEM == "cartesian") {
-    omega1 = omegax;
-    omega2 = omegay;
-    omega3 = omegaz;
+    omega1 = omegaz;
+    omega2 = omegax;
+    omega3 = omegay;
   } else if (COORDINATE_SYSTEM == "cylindrical") {
     theta = pmb->pcoord->x2v(j);
 
