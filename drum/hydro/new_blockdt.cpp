@@ -97,8 +97,18 @@ void Hydro::NewBlockTimeStep() {
                 dt1(i) /= pmb->pmy_mesh->cfl_number*std::abs(wi[IVX]);
               else
                 dt1(i) /= (std::abs(wi[IVX]) + cs);
-              dt2(i) /= (std::abs(wi[IVY]) + cs);
-              dt3(i) /= (std::abs(wi[IVZ]) + cs);
+
+              if (implicit_flag & 2)
+                dt2(i) = dt2(i)/std::max(std::abs(wi[IVY]) + cs,
+                  pmb->pmy_mesh->cfl_number*std::abs(wi[IVY]));
+              else
+                dt2(i) /= (std::abs(wi[IVY]) + cs);
+
+              if (implicit_flag & 4)
+                dt3(i) = dt3(i)/std::max(std::abs(wi[IVZ]) + cs,
+                  pmb->pmy_mesh->cfl_number*std::abs(wi[IVZ]));
+              else
+                dt3(i) /= (std::abs(wi[IVZ]) + cs);
             }
           } else { // FluidFormulation::background or disabled. Assume scalar advection:
             dt1(i) /= (std::abs(wi[IVX]));
