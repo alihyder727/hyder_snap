@@ -71,10 +71,10 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
     // Simple predictor-corrector scheme similar to MUSCL-Hancock
     // Expressed in 2S or 3S* algorithm form
     nstages = 2;
-    cfl_limit = 1.0;
+    cfl_limit = 20.0;
     // Modify VL2 stability limit in 2D, 3D
-    if (pm->ndim == 2) cfl_limit = 0.5;
-    if (pm->ndim == 3) cfl_limit = 0.5;
+    //if (pm->ndim == 2) cfl_limit = 0.5;
+    //if (pm->ndim == 3) cfl_limit = 0.5;
 
     stage_wghts[0].delta = 1.0; // required for consistency
     stage_wghts[0].gamma_1 = 0.0;
