@@ -128,13 +128,27 @@ void Reconstruction::Weno5X2(const int k, const int j, const int il, const int i
       }
     }
   } else*/
-    for (int n=NMASS; n<NHYDRO; ++n) {
+  //for (int n=NMASS; n<NMASS+3; ++n) {
+  for (int n=NMASS; n<NHYDRO; ++n) {
 #pragma omp simd
-      for (int i=il; i<=iu; ++i) {
-        wl(n,i) = interp_cp5(w(n,k,j+2,i),w(n,k,j+1,i),w(n,k,j,i),w(n,k,j-1,i),w(n,k,j-2,i));
-        wr(n,i) = interp_cp5(w(n,k,j-2,i),w(n,k,j-1,i),w(n,k,j,i),w(n,k,j+1,i),w(n,k,j+2,i));
-      }
+    for (int i=il; i<=iu; ++i) {
+      wl(n,i) = interp_cp5(w(n,k,j+2,i),w(n,k,j+1,i),w(n,k,j,i),w(n,k,j-1,i),w(n,k,j-2,i));
+      wr(n,i) = interp_cp5(w(n,k,j-2,i),w(n,k,j-1,i),w(n,k,j,i),w(n,k,j+1,i),w(n,k,j+2,i));
     }
+  }
+
+  /*scale = 0.;
+#pragma omp simd
+  for (int m = -2; m <= 2; ++m) scale += w(IPR,k,j,il+m);
+  for (int i=il; i<=iu; ++i) {
+#pragma omp simd
+    for (int m = -2; m <= 2; ++m) v[m+2] = w(IPR,k,j+m,i)/(5.*scale);
+    // wl(j+1/2)
+    wl(IPR,i) = interp_weno5(v[4], v[3], v[2], v[1], v[0])*5.*scale;
+    // wr(j-1/2)
+    wr(IPR,i) = interp_weno5(v[0], v[1], v[2], v[3], v[4])*5.*scale;
+    scale += w(IPR,k,j,i+3) - w(IPR,k,j,i-2);
+  }*/
 
   return;
 }
@@ -186,13 +200,27 @@ void Reconstruction::Weno5X3(const int k, const int j, const int il, const int i
       }
     }
   } else*/
-    for (int n=NMASS; n<NHYDRO; ++n) {
+  //for (int n=NMASS; n<NMASS+3; ++n) {
+  for (int n=NMASS; n<NHYDRO; ++n) {
 #pragma omp simd
-      for (int i=il; i<=iu; ++i) {
-        wl(n,i) = interp_cp5(w(n,k+2,j,i),w(n,k+1,j,i),w(n,k,j,i),w(n,k-1,j,i),w(n,k-2,j,i));
-        wr(n,i) = interp_cp5(w(n,k-2,j,i),w(n,k-1,j,i),w(n,k,j,i),w(n,k+1,j,i),w(n,k+2,j,i));
-      }
+    for (int i=il; i<=iu; ++i) {
+      wl(n,i) = interp_cp5(w(n,k+2,j,i),w(n,k+1,j,i),w(n,k,j,i),w(n,k-1,j,i),w(n,k-2,j,i));
+      wr(n,i) = interp_cp5(w(n,k-2,j,i),w(n,k-1,j,i),w(n,k,j,i),w(n,k+1,j,i),w(n,k+2,j,i));
     }
+  }
+
+  /*scale = 0.;
+#pragma omp simd
+  for (int m = -2; m <= 2; ++m) scale += w(IPR,k,j,il+m);
+  for (int i=il; i<=iu; ++i) {
+#pragma omp simd
+    for (int m = -2; m <= 2; ++m) v[m+2] = w(IPR,k+m,j,i)/(5.*scale);
+    // wl(k+1/2)
+    wl(IPR,i) = interp_weno5(v[4], v[3], v[2], v[1], v[0])*5.*scale;
+    // wr(k-1/2)
+    wr(IPR,i) = interp_weno5(v[0], v[1], v[2], v[3], v[4])*5.*scale;
+    scale += w(IPR,k,j,i+3) - w(IPR,k,j,i-2);
+  }*/
 
   return;
 }

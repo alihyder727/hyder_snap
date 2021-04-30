@@ -221,6 +221,10 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
         pmb->precon->PiecewiseLinearX2(k, js-1, il, iu, w, bcc, wl_, wr_);
       } else if (order == 5) {
         pmb->precon->Weno5X2(k, js-1, il, iu, w, bcc, wl_, wr_);
+        for (int i=il; i<=iu; ++i) {
+          pmb->peos->ApplyPrimitiveFloors(wl_, k, js-1, i);
+          pmb->peos->ApplyPrimitiveFloors(wr_, k, js-1, i);
+        }
       } else {
         pmb->precon->PiecewiseParabolicX2(k, js-1, il, iu, w, bcc, wl_, wr_);
       }
@@ -232,6 +236,10 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
           pmb->precon->PiecewiseLinearX2(k, j, il, iu, w, bcc, wlb_, wr_);
         } else if (order == 5) {
           pmb->precon->Weno5X2(k, j, il, iu, w, bcc, wlb_, wr_);
+          for (int i=il; i<=iu; ++i) {
+            pmb->peos->ApplyPrimitiveFloors(wl_, k, j, i);
+            pmb->peos->ApplyPrimitiveFloors(wr_, k, j, i);
+          }
         } else {
           pmb->precon->PiecewiseParabolicX2(k, j, il, iu, w, bcc, wlb_, wr_);
         }
@@ -348,6 +356,10 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
         pmb->precon->PiecewiseLinearX3(ks-1, j, il, iu, w, bcc, wl_, wr_);
       } else if (order == 5) {
         pmb->precon->Weno5X3(ks-1, j, il, iu, w, bcc, wl_, wr_);
+        for (int i=il; i<=iu; ++i) {
+          pmb->peos->ApplyPrimitiveFloors(wl_, ks-1, j, i);
+          pmb->peos->ApplyPrimitiveFloors(wr_, ks-1, j, i);
+        }
       } else {
         pmb->precon->PiecewiseParabolicX3(ks-1, j, il, iu, w, bcc, wl_, wr_);
       }
@@ -359,6 +371,10 @@ void Hydro::CalculateFluxes(AthenaArray<Real> &w, FaceField &b,
           pmb->precon->PiecewiseLinearX3(k, j, il, iu, w, bcc, wlb_, wr_);
         } else if (order == 5) {
           pmb->precon->Weno5X3(k, j, il, iu, w, bcc, wlb_, wr_);
+          for (int i=il; i<=iu; ++i) {
+            pmb->peos->ApplyPrimitiveFloors(wl_, k, j, i);
+            pmb->peos->ApplyPrimitiveFloors(wr_, k, j, i);
+          }
         } else {
           pmb->precon->PiecewiseParabolicX3(k, j, il, iu, w, bcc, wlb_, wr_);
         }

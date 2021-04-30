@@ -33,9 +33,11 @@ public:
   void ApplyBoundaryCondition(AthenaArray<Real> &w, AthenaArray<Real> &psf,
     int kl, int ku, int jl, int ju);
 
-  void RecvFromTop(AthenaArray<Real> &psf, AthenaArray<Real> &entropy,
+  void RecvBuffer(AthenaArray<Real> &psf,
+    int kl, int ku, int jl, int ju, int il, int iu, NeighborBlock nb);
+  void SendBuffer(AthenaArray<Real> const& psf,
     int kl, int ku, int jl, int ju);
-  void SendToBottom(AthenaArray<Real> &psf, AthenaArray<Real> &entropy,
+  void PopulateBotEntropy(AthenaArray<Real> const& w, 
     int kl, int ku, int jl, int ju);
   void WaitToFinishSend();
 
@@ -45,16 +47,18 @@ public:
 
 private:
   // pressure decomposition
-  AthenaArray<Real> psf_;         // hydrostatic pressure at cell face
+  AthenaArray<Real> psf_;         // hydrostatic pressure and polytropic index at cell face
   AthenaArray<Real> pres_, dens_; // save of original w
-  Real *buffer_;                  // MPI data buffer
+  Real *buffer_, *send_buffer_;   // MPI data buffer
   Real *wsend_top_, *wrecv_top_;  // MPI data buffer
   Real *wsend_bot_, *wrecv_bot_;  // MPI data buffer
+  int *brank_, *color_;           // bottom block rank and color
 
-  AthenaArray<Real> entropy_;     // pseudo entropy
+  AthenaArray<Real> entropy_;     // adiabatic index and pseudo entropy
 
 #ifdef MPI_PARALLEL
-  MPI_Request req_send_to_bot_;
+  MPI_Request req_send_top_;
+  MPI_Request req_send_bot_;
   MPI_Request req_send_sync_top_;
   MPI_Request req_send_sync_bot_;
   MPI_Request req_recv_sync_top_;

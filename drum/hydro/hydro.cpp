@@ -154,6 +154,7 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
 
   // implicit correction
   implicit_flag = pin->GetOrAddInteger("hydro", "implicit_flag", 0);
+  min_tem = pin->GetOrAddReal("hydro", "min_tem", 10.);
   pimp1 = new ImplicitSolver(this, X1DIR);
   pimp2 = new ImplicitSolver(this, X2DIR);
   pimp3 = new ImplicitSolver(this, X3DIR);
