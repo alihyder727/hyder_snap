@@ -143,16 +143,16 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
           aleft = pcoord->GetFace2Area(j,i,k);
           aright = pcoord->GetFace2Area(j,i+1,k);
           vol = pcoord->GetCellVolume(j,i,k);
-          //Phi.setZero();
-          JACOBIAN_FUNCTION(Phi,wl,j,i,k);
+          Phi.setZero();
+          //JACOBIAN_FUNCTION(Phi,wl,j,i,k);
           tmp = p3_*Phi*p2_;
           memcpy(jacobian_[j][i][k], tmp.data(), tmp.size()*sizeof(Real));
         } else { // X3DIR
           aleft = pcoord->GetFace3Area(i,k,j);
           aright = pcoord->GetFace3Area(i+1,k,j);
           vol = pcoord->GetCellVolume(i,k,j);
-          //Phi.setZero();
-          JACOBIAN_FUNCTION(Phi,wl,i,k,j);
+          Phi.setZero();
+          //JACOBIAN_FUNCTION(Phi,wl,i,k,j);
           tmp = p2_*Phi*p3_;
           memcpy(jacobian_[i][k][j], tmp.data(), tmp.size()*sizeof(Real));
         }

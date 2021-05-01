@@ -93,18 +93,18 @@ void Hydro::NewBlockTimeStep() {
               dt3(i) /= (std::abs(wi[IVZ]) + cf);
             } else {
               Real cs = pmb->peos->SoundSpeed(wi);
-              if (implicit_flag & 1)
+              if ((implicit_flag & 1) && (pmb->block_size.nx2 > 1))
                 dt1(i) /= pmb->pmy_mesh->cfl_number*std::abs(wi[IVX]);
               else
                 dt1(i) /= (std::abs(wi[IVX]) + cs);
 
-              if (implicit_flag & 2)
+              if ((implicit_flag & 2) && limit_to_advection)
                 dt2(i) = dt2(i)/std::max(std::abs(wi[IVY]) + cs,
                   pmb->pmy_mesh->cfl_number*std::abs(wi[IVY]));
               else
                 dt2(i) /= (std::abs(wi[IVY]) + cs);
 
-              if (implicit_flag & 4)
+              if ((implicit_flag & 4) && limit_to_advection)
                 dt3(i) = dt3(i)/std::max(std::abs(wi[IVZ]) + cs,
                   pmb->pmy_mesh->cfl_number*std::abs(wi[IVZ]));
               else

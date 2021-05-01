@@ -51,6 +51,7 @@ class Hydro {
   AthenaArray<Real> du;       // du stores the change of the conservative variable in a substep
   // implicit correction
   int implicit_flag;
+  bool limit_to_advection;
   Real min_tem;
 
   // storage for SMR/AMR

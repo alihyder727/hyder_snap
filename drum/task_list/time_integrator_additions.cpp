@@ -17,12 +17,12 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
 
   // do implicit coorection at every stage
   ph->implicit_done = nullptr;
-  // X1DIR
-  if (ph->implicit_flag & 1)
+  // X3DIR
+  if ((ph->implicit_flag & (1<<2)) && (pmb->ncells3 > 1))
     if (ph->implicit_flag & (1<<3))
-      ph->pimp1->FullCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+      ph->pimp3->FullCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
     else
-      ph->pimp1->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+      ph->pimp3->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
 
   // X2DIR
   if ((ph->implicit_flag & (1<<1)) && (pmb->ncells2 > 1))
@@ -31,12 +31,12 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
     else
       ph->pimp2->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
 
-  // X3DIR
-  if ((ph->implicit_flag & (1<<2)) && (pmb->ncells3 > 1))
+  // X1DIR
+  if (ph->implicit_flag & 1)
     if (ph->implicit_flag & (1<<3))
-      ph->pimp3->FullCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+      ph->pimp1->FullCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
     else
-      ph->pimp3->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
+      ph->pimp1->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
 
   Real wghts[3];
   wghts[0] = 1.;
