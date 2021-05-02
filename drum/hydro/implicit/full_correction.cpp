@@ -97,7 +97,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j) {
       // 3. calculate and save flux Jacobian matrix
-      for (int i = is-1; i <= ie+1; ++i) {
+      for (int i = is-2; i <= ie+1; ++i) {
         Real fsig = 1., feps = 1.;
         CopyPrimitives(wl, wr, w, k, j, i, mydir);
         for (int n = 1 + NVAPOR; n < NMASS; ++n) {
@@ -113,15 +113,15 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
         FluxJacobian(dfdq[i], gamma_m1[i], wr, mydir);
       } // 5. set up diffusion matrix and tridiagonal coefficients
       // left edge
-      CopyPrimitives(wl, wr, w, k, j, is, mydir);
-      Real gm1 = 0.5*(gamma_m1[is-1] + gamma_m1[is]);
+      CopyPrimitives(wl, wr, w, k, j, is-1, mydir);
+      Real gm1 = 0.5*(gamma_m1[is-2] + gamma_m1[is-1]);
       RoeAverage(prim, gm1, wl, wr);
       Real cs = pmb->peos->SoundSpeed(prim);
       Eigenvalue(Lambda, prim[IVX+mydir], cs);
       Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
       Am = Rmat*Lambda*Rimat;
 
-      for (int i = is; i <= ie; ++i) {
+      for (int i = is-1; i <= ie; ++i) {
         CopyPrimitives(wl, wr, w, k, j, i+1, mydir);
         // right edge
         gm1 = 0.5*(gamma_m1[i] + gamma_m1[i+1]);
