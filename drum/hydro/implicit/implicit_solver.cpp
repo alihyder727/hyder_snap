@@ -14,7 +14,7 @@
   #include <mpi.h>
 #endif
 
-#define MAX_DATA_SIZE 64
+#define MAX_DATA_SIZE 25
 
 ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
     pmy_hydro(phydro), mydir(dir), has_bot_neighbor(false), has_top_neighbor(false),
@@ -25,21 +25,21 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
   int nc1, nc2, nc3;
   if (dir == X1DIR) {
     nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
-    NewCArray(jacobian_, nc3, nc2, nc1, MAX_DATA_SIZE);
+    //NewCArray(jacobian_, nc3, nc2, nc1, MAX_DATA_SIZE);
   } else if (dir == X2DIR) {
     nc1 = pmb->ncells2, nc2 = pmb->ncells3, nc3 = pmb->ncells1;
-    NewCArray(jacobian_, nc2, nc1, nc3, MAX_DATA_SIZE);
+    //NewCArray(jacobian_, nc2, nc1, nc3, MAX_DATA_SIZE);
   } else { // X3DIR
     nc1 = pmb->ncells3, nc2 = pmb->ncells1, nc3 = pmb->ncells2;
-    NewCArray(jacobian_, nc1, nc3, nc2, MAX_DATA_SIZE);
+    //NewCArray(jacobian_, nc1, nc3, nc2, MAX_DATA_SIZE);
   }
 
   du_.NewAthenaArray(NHYDRO, nc3, nc2, nc1);
   du_.ZeroClear();
-  usend_top_ = new Real [NHYDRO*nc3*nc2];
+  /*usend_top_ = new Real [NHYDRO*nc3*nc2];
   urecv_bot_ = new Real [NHYDRO*nc3*nc2];
   usend_bot_ = new Real [NHYDRO*nc3*nc2];
-  urecv_top_ = new Real [NHYDRO*nc3*nc2];
+  urecv_top_ = new Real [NHYDRO*nc3*nc2];*/
 
   NewCArray(buffer_, nc3, nc2, 7*MAX_DATA_SIZE);
   NewCArray(coefficients_, nc3, nc2, nc1, 4*MAX_DATA_SIZE);
@@ -78,14 +78,14 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
 }
 
 ImplicitSolver::~ImplicitSolver() {
-  delete[] usend_top_;
-  delete[] urecv_bot_;
-  delete[] usend_bot_;
-  delete[] urecv_top_;
+  //delete[] usend_top_;
+  //delete[] urecv_bot_;
+  //delete[] usend_bot_;
+  //delete[] urecv_top_;
 
   FreeCArray(buffer_);
   FreeCArray(coefficients_);
-  FreeCArray(jacobian_);
+  //FreeCArray(jacobian_);
 
 #ifdef MPI_PARALLEL
   FreeCArray(req_send_data1_);
@@ -99,8 +99,8 @@ void ImplicitSolver::FindNeighbors() {
   // find top and bot neighbor
   has_top_neighbor = false;
   has_bot_neighbor = false;
-  first_block = false;
-  last_block = false;
+  first_block = true;
+  last_block = true;
 
   for (int n = 0; n < pmy_hydro->pmy_block->pbval->nneighbor; ++n) {
     NeighborBlock& nb = pmy_hydro->pmy_block->pbval->neighbor[n];
@@ -133,20 +133,20 @@ void ImplicitSolver::FindNeighbors() {
 
   MeshBlock *pmb = pmy_hydro->pmy_block;
   if (mydir == X1DIR) {
-    if (pmb->block_size.x1min == pmb->pmy_mesh->mesh_size.x1min)
-      first_block = true;
-    if (pmb->block_size.x1max == pmb->pmy_mesh->mesh_size.x1max)
-      last_block = true;
+    if (pmb->block_size.x1min > pmb->pmy_mesh->mesh_size.x1min)
+      first_block = false;
+    if (pmb->block_size.x1max < pmb->pmy_mesh->mesh_size.x1max)
+      last_block = false;
   } else if (mydir == X2DIR) {
-    if (pmb->block_size.x2min == pmb->pmy_mesh->mesh_size.x2min)
-      first_block = true;
-    if (pmb->block_size.x2max == pmb->pmy_mesh->mesh_size.x2max)
-      last_block = true;
+    if (pmb->block_size.x2min > pmb->pmy_mesh->mesh_size.x2min)
+      first_block = false;
+    if (pmb->block_size.x2max < pmb->pmy_mesh->mesh_size.x2max)
+      last_block = false;
   } else { // X3DIR
-    if (pmb->block_size.x3min == pmb->pmy_mesh->mesh_size.x3min)
-      first_block = true;
-    if (pmb->block_size.x3max == pmb->pmy_mesh->mesh_size.x3max)
-      last_block = true;
+    if (pmb->block_size.x3min > pmb->pmy_mesh->mesh_size.x3min)
+      first_block = false;
+    if (pmb->block_size.x3max < pmb->pmy_mesh->mesh_size.x3max)
+      last_block = false;
   }
 
   //if (first_block)
@@ -166,7 +166,7 @@ void ImplicitSolver::FindNeighbors() {
   //std::cout << "last_block " << last_block << std::endl;
 }
 
-void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
+/*void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
   int kl, int ku, int jl, int ju, int is, int ie) {
   MeshBlock *pmb = pmy_hydro->pmy_block;
 
@@ -190,12 +190,7 @@ void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
 #endif
     } else {  // local boundary
       MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-      if (mydir == X1DIR)
-        std::memcpy(pbl->phydro->pimp1->urecv_top_, usend_bot_, sbot*sizeof(Real));
-      else if (mydir == X2DIR)
-        std::memcpy(pbl->phydro->pimp2->urecv_top_, usend_bot_, sbot*sizeof(Real));
-      else
-        std::memcpy(pbl->phydro->pimp3->urecv_top_, usend_bot_, sbot*sizeof(Real));
+      std::memcpy(pbl->phydro->pimps[mydir]->urecv_top_, usend_bot_, sbot*sizeof(Real));
     }
   }
 
@@ -219,12 +214,7 @@ void ImplicitSolver::SynchronizeConserved(AthenaArray<Real> const& du,
 #endif
     } else {  // local boundary
       MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-      if (mydir == X1DIR)
-        std::memcpy(pbl->phydro->pimp1->urecv_bot_, usend_top_, stop*sizeof(Real));
-      else if (mydir == X2DIR)
-        std::memcpy(pbl->phydro->pimp2->urecv_bot_, usend_top_, stop*sizeof(Real));
-      else
-        std::memcpy(pbl->phydro->pimp3->urecv_bot_, usend_top_, stop*sizeof(Real));
+      std::memcpy(pbl->phydro->pimps[mydir]->urecv_bot_, usend_top_, stop*sizeof(Real));
     }
   }
 }
@@ -270,7 +260,7 @@ void ImplicitSolver::WaitToFinishSync(int kl, int ku, int jl, int ju, int is, in
         for (int n = 0; n < NHYDRO; ++n)
           du_(n,k,j,ie+1) = du_(n,k,j,ie);
   }
-}
+}*/
 
 int ImplicitSolver::CreateMPITag(int recvid, int sendid, std::string phys) {
   //return (lid<<17) | (bufid<<11) | phys;

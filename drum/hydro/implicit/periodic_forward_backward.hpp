@@ -47,10 +47,10 @@ void ImplicitSolver::PeriodicForwardSweep(
     rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,il)/dt;
     rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,il)/dt;
     rhs(4) = du_(IEN,k,j,il)/dt;
-    if (pmy_hydro->implicit_done != nullptr) {
-      pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,il,mydir);
-      rhs -= dt*phi*rhs;
-    }
+    //if (pmy_hydro->implicit_done != nullptr) {
+    //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,il,mydir);
+    //  rhs -= dt*phi*rhs;
+    //}
   }
 
   //if (last_block)
@@ -100,10 +100,10 @@ void ImplicitSolver::PeriodicForwardSweep(
       rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,i)/dt;
       rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,i)/dt;
       rhs(4) = du_(IEN,k,j,i)/dt;
-      if (pmy_hydro->implicit_done != nullptr) {
-        pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,i,mydir);
-        rhs -= dt*phi*rhs;
-      }
+      //if (pmy_hydro->implicit_done != nullptr) {
+      //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,i,mydir);
+      //  rhs -= dt*phi*rhs;
+      //}
     }
     
     //                         -1

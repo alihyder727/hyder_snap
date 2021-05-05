@@ -16,7 +16,7 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   Real dt = pmb->pmy_mesh->dt;
 
   // do implicit coorection at every stage
-  ph->implicit_done = nullptr;
+  //ph->implicit_done = nullptr;
   // X3DIR
   if ((ph->implicit_flag & (1<<2)) && (pmb->ncells3 > 1))
     if (ph->implicit_flag & (1<<3))

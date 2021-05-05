@@ -66,7 +66,7 @@ class Hydro {
   HydroSourceTerms hsrc;
   HydroDiffusion hdif;
   ImplicitSolver *pimp1, *pimp2, *pimp3;
-  ImplicitSolver *pimps[3], *implicit_done;
+  ImplicitSolver *pimps[3]; //, *implicit_done;
   Decomposition *pdec;
 
   // functions

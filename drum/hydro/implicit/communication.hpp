@@ -292,7 +292,7 @@ void inline ImplicitSolver::SaveForcingJacobian(T &phi, int k, int j ,int i) {
   } else {
     memcpy(jacobian_[i][k][j], phi.data(), phi.size()*sizeof(Real));
   }
-}*/
+}
 
 template<typename T>
 void inline ImplicitSolver::LoadForcingJacobian(T &phi, int k, int j ,int i,
@@ -312,6 +312,6 @@ void inline ImplicitSolver::LoadForcingJacobian(T &phi, int k, int j ,int i,
   for (int i = 0; i < 5; ++i)
     for (int j = 0; j < 5; ++j)
       phi(i,j) = tmp(i,j);
-}
+}*/
 
 #endif

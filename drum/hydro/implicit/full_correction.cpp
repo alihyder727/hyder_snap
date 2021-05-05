@@ -138,23 +138,23 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
           aright = pcoord->GetFace1Area(k,j,i+1);
           vol = pcoord->GetCellVolume(k,j,i);
           JACOBIAN_FUNCTION(Phi,wl,k,j,i);
-          memcpy(jacobian_[k][j][i], Phi.data(), Phi.size()*sizeof(Real));
+          //memcpy(jacobian_[k][j][i], Phi.data(), Phi.size()*sizeof(Real));
         } else if (mydir == X2DIR) {
           aleft = pcoord->GetFace2Area(j,i,k);
           aright = pcoord->GetFace2Area(j,i+1,k);
           vol = pcoord->GetCellVolume(j,i,k);
           Phi.setZero();
           //JACOBIAN_FUNCTION(Phi,wl,j,i,k);
-          tmp = p3_*Phi*p2_;
-          memcpy(jacobian_[j][i][k], tmp.data(), tmp.size()*sizeof(Real));
+          //tmp = p3_*Phi*p2_;
+          //memcpy(jacobian_[j][i][k], tmp.data(), tmp.size()*sizeof(Real));
         } else { // X3DIR
           aleft = pcoord->GetFace3Area(i,k,j);
           aright = pcoord->GetFace3Area(i+1,k,j);
           vol = pcoord->GetCellVolume(i,k,j);
           Phi.setZero();
           //JACOBIAN_FUNCTION(Phi,wl,i,k,j);
-          tmp = p2_*Phi*p3_;
-          memcpy(jacobian_[i][k][j], tmp.data(), tmp.size()*sizeof(Real));
+          //tmp = p2_*Phi*p3_;
+          //memcpy(jacobian_[i][k][j], tmp.data(), tmp.size()*sizeof(Real));
         }
 
         a[i] = (Am*aleft + Ap*aright + (aright - aleft)*dfdq[i])/(2.*vol) 
@@ -210,7 +210,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
             du(n,i,k,j) = du_(n,k,j,i);
         }
   }
-  pmy_hydro->implicit_done = this;
+  //pmy_hydro->implicit_done = this;
 
   delete [] gamma_m1;
 }

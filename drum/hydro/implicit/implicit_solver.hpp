@@ -62,9 +62,9 @@ public:
   void JacobianGravityCoriolis(T &jac, Real const prim[], int k, int j, int i);
 
 // communications
-  void SynchronizeConserved(AthenaArray<Real> const& du,
+  /*void SynchronizeConserved(AthenaArray<Real> const& du,
     int kl, int ku, int jl, int ju, int is, int ie);
-  void WaitToFinishSync(int kl, int ku, int jl, int ju, int is, int ie);
+  void WaitToFinishSync(int kl, int ku, int jl, int ju, int is, int ie);*/
 
   template<typename T>
   void SendBuffer(T const& a, int k, int j, NeighborBlock nb);
@@ -112,16 +112,16 @@ public:
   void LoadCoefficients(std::vector<T1> &a, std::vector<T2> &b,
     std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu);
 
-  template<typename T>
-  void LoadForcingJacobian(T &phi, int k, int j ,int i, CoordinateDirection dir);
+  //template<typename T>
+  //void LoadForcingJacobian(T &phi, int k, int j ,int i, CoordinateDirection dir);
 
 private:
-  Real *usend_top_, *urecv_top_;  // MPI data buffer
-  Real *usend_bot_, *urecv_bot_;  // MPI data buffer
+  //Real *usend_top_, *urecv_top_;  // MPI data buffer
+  //Real *usend_bot_, *urecv_bot_;  // MPI data buffer
 
   Real ***buffer_;                  // MPI data buffer
   Real ****coefficients_; // archive of coefficients in the tri-diagonal matrix
-  Real ****jacobian_;     // archive of forcing jacobian
+  //Real ****jacobian_;     // archive of forcing jacobian
   AthenaArray<Real> du_;  // stores implicit solution
 
   Eigen::Matrix<Real,5,5> p2_, p3_;  // perturbation matrices
@@ -131,10 +131,10 @@ private:
   MPI_Request **req_send_data2_;
   MPI_Request **req_send_data6_;
   MPI_Request **req_send_data7_;
-  MPI_Request req_send_sync_top_;
-  MPI_Request req_send_sync_bot_;
-  MPI_Request req_recv_sync_top_;
-  MPI_Request req_recv_sync_bot_;
+  //MPI_Request req_send_sync_top_;
+  //MPI_Request req_send_sync_bot_;
+  //MPI_Request req_recv_sync_top_;
+  //MPI_Request req_recv_sync_bot_;
 #endif
 };
 

@@ -156,13 +156,25 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   implicit_flag = pin->GetOrAddInteger("hydro", "implicit_flag", 0);
   limit_to_advection = pin->GetOrAddBoolean("time", "limit_to_advection", true);
   min_tem = pin->GetOrAddReal("hydro", "min_tem", 10.);
-  pimp1 = new ImplicitSolver(this, X1DIR);
-  pimp2 = new ImplicitSolver(this, X2DIR);
-  pimp3 = new ImplicitSolver(this, X3DIR);
+  if (implicit_flag & 1)
+    pimp1 = new ImplicitSolver(this, X1DIR);
+  else
+    pimp1 = nullptr;
+
+  if (implicit_flag & 2)
+    pimp2 = new ImplicitSolver(this, X2DIR);
+  else
+    pimp2 = nullptr;
+
+  if (implicit_flag & 4)
+    pimp3 = new ImplicitSolver(this, X3DIR);
+  else
+    pimp3 = nullptr;
+
   pimps[X1DIR] = pimp1;
   pimps[X2DIR] = pimp2;
   pimps[X3DIR] = pimp3;
-  implicit_done = nullptr;
+  //implicit_done = nullptr;
 }
 
 //----------------------------------------------------------------------------------------
@@ -177,9 +189,12 @@ Real Hydro::GetWeightForCT(Real dflx, Real rhol, Real rhor, Real dx, Real dt) {
 
 Hydro::~Hydro() {
   delete pdec;
-  delete pimp1;
-  delete pimp2;
-  delete pimp3;
+  if (pimp1 != nullptr)
+    delete pimp1;
+  if (pimp2 != nullptr)
+    delete pimp2;
+  if (pimp3 != nullptr)
+    delete pimp3;
 }
 
 void Hydro::CheckHydro() {
