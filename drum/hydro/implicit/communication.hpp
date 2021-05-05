@@ -32,7 +32,7 @@ void ImplicitSolver::SendBuffer(T const& a, int k, int j, NeighborBlock nb) {
 #endif
   } else { // local boundary
     MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-    std::memcpy(pbl->phydro->pimps[mydir]->buffer_[k][j], buffer_[k][j], s1*sizeof(Real));
+    std::memcpy(pbl->phydro->pimp->buffer_[k][j], buffer_[k][j], s1*sizeof(Real));
   }
 }
 
@@ -53,7 +53,7 @@ void ImplicitSolver::SendBuffer(T1 const &a, T2 const &b, int k, int j, Neighbor
 #endif
   } else { // local boundary
     MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-    std::memcpy(pbl->phydro->pimps[mydir]->buffer_[k][j], buffer_[k][j], (s1+s2)*sizeof(Real));
+    std::memcpy(pbl->phydro->pimp->buffer_[k][j], buffer_[k][j], (s1+s2)*sizeof(Real));
   }
 }
 
@@ -88,7 +88,7 @@ void ImplicitSolver::SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& 
 #endif
   } else { // local boundary
     MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-    std::memcpy(pbl->phydro->pimps[mydir]->buffer_[k][j], buffer_[k][j], st*sizeof(Real));
+    std::memcpy(pbl->phydro->pimp->buffer_[k][j], buffer_[k][j], st*sizeof(Real));
   }
 }
 
@@ -125,7 +125,7 @@ void ImplicitSolver::SendBuffer(T1 const& a, T2 const&b, T3 const& c, T4 const& 
 #endif
   } else { // local boundary
     MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-    std::memcpy(pbl->phydro->pimps[mydir]->buffer_[k][j], buffer_[k][j], st*sizeof(Real));
+    std::memcpy(pbl->phydro->pimp->buffer_[k][j], buffer_[k][j], st*sizeof(Real));
   }
 }
 
