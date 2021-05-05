@@ -38,17 +38,17 @@ void ImplicitSolver::PeriodicForwardSweep(
 
   if (T2::RowsAtCompileTime == 3) {  // partial matrix
     rhs(0) = du_(IDN,k,j,il)/dt;
-    rhs(1) = du_(IVX+mydir,k,j,il)/dt;
+    rhs(1) = du_(IVX+mydir_,k,j,il)/dt;
     rhs(2) = du_(IEN,k,j,il)/dt;
     rhs -= corr[il];
   } else {  // full matrix
     rhs(0) = du_(IDN,k,j,il)/dt;
-    rhs(1) = du_(IVX+mydir,k,j,il)/dt;
-    rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,il)/dt;
-    rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,il)/dt;
+    rhs(1) = du_(IVX+mydir_,k,j,il)/dt;
+    rhs(2) = du_(IVX+(IVY-IVX+mydir_)%3,k,j,il)/dt;
+    rhs(3) = du_(IVX+(IVZ-IVX+mydir_)%3,k,j,il)/dt;
     rhs(4) = du_(IEN,k,j,il)/dt;
     //if (pmy_hydro->implicit_done != nullptr) {
-    //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,il,mydir);
+    //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,il,mydir_);
     //  rhs -= dt*phi*rhs;
     //}
   }
@@ -91,17 +91,17 @@ void ImplicitSolver::PeriodicForwardSweep(
   for (int i = il+1; i <= iu; ++i) {
     if (T2::RowsAtCompileTime == 3) {  // partial matrix
       rhs(0) = du_(IDN,k,j,i)/dt;
-      rhs(1) = du_(IVX+mydir,k,j,i)/dt;
+      rhs(1) = du_(IVX+mydir_,k,j,i)/dt;
       rhs(2) = du_(IEN,k,j,i)/dt;
       rhs -= corr[i];
     } else {
       rhs(0) = du_(IDN,k,j,i)/dt;
-      rhs(1) = du_(IVX+mydir,k,j,i)/dt;
-      rhs(2) = du_(IVX+(IVY-IVX+mydir)%3,k,j,i)/dt;
-      rhs(3) = du_(IVX+(IVZ-IVX+mydir)%3,k,j,i)/dt;
+      rhs(1) = du_(IVX+mydir_,k,j,i)/dt;
+      rhs(2) = du_(IVX+(IVY-IVX+mydir_)%3,k,j,i)/dt;
+      rhs(3) = du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i)/dt;
       rhs(4) = du_(IEN,k,j,i)/dt;
       //if (pmy_hydro->implicit_done != nullptr) {
-      //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,i,mydir);
+      //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,i,mydir_);
       //  rhs -= dt*phi*rhs;
       //}
     }
@@ -200,13 +200,13 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
       for (int i = il; i <= iu; ++i) {
         if (T2::RowsAtCompileTime == 3) {  // partial matrix
           du_(IDN,k,j,i) = delta[i](0);
-          du_(IVX+mydir,k,j,i) = delta[i](1);
+          du_(IVX+mydir_,k,j,i) = delta[i](1);
           du_(IEN,k,j,i) = delta[i](2);
         } else { // full matrix
           du_(IDN,k,j,i) = delta[i](0);
-          du_(IVX+mydir,k,j,i) = delta[i](1);
-          du_(IVX+(IVY-IVX+mydir)%3,k,j,i) = delta[i](2);
-          du_(IVX+(IVZ-IVX+mydir)%3,k,j,i) = delta[i](3);
+          du_(IVX+mydir_,k,j,i) = delta[i](1);
+          du_(IVX+(IVY-IVX+mydir_)%3,k,j,i) = delta[i](2);
+          du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i) = delta[i](3);
           du_(IEN,k,j,i) = delta[i](4);
         }
       }

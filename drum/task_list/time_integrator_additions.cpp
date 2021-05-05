@@ -16,35 +16,31 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   Real dt = pmb->pmy_mesh->dt;
 
   // do implicit coorection at every stage
-  //ph->implicit_done = nullptr;
   // X3DIR
   if ((ph->implicit_flag & (1<<2)) && (pmb->ncells3 > 1)) {
-    ph->pimp = new ImplicitSolver(ph, X3DIR);
+    ph->pimp->SetDirection(X3DIR);
     if (ph->implicit_flag & (1<<3))
       ph->pimp->FullCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
     else
       ph->pimp->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
-    delete ph->pimp;
   }
 
   // X2DIR
   if ((ph->implicit_flag & (1<<1)) && (pmb->ncells2 > 1)) {
-    ph->pimp = new ImplicitSolver(ph, X2DIR);
+    ph->pimp->SetDirection(X2DIR);
     if (ph->implicit_flag & (1<<3))
       ph->pimp->FullCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
     else
       ph->pimp->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
-    delete ph->pimp;
   }
 
   // X1DIR
   if (ph->implicit_flag & 1) {
-    ph->pimp = new ImplicitSolver(ph, X1DIR);
+    ph->pimp->SetDirection(X1DIR);
     if (ph->implicit_flag & (1<<3))
       ph->pimp->FullCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
     else
       ph->pimp->PartialCorrection(ph->du, ph->w, stage_wghts[stage-1].beta*dt);
-    delete ph->pimp;
   }
 
   Real wghts[3];

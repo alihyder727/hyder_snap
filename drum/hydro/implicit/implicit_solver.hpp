@@ -23,11 +23,11 @@ public:
   bool periodic_boundary;
   bool pole_at_bot, pole_at_top;
   NeighborBlock tblock, bblock;
-  CoordinateDirection mydir;
 
 // functions
-  ImplicitSolver(Hydro *phydro, CoordinateDirection dir);
+  ImplicitSolver(Hydro *phydro, int n3max, int n2max);
   ~ImplicitSolver();
+  void SetDirection(CoordinateDirection dir);
 
 // utility functions
   void FindNeighbors();
@@ -116,13 +116,14 @@ public:
   //void LoadForcingJacobian(T &phi, int k, int j ,int i, CoordinateDirection dir);
 
 private:
+  CoordinateDirection mydir_;
   //Real *usend_top_, *urecv_top_;  // MPI data buffer
   //Real *usend_bot_, *urecv_bot_;  // MPI data buffer
 
   Real ***buffer_;                  // MPI data buffer
-  Real ****coefficients_; // archive of coefficients in the tri-diagonal matrix
   //Real ****jacobian_;     // archive of forcing jacobian
   AthenaArray<Real> du_;  // stores implicit solution
+  AthenaArray<Real> coefficients_;  // archive of coefficients in the tri-diagonal matrix
 
   Eigen::Matrix<Real,5,5> p2_, p3_;  // perturbation matrices
 

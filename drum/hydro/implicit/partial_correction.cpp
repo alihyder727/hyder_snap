@@ -27,7 +27,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
 
   int is, ie, js, je, ks, ke;
   int idn = 0, ivx = 1, ivy = 2, ivz = 3, ien = 4;
-  if (mydir == X1DIR) {
+  if (mydir_ == X1DIR) {
     ks = pmb->ks, js = pmb->js, is = pmb->is;
     ke = pmb->ke, je = pmb->je, ie = pmb->ie;
     for (int n = 0; n < NHYDRO; ++n)
@@ -35,7 +35,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
         for (int j = js; j <= je; ++j)
           for (int i = is; i <= ie; ++i)
             du_(n,k,j,i) = du(n,k,j,i);
-  } else if (mydir == X2DIR) {
+  } else if (mydir_ == X2DIR) {
     ks = pmb->is, js = pmb->ks, is = pmb->js;
     ke = pmb->ie, je = pmb->ke, ie = pmb->je;
     for (int n = 0; n < NHYDRO; ++n)
@@ -82,7 +82,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
   Real gamma = pmb->peos->GetGamma();
   Real grav = pmy_hydro->hsrc.GetG1();
   Eigen::Matrix<Real,3,3> Phi, Dt, Bnd;
-  if (mydir == X1DIR) {
+  if (mydir_ == X1DIR) {
     Phi  << 0.,    0.,    0.,
             grav,  0.,    0.,
             0.,    grav,  0.;
@@ -106,7 +106,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
       // calculate and save flux Jacobian matrix
       for (int i = is-1; i <= ie+1; ++i) {
         Real fsig = 1., feps = 1.;
-        CopyPrimitives(wl, wr, w, k, j, i, mydir);
+        CopyPrimitives(wl, wr, w, k, j, i, mydir_);
         for (int n = 1 + NVAPOR; n < NMASS; ++n) {
           fsig += wr[n]*(pthermo->GetCvRatio(n) - 1.);
           feps -= wr[n];
@@ -118,7 +118,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
 
         gamma_m1[i] = (gamma - 1.)*feps/fsig;
         //FluxJacobian(dfdq1[i], dfdq2[i], gamma_m1[i], w, k, j, i);
-        FluxJacobian(dfdq, gamma_m1[i], wr, mydir);
+        FluxJacobian(dfdq, gamma_m1[i], wr, mydir_);
         dfdq1[i] << dfdq(idn,ivy), dfdq(idn,ivz),
                     dfdq(ivx,ivy), dfdq(ivx,ivz),
                     dfdq(ien,ivy), dfdq(ien,ivz);
@@ -129,12 +129,12 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
 
       // set up diffusion matrix and tridiagonal coefficients
       // left edge
-      CopyPrimitives(wl, wr, w, k, j, is, mydir);
+      CopyPrimitives(wl, wr, w, k, j, is, mydir_);
       Real gm1 = 0.5*(gamma_m1[is-1] + gamma_m1[is]);
       RoeAverage(prim, gm1, wl, wr);
       Real cs = pmb->peos->SoundSpeed(prim);
-      Eigenvalue(Lambda, prim[IVX+mydir], cs);
-      Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
+      Eigenvalue(Lambda, prim[IVX+mydir_], cs);
+      Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir_);
       Am = Rmat*Lambda*Rimat;
       Am1 << Am(idn,ivy), Am(idn,ivz),
              Am(ivx,ivy), Am(ivx,ivz),
@@ -144,12 +144,12 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
              Am(ien,idn), Am(ien,ivx), Am(ien,ien);
 
       for (int i = is; i <= ie; ++i) {
-        CopyPrimitives(wl, wr, w, k, j, i+1, mydir);
+        CopyPrimitives(wl, wr, w, k, j, i+1, mydir_);
         gm1 = 0.5*(gamma_m1[i] + gamma_m1[i+1]);
         RoeAverage(prim, gm1, wl, wr);
         Real cs = pmb->peos->SoundSpeed(prim);
-        Eigenvalue(Lambda, prim[IVX+mydir], cs);
-        Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
+        Eigenvalue(Lambda, prim[IVX+mydir_], cs);
+        Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir_);
         Ap = Rmat*Lambda*Rimat;
         Ap1 << Ap(idn,ivy), Ap(idn,ivz),
                Ap(ivx,ivy), Ap(ivx,ivz),
@@ -160,11 +160,11 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
 
         // set up diagonals a, b, c.
         Real aleft, aright, vol;
-        if (mydir == X1DIR) {
+        if (mydir_ == X1DIR) {
           aleft = pcoord->GetFace1Area(k,j,i);
           aright = pcoord->GetFace1Area(k,j,i+1);
           vol = pcoord->GetCellVolume(k,j,i);
-        } else if (mydir == X2DIR) {
+        } else if (mydir_ == X2DIR) {
           aleft = pcoord->GetFace2Area(j,i,k);
           aright = pcoord->GetFace2Area(j,i+1,k);
           vol = pcoord->GetCellVolume(j,i,k);
@@ -179,8 +179,8 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
         c[i] = -(Ap2 - dfdq2[i+1])*aright/(2.*vol);
 
         // flux correction
-        //dqm << du_(IVX+(IVY-IVX+mydir)%3,k,j,i  ), du_(IVX+(IVZ-IVX+mydir)%3,k,j,i  );
-        //dqp << du_(IVX+(IVY-IVX+mydir)%3,k,j,i+1), du_(IVX+(IVZ-IVX+mydir)%3,k,j,i+1);
+        //dqm << du_(IVX+(IVY-IVX+mydir_)%3,k,j,i  ), du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i  );
+        //dqp << du_(IVX+(IVY-IVX+mydir_)%3,k,j,i+1), du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i+1);
         //sm = 0.5*((dfdq1[i-1] + Am1)*dqm + (dfdq1[i] - Am1)*dqp);
         //sp = 0.5*((dfdq1[i] + Ap1)*dqm + (dfdq1[i+1] - Ap1)*dqp);
         //corr[i] = (sp*aright - sm*aleft)/vol;
@@ -217,7 +217,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
   else
     BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
 
-  if (mydir == X1DIR) {
+  if (mydir_ == X1DIR) {
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {
@@ -225,7 +225,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
           du(IVX,k,j,i) = du_(IVX,k,j,i);
           du(IEN,k,j,i) = du_(IEN,k,j,i);
         }
-  } else if (mydir == X2DIR) {
+  } else if (mydir_ == X2DIR) {
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {

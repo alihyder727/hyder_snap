@@ -16,50 +16,24 @@
 
 #define MAX_DATA_SIZE 25
 
-ImplicitSolver::ImplicitSolver(Hydro *phydro, CoordinateDirection dir):
-    pmy_hydro(phydro), mydir(dir), has_bot_neighbor(false), has_top_neighbor(false),
+ImplicitSolver::ImplicitSolver(Hydro *phydro, int n3max, int n2max):
+    pmy_hydro(phydro), has_bot_neighbor(false), has_top_neighbor(false),
     first_block(true), last_block(true), periodic_boundary(false),
     pole_at_bot(false), pole_at_top(false)
 {
   MeshBlock *pmb = phydro->pmy_block;
-  int nc1, nc2, nc3;
-  if (dir == X1DIR) {
-    nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
-    //NewCArray(jacobian_, nc3, nc2, nc1, MAX_DATA_SIZE);
-  } else if (dir == X2DIR) {
-    nc1 = pmb->ncells2, nc2 = pmb->ncells3, nc3 = pmb->ncells1;
-    //NewCArray(jacobian_, nc2, nc1, nc3, MAX_DATA_SIZE);
-  } else { // X3DIR
-    nc1 = pmb->ncells3, nc2 = pmb->ncells1, nc3 = pmb->ncells2;
-    //NewCArray(jacobian_, nc1, nc3, nc2, MAX_DATA_SIZE);
-  }
+  int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
 
   du_.NewAthenaArray(NHYDRO, nc3, nc2, nc1);
-  du_.ZeroClear();
-  /*usend_top_ = new Real [NHYDRO*nc3*nc2];
-  urecv_bot_ = new Real [NHYDRO*nc3*nc2];
-  usend_bot_ = new Real [NHYDRO*nc3*nc2];
-  urecv_top_ = new Real [NHYDRO*nc3*nc2];*/
-
-  NewCArray(buffer_, nc3, nc2, 7*MAX_DATA_SIZE);
-  NewCArray(coefficients_, nc3, nc2, nc1, 4*MAX_DATA_SIZE);
+  coefficients_.NewAthenaArray(nc3, nc2, nc1, 4*MAX_DATA_SIZE);
+  NewCArray(buffer_, n3max, n2max, 7*MAX_DATA_SIZE);
 
 #ifdef MPI_PARALLEL
-  NewCArray(req_send_data1_, nc3, nc2);
-  NewCArray(req_send_data2_, nc3, nc2);
-  NewCArray(req_send_data6_, nc3, nc2);
-  NewCArray(req_send_data7_, nc3, nc2);
+  NewCArray(req_send_data1_, n3max, n2max);
+  NewCArray(req_send_data2_, n3max, n2max);
+  NewCArray(req_send_data6_, n3max, n2max);
+  NewCArray(req_send_data7_, n3max, n2max);
 #endif
-
-  if ((pmb->pmy_mesh->mesh_bcs[2*dir] == BoundaryFlag::periodic) &&
-     (pmb->pmy_mesh->mesh_bcs[2*dir+1] == BoundaryFlag::periodic)) {
-    periodic_boundary = true;
-  }
-
-  if (pmb->pbval->block_bcs[2*dir] == BoundaryFlag::polar)
-    pole_at_bot = true;
-  if (pmb->pbval->block_bcs[2*dir+1] == BoundaryFlag::polar)
-    pole_at_top = true;
 
   int idn = 0, ivx = 1, ivy = 2, ivz = 3, ien = 4;
   p2_.setZero();
@@ -84,7 +58,7 @@ ImplicitSolver::~ImplicitSolver() {
   //delete[] urecv_top_;
 
   FreeCArray(buffer_);
-  FreeCArray(coefficients_);
+  //FreeCArray(coefficients_);
   //FreeCArray(jacobian_);
 
 #ifdef MPI_PARALLEL
@@ -93,6 +67,44 @@ ImplicitSolver::~ImplicitSolver() {
   FreeCArray(req_send_data6_);
   FreeCArray(req_send_data7_);
 #endif
+}
+
+void ImplicitSolver::SetDirection(CoordinateDirection dir) {
+  mydir_ = dir;
+  MeshBlock *pmb = pmy_hydro->pmy_block;
+  int nc1, nc2, nc3;
+  if (dir == X1DIR) {
+    nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
+  } else if (dir == X2DIR) {
+    nc1 = pmb->ncells2, nc2 = pmb->ncells3, nc3 = pmb->ncells1;
+  } else { // X3DIR
+    nc1 = pmb->ncells3, nc2 = pmb->ncells1, nc3 = pmb->ncells2;
+  }
+
+  du_.SetDim1(nc1);
+  du_.SetDim2(nc2);
+  du_.SetDim3(nc3);
+
+  coefficients_.SetDim2(nc1);
+  coefficients_.SetDim3(nc2);
+  coefficients_.SetDim4(nc3);
+
+  if ((pmb->pmy_mesh->mesh_bcs[2*dir] == BoundaryFlag::periodic) &&
+     (pmb->pmy_mesh->mesh_bcs[2*dir+1] == BoundaryFlag::periodic)) {
+    periodic_boundary = true;
+  } else {
+    periodic_boundary = false;
+  }
+
+  if (pmb->pbval->block_bcs[2*dir] == BoundaryFlag::polar)
+    pole_at_bot = true;
+  else
+    pole_at_bot = false;
+
+  if (pmb->pbval->block_bcs[2*dir+1] == BoundaryFlag::polar)
+    pole_at_top = true;
+  else
+    pole_at_top = false;
 }
 
 void ImplicitSolver::FindNeighbors() {
@@ -104,7 +116,7 @@ void ImplicitSolver::FindNeighbors() {
 
   for (int n = 0; n < pmy_hydro->pmy_block->pbval->nneighbor; ++n) {
     NeighborBlock& nb = pmy_hydro->pmy_block->pbval->neighbor[n];
-    if (mydir == X1DIR) {
+    if (mydir_ == X1DIR) {
       if ((nb.ni.ox1 == -1) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == 0)) {
         bblock = nb;
         has_bot_neighbor = true;
@@ -112,7 +124,7 @@ void ImplicitSolver::FindNeighbors() {
         tblock = nb;
         has_top_neighbor = true;
       }
-    } else if (mydir == X2DIR) {
+    } else if (mydir_ == X2DIR) {
       if ((nb.ni.ox1 == 0) && (nb.ni.ox2 == -1) && (nb.ni.ox3 == 0)) {
         bblock = nb;
         has_bot_neighbor = true;
@@ -132,12 +144,12 @@ void ImplicitSolver::FindNeighbors() {
   }
 
   MeshBlock *pmb = pmy_hydro->pmy_block;
-  if (mydir == X1DIR) {
+  if (mydir_ == X1DIR) {
     if (pmb->block_size.x1min > pmb->pmy_mesh->mesh_size.x1min)
       first_block = false;
     if (pmb->block_size.x1max < pmb->pmy_mesh->mesh_size.x1max)
       last_block = false;
-  } else if (mydir == X2DIR) {
+  } else if (mydir_ == X2DIR) {
     if (pmb->block_size.x2min > pmb->pmy_mesh->mesh_size.x2min)
       first_block = false;
     if (pmb->block_size.x2max < pmb->pmy_mesh->mesh_size.x2max)
@@ -155,12 +167,12 @@ void ImplicitSolver::FindNeighbors() {
   //if (last_block)
   //  has_top_neighbor = false;
 
-  //if (pmb->pbval->block_bcs[2*mydir] == BoundaryFlag::polar)
+  //if (pmb->pbval->block_bcs[2*mydir_] == BoundaryFlag::polar)
   //  first_block = true;
-  //if (pmb->pbval->block_bcs[2*mydir+1] == BoundaryFlag::polar)
+  //if (pmb->pbval->block_bcs[2*mydir_+1] == BoundaryFlag::polar)
   //  last_block = true;
 
-  //std::cout << "dir = " << mydir << std::endl;
+  //std::cout << "dir = " << mydir_ << std::endl;
   //std::cout << "I'm rank " << Globals::my_rank << std::endl;
   //std::cout << "first_block " << first_block << std::endl;
   //std::cout << "last_block " << last_block << std::endl;
@@ -181,7 +193,7 @@ void ImplicitSolver::FindNeighbors() {
       int tag = CreateMPITag(bblock.snb.gid, pmb->gid, "b");
       MPI_Isend(usend_bot_, sbot, MPI_ATHENA_REAL, bblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_send_sync_bot_);
-      if (pmb->pbval->block_bcs[2*mydir] == BoundaryFlag::polar)
+      if (pmb->pbval->block_bcs[2*mydir_] == BoundaryFlag::polar)
         tag = CreateMPITag(pmb->gid, bblock.snb.gid, "b");
       else
         tag = CreateMPITag(pmb->gid, bblock.snb.gid, "t");
@@ -190,7 +202,7 @@ void ImplicitSolver::FindNeighbors() {
 #endif
     } else {  // local boundary
       MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-      std::memcpy(pbl->phydro->pimps[mydir]->urecv_top_, usend_bot_, sbot*sizeof(Real));
+      std::memcpy(pbl->phydro->pimp->urecv_top_, usend_bot_, sbot*sizeof(Real));
     }
   }
 
@@ -205,7 +217,7 @@ void ImplicitSolver::FindNeighbors() {
       int tag = CreateMPITag(tblock.snb.gid, pmb->gid, "t");
       MPI_Isend(usend_top_, stop, MPI_ATHENA_REAL, tblock.snb.rank, tag, MPI_COMM_WORLD,
         &req_send_sync_top_);
-      if (pmb->pbval->block_bcs[2*mydir+1] == BoundaryFlag::polar)
+      if (pmb->pbval->block_bcs[2*mydir_+1] == BoundaryFlag::polar)
         tag = CreateMPITag(pmb->gid, tblock.snb.gid, "t");
       else
         tag = CreateMPITag(pmb->gid, tblock.snb.gid, "b");
@@ -214,7 +226,7 @@ void ImplicitSolver::FindNeighbors() {
 #endif
     } else {  // local boundary
       MeshBlock *pbl = pmy_hydro->pmy_block->pmy_mesh->FindMeshBlock(bblock.snb.gid);
-      std::memcpy(pbl->phydro->pimps[mydir]->urecv_bot_, usend_top_, stop*sizeof(Real));
+      std::memcpy(pbl->phydro->pimp->urecv_bot_, usend_top_, stop*sizeof(Real));
     }
   }
 }

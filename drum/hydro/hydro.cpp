@@ -156,6 +156,18 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   implicit_flag = pin->GetOrAddInteger("hydro", "implicit_flag", 0);
   limit_to_advection = pin->GetOrAddBoolean("time", "limit_to_advection", true);
   min_tem = pin->GetOrAddReal("hydro", "min_tem", 10.);
+
+  int n2max = nc2, n3max = nc3;
+  if (implicit_flag & 2) {
+    n2max = std::max(n2max, nc3);
+    n3max = std::max(n3max, nc1);
+  }
+  if (implicit_flag & 3) {
+    n2max = std::max(n2max, nc1);
+    n3max = std::max(n3max, nc2);
+  }
+
+  pimp = new ImplicitSolver(this, n3max, n2max);
 }
 
 //----------------------------------------------------------------------------------------
@@ -170,6 +182,7 @@ Real Hydro::GetWeightForCT(Real dflx, Real rhol, Real rhor, Real dx, Real dt) {
 
 Hydro::~Hydro() {
   delete pdec;
+  delete pimp;
 }
 
 void Hydro::CheckHydro() {

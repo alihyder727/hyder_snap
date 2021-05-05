@@ -88,6 +88,14 @@ class AthenaArray {
   int GetDim5() const { return nx5_; }
   int GetDim6() const { return nx6_; }
 
+  // functions to set array dimensions
+  void SetDim1(int nx1) { nx1_ = nx1; }
+  void SetDim2(int nx2) { nx2_ = nx2; }
+  void SetDim3(int nx3) { nx3_ = nx3; }
+  void SetDim4(int nx4) { nx4_ = nx4; }
+  void SetDim5(int nx5) { nx5_ = nx5; }
+  void SetDim6(int nx6) { nx6_ = nx6; }
+
   // a function to get the total size of the array
   int GetSize() const {
     if (state_ == DataStatus::empty)

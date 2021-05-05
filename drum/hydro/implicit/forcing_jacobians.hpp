@@ -73,9 +73,9 @@ void ImplicitSolver::JacobianGravityCoriolis(T &jac, Real const prim[],
   jac(ivz,ivx) += 2*omega2;
   jac(ivz,ivy) += -2*omega1;
 
-  if (mydir == X2DIR)
+  if (mydir_ == X2DIR)
     jac = p2_*jac*p3_;
-  else if (mydir == X3DIR)
+  else if (mydir_ == X3DIR)
     jac = p3_*jac*p2_;
 
   /*} else if (dir == X2DIR) {

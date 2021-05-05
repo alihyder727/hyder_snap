@@ -245,8 +245,8 @@ void ImplicitSolver::SaveCoefficients(std::vector<T1> &a, std::vector<T2> &b,
   int k, int j, int il, int iu) {
   for (int i = il; i <= iu; ++i) {
     int s1 = a[i].size(), s2 = b[i].size();
-    memcpy(coefficients_[k][j][i], a[i].data(), s1*sizeof(Real));
-    memcpy(coefficients_[k][j][i] + s1, b[i].data(), s2*sizeof(Real));
+    memcpy(&coefficients_(k,j,i,0), a[i].data(), s1*sizeof(Real));
+    memcpy(&coefficients_(k,j,i,s1), b[i].data(), s2*sizeof(Real));
   }
 }
 
@@ -255,10 +255,10 @@ void ImplicitSolver::SaveCoefficients(std::vector<T1> &a, std::vector<T2> &b,
   std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu) {
   for (int i = il; i <= iu; ++i) {
     int s1 = a[i].size(), s2 = b[i].size(), s3 = c[i].size(), s4 = d[i].size();
-    memcpy(coefficients_[k][j][i], a[i].data(), s1*sizeof(Real));
-    memcpy(coefficients_[k][j][i]+s1, b[i].data(), s2*sizeof(Real));
-    memcpy(coefficients_[k][j][i]+s1+s2, c[i].data(), s3*sizeof(Real));
-    memcpy(coefficients_[k][j][i]+s1+s2+s3, d[i].data(), s4*sizeof(Real));
+    memcpy(&coefficients_(k,j,i,0), a[i].data(), s1*sizeof(Real));
+    memcpy(&coefficients_(k,j,i,s1), b[i].data(), s2*sizeof(Real));
+    memcpy(&coefficients_(k,j,i,s1+s2), c[i].data(), s3*sizeof(Real));
+    memcpy(&coefficients_(k,j,i,s1+s2+s3), d[i].data(), s4*sizeof(Real));
   }
 }
 
@@ -267,8 +267,8 @@ void ImplicitSolver::LoadCoefficients(std::vector<T1> &a, std::vector<T2> &b,
   int k, int j, int il, int iu) {
   for (int i = il; i <= iu; ++i) {
     int s1 = a[i].size(), s2 = b[i].size();
-    memcpy(a[i].data(), coefficients_[k][j][i], s1*sizeof(Real));
-    memcpy(b[i].data(), coefficients_[k][j][i] + s1, s2*sizeof(Real));
+    memcpy(a[i].data(), &coefficients_(k,j,i,0), s1*sizeof(Real));
+    memcpy(b[i].data(), &coefficients_(k,j,i,s1), s2*sizeof(Real));
   }
 }
 
@@ -277,10 +277,10 @@ void ImplicitSolver::LoadCoefficients(std::vector<T1> &a, std::vector<T2> &b,
   std::vector<T3> &c, std::vector<T4> &d, int k, int j, int il, int iu) {
   for (int i = il; i <= iu; ++i) {
     int s1 = a[i].size(), s2 = b[i].size(), s3 = c[i].size(), s4 = d[i].size();
-    memcpy(a[i].data(), coefficients_[k][j][i], s1*sizeof(Real));
-    memcpy(b[i].data(), coefficients_[k][j][i]+s1, s2*sizeof(Real));
-    memcpy(c[i].data(), coefficients_[k][j][i]+s1+s2, s3*sizeof(Real));
-    memcpy(d[i].data(), coefficients_[k][j][i]+s1+s2+s3, s4*sizeof(Real));
+    memcpy(a[i].data(), &coefficients_(k,j,i,0), s1*sizeof(Real));
+    memcpy(b[i].data(), &coefficients_(k,j,i,s1), s2*sizeof(Real));
+    memcpy(c[i].data(), &coefficients_(k,j,i,s1+s2), s3*sizeof(Real));
+    memcpy(d[i].data(), &coefficients_(k,j,i,s1+s2+s3), s4*sizeof(Real));
   }
 }
 

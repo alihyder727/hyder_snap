@@ -31,7 +31,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
 
   int is, ie, js, je, ks, ke;
   int idn = 0, ivx = 1, ivy = 2, ivz = 3, ien = 4;
-  if (mydir == X1DIR) {
+  if (mydir_ == X1DIR) {
     ks = pmb->ks, js = pmb->js, is = pmb->is;
     ke = pmb->ke, je = pmb->je, ie = pmb->ie;
     for (int n = 0; n < NHYDRO; ++n)
@@ -39,7 +39,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
         for (int j = js; j <= je; ++j)
           for (int i = is; i <= ie; ++i)
             du_(n,k,j,i) = du(n,k,j,i);
-  } else if (mydir == X2DIR) {
+  } else if (mydir_ == X2DIR) {
     ks = pmb->is, js = pmb->ks, is = pmb->js;
     ke = pmb->ie, je = pmb->ke, ie = pmb->je;
     for (int n = 0; n < NHYDRO; ++n)
@@ -99,7 +99,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       // 3. calculate and save flux Jacobian matrix
       for (int i = is-2; i <= ie+1; ++i) {
         Real fsig = 1., feps = 1.;
-        CopyPrimitives(wl, wr, w, k, j, i, mydir);
+        CopyPrimitives(wl, wr, w, k, j, i, mydir_);
         for (int n = 1 + NVAPOR; n < NMASS; ++n) {
           fsig += w(n,k,j,i)*(pthermo->GetCvRatio(n) - 1.);
           feps -= w(n,k,j,i);
@@ -110,36 +110,36 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
         }
 
         gamma_m1[i] = (gamma - 1.)*feps/fsig;
-        FluxJacobian(dfdq[i], gamma_m1[i], wr, mydir);
+        FluxJacobian(dfdq[i], gamma_m1[i], wr, mydir_);
       } // 5. set up diffusion matrix and tridiagonal coefficients
       // left edge
-      CopyPrimitives(wl, wr, w, k, j, is-1, mydir);
+      CopyPrimitives(wl, wr, w, k, j, is-1, mydir_);
       Real gm1 = 0.5*(gamma_m1[is-2] + gamma_m1[is-1]);
       RoeAverage(prim, gm1, wl, wr);
       Real cs = pmb->peos->SoundSpeed(prim);
-      Eigenvalue(Lambda, prim[IVX+mydir], cs);
-      Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
+      Eigenvalue(Lambda, prim[IVX+mydir_], cs);
+      Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir_);
       Am = Rmat*Lambda*Rimat;
 
       for (int i = is-1; i <= ie; ++i) {
-        CopyPrimitives(wl, wr, w, k, j, i+1, mydir);
+        CopyPrimitives(wl, wr, w, k, j, i+1, mydir_);
         // right edge
         gm1 = 0.5*(gamma_m1[i] + gamma_m1[i+1]);
         RoeAverage(prim, gm1, wl, wr);
         Real cs = pmb->peos->SoundSpeed(prim);
-        Eigenvalue(Lambda, prim[IVX+mydir], cs);
-        Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir);
+        Eigenvalue(Lambda, prim[IVX+mydir_], cs);
+        Eigenvector(Rmat, Rimat, prim, cs, gm1, mydir_);
         Ap = Rmat*Lambda*Rimat;
 
         // set up diagonals a, b, c, and Jacobian of the forcing function
         Real aleft, aright, vol;
-        if (mydir == X1DIR) {
+        if (mydir_ == X1DIR) {
           aleft = pcoord->GetFace1Area(k,j,i);
           aright = pcoord->GetFace1Area(k,j,i+1);
           vol = pcoord->GetCellVolume(k,j,i);
           JACOBIAN_FUNCTION(Phi,wl,k,j,i);
           //memcpy(jacobian_[k][j][i], Phi.data(), Phi.size()*sizeof(Real));
-        } else if (mydir == X2DIR) {
+        } else if (mydir_ == X2DIR) {
           aleft = pcoord->GetFace2Area(j,i,k);
           aright = pcoord->GetFace2Area(j,i+1,k);
           vol = pcoord->GetCellVolume(j,i,k);
@@ -185,7 +185,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
   else
     BackwardSubstitution(a, delta, ks, ke, js, je, is, ie);
 
-  if (mydir == X1DIR) {
+  if (mydir_ == X1DIR) {
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {
@@ -193,7 +193,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
           for (int n = NMASS; n <= NMASS + 3; ++n)
             du(n,k,j,i) = du_(n,k,j,i);
         }
-  } else if (mydir == X2DIR) {
+  } else if (mydir_ == X2DIR) {
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {
