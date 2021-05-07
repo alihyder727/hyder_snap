@@ -210,7 +210,6 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
             du(n,i,k,j) = du_(n,k,j,i);
         }
   }
-  //pmy_hydro->implicit_done = this;
 
   delete [] gamma_m1;
 }

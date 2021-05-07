@@ -9,6 +9,7 @@
 #include "../../math/eigen335/Eigen/Dense"
 
 // Athena++ headers
+#include "../../thermodynamics/thermodynamics.hpp"
 #include "communication.hpp"
 
 template<typename T1, typename T2>
@@ -17,6 +18,7 @@ void ImplicitSolver::PeriodicForwardSweep(
   std::vector<T2> &corr, Real dt,
   int k, int j, int il, int iu)
 {
+  Thermodynamics *pthermo = pmy_hydro->pmy_block->pthermo;
   T1 sum_beta_gamma, phi;
   T2 rhs, sum_beta_zeta;
   std::vector<T1> beta(diag.size()), gamma(diag.size());
@@ -37,16 +39,28 @@ void ImplicitSolver::PeriodicForwardSweep(
   // zeta -> k
 
   if (T2::RowsAtCompileTime == 3) {  // partial matrix
-    rhs(0) = du_(IDN,k,j,il)/dt;
+    rhs(0) = du_(IDN,k,j,il);
     rhs(1) = du_(IVX+mydir_,k,j,il)/dt;
-    rhs(2) = du_(IEN,k,j,il)/dt;
+    rhs(2) = du_(IEN,k,j,il);
+    for (int n = 1; n < NMASS; ++n) {
+      rhs(0) += du_(n,k,j,il);
+      rhs(2) += pthermo->GetLatent(n)*du_(n,k,j,il);
+    }
+    rhs(0) /= dt;
+    rhs(2) /= dt;
     rhs -= corr[il];
   } else {  // full matrix
-    rhs(0) = du_(IDN,k,j,il)/dt;
+    rhs(0) = du_(IDN,k,j,il);
     rhs(1) = du_(IVX+mydir_,k,j,il)/dt;
     rhs(2) = du_(IVX+(IVY-IVX+mydir_)%3,k,j,il)/dt;
     rhs(3) = du_(IVX+(IVZ-IVX+mydir_)%3,k,j,il)/dt;
-    rhs(4) = du_(IEN,k,j,il)/dt;
+    rhs(4) = du_(IEN,k,j,il);
+    for (int n = 1; n < NMASS; ++n) {
+      rhs(0) += du_(n,k,j,il);
+      rhs(4) += pthermo->GetLatent(n)*du_(n,k,j,il);
+    }
+    rhs(0) /= dt;
+    rhs(4) /= dt;
     //if (pmy_hydro->implicit_done != nullptr) {
     //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,il,mydir_);
     //  rhs -= dt*phi*rhs;
@@ -90,16 +104,28 @@ void ImplicitSolver::PeriodicForwardSweep(
 
   for (int i = il+1; i <= iu; ++i) {
     if (T2::RowsAtCompileTime == 3) {  // partial matrix
-      rhs(0) = du_(IDN,k,j,i)/dt;
+      rhs(0) = du_(IDN,k,j,i);
       rhs(1) = du_(IVX+mydir_,k,j,i)/dt;
-      rhs(2) = du_(IEN,k,j,i)/dt;
+      rhs(2) = du_(IEN,k,j,i);
+      for (int n = 1; n < NMASS; ++n) {
+        rhs(0) += du_(n,k,j,i);
+        rhs(2) += pthermo->GetLatent(n)*du_(n,k,j,i);
+      }
+      rhs(0) /= dt;
+      rhs(2) /= dt;
       rhs -= corr[i];
     } else {
-      rhs(0) = du_(IDN,k,j,i)/dt;
+      rhs(0) = du_(IDN,k,j,i);
       rhs(1) = du_(IVX+mydir_,k,j,i)/dt;
       rhs(2) = du_(IVX+(IVY-IVX+mydir_)%3,k,j,i)/dt;
       rhs(3) = du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i)/dt;
-      rhs(4) = du_(IEN,k,j,i)/dt;
+      rhs(4) = du_(IEN,k,j,i);
+      for (int n = 1; n < NMASS; ++n) {
+        rhs(0) += du_(n,k,j,i);
+        rhs(4) += pthermo->GetLatent(n)*du_(n,k,j,i);
+      }
+      rhs(0) /= dt;
+      rhs(4) /= dt;
       //if (pmy_hydro->implicit_done != nullptr) {
       //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,i,mydir_);
       //  rhs -= dt*phi*rhs;
@@ -171,6 +197,7 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
   std::vector<T2> &delta, 
   int kl, int ku, int jl, int ju, int il, int iu)
 {
+  Thermodynamics *pthermo = pmy_hydro->pmy_block->pthermo;
   T2 delta_last;
   std::vector<T1> gamma(diagU.size());
   std::vector<T2> zeta(diagU.size());
@@ -209,6 +236,10 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
           du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i) = delta[i](3);
           du_(IEN,k,j,i) = delta[i](4);
         }
+        for (int n = 1; n < NMASS; ++n) {
+          du_(IDN,k,j,i) -= du_(n,k,j,i);
+          du_(IEN,k,j,i) -= pthermo->GetLatent(n)*du_(n,k,j,i);
+        }
       }
 
       if (!first_block)
@@ -218,20 +249,13 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
 #ifdef MPI_PARALLEL
   MPI_Status status;
 
-  if (!last_block) {
-    if (tblock.snb.rank != Globals::my_rank)
+  if (!last_block && (tblock.snb.rank != Globals::my_rank)) {
       for (int k = kl; k <= ku; ++k)
         for (int j = jl; j <= ju; ++j)
           MPI_Wait(&req_send_data6_[k][j], &status);
-  }/* else {
-    if (tblock.snb.rank != Globals::my_rank)
-      for (int k = kl; k <= ku; ++k)
-        for (int j = jl; j <= ju; ++j)
-          MPI_Wait(&req_send_data1_[k][j], &status);
-  }*/
+  }
 
-  if (!first_block) {
-    if (bblock.snb.rank != Globals::my_rank)
+  if (!first_block && (bblock.snb.rank != Globals::my_rank)) {
       for (int k = kl; k <= ku; ++k)
         for (int j = jl; j <= ju; ++j)
           MPI_Wait(&req_send_data2_[k][j], &status);

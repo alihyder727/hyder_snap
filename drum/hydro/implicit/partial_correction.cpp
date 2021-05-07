@@ -60,7 +60,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
   Eigen::Matrix<Real,5,5> Am, Ap, dfdq;
   Eigen::Matrix<Real,3,2> Am1, Ap1;
   Eigen::Matrix<Real,3,3> Am2, Ap2;
-  Eigen::Matrix<Real,3,1> rhs, sm, sp;
+  Eigen::Matrix<Real,3,1> sm, sp;
   Eigen::Matrix<Real,2,1> dqm, dqp;
 
   Real prim[NHYDRO]; // Roe averaged primitive variables of cell i-1/2
@@ -192,16 +192,8 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
       }
 
       // 5. fix boundary condition
-      //if (first_block)
-        //if (periodic_boundary)
-        //  a[is] += c[is-1];
-        //else
       if (first_block && !periodic_boundary)
           a[is] += b[is]*Bnd;
-      //if (last_block)
-        //if (periodic_boundary)
-        //  a[ie] += b[ie+1];
-        //else
       if (last_block && !periodic_boundary)
           a[ie] += c[ie]*Bnd;
 
