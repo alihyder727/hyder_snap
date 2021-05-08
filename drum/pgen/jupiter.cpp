@@ -102,9 +102,9 @@ void Forcing(MeshBlock *pmb, Real const time, Real const dt,
 void Mesh::InitUserMeshData(ParameterInput *pin)
 {
   grav = - pin->GetReal("hydro", "grav_acc1");
+  Tmin = pin->GetReal("hydro", "min_tem");
   P0 = pin->GetReal("problem", "P0");
   T0 = pin->GetReal("problem", "T0");
-  Tmin = pin->GetReal("problem", "Tmin");
   prad = pin->GetReal("problem", "prad");
   hrate = pin->GetReal("problem", "hrate")/86400.;  // K/day to K/s
   sponge_tau = pin->GetReal("problem", "sponge_tau");

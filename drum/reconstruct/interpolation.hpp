@@ -84,7 +84,7 @@ inline T interp_bp3(T phim2, T phim1, T phi, T phip1, int sgn) {
 
 // WENO 3 interpolation
 template<typename T>
-inline T interp_weno3(T phim1, T phi, T phip1) {
+inline T interp_weno3(T const& phim1, T const& phi, T const& phip1) {
   T p0 = (1.0/2.0)*phi + (1.0/2.0)*phim1;
   T p1 = (-1.0/2.0)*phip1 + (3.0/2.0)*phi;
 
