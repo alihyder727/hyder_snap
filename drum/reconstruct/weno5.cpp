@@ -61,16 +61,9 @@ void Reconstruction::Weno5X1(const int k, const int j, const int il, const int i
 
   for (int n=NMASS; n<NHYDRO; ++n) {
     // left boundary
-#pragma omp simd
     for (int i=il; i<il+ng1; ++i) {
-      Real scale = 0.;
-      for (int m = -2; m <= 2; ++m) scale += (w(n,k,j,i+m) + 1.E-16)/5.;
-      wl(n,i+1) = interp_weno5(w(n,k,j,i+2)/scale, w(n,k,j,i+1)/scale, w(n,k,j,i)/scale,
-                               w(n,k,j,i-1)/scale, w(n,k,j,i-2)/scale);
-      wl(n,i+1) *= scale;
-      wr(n,i  ) = interp_weno5(w(n,k,j,i-2)/scale, w(n,k,j,i-1)/scale, w(n,k,j,i)/scale,
-                               w(n,k,j,i+1)/scale, w(n,k,j,i+2)/scale);
-      wr(n,i  ) *= scale;
+      wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
+      wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
     }
 
     // interior
@@ -81,16 +74,9 @@ void Reconstruction::Weno5X1(const int k, const int j, const int il, const int i
     }
 
     // right boundary
-#pragma omp simd
     for (int i=iu-ng2+1; i<=iu; ++i) {
-      Real scale = 0.;
-      for (int m = -2; m <= 2; ++m) scale += (w(n,k,j,i+m) + 1.E-16)/5.;
-      wl(n,i+1) = interp_weno5(w(n,k,j,i+2)/scale, w(n,k,j,i+1)/scale, w(n,k,j,i)/scale,
-                               w(n,k,j,i-1)/scale, w(n,k,j,i-2)/scale);
-      wl(n,i+1) *= scale;
-      wr(n,i  ) = interp_weno5(w(n,k,j,i-2)/scale, w(n,k,j,i-1)/scale, w(n,k,j,i)/scale,
-                               w(n,k,j,i+1)/scale, w(n,k,j,i+2)/scale);
-      wr(n,i  ) *= scale;
+      wl(n,i+1) = interp_weno5(w(n,k,j,i+2),w(n,k,j,i+1),w(n,k,j,i),w(n,k,j,i-1),w(n,k,j,i-2));
+      wr(n,i  ) = interp_weno5(w(n,k,j,i-2),w(n,k,j,i-1),w(n,k,j,i),w(n,k,j,i+1),w(n,k,j,i+2));
     }
   }
 
@@ -106,7 +92,6 @@ void Reconstruction::Weno5X2(const int k, const int j, const int il, const int i
   AthenaArray<Real> &wl, AthenaArray<Real> &wr)
 {
   for (int n=0; n<=NVAPOR; ++n) {
-#pragma omp simd
     for (int i=il; i<=iu; ++i) {
       Real scale = 0.;
       for (int m = -2; m <= 2; ++m) scale += (w(n,k,j+m,i) + 1.E-16)/5.;
@@ -120,7 +105,6 @@ void Reconstruction::Weno5X2(const int k, const int j, const int il, const int i
   }
 
   for (int n=NVAPOR+1; n<NMASS; ++n) {
-#pragma omp simd
     for (int i=il; i<=iu; ++i) {
       Real scale = 0.;
       for (int m = -1; m <= 1; ++m) scale += (w(n,k,j+m,i) + 1.E-16)/3.;
@@ -151,7 +135,6 @@ void Reconstruction::Weno5X3(const int k, const int j, const int il, const int i
   AthenaArray<Real> &wl, AthenaArray<Real> &wr)
 {
   for (int n=0; n<=NVAPOR; ++n) {
-#pragma omp simd
     for (int i=il; i<=iu; ++i) {
       Real scale = 0.;
       for (int m = -2; m <= 2; ++m) scale += (w(n,k+m,j,i) + 1.E-16)/5.;
@@ -165,7 +148,6 @@ void Reconstruction::Weno5X3(const int k, const int j, const int il, const int i
   }
 
   for (int n=NVAPOR+1; n<NMASS; ++n) {
-#pragma omp simd
     for (int i=il; i<=iu; ++i) {
       Real scale = 0.;
       for (int m = -1; m <= 1; ++m) scale += (w(n,k+m,j,i) + 1.E-16)/3.;
