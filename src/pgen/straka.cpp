@@ -2,27 +2,49 @@
  * Athena++/Atmosphere Example Program
  *
  * Author: Cheng Li, University of Michigan, 2021
- * Reference: 
+ * Reference: Straka et al., 1993
  *======================================================================================
  */
 
 // @sect3{Include files}
 
 // These are Athena++ headers files
+// Athena++ is able to run both single precision (float) and double precision (double) applications
+// A macro (Real) is defined to indicate the precision and it is define here.
 #include "../athena.hpp"
+
+// This file defines the basic multi-dimension array that stores fluid dynamic data.
 #include "../athena_arrays.hpp"
+
+// The input file and parameters are treated by the ParameterInput class and is define
+// here.
 #include "../parameter_input.hpp"
+
+// Boundary condition is taken care of by the BoundaryValues class defined in the file
+// below.
 #include "../bvals/bvals.hpp"
+
+// Coordinate related information are stored in the Coordinates class.
 #include "../coordinates/coordinates.hpp"
+
+// This file describes the equation of state.
 #include "../eos/eos.hpp"
+
+// Magnetohydrodynamics are treated here. 
+// Since this is hydro-only application, this file is only a place holder.
 #include "../field/field.hpp"
+
+// Hydrodynamic fields are stored in the Hydro class
 #include "../hydro/hydro.hpp"
+
+// dynamic fields are solved on a mesh and 
 #include "../mesh/mesh.hpp"
 #include "../utils/utils.hpp"
 #include "../globals.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 
-// This is the math library
+// This is the math library. It is better to put math-related functions in a separate
+// namespace
 namespace math {
   #include "../math/core.h"
 }
