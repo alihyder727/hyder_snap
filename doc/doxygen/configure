@@ -111,17 +111,17 @@ VERBATIM_HEADERS       = NO
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-HTML_HEADER            = header.html
-HTML_FOOTER            = footer.html
+#HTML_HEADER            = header.html
+#HTML_FOOTER            = footer.html
 USE_MATHJAX            = YES
 MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@2
 MATHJAX_EXTENSIONS     = TeX/AMSmath TeX/AMSsymbols
 HTML_COLORSTYLE_HUE    = 220
 HTML_COLORSTYLE_SAT    = 200
-HTML_EXTRA_STYLESHEET  = customdoxygen.css
-HTML_EXTRA_FILES       = doxy-boot.js
-HTML_DYNAMIC_MENUS     = NO
-GENERATE_TREEVIEW      = NO
+HTML_EXTRA_STYLESHEET  = custom.css custom-sidebar.css
+#HTML_EXTRA_FILES       = doxy-boot.js
+#HTML_DYNAMIC_MENUS     = NO
+GENERATE_TREEVIEW      = YES
 #LAYOUT_FILE            = DoxygenLayout.xml
 
 
