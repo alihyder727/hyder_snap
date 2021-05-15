@@ -17,9 +17,11 @@ PLAIN_DOCS := $(addsuffix _plain.txt,$(addprefix $(EXAMPLE_DIR),$(PLAIN_DOCS)))
 all : $(EXAMPLE_DOCS) $(PLAIN_DOCS) doxygen
 
 $(EXAMPLE_DIR)%.dox: ../$(EXAMPLE_DIR)%
+	mkdir -p $(EXAMPLE_DIR)
 	perl $(SCRIPT_DIR)make_step.pl $(subst ../$(EXAMPLE_DIR),,$<) ../ > $@
 
 $(EXAMPLE_DIR)%_plain.txt: $(PGEN_DIR)%.cpp
+	mkdir -p $(EXAMPLE_DIR)
 	perl $(SCRIPT_DIR)program2plain $< > $@
 
 doxygen:
