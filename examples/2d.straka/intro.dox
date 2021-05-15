@@ -1,0 +1,36 @@
+<h3> Introduction </h3>
+
+<p>
+This example shows the simulation of a sinking air bubble in two dimensions. This
+simulation is proposed by @cite straka1993 for benchmarking the
+numerical methods. 
+
+The bubble is aloft in the air .
+
+<h4> Patch the code </h4>
+
+<h4> Configure the program </h4>
+The program should be configured by the following commands:
+@code
+  ./configure --prob=straka --nghost=3 -netcdf
+@endcode
+Then use the following commands to compile it:
+@code
+  make -j4
+@endcode
+If the compilation is successfull, an executable file named "straka.ex" will appear in
+the <i>bin</i> folder. It is recommand to make a soft link of the executable file to the 
+running directory.
+@code
+  ln -s ../bin/straka.ex ./
+@endcode
+
+<h4> Running the program </h4>
+Change directory to the running directory
+@code
+  cd example/2d.straka
+@endcode
+and you can execute the program by
+@code
+  ./straka.ex -i straka.inp > log.straka &
+@endcode

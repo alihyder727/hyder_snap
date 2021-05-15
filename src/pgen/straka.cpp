@@ -1,15 +1,14 @@
-//========================================================================================
-// Athena++ astrophysical MHD code
-// Copyright(C) 2014 James M. Stone <jmstone@princeton.edu> and other code contributors
-// Licensed under the 3-clause BSD License, see LICENSE file for details
-//========================================================================================
-//! \file straka.cpp
-//  \brief Problem generator for a dense sinking bubble
-//
-// REFERENCE: Straka et al., 1993
-//========================================================================================
+/*======================================================================================
+ * Athena++/Atmosphere Example Program
+ *
+ * Author: Cheng Li, University of Michigan, 2021
+ * Reference: 
+ *======================================================================================
+ */
 
-// Athena++ headers
+// @sect3{Include files}
+
+// These are Athena++ headers files
 #include "../athena.hpp"
 #include "../athena_arrays.hpp"
 #include "../parameter_input.hpp"
@@ -23,12 +22,15 @@
 #include "../globals.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 
+// This is the math library
 namespace math {
   #include "../math/core.h"
 }
 
+// Defines global variables
 Real K, p0, cp, Rd;
 
+// @sect3{User output variables}
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
   AllocateUserOutputVariables(2);
@@ -36,6 +38,7 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
   SetUserOutputVariableName(1, "theta");
 }
 
+// @sect3{Calculate user output variables}
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 {
   for (int j = js; j <= je; ++j)
@@ -48,6 +51,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
     }
 }
 
+// @sect3{Forcing function}
 void Diffusion(MeshBlock *pmb, Real const time, Real const dt,
   AthenaArray<Real> const& w, AthenaArray<Real> const& bcc, AthenaArray<Real> &u)
 {
@@ -72,6 +76,7 @@ void Diffusion(MeshBlock *pmb, Real const time, Real const dt,
     }
 }
 
+// @sect3{Set program varialbes here}
 void Mesh::InitUserMeshData(ParameterInput *pin)
 {
   // forcing parameters
@@ -85,6 +90,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   EnrollUserExplicitSourceFunction(Diffusion);
 }
 
+// @sect3{Main problem generator}
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
   Real grav = -phydro->hsrc.GetG1();
@@ -118,21 +124,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         phydro->w(IVX,j,is-i) = phydro->w(IVY,j,is-i) = 0.;
       }
   }
-
-  /* add tracers if defined
-  if (NTRACER > 0) {
-    for (int j = js; j <= je; ++j)
-      for (int i = is; i <= ie; ++i) {
-        phydro->w(ITR,j,i) = pcoord->x1v(i);
-        if (j > 7./8.*js + 1./8.*je)
-          phydro->w(ITR,j,i) += 1000.;
-        if (NTRACER > 1) {
-          phydro->w(ITR+1,j,i) = pcoord->x2v(j);
-          if (i > 7./8.*is + 1./8.*ie)
-            phydro->w(ITR+1,j,i) += 1000.;
-        }
-      }
-  }*/
 
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
 }
