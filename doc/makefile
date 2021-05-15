@@ -24,7 +24,7 @@ $(EXAMPLE_DIR)%_plain.txt: $(PGEN_DIR)%.cpp
 	mkdir -p $(EXAMPLE_DIR)
 	perl $(SCRIPT_DIR)program2plain $< > $@
 
-doxygen:
+doxygen: $(DOXYGEN_DIR)configure
 	cd doxygen && doxygen configure
 
 .PHONY : all doxygen
