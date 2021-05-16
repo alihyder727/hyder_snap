@@ -82,6 +82,8 @@ void Decomposition::FindNeighbors()
 
 #ifdef MPI_PARALLEL
   MPI_Allgather(&bblock.snb.rank, 1, MPI_INT, brank_, 1, MPI_INT, MPI_COMM_WORLD);
+#else
+  brank_[0] = -1;
 #endif
 }
 

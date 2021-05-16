@@ -19,6 +19,7 @@ before_install:
   - sudo apt-get install openmpi-bin
   - sudo apt-get install libpnetcdf-dev
   - sudo apt-get install libnetcdf-dev
+  - sudo apt-get install netcdf-bin
   - sudo apt-get install nco
 
 install:

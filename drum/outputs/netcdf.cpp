@@ -18,6 +18,7 @@
 #include "../mesh/mesh.hpp"
 #include "../hydro/hydro.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../utils/utils.hpp"
 #include "outputs.hpp"
 
 // Only proceed if NETCDF output enabled
@@ -190,17 +191,45 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     }
 
     int iax1[2]  = {idt, idx1};
-    int iaxis[4]  = {idt, idx3 , idx2 , idx1};
-    int iaxis1[4] = {idt, idx3 , idx2 , idx1f};
-    int iaxis2[4] = {idt, idx3 , idx2f, idx1};
-    int iaxis3[4] = {idt, idx3f, idx2 , idx1};
-    int iaxis4[4] = {idt, idx3, idx2};
+    int iaxis[4]  = {idt, idx1 , idx2 , idx3};
+    int iaxis1[4] = {idt, idx1f, idx2 , idx3};
+    int iaxis2[4] = {idt, idx1, idx2f, idx3};
+    int iaxis3[4] = {idt, idx1, idx2, idx3f};
+    int iaxis4[4] = {idt, idx2, idx3};
     int *var_ids = new int [total_vars];
     int *ivar = var_ids;
 
     pdata = pfirst_data_;
     while (pdata != NULL) {
-      std::string name;
+      std::string name, attr;
+      std::vector<std::string> longnames, units;
+
+      // vectorize long_name
+      if (pdata->long_name.find(',') != std::string::npos) {
+        longnames = Vectorize<std::string>(pdata->long_name.c_str(), ",");
+        std::stringstream msg; 
+        if (longnames.size() != pdata->data.GetDim4()) {
+          msg << "### FATAL ERROR in NetcdfOutput::WriteOutputFile"
+              << std::endl << "Size of long_names: " << longnames.size()
+              << " does not equal number of fields: " << pdata->data.GetDim4()
+              << std::endl;
+          ATHENA_ERROR(msg);
+        }
+      }
+
+      // vectorize units
+      if (pdata->units.find(',') != std::string::npos) {
+        units = Vectorize<std::string>(pdata->units.c_str(), ",");
+        std::stringstream msg; 
+        if (units.size() != pdata->data.GetDim4()) {
+          msg << "### FATAL ERROR in NetcdfOutput::WriteOutputFile"
+              << std::endl << "Size of units: " << units.size()
+              << " does not equal number of fields: " << pdata->data.GetDim4()
+              << std::endl;
+          ATHENA_ERROR(msg);
+        }
+      }
+
       int nvar;
       if (pdata->grid == "-CC") // FIXME: Fix this in radiation output
         nvar = pdata->data.GetDim3();
@@ -222,17 +251,37 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
             name = pdata->name + c;
         }
         if (pdata->grid == "CCF")
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis1, ivar++);
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis1, ivar);
         else if ((pdata->grid == "CFC") && (ncells2 > 1))
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis2, ivar++);
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis2, ivar);
         else if ((pdata->grid == "FCC") && (ncells3 > 1))
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis3, ivar++);
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis3, ivar);
         else if (pdata->grid == "--C")
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1, ivar++);
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1, ivar);
         else if (pdata->grid == "-CC")
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 3, iaxis4, ivar++);
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 3, iaxis4, ivar);
         else
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar++);
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar);
+
+        // set units
+        if (pdata->units != "") {
+          if (units.empty())
+            attr = pdata->units;
+          else
+            attr = units[n];
+          nc_put_att_text(ifile, *ivar, "units", attr.length(), attr.c_str());
+        }
+
+        // set long_name
+        if (pdata->long_name != "") {
+          if (longnames.empty())
+            attr = pdata->long_name;
+          else
+            attr = longnames[n];
+          nc_put_att_text(ifile, *ivar, "long_name", attr.length(), attr.c_str());
+        }
+
+        ivar++;
       }
       pdata = pdata->pnext;
     }
@@ -242,11 +291,11 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     // 4. write variables
     float *data = new float[nfaces1*nfaces2*nfaces3];
     size_t start[4] = {0, 0, 0, 0};
-    size_t count[4]  = {1, (size_t)ncells3, (size_t)ncells2, (size_t)ncells1};
-    size_t count1[4] = {1, (size_t)ncells3, (size_t)ncells2, (size_t)nfaces1};
-    size_t count2[4] = {1, (size_t)ncells3, (size_t)nfaces2, (size_t)ncells1};
-    size_t count3[4] = {1, (size_t)nfaces3, (size_t)ncells2, (size_t)ncells1};
-    size_t count4[3] = {1, (size_t)ncells3, (size_t)ncells2};
+    size_t count[4]  = {1, (size_t)ncells1, (size_t)ncells2, (size_t)ncells3};
+    size_t count1[4] = {1, (size_t)nfaces1, (size_t)ncells2, (size_t)ncells3};
+    size_t count2[4] = {1, (size_t)ncells1, (size_t)nfaces2, (size_t)ncells3};
+    size_t count3[4] = {1, (size_t)ncells1, (size_t)ncells2, (size_t)nfaces3};
+    size_t count4[3] = {1, (size_t)ncells2, (size_t)ncells3};
     size_t count_ax1[2] = {1, (size_t)ncells1};
 
     float time = (float)pm->time;
@@ -293,53 +342,53 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       if (pdata->grid == "CCF") {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
-          for (int k = out_ks; k <= out_ke; ++k)
+          for (int i = out_is; i <= out_ie+1; ++i)
             for (int j = out_js; j <= out_je; ++j)
-              for (int i = out_is; i <= out_ie+1; ++i, ++it)
-                *it = (float)pdata->data(n,k,j,i);
-          nc_put_vara_float(ifile, *(ivar++), start, count1, data);
+              for (int k = out_ks; k <= out_ke; ++k)
+                *it++ = (float)pdata->data(n,k,j,i);
+          nc_put_vara_float(ifile, *ivar++, start, count1, data);
         }
       } else if ((pdata->grid == "CFC") && (ncells2 > 1)) {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
-          for (int k = out_ks; k <= out_ke; ++k)
+          for (int i = out_is; i <= out_ie; ++i)
             for (int j = out_js; j <= out_je+1; ++j)
-              for (int i = out_is; i <= out_ie; ++i, ++it)
-                *it = (float)pdata->data(n,k,j,i);
-          nc_put_vara_float(ifile, *(ivar++), start, count2, data);
+              for (int k = out_ks; k <= out_ke; ++k)
+                *it++ = (float)pdata->data(n,k,j,i);
+          nc_put_vara_float(ifile, *ivar++, start, count2, data);
         }
       } else if ((pdata->grid == "FCC") && (ncells3 > 1)) {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
-          for (int k = out_ks; k <= out_ke+1; ++k)
+          for (int i = out_is; i <= out_ie; ++i)
             for (int j = out_js; j <= out_je; ++j)
-              for (int i = out_is; i <= out_ie; ++i, ++it)
-                *it = (float)pdata->data(n,k,j,i);
-          nc_put_vara_float(ifile, *(ivar++), start, count3, data);
+              for (int k = out_ks; k <= out_ke+1; ++k)
+                *it++ = (float)pdata->data(n,k,j,i);
+          nc_put_vara_float(ifile, *ivar++, start, count3, data);
         }
       } else if (pdata->grid == "--C") {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
-          for (int i = out_is; i <= out_ie; ++i, ++it)
-            *it = (float)pdata->data(n,i);
-          nc_put_vara_float(ifile, *(ivar++), start, count_ax1, data);
+          for (int i = out_is; i <= out_ie; ++i)
+            *it++ = (float)pdata->data(n,i);
+          nc_put_vara_float(ifile, *ivar++, start, count_ax1, data);
         }
       } else if (pdata->grid == "-CC") {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
-          for (int k = out_ks; k <= out_ke; ++k)
-            for (int j = out_js; j <= out_je; ++j, ++it)
-              *it = (float)pdata->data(n,k,j);
-          nc_put_vara_float(ifile, *(ivar++), start, count4, data);
+          for (int j = out_js; j <= out_je; ++j)
+            for (int k = out_ks; k <= out_ke; ++k)
+              *it++ = (float)pdata->data(n,k,j);
+          nc_put_vara_float(ifile, *ivar++, start, count4, data);
         }
       } else {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
-          for (int k = out_ks; k <= out_ke; ++k)
+          for (int i = out_is; i <= out_ie; ++i)
             for (int j = out_js; j <= out_je; ++j)
-              for (int i = out_is; i <= out_ie; ++i, ++it)
-                *it = (float)pdata->data(n,k,j,i);
-          nc_put_vara_float(ifile, *(ivar++), start, count, data);
+              for (int k = out_ks; k <= out_ke; ++k)
+                *it++ = (float)pdata->data(n,k,j,i);
+          nc_put_vara_float(ifile, *ivar++, start, count, data);
         }
       }
 

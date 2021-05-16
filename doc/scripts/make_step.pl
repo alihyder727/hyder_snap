@@ -14,8 +14,8 @@
 ## Adapted to Athena++/Atmosphere by Cheng Li
 ## ---------------------------------------------------------------------
 
-if ($#ARGV != 1) {
-  print "\nUsage: make_step.pl step root_dir\n";
+if ($#ARGV != 2) {
+  print "\nUsage: make_step.pl step root_dir id\n";
   exit;
 }
 
@@ -24,10 +24,11 @@ $step_underscore=$step;
 $step_underscore=~ s/-/_/;
 
 $root_dir=$ARGV[1];
+$count=$ARGV[2];
 
 print
 "/**
-\@page $step_underscore The $step tutorial program
+\@page $step_underscore Example #$count : The $step Problem
 ";
 
 open BF, "$root_dir/examples/$step/builds-on"

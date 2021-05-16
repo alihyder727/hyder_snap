@@ -79,7 +79,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       pkg.id = TOP_COOLING;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
-      pkg.Function = &Physics::TopCooling;
+      //pkg.Function = &Physics::TopCooling;
       ptm->AddPackage(pkg, "top_cooling");
 
       Jcool_ = pin->GetReal("physics", "top_cooling.KperDay")/86400.; // K/day to K/s
@@ -87,7 +87,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       pkg.id = TOP_COOLING;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
-      pkg.Function = &Physics::BotHeating;
+      //pkg.Function = &Physics::BotHeating;
       ptm->AddPackage(pkg, "bot_heating");
 
       Jheat_ = pin->GetReal("physics", "bot_heating.KperDay")/86400.; // K/day to K/s

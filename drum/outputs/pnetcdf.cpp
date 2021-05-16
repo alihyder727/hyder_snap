@@ -201,7 +201,6 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   }
 
   int iax1[2]  = {idt, idx1};
-  int iax1f[2]  = {idt, idx1f};
   int iaxis[4]  = {idt, idx1, idx2, idx3};
   int iaxis1[4] = {idt, idx1f, idx2, idx3};
   int iaxis2[4] = {idt, idx1, idx2f, idx3};

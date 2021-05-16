@@ -4,7 +4,7 @@
 
 PROJECT_NAME           = "Athena++/Atmosphere"
 PROJECT_NUMBER         = "v19"
-PROJECT_LOGO           = 
+PROJECT_LOGO           = logo1.png
 OUTPUT_DIRECTORY       = .
 
 # The doxygen documentation says this about the following flag:
@@ -70,6 +70,11 @@ WARN_IF_DOC_ERROR      = YES
 #---------------------------------------------------------------------------
 
 INPUT                  = ../../drum \
+												 ../../src/coordinates \
+												 ../../src/thermodynamics \
+												 ../../src/eos/eos.hpp \
+												 ../../src/parameter_input.hpp \
+												 ../../src/parameter_input.cpp \
 												 ../examples
 EXCLUDE                = ../../drum/pgen
 RECURSIVE              = YES
