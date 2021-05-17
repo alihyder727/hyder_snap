@@ -52,7 +52,7 @@ while (<>) {
         # replace double dashes in comments by &mdash;
 	$text =~ s!--!&mdash;!g;
 
-	print "        <li><a href=\"#$reftext\">$text</a>\n";
+	print "        <li><a href=\"#$reftext\">$text</a></li>\n";
 
 	$level = $newlevel;
     } 

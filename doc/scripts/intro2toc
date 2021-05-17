@@ -54,7 +54,7 @@ while (<>) {
           # hyperref, so get rid of the percent sign
           $text =~ s!\%!!g;
 
-          print "        <li><a href=\"#$reftext\">$text</a>\n";
+          print "        <li><a href=\"#$reftext\">$text</a></li>\n";
 
           $level = $newlevel;
        }

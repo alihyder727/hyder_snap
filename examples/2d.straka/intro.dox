@@ -6,7 +6,7 @@ is proposed by @cite straka1993 for benchmarking the
 numerical methods. The temperature of the cold air bubble is described by:
 
 @f{equation*}
-  \Delta T = -15\text{K} (\cos(\pi L)+1)/2., \quad L < 1,
+  \Delta T = -15\text{K} \frac{\cos(\pi L)+1}{2}, \quad L < 1,
 @f}
 
 where $L$ is the normalized distance to the center of the cold air bubble at $(x_c,z_c)$.
@@ -16,7 +16,7 @@ where $L$ is the normalized distance to the center of the cold air bubble at $(x
 @f}
 
 Particularly, $x_c=0$ km, $z_c=3$ km, $x_r=4$ km and $z_r=2$ km. The domain is
-two-dimensional and is 6.4 km tall and 25.6 km wide. Both the horizontal and the
+two-dimensional and is 6.4 km tall and 25.6 km wide. Either the horizontal or the
 vertical resolution is 100 m. The background atmosphere is isentropic, where the
 temperature is 300 K at 1 bar surface pressure. Initially, the bubble is aloft in the air, 
 hydrostatically balanced. Convective instability causes the bubble to sink while
@@ -30,9 +30,9 @@ the density current.
 The first step is to patch the code. The Athena++/Atmosphere model is developed based on
 the <a href="https://github.com/PrincetonUniversity/athena/wiki">Athena++ project</a>.
 We have modified many source codes and have added support for atmospheric simulation. In order to
-keep track of our modifications and seperate it from the main stream development of the Athena++
-code, we keep all modifications that are in conflict with the original Athena++ code
-to a dedicated folder @ref drum. Then we patch the code using a python script:
+keep track of our modifications and keep it seperate from the main stream development of the Athena++
+code, all source files that are in conflict with the original Athena++ code
+are placed in a dedicated folder @reff{drum}. Then we patch the code using a python script:
 @code
 ./patch.py
 @endcode
@@ -110,7 +110,7 @@ Change directory to the running directory
 @code
   cd example/2d.straka
 @endcode
-It is recommand to make a soft link of the executable file to the
+It is recommended to make a soft link of the executable file to the
 running directory:
 @code
   ln -s ../../bin/straka.ex ./

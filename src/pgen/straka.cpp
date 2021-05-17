@@ -28,7 +28,7 @@
 // declared in the following file.
 #include "../eos/eos.hpp"
 // Evolution of hydrodynamic fields like pressure, density and velocities are managed by
-// the Hydro class
+// the Hydro class.
 #include "../hydro/hydro.hpp"
 // Athena++ can alo simulate magnetohydrodynamics (MHD).
 // However, since this example is a hydro-only application, the MHD file is only
@@ -143,7 +143,7 @@ void Diffusion(MeshBlock *pmb, Real const time, Real const dt,
       // `conserved variables` are meant for internal calculation. Solving for
       // `conserved variables` guarantees the conservation properties. However,
       // `conserved variables` are not easy to use for diagnostics. Therefore, another
-      // group of variables called the `primitive variables` is introduced for external
+      // group of variables called the `primitive variables` are introduced for external
       // calculations, like calculating transport fluxes, radiative fluxes and
       // interacting with other physical components of the system. In this case, the
       // diffusion is calculated by using the `primitive variabes` and the result is
@@ -153,7 +153,7 @@ void Diffusion(MeshBlock *pmb, Real const time, Real const dt,
       u(IM2,j,i) += dt*K*w(IDN,j,i)/(dx*dy)*(
         w(IV2,j,i-1) + w(IV2,j,i+1) + w(IV2,j-1,i) + w(IV2,j+1,i) - 4.*w(IV2,j,i));
 
-      // Add thermal dissipation is similar to adding viscous dissipation.
+      // Adding thermal dissipation is similar to adding viscous dissipation.
       u(IEN,j,i) += dt*K*w(IDN,j,i)/(dx*dy)*cp*temp/theta*(theta_ip1_j + theta_im1_j +
         theta_i_jp1 + theta_i_jm1 - 4.*theta);
     }

@@ -24,7 +24,7 @@ bin/
 *.lib
 
 # Executables
-*.exe
+*.ex
 *.out
 *.app
 athena
@@ -54,6 +54,9 @@ meshtest.dat
 # Gcov log files
 *.gcov
 
+# log files
+log.*
+
 # Lcov: graphical frontend for Gcov- tracefiles
 *.info
 
@@ -68,6 +71,15 @@ patch_files
 
 # netcdf outputs
 *.nc
+
+# doxygen folders
+doc/doxygen/html/
+doc/doxygen/latex/
+doc/doxygen/img/
+doc/examples/
+
+# disort test
+src/radiation/rtsolver/cdisort213/disotest
 
 # junk files
 z.junk/

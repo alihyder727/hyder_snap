@@ -49,16 +49,16 @@ if ($buildson ne "")
 # then show the table of contents
 print
 "\@htmlonly
-<table class=\"tutorial\" width=\"50%\">
-<tr><th colspan=\"2\"><b><small>Table of contents</small></b></th></tr>
-<tr><td width=\"50%\" valign=\"top\">
-<ol>
-  <li> <a href=\"#Intro\" class=bold>Introduction</a>
+<div class=\"contents\">
+<div class=\"toc\">
+<b>Table of contents</b>
+<ul>
+  <li><a href=\"#Intro\" class=bold>Introduction</a></li>
 ";
 
 system $^X, "$root_dir/doc/scripts/intro2toc", "$root_dir/examples/$step/intro.dox";
 
-print "  <li> <a href=\"#CommProg\" class=bold>The commented program</a>\n";
+print "  <li><a href=\"#CommProg\" class=bold>Commented program</a></li>\n";
 
 my $file_extension;
 
@@ -77,15 +77,14 @@ if (-f "$root_dir/src/pgen/$pgen.cu")
 system $^X, "$root_dir/doc/scripts/program2toc", "$root_dir/src/pgen/$pgen.$file_extension";
 
 print
-"</ol></td><td width=\"50%\" valign=\"top\"><ol>
-  <li value=\"3\"> <a href=\"#Results\" class=bold>Results</a>
+"  <li><a href=\"#Results\" class=bold>Results</a></li>
 ";
 
 system $^X, "$root_dir/doc/scripts/intro2toc", "$root_dir/examples/$step/results.dox";
 
 print
-"  <li> <a href=\"#PlainProg\" class=bold>The plain program</a>
-</ol> </td> </tr> </table>
+"  <li><a href=\"#PlainProg\" class=bold>Plain program</a></li>
+</ul></div></div>
 \@endhtmlonly
 ";
 
