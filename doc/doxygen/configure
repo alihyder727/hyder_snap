@@ -230,3 +230,4 @@ SERVER_BASED_SEARCH    = NO
 #---------------------------------------------------------------------------
 
 CITE_BIB_FILES         = references.bib
+LATEX_BIB_STYLE        = chicago
