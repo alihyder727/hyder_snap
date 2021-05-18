@@ -24,14 +24,15 @@ public:
   Diagnostics(MeshBlock *pmb, std::string name);
   virtual ~Diagnostics();
   Diagnostics* operator[](std::string name);
+  void SetColor(CoordinateDirection dir);
 
   template<typename Dg> Diagnostics* AddDiagnostics(Dg const& d) {
     Dg *pd = new Dg(d);
     Diagnostics *p = this;
-    while (p->next != NULL) p = p->next;
+    while (p->next != nullptr) p = p->next;
     p->next = pd;
     p->next->prev= p;
-    p->next->next = NULL;
+    p->next->next = nullptr;
     return p->next;
   }
 
@@ -40,6 +41,8 @@ public:
 protected:
   MeshBlock *pmy_block_;
   int ncells1_, ncells2_, ncells3_;
+  std::vector<int> brank_; /**< rank of the bottom block */
+  std::vector<int> color_; /**< MPI color of each rank */
 
   // geometric arrays
   AthenaArray<Real> x1area_, x2area_, x2area_p1_, x3area_, x3area_p1_, vol_;
@@ -51,7 +54,7 @@ protected:
 class Divergence: public Diagnostics {
 public:
   Divergence(MeshBlock *pmb);
-  virtual ~Divergence();
+  virtual ~Divergence() {}
   void Finalize(AthenaArray<Real> const& w);
 
 protected:
@@ -62,7 +65,7 @@ protected:
 class Curl: public Diagnostics {
 public:
   Curl(MeshBlock *pmb);
-  virtual ~Curl();
+  virtual ~Curl() {}
   void Finalize(AthenaArray<Real> const& w);
 
 protected:
@@ -150,11 +153,19 @@ public:
   void Finalize(AthenaArray<Real> const& w);
 };
 
-// 10. total radiative flux
+// 11. total angular momentum
 class AngularMomentum: public Diagnostics {
 public:
   AngularMomentum(MeshBlock *pmb);
   virtual ~AngularMomentum() {}
+  void Finalize(AthenaArray<Real> const& w);
+};
+
+// 12. eddy kinetic energy
+class EddyKineticEnergy: public Diagnostics {
+public:
+  EddyKineticEnergy(MeshBlock *pmb);
+  virtual ~EddyKineticEnergy() {}
   void Finalize(AthenaArray<Real> const& w);
 };
 

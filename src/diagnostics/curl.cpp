@@ -21,23 +21,6 @@ Curl::Curl(MeshBlock *pmb) : Diagnostics(pmb, "curl")
   }
 }
 
-Curl::~Curl()
-{
-  if (pmy_block_->block_size.nx3 > 1) {
-    data.DeleteAthenaArray();
-    v3f2_.DeleteAthenaArray();
-    v2f3_.DeleteAthenaArray();
-    v1f3_.DeleteAthenaArray();
-    v3f1_.DeleteAthenaArray();
-    v2f1_.DeleteAthenaArray();
-    v1f2_.DeleteAthenaArray();
-  } else if (pmy_block_->block_size.nx2 > 1) {
-    data.DeleteAthenaArray();
-    v2f1_.DeleteAthenaArray();
-    v1f2_.DeleteAthenaArray();
-  }
-}
-
 void Curl::Finalize(AthenaArray<Real> const& w)
 {
   MeshBlock *pmb = pmy_block_;
@@ -76,7 +59,7 @@ void Curl::Finalize(AthenaArray<Real> const& w)
         pcoord->VolCenterFace1Area(k,j,is,ie,x1area_);
 
         for (int i = is; i <= ie; ++i) {
-          data(0,k,j,i) = (x3edge_p1_(i)*v3f2_(k,j+1,i) - x3edge_(i)*v3f2_(k,j,i) -
+          data(0,k,j,i) = -(x3edge_p1_(i)*v3f2_(k,j+1,i) - x3edge_(i)*v3f2_(k,j,i) -
                   x2edge_p1_(i)*v2f3_(k+1,j,i) + x2edge_(i)*v2f3_(k,j,i))/x1area_(i);
         }
       }
@@ -88,7 +71,7 @@ void Curl::Finalize(AthenaArray<Real> const& w)
         pcoord->Edge1Length(k+1,j,is,ie,x1edge_p1_);
         pcoord->VolCenterFace2Area(k,j,is,ie,x2area_);
         for (int i = is; i <= ie; ++i)
-          data(1,k,j,i) = (x1edge_p1_(i)*v1f3_(k+1,j,i) - x1edge_(i)*v1f3_(k,j,i) -
+          data(1,k,j,i) = -(x1edge_p1_(i)*v1f3_(k+1,j,i) - x1edge_(i)*v1f3_(k,j,i) -
                   x3edge_(i+1)*v3f1_(k,j,i+1) + x3edge_(i)*v3f1_(k,j,i))/x2area_(i);
       }
 
@@ -100,11 +83,11 @@ void Curl::Finalize(AthenaArray<Real> const& w)
         pcoord->VolCenterFace3Area(k,j,is,ie,x3area_);
         if (pmb->block_size.nx3 > 1) {  // curl is a vector
           for (int i = is; i <= ie; ++i)
-            data(2,k,j,i) = (x2edge_(i+1)*v2f1_(k,j,i+1) - x2edge_(i)*v2f1_(k,j,i) -
+            data(2,k,j,i) = -(x2edge_(i+1)*v2f1_(k,j,i+1) - x2edge_(i)*v2f1_(k,j,i) -
                   x1edge_p1_(i)*v1f2_(k,j+1,i) + x1edge_(i)*v1f2_(k,j,i))/x3area_(i);
         } else {  // curl is a scalar
           for (int i = is; i <= ie; ++i)
-            data(k,j,i) = (x2edge_(i+1)*v2f1_(k,j,i+1) - x2edge_(i)*v2f1_(k,j,i) -
+            data(k,j,i) = -(x2edge_(i+1)*v2f1_(k,j,i+1) - x2edge_(i)*v2f1_(k,j,i) -
                   x1edge_p1_(i)*v1f2_(k,j+1,i) + x1edge_(i)*v1f2_(k,j,i))/x3area_(i);
         }
       }

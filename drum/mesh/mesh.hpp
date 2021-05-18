@@ -147,6 +147,8 @@ class MeshBlock {
                    AthenaArray<Real> &u_in2, const Real wght[3]);
   void WeightedAve(FaceField &b_out, FaceField &b_in1, FaceField &b_in2,
                    const Real wght[3]);
+  void FindNeighbors(CoordinateDirection dir,
+		NeighborBlock &bblock, NeighborBlock &tblock);
 
   // inform MeshBlock which arrays contained in member Hydro, Field, Particles,
   // ... etc. classes are the "primary" representations of a quantity. when registered,

@@ -39,7 +39,7 @@ void Buoyancy::Finalize(AthenaArray<Real> const& w)
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
-        Real dx = pmb->pcoord->dx1v(i);
+        Real dx = pmb->pcoord->dx1f(i);
         data(k,j,i) = -(wl_(IPR,k,j,i+1) - wr_(IPR,k,j,i))/(dx*w(IDN,k,j,i)) + grav_;
       }
 }

@@ -71,6 +71,7 @@ WARN_IF_DOC_ERROR      = YES
 
 INPUT                  = ../../drum \
 												 ../../src/coordinates \
+												 ../../src/diagnostics \
 												 ../../src/thermodynamics \
 												 ../../src/eos/eos.hpp \
 												 ../../src/parameter_input.hpp \

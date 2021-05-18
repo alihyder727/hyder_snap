@@ -1,10 +1,9 @@
-/* -------------------------------------------------------------------------------------
- * Athena++/Atmosphere Example Program
+/** @file straka.cpp
+ * @brief Sinking bubble test case
  *
- * Author: Cheng Li, University of Michigan, 2021
- * Reference: Straka et al., 1993
- *
- * -------------------------------------------------------------------------------------
+ * @author Cheng Li (chengcli@umich.edu)
+ * @created Tuesday May 18, 2021 08:07:22 PDT
+ * @bug No known bugs.
  */
 
 // @sect3{Include files}

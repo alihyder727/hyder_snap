@@ -13,16 +13,6 @@ Divergence::Divergence(MeshBlock *pmb) : Diagnostics(pmb, "div")
     v3f3_.NewAthenaArray(ncells3_+1,ncells2_,ncells1_);
 }
 
-Divergence::~Divergence()
-{
-  data.DeleteAthenaArray();
-  v1f1_.DeleteAthenaArray();
-  if (pmy_block_->block_size.nx2 > 1)
-    v2f2_.DeleteAthenaArray();
-  if (pmy_block_->block_size.nx3 > 1)
-    v3f3_.DeleteAthenaArray();
-}
-
 void Divergence::Finalize(AthenaArray<Real> const& w)
 {
   MeshBlock *pmb = pmy_block_;
