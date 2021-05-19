@@ -3,7 +3,7 @@
 
 This example shows the simulation of a sinking air bubble in two dimensions. It 
 is proposed by @cite straka1993 for benchmarking the
-numerical methods. The temperature of the cold air bubble is described by:
+numerical methods. The temperature anomaly of the cold air bubble is described by:
 
 @f{equation*}
   \Delta T = -15\text{K} \frac{\cos(\pi L)+1}{2}, \quad L < 1,

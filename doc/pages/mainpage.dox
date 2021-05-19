@@ -75,7 +75,7 @@ to the root directory of the code and execute:
 @code
   pip3 install -r requirements.txt
 @endcode
-Otherwise, obtain `pip3` by:
+Otherwise, obtain `pip3` first by:
 @code
   sudo apt install python3-pip
 @endcode

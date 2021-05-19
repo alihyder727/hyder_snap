@@ -51,7 +51,7 @@ print
 "\@htmlonly
 <div class=\"contents\">
 <div class=\"toc\">
-<b>Table of contents</b>
+<p><b>Table of contents</b></p>
 <ul>
   <li><a href=\"#Intro\" class=bold>Introduction</a></li>
 ";
