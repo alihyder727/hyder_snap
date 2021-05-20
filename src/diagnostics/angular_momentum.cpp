@@ -2,7 +2,7 @@
  * @brief Implement total mass, moment of inertia, axial angular momentum output (am)
  *
  * @author Cheng Li (chengcli@umich.edu)
- * @created Tuesday May 18, 2021 08:07:22 PDT
+ * @date Tuesday May 18, 2021 08:07:22 PDT
  * @attention This output only works with spherical polar coordinate system
  * @bug No known bugs.
  */

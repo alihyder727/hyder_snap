@@ -2,7 +2,7 @@
  * @brief Implement eddy kinetic energy and mean kinetic energy output (eke)
  *
  * @author Cheng Li (chengcli@umich.edu)
- * @created Tuesday May 18, 2021 08:07:22 PDT
+ * @date Tuesday May 18, 2021 08:07:22 PDT
  * @bug No known bugs.
  */
 

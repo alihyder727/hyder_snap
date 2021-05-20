@@ -22,7 +22,7 @@ Research and Forecasting Model (WRF)</a> and the
 <a href="https://dedalus-project.org/">Dedalus Project</a>. The former has hundreds of
 thousands of lines of code that meet the needs of all kinds of research regarding
 Earth's atmosphere. The latter is essentialy a PDE solver with boundary conditions,
-which is perfect for fundamental studies but is too primitive for explaining read world
+which is perfect for fundamental studies but is too primitive for explaining real world
 phenomena.
 
 The Athena++/Atmosphere model sits in between. It can be either regarded as a
@@ -87,7 +87,7 @@ how to get started.
 The best way to get started is to work with an example. We provide a detailed
 documentation of an example problem in which we calculate the propagation of a density
 current on the surface. The introduction, commented program and results are located at
-page <a href="https://snap.chengcli.io/2d_8straka.html">2d.straka</a>.
+page @ref 2d.straka.
 The documentation is written in such a way that focuses on 
 explaining what's going on in individual code blocks. Understanding this program serves as a
 basis for understanding the internal mechanism of the code.
@@ -95,7 +95,7 @@ basis for understanding the internal mechanism of the code.
 @section cite Citing our work
 If you feel that our code helps your project, please consider citing our work in your
 publication:
-<ol class="list">
+<ol class="publist">
   <li>Huazhi Ge, C. Li, X. Zhang, D. Lee, 2020, A Global Nonhydrostatic Atmospheric Model
     with a Mass-and Energy-conserving Vertically Implicit Correction (VIC) Scheme,
     <em>ApJ, 898.2:130</em></li>

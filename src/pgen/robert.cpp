@@ -1,7 +1,11 @@
 /* -------------------------------------------------------------------------------------
  * Athena++/Atmosphere Example Program
  *
- * Contributer: Cheng Li, University of Michigan, 2021
+ * Contributer:
+ * Cheng Li, University of Michigan
+ * Huazhi Ge, University of California, Santa Cruz
+ *
+ * Year: 2021
  * Contact: chengcli@umich.edu
  * Reference: Robert et al., 1992
  * -------------------------------------------------------------------------------------

@@ -6,7 +6,7 @@ is proposed by @cite straka1993 for benchmarking the
 numerical methods. The temperature anomaly of the cold air bubble is described by:
 
 @f{equation*}
-  \Delta T = -15\text{K} \frac{\cos(\pi L)+1}{2}, \quad L < 1,
+  \Delta T = -15\;\text{K} \frac{\cos(\pi L)+1}{2}, \quad L < 1,
 @f}
 
 where $L$ is the normalized distance to the center of the cold air bubble at $(x_c,z_c)$.
@@ -26,8 +26,11 @@ propagates out at the surface developing
 The purpose of the program is to resolve the instability and calculate the evolution of
 the density current.
 
+
 <h3> Patch the code </h3>
-The first step is to patch the code. The Athena++/Atmosphere model is developed based on
+Since this example is the first of the series. We would spend a few paragraphs on how to
+configure, compile and run the code. The first step of running the code is to patch the code.
+The Athena++/Atmosphere model is developed based on
 the <a href="https://github.com/PrincetonUniversity/athena/wiki">Athena++ project</a>.
 We have modified many source codes and have added support for atmospheric simulation. In order to
 keep track of our modifications and keep it seperate from the main stream development of the Athena++

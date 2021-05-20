@@ -3,8 +3,9 @@
 # Based on Doxyfile 1.9.1 and deal.II template
 
 PROJECT_NAME           = "Athena++/Atmosphere"
-PROJECT_NUMBER         = "v19"
+#PROJECT_NUMBER         = "v19"
 PROJECT_LOGO           = logo1.png
+PROJECT_BRIEF          = Planetary Atmosphere Simulator
 OUTPUT_DIRECTORY       = .
 
 # The doxygen documentation says this about the following flag:
@@ -70,6 +71,7 @@ WARN_IF_DOC_ERROR      = YES
 #---------------------------------------------------------------------------
 
 INPUT                  = ../../drum \
+												 ../../src/math/ \
 												 ../../src/coordinates \
 												 ../../src/diagnostics \
 												 ../../src/thermodynamics \
@@ -78,7 +80,8 @@ INPUT                  = ../../drum \
 												 ../../src/parameter_input.cpp \
 												 ../examples \
                          ../pages
-EXCLUDE                = ../../drum/pgen
+EXCLUDE                = ../../drum/pgen \
+												 ../../src/math/eigen335
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = *.templates.h
 EXAMPLE_PATH           = ../examples
@@ -94,7 +97,6 @@ FILTER_SOURCE_FILES    = YES
 #
 # Related to a bug in doxygen, fixed in 1.9.0 
 ALIASES += reff{1}="@ref /home/cli/athena19-dev/\1 \"\1\""
-#ALIASES += reff{1}="@ref \1 \"\1\""
 ALIASES += dealiiRequiresUpdateFlags{1}="@note For this function to work properly, the underlying FEValues, FEFaceValues, or FESubfaceValues object on which you call it must have computed the information you are requesting. To do so, the <code>\1</code> flag must be an element of the list of UpdateFlags that you passed to the constructor of this object. See @ref UpdateFlags for more information."
 
 ALIASES += dealiiOperationIsMultithreaded="@note If deal.II is configured with threads, this operation will run multi-threaded by splitting the work into smaller chunks (assuming there is enough work to make this worthwhile)."
@@ -122,7 +124,7 @@ VERBATIM_HEADERS       = NO
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-#HTML_HEADER            = header.html
+HTML_HEADER            = header.html
 #HTML_FOOTER            = footer.html
 USE_MATHJAX            = YES
 MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@2
@@ -130,7 +132,7 @@ MATHJAX_EXTENSIONS     = TeX/AMSmath TeX/AMSsymbols
 HTML_COLORSTYLE_HUE    = 220
 HTML_COLORSTYLE_SAT    = 200
 HTML_EXTRA_STYLESHEET  = custom.css custom-sidebar.css
-#HTML_EXTRA_FILES       = doxy-boot.js
+HTML_EXTRA_FILES       = main.js
 #HTML_DYNAMIC_MENUS     = NO
 GENERATE_TREEVIEW      = YES
 LAYOUT_FILE            = layout.xml
