@@ -2,7 +2,7 @@
  * @brief Rayleigh-Benard convection in planetary atmospheres
  *
  * @author Cheng Li (chengcli@umich.edu)
- * @created Tuesday May 18, 2021 08:07:22 PDT
+ * @date Tuesday May 18, 2021 08:07:22 PDT
  * @bug No known bugs.
  */
 
@@ -24,8 +24,13 @@
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../physics/physics.hpp"
 
-// molecules
-Real grav, P0, T0;
+namespace math {
+  #include "../math/core.h"
+};
+
+// global parameters
+Real grav, P0, T0, radius, omega;
+bool use_polar_beta;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -36,8 +41,6 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 {
-  Real dq[1+NVAPOR], rh;
-
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
@@ -46,11 +49,39 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
       }
 }
 
+void Forcing(MeshBlock *pmb, Real const time, Real const dt,
+    AthenaArray<Real> const &w, AthenaArray<Real> const &bcc, AthenaArray<Real> &u)
+{
+  int is = pmb->is, js = pmb->js, ks = pmb->ks;
+  int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
+
+  for (int k = ks; k <= ke; ++k)
+    for (int j = js; j <= je; ++j)
+      for (int i = is; i <= ie; ++i) {
+        if (use_polar_beta) {
+          Real x2 = pmb->pcoord->x2v(j);
+          Real x3 = pmb->pcoord->x3v(k);
+          Real dist = sqrt(x2*x2 + x3*x3);
+
+          Real fcor = -omega*math::sqr(dist/radius);
+          u(IM2,k,j,i) += dt*fcor*w(IDN,k,j,i)*w(IM3,k,j,i);
+          u(IM3,k,j,i) -= dt*fcor*w(IDN,k,j,i)*w(IM2,k,j,i);
+        }
+      }
+}
+
 void Mesh::InitUserMeshData(ParameterInput *pin)
 {
   grav = - pin->GetReal("hydro", "grav_acc1");
   P0 = pin->GetReal("problem", "P0");
   T0 = pin->GetReal("problem", "T0");
+  use_polar_beta = pin->GetOrAddBoolean("problem", "use_polar_beta", false);
+  if (use_polar_beta) {
+    radius = pin->GetReal("problem", "radius");
+    omega = pin->GetReal("hydro", "OmegaZ");
+  }
+
+  EnrollUserExplicitSourceFunction(Forcing);
 }
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
