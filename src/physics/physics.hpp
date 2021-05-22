@@ -64,11 +64,14 @@ protected:
   Real tau_Tbot_, tau_Ubot_, tau_Qbot_;
 
   // parameters for sponge layer
-  Real tau_top_, tau_bot_;
-  Real width_top_, width_bot_;
+  Real tau_top_;    /**< top sponge layer time scale [s] */
+  Real width_top_;  /**< top sponge layer width [m] */
 
-  // parameters for cooling and heating;
-  Real Jcool_, Jheat_;
+  Real tau_bot_;    /**< bottom sponge layer time scale [s] */
+  Real width_bot_;  /**< bottom sponge layer width [m] */
+
+  Real dTdt_;       /**< cooling rate [K/s] */
+  Real hflux_;      /**< heating flux [W/m^2] */
 };
 
 //! \brief task to do on a meshblock

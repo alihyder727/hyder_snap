@@ -63,7 +63,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   // 0. reference radius for spherical polar geometry
   float radius;
-  if (COORDINATE_SYSTEM == "spherical_polar") {
+  if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
     try {
       radius = (float)pin->GetReal("problem", "radius");
     } catch(std::runtime_error& e) {
@@ -121,14 +121,14 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   ncmpi_def_var(ifile, "time", NC_FLOAT, 1, &idt, &ivt);
   ncmpi_put_att_text(ifile, ivt, "axis", 1, "T");
   ncmpi_put_att_text(ifile, ivt, "long_name", 4, "time");
-  if (COORDINATE_SYSTEM == "spherical_polar") {
+  if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
     ncmpi_put_att_text(ifile, ivt, "units", 25, "seconds since 1-1-1 0:0:0");
   } else
     ncmpi_put_att_text(ifile, ivt, "units", 7, "seconds");
 
   ncmpi_def_var(ifile, "x1", NC_FLOAT, 1, &idx1, &ivx1);
   ncmpi_put_att_text(ifile, ivx1, "axis", 1, "Z");
-  if (COORDINATE_SYSTEM == "spherical_polar") {
+  if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
     ncmpi_put_att_text(ifile, ivx1, "units", 6, "meters");
     ncmpi_put_att_text(ifile, ivx1, "long_name", 8, "altitude");
   } else {
@@ -138,7 +138,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   if (nx1 > 1) {
     ncmpi_def_var(ifile, "x1f", NC_FLOAT, 1, &idx1f, &ivx1f);
     ncmpi_put_att_text(ifile, ivx1f, "axis", 1, "Z");
-    if (COORDINATE_SYSTEM == "spherical_polar") {
+    if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
       ncmpi_put_att_text(ifile, ivx1f, "units", 6, "meters");
       ncmpi_put_att_text(ifile, ivx1f, "long_name", 8, "altitude");
     } else {
@@ -149,7 +149,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   ncmpi_def_var(ifile, "x2", NC_FLOAT, 1, &idx2, &ivx2);
   ncmpi_put_att_text(ifile, ivx2, "axis", 1, "Y");
-  if (COORDINATE_SYSTEM == "spherical_polar") {
+  if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
     ncmpi_put_att_text(ifile, ivx2, "units", 13, "degrees_north");
     ncmpi_put_att_text(ifile, ivx2, "long_name", 8, "latitude");
   } else {
@@ -159,7 +159,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   if (nx2 > 1) {
     ncmpi_def_var(ifile, "x2f", NC_FLOAT, 1, &idx2f, &ivx2f);
     ncmpi_put_att_text(ifile, ivx2f, "axis", 1, "Y");
-    if (COORDINATE_SYSTEM == "spherical_polar") {
+    if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
       ncmpi_put_att_text(ifile, ivx2f, "units", 13, "degrees_north");
       ncmpi_put_att_text(ifile, ivx2f, "long_name", 8, "latitude");
     } else {
@@ -170,7 +170,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   ncmpi_def_var(ifile, "x3", NC_FLOAT, 1, &idx3, &ivx3);
   ncmpi_put_att_text(ifile, ivx3, "axis", 1, "X");
-  if (COORDINATE_SYSTEM == "spherical_polar") {
+  if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
     ncmpi_put_att_text(ifile, ivx3, "units", 12, "degrees_east");
     ncmpi_put_att_text(ifile, ivx3, "long_name", 9, "longitude");
   } else {
@@ -180,7 +180,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   if (nx3 > 1) {
     ncmpi_def_var(ifile, "x3f", NC_FLOAT, 1, &idx3f, &ivx3f);
     ncmpi_put_att_text(ifile, ivx3f, "axis", 1, "X");
-    if (COORDINATE_SYSTEM == "spherical_polar") {
+    if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
       ncmpi_put_att_text(ifile, ivx3f, "units", 12, "degrees_east");
       ncmpi_put_att_text(ifile, ivx3f, "long_name", 9, "longitude");
     } else {
@@ -293,7 +293,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   err = ncmpi_put_att_text(ifile, NC_GLOBAL, "Conventions", 6, "COARDS");
   ERR
-  if (COORDINATE_SYSTEM == "spherical_polar") {
+  if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
     err = ncmpi_put_att_float(ifile, NC_GLOBAL, "PlanetRadius", NC_FLOAT, 1, &radius);
     ERR
   }
@@ -361,7 +361,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     MPI_Offset count_ax1[2] = {1, ncells1};
     MPI_Offset count_ax1f[2] = {1, nfaces1};
 
-    if (COORDINATE_SYSTEM == "spherical_polar")
+    if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0)
       for (int i = out_is; i <= out_ie; ++i)
         (*ib)[i-out_is] = (float)(pmb->pcoord->x1v(i)) - radius;
     else
@@ -371,7 +371,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     ERR
 
     if (nx1 > 1) {
-      if (COORDINATE_SYSTEM == "spherical_polar")
+      if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0)
         for (int i = out_is; i <= out_ie + 1; ++i)
           (*ib)[i-out_is] = (float)(pmb->pcoord->x1f(i)) - radius;
       else
@@ -381,7 +381,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       ERR
     }
 
-    if (COORDINATE_SYSTEM == "spherical_polar")
+    if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0)
       for (int j = out_js; j <= out_je; ++j)
         (*ib)[j-out_js] = 90. - (float)rad2deg(pmb->pcoord->x2v(j));
     else
@@ -391,7 +391,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     ERR
 
     if (nx2 > 1) {
-      if (COORDINATE_SYSTEM == "spherical_polar")
+      if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0)
         for (int j = out_js; j <= out_je + 1; ++j)
           (*ib)[j-out_js] = 90. - (float)rad2deg(pmb->pcoord->x2f(j));
       else
@@ -401,7 +401,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       ERR
     }
 
-    if (COORDINATE_SYSTEM == "spherical_polar")
+    if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0)
       for (int k = out_ks; k <= out_ke; ++k)
         (*ib)[k-out_ks] = (float)rad2deg(pmb->pcoord->x3v(k));
     else
@@ -411,7 +411,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     ERR
 
     if (nx3 > 1) {
-      if (COORDINATE_SYSTEM == "spherical_polar")
+      if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0)
         for (int k = out_ks; k <= out_ke + 1; ++k)
           (*ib)[k-out_ks] = (float)rad2deg(pmb->pcoord->x3f(k));
       else

@@ -11,6 +11,7 @@
 #include "../../mesh/mesh.hpp"
 #include "../../coordinates/coordinates.hpp"
 #include "../hydro.hpp"
+#include "../../math/core.h"
 
 //! \brief add source terms for constant coriolis acceleration in 
 //  axial direction to conserved variables
@@ -23,7 +24,6 @@ void HydroSourceTerms::Coriolis123(const Real dt,const AthenaArray<Real> *flx,
     for (int k=pmb->ks; k<=pmb->ke; ++k) {
 #pragma omp parallel for schedule(static)
     for (int j=pmb->js; j<=pmb->je; ++j) {
-#pragma simd
       for (int i=pmb->is; i<=pmb->ie; ++i) {
         Real m1 = prim(IDN,k,j,i)*prim(IM1,k,j,i),
              m2 = prim(IDN,k,j,i)*prim(IM2,k,j,i),
@@ -53,17 +53,17 @@ void HydroSourceTerms::CoriolisXYZ(const Real dt,const AthenaArray<Real> *flx,
 #pragma omp parallel for schedule(static)
     for (int j=pmb->js; j<=pmb->je; ++j)
       for (int i=pmb->is; i<=pmb->ie; ++i) {
-        if (COORDINATE_SYSTEM == "cartesian") {
-          omega1 = omegax_;
-          omega2 = omegay_;
-          omega3 = omegaz_;
-        } else if (COORDINATE_SYSTEM == "cylindrical") {
+        if (strcmp(COORDINATE_SYSTEM,"cartesian") == 0) {
+          omega1 = omegaz_;
+          omega2 = omegax_;
+          omega3 = omegay_;
+        } else if (strcmp(COORDINATE_SYSTEM,"cylindrical") == 0) {
           theta = pmb->pcoord->x2v(j);
 
           omega1 = cos(theta)*omegax_ + sin(theta)*omegay_;
           omega2 = -sin(theta)*omegax_ + cos(theta)*omegay_;
           omega3 = omegaz_;
-        } else if (COORDINATE_SYSTEM == "spherical_polar") {
+        } else if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
           theta = pmb->pcoord->x2v(j);
           phi = pmb->pcoord->x3v(k);
 
@@ -82,8 +82,7 @@ void HydroSourceTerms::CoriolisXYZ(const Real dt,const AthenaArray<Real> *flx,
              m3 = prim(IDN,k,j,i)*prim(IM3,k,j,i);
         cons(IM1,k,j,i) += 2.*dt*(omega3*m2 - omega2*m3);
         cons(IM2,k,j,i) += 2.*dt*(omega1*m3 - omega3*m1);
-        if (pmb->ncells3 > 1) // 3d
-          cons(IM3,k,j,i) += 2.*dt*(omega2*m1 - omega1*m2);
+        cons(IM3,k,j,i) += 2.*dt*(omega2*m1 - omega1*m2);
       }
     }
   }

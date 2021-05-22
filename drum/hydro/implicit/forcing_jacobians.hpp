@@ -21,17 +21,17 @@ void ImplicitSolver::JacobianGravityCoriolis(T &jac, Real const prim[],
   MeshBlock *pmb = pmy_hydro->pmy_block;
 
   jac.setZero();
-  if (COORDINATE_SYSTEM == "cartesian") {
+  if (strcmp(COORDINATE_SYSTEM,"cartesian") == 0) {
     omega1 = omegaz;
     omega2 = omegax;
     omega3 = omegay;
-  } else if (COORDINATE_SYSTEM == "cylindrical") {
+  } else if (strcmp(COORDINATE_SYSTEM,"cylindrical") == 0) {
     theta = pmb->pcoord->x2v(j);
 
     omega1 = cos(theta)*omegax + sin(theta)*omegay;
     omega2 = -sin(theta)*omegax + cos(theta)*omegay;
     omega3 = omegaz;
-  } else if (COORDINATE_SYSTEM == "spherical_polar") {
+  } else if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0) {
     theta = pmb->pcoord->x2v(j);
     phi = pmb->pcoord->x3v(k);
 
