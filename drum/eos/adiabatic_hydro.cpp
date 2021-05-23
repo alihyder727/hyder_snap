@@ -102,23 +102,16 @@ void EquationOfState::ConservedToPrimitive(
 
         // internal energy
         Real KE = 0.5*di*(u_m1*u_m1 + u_m2*u_m2 + u_m3*u_m3);
-        Real LE = 0., fsig = 1., feps = 1.;
-        // clouds
-        for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-          LE += -pthermo->GetLatent(n)*cons(n,k,j,i);
-          fsig += prim(n,k,j,i)*(pthermo->GetCvRatio(n) - 1.);
-          feps -= prim(n,k,j,i);
-        }
+        Real fsig = 1., feps = 1.;
         // vapors
         for (int n = 1; n <= NVAPOR; ++n) {
-          LE += -pthermo->GetLatent(n)*cons(n,k,j,i);
           fsig += prim(n,k,j,i)*(pthermo->GetCvRatio(n) - 1.);
           feps += prim(n,k,j,i)*(1./pthermo->GetMassRatio(n) - 1.);
         }
-        w_p = gm1*(u_e - KE - LE)*feps/fsig;
+        w_p = gm1*(u_e - KE)*feps/fsig;
 
         // apply pressure floor, correct total energy
-        u_e = (w_p > pressure_floor_) ?  u_e : ((pressure_floor_/gm1)*fsig/feps + KE + LE);
+        u_e = (w_p > pressure_floor_) ?  u_e : ((pressure_floor_/gm1)*fsig/feps + KE);
         w_p = (w_p > pressure_floor_) ?  w_p : pressure_floor_;
 
         #ifdef DEBUG
@@ -191,20 +184,13 @@ void EquationOfState::PrimitiveToConserved(
 
         // total energy
         Real KE = 0.5*w_d*(w_vx*w_vx + w_vy*w_vy + w_vz*w_vz);
-        Real LE = 0., fsig = 1., feps = 1.;
-        // clouds
-        for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-          LE += -pthermo->GetLatent(n)*cons(n,k,j,i);
-          fsig += prim(n,k,j,i)*(pthermo->GetCvRatio(n) - 1.);
-          feps -= prim(n,k,j,i);
-        }
+        Real fsig = 1., feps = 1.;
         // vapors
         for (int n = 1; n <= NVAPOR; ++n) {
-          LE += -pthermo->GetLatent(n)*cons(n,k,j,i);
           fsig += prim(n,k,j,i)*(pthermo->GetCvRatio(n) - 1.);
           feps += prim(n,k,j,i)*(1./pthermo->GetMassRatio(n) - 1.);
         }
-        u_e = igm1*w_p*fsig/feps + KE + LE;
+        u_e = igm1*w_p*fsig/feps + KE ;
       }
     }
   }
@@ -219,10 +205,6 @@ Real EquationOfState::SoundSpeed(const Real prim[NHYDRO]) {
   Thermodynamics *pthermo = pmy_block_->pthermo;
 
   Real fsig = 1., feps = 1.;
-  for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-    fsig += prim[n]*(pthermo->GetCvRatio(n) - 1.);
-    feps -= prim[n];
-  }
   for (int n = 1; n <= NVAPOR; ++n) {
     fsig += prim[n]*(pthermo->GetCvRatio(n) - 1.);
     feps += prim[n]*(1./pthermo->GetMassRatio(n) - 1.);

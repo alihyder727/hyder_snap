@@ -22,8 +22,8 @@ Real q_sig(Real const w[], Real const sig[]);
 Real qhat_eps(Real const q[], Real const eps[]);
 //Real qhat_rcp(Real const q[], Real const rcp[]);
 
-void put_hat(Real q[], Real const w[], Real const eps[], Real Rd);
-void cut_hat(Real w[], Real const q[], Real const eps[], Real Rd);
+void mass2molar(Real q[], Real const w[], Real const eps[], Real Rd);
+void molar2mass(Real w[], Real const q[], Real const eps[], Real Rd);
 
 Real dlnTdlnP(Real const q[], int const isat[], 
   Real const rcp[], Real const beta[], Real const delta[], Real const t3[], Real gamma);

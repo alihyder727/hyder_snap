@@ -1,5 +1,7 @@
 #ifndef THERMODYNAMICS_HPP
 #define THERMODYNAMICS_HPP
+
+// C/C++ headers
 #include <cfloat>
 #include <iosfwd>
 
@@ -31,25 +33,56 @@ public:
   Thermodynamics(MeshBlock *pmb, ParameterInput *pin);
   ~Thermodynamics();
 
-  // access functions
+  //! ideal gas constant of dry air in J/(kg K)
   Real GetRd() const {return Rd_;}
+
+  /*! ratio of specific heat capacity at constant volume
+   * @param n index of vapor
+   * @return $c_v$ of vapor n in units of J/(kg K) ratioed to that of dry air
+   */
   Real GetCvRatio(int n) const {return rcv_[n];}
+
+  /*! specific heat capacity at constant volume in J/(kg K)
+   * @param n index of vapor
+   */
   Real GetCv(int n) const {
     Real cvd = Rd_/(pmy_block_->peos->GetGamma() - 1.);
     return rcv_[n]*cvd;
   }
+
+  /*! specific heat capacity at constant pressure in J/(kg K)
+   * @param n index of vapor
+   */
   Real GetCpRatio(int n) const {return rcp_[n];}
+
+  /*! ratio of specific heat capacity at constant pressure
+   * @param n index of vapor
+   * @return $c_p$ of vapor n in units of J/(kg K) ratioed to that of dry air
+   * */
   Real GetCp(int n) const {
     Real gamma = pmy_block_->peos->GetGamma();
     Real cpd = Rd_*gamma /(gamma - 1.);
     return rcp_[n]*cpd;
   }
+
+  /*! temperature dependent latent heat of condensates in J/kg (positive)
+   * @param n index of condensate
+   * @param temp temperature (default to 0)
+   */
   Real GetLatent(int n, Real temp = 0.) const {
     return latent_[n] - delta_[n]*Rd_/eps_[n]*temp;
   }
+
+  //! ratio of molecular weights
   Real GetMassRatio(int n) const {return eps_[n];}
+
+  //! beta parameter
   Real GetBeta(int n) const {return beta_[n];}
+
+  //! delta parameter
   Real GetDelta(int n) const {return delta_[n];}
+
+  //! saturation vapor pressure
   Real SatVaporPressure(Real temp, int n) const {
     if (n == AMMONIA_VAPOR_ID)
       return sat_vapor_p_NH3_BriggsS(temp);
@@ -59,10 +92,11 @@ public:
       return SatVaporPresIdeal(temp/t3_[n], p3_[n], beta_[n], delta_[n]);
   }
 
-  // Construct an adiabat with primary condensate
-  // method = 0 - reversible adiabat
-  //        = 1 - pseudo adiabat
-  //        = 2 - an adiabat with no latent heat release
+  /*! Construct an adiabat with primary condensate
+   * @param method = 0 - reversible adiabat \
+   *               = 1 - pseudo adiabat \
+   *               = 2 - an adiabat with no latent heat release
+   */
   void ConstructAdiabat(Real **w, Real Ts, Real Ps,
     Real grav, Real dz, int len, Adiabat method, Real dTdz = 0.) const;
 
@@ -73,33 +107,25 @@ public:
   //        - \sum_{i,j} q_{ij}^\hat \mu_{ij}^\hat)/R_d^\hat
   void UpdateTPConservingU(Real q[], Real rho, Real uhat) const;
 
+  /*! adjust conserved variable to a sub-saturated state
+   * @param u conserved variables
+   */
   void SaturationAdjustment(AthenaArray<Real> &u) const;
 
-  void PolytropicIndex(AthenaArray<Real> &gamma, AthenaArray<Real> &w,
-    int kl, int ku, int jl, int ju, int il, int iu) const;
+  //void PolytropicIndex(AthenaArray<Real> &gamma, AthenaArray<Real> &w,
+  //  int kl, int ku, int jl, int ju, int il, int iu) const;
 
+  //! polytropic index $\gamma=c_p/c_v$
   template<typename T>
-  Real GetPolytropicIndex(T w) {
-    Real gamma = pmy_block_->peos->GetGamma();
-    Real fsig = 1., feps = 1.;
-    for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-      fsig += w[n]*(rcv_[n] - 1.);
-      feps -= w[n];
-    }
-    for (int n = 1; n <= NVAPOR; ++n) {
-      fsig += w[n]*(rcv_[n] - 1.);
-      feps += w[n]*(1./eps_[n] - 1.);
-    }
-    return 1. + (gamma - 1.)*feps/fsig;
-  }
+  Real GetPolytropicIndex(T w);
 
-  // Conserved variables to thermodynamic variables
-  void ConservedToThermodynamic(AthenaArray<Real> &q, AthenaArray<Real> const& u,
+  //! Conserved variables to thermodynamic variables
+  void ConservedToThermo(AthenaArray<Real> &q, AthenaArray<Real> const& u,
     int il, int iu, int jl, int ju, int kl, int ku) const;
 
   // Thermodynamic variables to conserved variables
   // density of dry air, momentum and total energy are not updated
-  void ThermodynamicToConserved(AthenaArray<Real> &w, AthenaArray<Real> const& q,
+  void ThermoToConserved(AthenaArray<Real> &u, AthenaArray<Real> const& q,
     int il, int iu, int jl, int ju, int kl, int ku) const;
 
   // template functions
@@ -116,7 +142,7 @@ public:
   }
 
   template<typename T>
-  Real Chi(T w) {
+  Real GetChi(T w) {
     for (int n = 0; n < NHYDRO; ++n) w1_[n] = w[n];
     Real gamma = pmy_block_->peos->GetGamma();
     Real tem[1] = {Temp(w)};
@@ -127,7 +153,7 @@ public:
   }
 
   template<typename T>
-  Real Cp(T w) {
+  Real GetCp(T w) {
     for (int n = 0; n < NHYDRO; ++n) w1_[n] = w[n];
     Real gamma = pmy_block_->peos->GetGamma();
     Real tem[1] = {Temp(w)};
@@ -137,7 +163,7 @@ public:
   }
 
   template<typename T>
-  Real Cv(T w) {
+  Real GetCv(T w) {
     for (int n = 0; n < NHYDRO; ++n) w1_[n] = w[n];
     Real gamma = pmy_block_->peos->GetGamma();
     Real tem[1] = {Temp(w)};
@@ -153,20 +179,20 @@ public:
   }
 
   template<typename T>
-  Real Temp(T w) {
+  Real GetTemp(T w) {
     for (int n = 0; n < NHYDRO; ++n) w1_[n] = w[n];
     return w[IPR]/(w[IDN]*Rd_*q_eps(w1_, eps_));
   }
 
   template<typename T>
-  Real Theta(T w, Real p0) {
+  Real GetTheta(T w, Real p0) {
     Real chi = Chi(w);
     Real temp = Temp(w);
     return temp*pow(p0/w[IPR], chi);
   }
 
   template<typename T>
-  Real ThetaE(T prim, Real p0) {
+  Real GetThetaE(T prim, Real p0) {
 #if (NVAPOR > 0)
     Real gamma = pmy_block_->peos->GetGamma();
     Real tem[1] = {Temp(prim)};
@@ -229,15 +255,18 @@ public:
   }
 
   template<typename T>
-  Real MSE(T prim, Real gz) {
+  Real GetMoistStaticEnergy(T prim, Real gz) {
     Real LE = 0.;
     for (int n = 1 + NVAPOR; n < NMASS; ++n)
       LE -= latent_[n]*prim[n];
     return Cp(prim)*Temp(prim) + LE + gz;
   }
 
-  template<typename T>
-  void SaturationSurplus(Real dq[], T prim) {
+  /*! Saturation surplus for vapors can be both positive and negative
+   * positive value represents supersaturation
+   * negative value represents saturation deficit
+   */
+  void CalculateSaturationSurplus(Real dq[], AthenaArray<Real> const& w) {
     Real temp = Temp(prim);
 
     // mass to molar mixing ratio
@@ -255,9 +284,6 @@ public:
 
     for (int n = 0; n <= NVAPOR; ++n)
       dq[n] /= sum;
-    // Saturation surplus for vapors can be both positive and negative
-    // positive value represents supersaturation
-    // negative value represents saturation deficit
 
     for (int n = 1; n <= NVAPOR; ++n) {
       Real q = dq[n];
@@ -282,23 +308,23 @@ public:
     }
   }
 
-  Real last_time, dt;
+  // Real last_time, dt;
 private:
   MeshBlock *pmy_block_;
   Real ftol_;
   int max_iter_;
-  Real w1_[NHYDRO];  // scratch array for storing primitive variables
+  Real w1_[NHYDRO];   /**< scratch array for storing primitive variables */
 
-  Real Rd_;   // gas constant of dry air
-  Real eps_[NMASS];
-  Real rcp_[NMASS];
-  Real beta_[NMASS];
+  Real Rd_;           /**< ideal gas constant of dry air */
+  Real eps_[NMASS];   /**< ratio of mean molecular weights */
+  Real rcp_[NMASS];   /**< ratio of heat capacity at constant pressure */
+  Real beta_[NMASS];  /**< dimensionless latent heat */
 
-  Real latent_[NMASS];
-  Real delta_[NMASS];
-  Real rcv_[NMASS];
-  Real t3_[NMASS];
-  Real p3_[NMASS];
+  Real latent_[NMASS];  /**< latent heat in J/kg */
+  Real delta_[NMASS];   /**< cp(gas) - cp(cloud) */
+  Real rcv_[NMASS];     /**< ratio of heat capacity at constant volume */
+  Real t3_[NMASS];      /**< triple point temperature */
+  Real p3_[NMASS];      /**< triple point pressure */
 };
 
 #endif

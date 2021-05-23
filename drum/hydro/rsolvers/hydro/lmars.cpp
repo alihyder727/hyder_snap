@@ -36,12 +36,7 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
     }
     // correction for gamma
     // left
-    Real fsig = 1., feps = 1., lel = 0., ler = 0.;
-    for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-      lel += -pthermo->GetLatent(n)*wli[n];
-      fsig += wli[n]*(pthermo->GetCvRatio(n) - 1.);
-      feps -= wli[n];
-    }
+    Real fsig = 1., feps = 1.;
     for (int n = 1; n <= NVAPOR; ++n) {
       fsig += wli[n]*(pthermo->GetCvRatio(n) - 1.);
       feps += wli[n]*(1./pthermo->GetMassRatio(n) - 1.);
@@ -50,11 +45,6 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
 
     // right
     fsig = 1., feps = 1.;
-    for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-      ler += -pthermo->GetLatent(n)*wri[n];
-      fsig += wri[n]*(pthermo->GetCvRatio(n) - 1.);
-      feps -= wri[n];
-    }
     for (int n = 1; n <= NVAPOR; ++n) {
       fsig += wri[n]*(pthermo->GetCvRatio(n) - 1.);
       feps += wri[n]*(1./pthermo->GetMassRatio(n) - 1.);
@@ -87,9 +77,9 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
 
     // enthalpy
     hl = wli[IPR]/wli[IDN]*(kappal + 1.) 
-      + 0.5*(sqr(wli[ivx]) + sqr(wli[ivy]) + sqr(wli[ivz])) + lel;
+      + 0.5*(sqr(wli[ivx]) + sqr(wli[ivy]) + sqr(wli[ivz]));
     hr = wri[IPR]/wri[IDN]*(kappar + 1.)
-      + 0.5*(sqr(wri[ivx]) + sqr(wri[ivy]) + sqr(wri[ivz])) + ler;
+      + 0.5*(sqr(wri[ivx]) + sqr(wri[ivy]) + sqr(wri[ivz]));
 
     rhobar = 0.5*(wli[IDN] + wri[IDN]);
     cbar = sqrt(0.5*(1. + (1./kappar + 1./kappal)/2.)*(wli[IPR]+ wri[IPR])/rhobar);

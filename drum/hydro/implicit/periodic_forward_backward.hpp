@@ -40,27 +40,21 @@ void ImplicitSolver::PeriodicForwardSweep(
 
   if (T2::RowsAtCompileTime == 3) {  // partial matrix
     rhs(0) = du_(IDN,k,j,il);
-    rhs(1) = du_(IVX+mydir_,k,j,il)/dt;
-    rhs(2) = du_(IEN,k,j,il);
-    for (int n = 1; n < NMASS; ++n) {
+    for (int n = 1; n <= NVAPOR; ++n)
       rhs(0) += du_(n,k,j,il);
-      rhs(2) += pthermo->GetLatent(n)*du_(n,k,j,il);
-    }
     rhs(0) /= dt;
-    rhs(2) /= dt;
+    rhs(1) = du_(IVX+mydir_,k,j,il)/dt;
+    rhs(2) = du_(IEN,k,j,il)/dt;
     rhs -= corr[il];
   } else {  // full matrix
     rhs(0) = du_(IDN,k,j,il);
+    for (int n = 1; n <= NVAPOR; ++n)
+      rhs(0) += du_(n,k,j,il);
+    rhs(0) /= dt;
     rhs(1) = du_(IVX+mydir_,k,j,il)/dt;
     rhs(2) = du_(IVX+(IVY-IVX+mydir_)%3,k,j,il)/dt;
     rhs(3) = du_(IVX+(IVZ-IVX+mydir_)%3,k,j,il)/dt;
-    rhs(4) = du_(IEN,k,j,il);
-    for (int n = 1; n < NMASS; ++n) {
-      rhs(0) += du_(n,k,j,il);
-      rhs(4) += pthermo->GetLatent(n)*du_(n,k,j,il);
-    }
-    rhs(0) /= dt;
-    rhs(4) /= dt;
+    rhs(4) = du_(IEN,k,j,il)/dt;
     //if (pmy_hydro->implicit_done != nullptr) {
     //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,il,mydir_);
     //  rhs -= dt*phi*rhs;
@@ -105,27 +99,21 @@ void ImplicitSolver::PeriodicForwardSweep(
   for (int i = il+1; i <= iu; ++i) {
     if (T2::RowsAtCompileTime == 3) {  // partial matrix
       rhs(0) = du_(IDN,k,j,i);
-      rhs(1) = du_(IVX+mydir_,k,j,i)/dt;
-      rhs(2) = du_(IEN,k,j,i);
-      for (int n = 1; n < NMASS; ++n) {
+      for (int n = 1; n <= NVAPOR; ++n)
         rhs(0) += du_(n,k,j,i);
-        rhs(2) += pthermo->GetLatent(n)*du_(n,k,j,i);
-      }
       rhs(0) /= dt;
-      rhs(2) /= dt;
+      rhs(1) = du_(IVX+mydir_,k,j,i)/dt;
+      rhs(2) = du_(IEN,k,j,i)/dt;
       rhs -= corr[i];
     } else {
       rhs(0) = du_(IDN,k,j,i);
+      for (int n = 1; n <= NVAPOR; ++n)
+        rhs(0) += du_(n,k,j,i);
+      rhs(0) /= dt;
       rhs(1) = du_(IVX+mydir_,k,j,i)/dt;
       rhs(2) = du_(IVX+(IVY-IVX+mydir_)%3,k,j,i)/dt;
       rhs(3) = du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i)/dt;
-      rhs(4) = du_(IEN,k,j,i);
-      for (int n = 1; n < NMASS; ++n) {
-        rhs(0) += du_(n,k,j,i);
-        rhs(4) += pthermo->GetLatent(n)*du_(n,k,j,i);
-      }
-      rhs(0) /= dt;
-      rhs(4) /= dt;
+      rhs(4) = du_(IEN,k,j,i)/dt;
       //if (pmy_hydro->implicit_done != nullptr) {
       //  pmy_hydro->implicit_done->LoadForcingJacobian(phi,k,j,i,mydir_);
       //  rhs -= dt*phi*rhs;

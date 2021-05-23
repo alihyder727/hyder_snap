@@ -106,7 +106,7 @@ Real qhat_eps(Real const q[], Real const eps[])
   return q_gas(q)/feps;
 }
 
-void put_hat(Real q[], Real const w[], Real const eps[], Real Rd)
+void mass2molar(Real q[], Real const w[], Real const eps[], Real Rd)
 {
   // set molar mixing ratio
   Real sum = 1.;
@@ -117,12 +117,12 @@ void put_hat(Real q[], Real const w[], Real const eps[], Real Rd)
   for (int n = 1; n < NMASS; ++n)
     q[n] /= sum;
 
-  // pressure and temperature
+  // set pressure and temperature
   q[IPR] = w[IPR];
   q[IDN] = w[IPR]/(w[IDN]*Rd*q_eps(w, eps));
 }
 
-void cut_hat(Real w[], Real const q[], Real const eps[], Real Rd)
+void molar2mass(Real w[], Real const q[], Real const eps[], Real Rd)
 {
   // set mass mixing ratio
   Real sum = 1.;
@@ -133,7 +133,7 @@ void cut_hat(Real w[], Real const q[], Real const eps[], Real Rd)
   for (int n = 1; n < NMASS; ++n)
     w[n] /= sum;
 
-  // pressure and density
+  // set pressure and density
   w[IPR] = q[IPR];
   w[IDN] = q[IPR]/(q[IDN]*Rd*q_eps(w, eps));
 }
