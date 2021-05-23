@@ -1,3 +1,11 @@
+/** @file rbc.cpp
+ * @brief Rayleigh-Benard convection in planetary atmospheres
+ *
+ * @author Cheng Li (chengcli@umich.edu)
+ * @date Tuesday May 22, 2021 08:07:22 PDT
+ * @bug No known bugs.
+ */
+
 // C/C++ header
 #include <ctime>
 #include <sstream>
@@ -17,18 +25,25 @@
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../physics/physics.hpp"
 
+namespace math {
+  #include "../math/core.h"
+};
+
 // molecules
 enum {iH2O = 1, iH2Oc = 2, iH2Op = 3};
-Real grav, P0, T0, Tmin, prad, hrate, sponge_tau;
+
+// global parameters
+Real grav, P0, T0, Tmin, radius, omega;
+bool use_polar_beta;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
   AllocateUserOutputVariables(5);
-  SetUserOutputVariableName(0, "temp");
-  SetUserOutputVariableName(1, "theta");
-  SetUserOutputVariableName(2, "thetav");
-  SetUserOutputVariableName(3, "mse");
-  SetUserOutputVariableName(4, "rh_h2o");
+  SetUserOutputVariableName(0, "temp", "temperature", "K");
+  SetUserOutputVariableName(1, "theta", "potential temperature", "K");
+  SetUserOutputVariableName(2, "thetav", "virtual potential temperature", "K");
+  SetUserOutputVariableName(3, "mse", "moist static energy", "J/kg");
+  SetUserOutputVariableName(4, "rh_h2o", "relative humidity");
 }
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
@@ -42,9 +57,11 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
         user_out_var(1,k,j,i) = pthermo->Theta(phydro->w.at(k,j,i), P0);
         // theta_v
         user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->Qeps(phydro->w.at(k,j,i));
+        // mse
         user_out_var(3,k,j,i) = pthermo->MSE(phydro->w.at(k,j,i), grav*pcoord->x1v(i));
         pthermo->SaturationSurplus(dq, phydro->w.at(k,j,i));
         rh = phydro->w(iH2O,k,j,i)/(phydro->w(iH2O,k,j,i) - dq[iH2O]);
+        // rh
         user_out_var(4,k,j,i) = rh;
       }
 }
@@ -54,20 +71,18 @@ void Forcing(MeshBlock *pmb, Real const time, Real const dt,
 {
   int is = pmb->is, js = pmb->js, ks = pmb->ks;
   int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
-  Thermodynamics *pthermo = pmb->pthermo;
 
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
-        Real cv = pthermo->Cv(w.at(k,j,i));
-        if (w(IPR,k,j,i) < prad) {
-          u(IEN,k,j,i) += dt*hrate*w(IDN,k,j,i)*cv*(1. +
-                          1.E-4*sin(2.*M_PI*rand()/RAND_MAX));
-        }
+        if (use_polar_beta) {
+          Real x2 = pmb->pcoord->x2v(j);
+          Real x3 = pmb->pcoord->x3v(k);
+          Real dist = sqrt(x2*x2 + x3*x3);
 
-        Real temp = pthermo->Temp(w.at(k,j,i));
-        if (temp < Tmin) {
-          u(IEN,k,j,i) += w(IDN,k,j,i)*cv*(Tmin - temp)/sponge_tau*dt;
+          Real fcor = -omega*math::sqr(dist/radius);
+          u(IM2,k,j,i) += dt*fcor*w(IDN,k,j,i)*w(IM3,k,j,i);
+          u(IM3,k,j,i) -= dt*fcor*w(IDN,k,j,i)*w(IM2,k,j,i);
         }
       }
 }
@@ -77,9 +92,11 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   grav = - pin->GetReal("hydro", "grav_acc1");
   P0 = pin->GetReal("problem", "P0");
   T0 = pin->GetReal("problem", "T0");
-  prad = pin->GetReal("problem", "prad");
-  hrate = pin->GetReal("problem", "hrate")/86400.;  // K/day to K/s
-  sponge_tau = pin->GetReal("problem", "sponge_tau");
+  use_polar_beta = pin->GetOrAddBoolean("problem", "use_polar_beta", false);
+  if (use_polar_beta) {
+    radius = pin->GetReal("problem", "radius");
+    omega = pin->GetReal("hydro", "OmegaZ");
+  }
   Tmin = pin->GetReal("hydro", "min_tem");
 
   EnrollUserExplicitSourceFunction(Forcing);
@@ -159,41 +176,27 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
 
   // setup initial condition
-  int kl = block_size.nx3 == 1 ? ks : ks-NGHOST;
-  int ku = block_size.nx3 == 1 ? ke : ke+NGHOST;
-  int jl = block_size.nx2 == 1 ? js : js-NGHOST;
-  int ju = block_size.nx2 == 1 ? je : je+NGHOST;
+  srand(Globals::my_rank + time(0));
   for (int i = is; i <= ie; ++i) {
     Real buf[NHYDRO];
     interpn(buf, &pcoord->x1v(i), *w1, z1, &nx1, 1, NHYDRO);
     buf[IVX] = buf[IVY] = buf[IVZ] = 0.;
+
     // set cloud to zero
     for (int n = 1+NVAPOR; n < NMASS; ++n)
       buf[n] = 0.;
+
     for (int n = 0; n < NHYDRO; ++n)
-      for (int k = kl; k <= ku; ++k)
-        for (int j = jl; j <= ju; ++j)
+      for (int k = ks; k <= ke; ++k)
+        for (int j = js; j <= je; ++j)
           phydro->w(n,k,j,i) = buf[n];
+
+    // add noise
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+      phydro->w(IV1,k,j,i) = 0.001*(1.*rand()/RAND_MAX - 0.5);
   }
 
-  // setup open lower boundary
-  if (pbval->block_bcs[inner_x1] == BoundaryFlag::outflow) {
-    for (int k = kl; k <= ku; ++k)
-      for (int j = jl; j <= ju; ++j) {
-        for (int n = 0; n < NHYDRO; ++n)
-          w1[0][n] = phydro->w(n,k,j,is);
-        Real P1 = w1[0][IPR];
-        Real T1 = pthermo->Temp(w1[0]);
-        Real dz = pcoord->dx1f(is);
-        // adiabatic extrapolate half a grid down
-        pthermo->ConstructAdiabat(w1, T1, P1, grav, -dz/2., 2, Adiabat::reversible);
-        for (int n = 0; n < NHYDRO; ++n)
-          for (int i = 1; i <= NGHOST; ++i)
-            phydro->w(n,k,j,is-i) = w1[1][n];
-      }
-  }
-
-  srand(Globals::my_rank + time(0));
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
   pphy->Initialize(phydro->w);
 
