@@ -9,7 +9,6 @@
 #include "../../math/eigen335/Eigen/Dense"
 
 // Athena++ headers
-#include "../../thermodynamics/thermodynamics.hpp"
 #include "communication.hpp"
 
 template<typename T1, typename T2>
@@ -18,7 +17,6 @@ void ImplicitSolver::ForwardSweep(
   std::vector<T2> &delta, std::vector<T2> &corr, Real dt,
   int k, int j, int il, int iu)
 {
-  Thermodynamics *pthermo = pmy_hydro->pmy_block->pthermo;
   T1 phi;
   T2 rhs;
 
@@ -97,8 +95,6 @@ void ImplicitSolver::BackwardSubstitution(
   std::vector<T2> &delta, 
   int kl, int ku, int jl, int ju, int il, int iu)
 {
-  Thermodynamics *pthermo = pmy_hydro->pmy_block->pthermo;
-
   for (int k = kl; k <= ku; ++k)
     for (int j = jl; j <= ju; ++j) {
       LoadCoefficients(a, delta, k, j, il, iu);
@@ -124,10 +120,8 @@ void ImplicitSolver::BackwardSubstitution(
           du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i) = delta[i](3);
           du_(IEN,k,j,i) = delta[i](4);
         }
-        for (int n = 1; n < NMASS; ++n) {
+        for (int n = 1; n <= NVAPOR; ++n)
           du_(IDN,k,j,i) -= du_(n,k,j,i);
-          du_(IEN,k,j,i) -= pthermo->GetLatent(n)*du_(n,k,j,i);
-        }
       }
 
       if (!first_block)

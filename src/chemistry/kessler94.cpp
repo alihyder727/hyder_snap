@@ -15,7 +15,7 @@
 // Make sure that the chemical scheme works with negative mixing ratios
 void Kessler94::AssembleReactionMatrix(Real *r0, Real **r1, Real const q[], Real time)
 {
-  Real k1 = kc_.at(1);
+  /*Real k1 = kc_.at(1);
   Real k2 = kc_.at(2);
   Real k3 = kc_.at(3);
   std::fill(*r1_, *r1_ + NMASS*NMASS, 0.);
@@ -52,5 +52,5 @@ void Kessler94::AssembleReactionMatrix(Real *r0, Real **r1, Real const q[], Real
     r1[ic][ip] += -k2*q[ic];
     r1[ip][ic] += k2*q[ip];
     r1[ip][ip] += k2*q[ic];
-  }
+  }*/
 }

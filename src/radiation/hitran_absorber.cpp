@@ -111,7 +111,7 @@ Real HitranAbsorber::AbsorptionCoefficient(Real wave, Real const prim[]) const
   Real dens = prim[IPR]/(Rgas*prim[IDN]);
   Real x0 = 1.;
   if (imol_ == 0) 
-    for (int n = 1; n < NMASS; ++n) x0 -= prim[n];
+    for (int n = 1; n <= NVAPOR; ++n) x0 -= prim[n];
   else
     x0 = prim[imol_];
   return 1.E-3*exp(val)*dens*x0*mixr_; // ln(m*2/kmol) -> 1/m

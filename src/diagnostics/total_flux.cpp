@@ -35,7 +35,7 @@ void TotalFlux::Progress(AthenaArray<Real> const& w)
         data(0,i) += vol_(i)*w(IDN,k,j,i)*w(IVX,k,j,i);
         for (int n = 1; n < IPR; ++n)
           data(n,i) += vol_(i)*w(n,k,j,i)*w(IVX,k,j,i);
-        data(IPR,i) += vol_(i)*pthermo->Temp(w.at(k,j,i))*w(IVX,k,j,i);
+        data(IPR,i) += vol_(i)*pthermo->GetTemp(w.at(k,j,i))*w(IVX,k,j,i);
       }
     }
 

@@ -100,10 +100,6 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       for (int i = is-2; i <= ie+1; ++i) {
         Real fsig = 1., feps = 1.;
         CopyPrimitives(wl, wr, w, k, j, i, mydir_);
-        for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-          fsig += w(n,k,j,i)*(pthermo->GetCvRatio(n) - 1.);
-          feps -= w(n,k,j,i);
-        }
         for (int n = 1; n <= NVAPOR; ++n) {
           fsig += w(n,k,j,i)*(pthermo->GetCvRatio(n) - 1.);
           feps += w(n,k,j,i)*(1./pthermo->GetMassRatio(n) - 1.);
@@ -190,7 +186,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {
           du(IDN,k,j,i) = du_(IDN,k,j,i);
-          for (int n = NMASS; n <= NMASS + 3; ++n)
+          for (int n = IVX; n < NHYDRO; ++n)
             du(n,k,j,i) = du_(n,k,j,i);
         }
   } else if (mydir_ == X2DIR) {
@@ -198,7 +194,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {
           du(IDN,j,i,k) = du_(IDN,k,j,i);
-          for (int n = NMASS; n <= NMASS + 3; ++n)
+          for (int n = IVX; n < NHYDRO; ++n)
             du(n,j,i,k) = du_(n,k,j,i);
         }
   } else {  // X3DIR
@@ -206,7 +202,7 @@ void ImplicitSolver::FullCorrection(AthenaArray<Real>& du,
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {
           du(IDN,i,k,j) = du_(IDN,k,j,i);
-          for (int n = NMASS; n <= NMASS + 3; ++n)
+          for (int n = IVX; n < NHYDRO; ++n)
             du(n,i,k,j) = du_(n,k,j,i);
         }
   }

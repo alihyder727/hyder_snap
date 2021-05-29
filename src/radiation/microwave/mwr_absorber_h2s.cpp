@@ -40,7 +40,7 @@ Real MwrAbsorberH2S::AbsorptionCoefficient(Real wave, Real const prim[]) const
   Real P = prim[IPR]/1.E5;
   Real T = prim[IDN];
   Real xdry = 1.;
-  for (int i = 1; i < NMASS; ++i) xdry -= prim[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= prim[i];
   Real XHe = xHe_*xdry;
   Real XH2, XH2S;
 

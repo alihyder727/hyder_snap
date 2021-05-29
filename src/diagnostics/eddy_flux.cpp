@@ -45,7 +45,7 @@ void EddyFlux::Progress(AthenaArray<Real> const& w)
       for (int i = is; i <= ie; ++i) {
         for (int n = 0; n < IPR; ++n)
           data_sum[n*ncells1_ + i] += vol_(i)*w(n,k,j,i);
-        data_sum[IPR*ncells1_ + i] += vol_(i)*pthermo->Temp(w.at(k,j,i));
+        data_sum[IPR*ncells1_ + i] += vol_(i)*pthermo->GetTemp(w.at(k,j,i));
         data_sum[NHYDRO*ncells1_ + i] += vol_(i);
       }
     }
@@ -65,7 +65,7 @@ void EddyFlux::Progress(AthenaArray<Real> const& w)
           eddy_(n,k,j,i) = w(n,k,j,i) - mean_(n,k,j,i);
         }
         mean_(IPR,k,j,i) = data_sum[IPR*ncells1_ + i]/vol;
-        eddy_(IPR,k,j,i) = pthermo->Temp(w.at(k,j,i)) - mean_(IPR,k,j,i);
+        eddy_(IPR,k,j,i) = pthermo->GetTemp(w.at(k,j,i)) - mean_(IPR,k,j,i);
       }
 
   // take horizontal average

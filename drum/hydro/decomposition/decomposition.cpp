@@ -334,7 +334,7 @@ void Decomposition::PopulateBotEntropy(AthenaArray<Real> const& w,
   if (!has_bot_neighbor) {
     for (int k = kl; k <= ku; ++k)
       for (int j = jl; j <= ju; ++j) {
-        Real gamma = pmb->pthermo->GetPolytropicIndex(w.at(k,j,pmb->is));
+        Real gamma = pmb->pthermo->GetGamma(w.at(k,j,pmb->is));
         buffer_[p++] = gamma;
         buffer_[p++] = log(w(IPR,k,j,pmb->is)) - gamma*log(w(IDN,k,j,pmb->is));
       }

@@ -11,7 +11,7 @@
 
 Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin)
 {
-  pmy_block_ = pmb;
+  /*pmy_block_ = pmb;
   NewCArray(identity_, NMASS, NMASS);
   NewCArray(r1_, NMASS, NMASS);
   r0_ = new Real [NMASS];
@@ -44,20 +44,20 @@ Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin)
   for (int n = 1+NVAPOR; n < NMASS; ++n) {
     sprintf(buf, "vsed%d", n);
     vsed_default_[n] = pin->GetOrAddReal("chemistry", buf, 0.);
-  }
+  }*/
 }
 
 Chemistry::~Chemistry()
 {
-  FreeCArray(identity_);
-  FreeCArray(r1_);
-  delete[] r0_;
+  //FreeCArray(identity_);
+  //FreeCArray(r1_);
+  //delete[] r0_;
 }
 
 void Chemistry::AddSedimentationFlux(AthenaArray<Real>& x1flux,
   AthenaArray<Real> const& wr, int k, int j, int il, int iu)
 {
-  MeshBlock *pmb = pmy_block_;
+  /*MeshBlock *pmb = pmy_block_;
   Thermodynamics *pthermo = pmb->pthermo;
 
   Real vsed[NMASS], w1[NHYDRO];
@@ -80,13 +80,13 @@ void Chemistry::AddSedimentationFlux(AthenaArray<Real>& x1flux,
       x1flux(IVZ,k,j,i) += vsed[n]*rho*v3;
       x1flux(IEN,k,j,i) += vsed[n]*rho*en;
     }
-  }
+  }*/
 }
 
 void Chemistry::AddFrictionalHeating(AthenaArray<Real> &u, 
   AthenaArray<Real> const& w, Real dt)
 {
-  MeshBlock *pmb = pmy_block_;
+  /*MeshBlock *pmb = pmy_block_;
   Real grav = pmb->phydro->hsrc.GetG1();
 
   Real vsed[NMASS], w1[NHYDRO];
@@ -98,17 +98,17 @@ void Chemistry::AddFrictionalHeating(AthenaArray<Real> &u,
         SedimentationVelocity(vsed, w1);
         for (int n = 1+NVAPOR; n < NMASS; ++n)
           u(IEN,k,j,i) += dt*w1[IDN]*w1[n]*vsed[n]*grav;
-      }
+      }*/
 }
 
 void Chemistry::AssembleReactionMatrix(Real *r0, Real **r1, Real const q[], Real time)
 {
-  std::fill(*r1_, *r1_ + NMASS*NMASS, 0.);
-  std::fill(r0_, r0_ + NMASS, 0.);
+  //std::fill(*r1_, *r1_ + NMASS*NMASS, 0.);
+  //std::fill(r0_, r0_ + NMASS, 0.);
 }
 
 void Chemistry::SedimentationVelocity(Real vsed[], Real const w[], Real temp)
 {
-  for (int n = 1+NVAPOR; n < NMASS; ++n)
-    vsed[n] = vsed_default_[n];
+  //for (int n = 1+NVAPOR; n < NMASS; ++n)
+  //  vsed[n] = vsed_default_[n];
 }

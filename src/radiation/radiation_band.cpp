@@ -196,7 +196,7 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
 
   while (a != NULL) {
     for (int i = il; i <= iu; ++i) {
-      pthermo->P2Q(q, w.at(k,j,i));
+      pthermo->PrimitiveToChemical(q, w.at(k,j,i));
       tem_[i] = q[IDN];
       //std::cout << i << " " << tem_[i] << std::endl;
       for (int m = 0; m < nspec; ++m) {

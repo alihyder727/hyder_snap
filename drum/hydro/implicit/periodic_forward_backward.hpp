@@ -9,7 +9,6 @@
 #include "../../math/eigen335/Eigen/Dense"
 
 // Athena++ headers
-#include "../../thermodynamics/thermodynamics.hpp"
 #include "communication.hpp"
 
 template<typename T1, typename T2>
@@ -18,7 +17,6 @@ void ImplicitSolver::PeriodicForwardSweep(
   std::vector<T2> &corr, Real dt,
   int k, int j, int il, int iu)
 {
-  Thermodynamics *pthermo = pmy_hydro->pmy_block->pthermo;
   T1 sum_beta_gamma, phi;
   T2 rhs, sum_beta_zeta;
   std::vector<T1> beta(diag.size()), gamma(diag.size());
@@ -185,7 +183,6 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
   std::vector<T2> &delta, 
   int kl, int ku, int jl, int ju, int il, int iu)
 {
-  Thermodynamics *pthermo = pmy_hydro->pmy_block->pthermo;
   T2 delta_last;
   std::vector<T1> gamma(diagU.size());
   std::vector<T2> zeta(diagU.size());
@@ -224,10 +221,8 @@ void ImplicitSolver::PeriodicBackwardSubstitution(
           du_(IVX+(IVZ-IVX+mydir_)%3,k,j,i) = delta[i](3);
           du_(IEN,k,j,i) = delta[i](4);
         }
-        for (int n = 1; n < NMASS; ++n) {
+        for (int n = 1; n <= NVAPOR; ++n)
           du_(IDN,k,j,i) -= du_(n,k,j,i);
-          du_(IEN,k,j,i) -= pthermo->GetLatent(n)*du_(n,k,j,i);
-        }
       }
 
       if (!first_block)

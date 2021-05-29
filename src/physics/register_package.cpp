@@ -56,7 +56,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       tau_Ubot_ = pin->GetReal("physics", "fix_bot_composition.tau");
       if (!hydro_bot_.IsAllocated())
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
-      com_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, NMASS);
+      com_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1+NVAPOR);
     } else if (std::strcmp(p, "top_sponge_layer") == 0) {
       pkg.id = TOP_SPONGE_LAYER;
       pkg.dep = 0LL;
@@ -131,14 +131,14 @@ void Physics::Initialize(AthenaArray<Real> const& w)
   for (int k = pmb->ks; k <= pmb->ke; ++k)
     for (int j = pmb->js; j <= pmb->je; ++j) {
       if (ptm->HasTask(FIX_BOT_TEMPERATURE))
-        tem_bot_(k,j) = pmb->pthermo->Temp(w.at(k,j,pmb->is));
+        tem_bot_(k,j) = pmb->pthermo->GetTemp(w.at(k,j,pmb->is));
       if (ptm->HasTask(FIX_BOT_VELOCITY)) {
         vel_bot_(0,k,j) = w(IVX,k,j,pmb->is);
         vel_bot_(1,k,j) = w(IVY,k,j,pmb->is);
         vel_bot_(2,k,j) = w(IVZ,k,j,pmb->is);
       }
       if (ptm->HasTask(FIX_BOT_COMPOSITION))
-        for (int n = 1; n < NMASS; ++n)
+        for (int n = 1; n <= NVAPOR; ++n)
           com_bot_(n,k,j) = w(n,k,j,pmb->is);
     }
 }

@@ -11,37 +11,50 @@ void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
   Real pres = q[IPR];
   Real dTdz[4], chi[4];
 
-  Real beta0[NMASS], delta0[NMASS];
-  std::fill(beta0, beta0 + NMASS, 0.);
-  std::fill(delta0, delta0 + NMASS, 0.);
+  Real beta0[1+3*NVAPOR], delta0[1+3*NVAPOR];
+  std::fill(beta0, beta0 + 1+3*NVAPOR, 0.);
+  std::fill(delta0, delta0 + 1+3*NVAPOR, 0.);
 
   for (int rk = 0; rk < 4; ++rk) {
     // reset vapor
-    for (int n = 1; n <= NVAPOR; ++n) {
-      q[n] += q[n+NVAPOR];
-      q[n+NVAPOR] = 0.;
-      isat[n] = 0;
+    for (int iv = 1; iv <= NVAPOR; ++iv) {
+      q[iv] += q[NHYDRO+iv-1] + q[NHYDRO+NVAPOR+iv-1];
+      q[NHYDRO+iv-1] = 0.;
+      q[NHYDRO+NVAPOR+iv-1] = 0.;
+      isat[iv] = 0;
     }
 
-    for (int n = 1; n <= NVAPOR; ++n) {
-      int nc = n + NVAPOR;
-      Real rate = GasCloudIdeal(q, n, nc, t3[nc], p3[nc], 0., beta[nc], delta[nc]);
+    for (int iv = 1; iv <= NVAPOR; ++iv) {
+      int nc = q[IDN] > t3[iv] ? iv + NVAPOR : iv + 2*NVAPOR;
+      int ic = NHYDRO - NVAPOR + nc - 1;
+      Real rate = VaporCloudEquilibrium(q, iv, ic, t3[iv], p3[iv], 0., beta[nc], delta[nc]);
       //Real rate = 0.;
-      if (rate > 0.) isat[n] = 1;
-      q[n] -= rate;
-      if (method == 0) q[nc] += rate;
+      if (rate > 0.) isat[iv] = 1;
+      q[iv] -= rate;
+      if (method == 0) q[ic] += rate;
     }
 
     // calculate tendency
-    update_gamma(gamma, rcp, q);
+    update_gamma(gamma, q);
+    Real q_gas = 1., q_eps = 1.;
+    for (int n = NHYDRO; n < NHYDRO + 2*NVAPOR; ++n) {
+      q_gas -= q[n];
+      q_eps += q[n]*(eps[n] -  1.);
+    }
+    // vapor
+    for (int n = 1; n <= NVAPOR; ++n)
+      q_eps += q[n]*(eps[n] - 1.);
+
+    Real R_ov_Rd = q_gas/q_eps;
+
     if (method == 0 || method == 1)
       chi[rk] = dlnTdlnP(q, isat, rcp, beta, delta, t3, gamma);
     else if (method == 2)
       chi[rk] = dlnTdlnP(q, isat, rcp, beta0, delta0, t3, gamma);
     else  // isothermal
       chi[rk] = 0.;
-    dTdz[rk] = - chi[rk]*g_ov_Rd/qhat_eps(q, eps) + user_dTdz;
-    chi[rk] = - qhat_eps(q, eps)/g_ov_Rd*dTdz[rk];
+    dTdz[rk] = - chi[rk]*g_ov_Rd/R_ov_Rd + user_dTdz;
+    chi[rk] = - R_ov_Rd/g_ov_Rd*dTdz[rk];
     
     // integrate over dz
     Real chi_avg;
@@ -56,17 +69,18 @@ void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
     if (fabs(q[IDN] - temp) > 0.1) // isothermal limit
       q[IPR] = pres*pow(q[IDN]/temp, 1./chi_avg);
     else
-      q[IPR] = pres*exp(-2.*g_ov_Rd*dz/(qhat_eps(q, eps)*(q[IDN] + temp)));
+      q[IPR] = pres*exp(-2.*g_ov_Rd*dz/(R_ov_Rd*(q[IDN] + temp)));
   }
 
   // recondensation
-  for (int n = 1; n <= NVAPOR; ++n) {
-    int nc = n + NVAPOR;
-    Real rate = GasCloudIdeal(q, n, nc, t3[nc], p3[nc], 0., beta[nc], delta[nc]);
+  for (int iv = 1; iv <= NVAPOR; ++iv) {
+    int nc = q[IDN] > t3[iv] ? iv + NVAPOR : iv + 2*NVAPOR;
+    int ic = NHYDRO - NVAPOR + nc - 1;
+    Real rate = VaporCloudEquilibrium(q, iv, ic, t3[iv], p3[iv], 0., beta[nc], delta[nc]);
     //Real rate = 0.;
-    if (rate > 0.) isat[n] = 1;
-    q[n] -= rate;
-    if (method == 0) q[nc] += rate;
+    if (rate > 0.) isat[iv] = 1;
+    q[iv] -= rate;
+    if (method == 0) q[ic] += rate;
   }
 }
 
@@ -74,10 +88,10 @@ void rk4_integrate_z_adaptive(Real q[], int isat[], Real rcp[], Real const eps[]
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
   Real g_ov_Rd, Real dz, Real ftol, int method, Real user_dTdz)
 {
-  Real q1[NHYDRO], q2[NHYDRO];
+  Real q1[NHYDRO+2*NVAPOR], q2[NHYDRO+2*NVAPOR];
   int  isat1[1+NVAPOR], isat2[1+NVAPOR];
 
-  for (int n = 0; n < NHYDRO; ++n) {
+  for (int n = 0; n < NHYDRO+2*NVAPOR; ++n) {
     q1[n] = q[n];
     q2[n] = q[n];
   }
@@ -108,7 +122,7 @@ void rk4_integrate_z_adaptive(Real q[], int isat[], Real rcp[], Real const eps[]
     rk4_integrate_z_adaptive(q, isat, rcp, eps, beta, delta, t3, p3, gamma,
                              g_ov_Rd, dz/2., ftol, method, user_dTdz);
   } else {
-    for (int n = 0; n < NHYDRO; ++n)
+    for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
       q[n] = q2[n];
     for (int n = 0; n <= NVAPOR; ++n)
       isat[n] = isat2[n];

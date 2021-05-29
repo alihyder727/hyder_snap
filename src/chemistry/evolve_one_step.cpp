@@ -6,7 +6,7 @@
 
 void Chemistry::EvolveOneStep(AthenaArray<Real> &u, Real time, Real dt)
 {
-  // return if there's no phase
+  /* return if there's no phase
   if (NPHASE*NVAPOR == 0) return;
 
   MeshBlock *pmb = pmy_block_;
@@ -89,7 +89,7 @@ void Chemistry::EvolveOneStep(AthenaArray<Real> &u, Real time, Real dt)
           sum += q1[n]*(pthermo->GetMassRatio(n) - 1.);
         for (int n = 1; n < NMASS; ++n)
           u(n,k,j,i) = rho*q1[n]*pthermo->GetMassRatio(n)/sum;
-      }
+      }*/
 }
 
 /* TODO: TR-BDF2

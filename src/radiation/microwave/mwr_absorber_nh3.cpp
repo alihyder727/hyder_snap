@@ -59,7 +59,7 @@ Real MwrAbsorberNH3::AbsorptionCoefficient(Real wave, Real const prim[]) const
   Real P_idl = prim[IPR]/1.E5; // pa -> bar
   Real T = prim[IDN];
   Real xdry = 1.;
-  for (int i = 1; i < NMASS; ++i) xdry -= prim[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= prim[i];
   Real XHe = xHe_*xdry;
   Real XH2, XNH3, XH2O;
 

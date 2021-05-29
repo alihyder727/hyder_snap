@@ -22,7 +22,7 @@ void HydroBoundaryVariable::OutflowInnerX1(
 
   // conforms to the case without gravity
   if (pmy_block_->phydro->hsrc.GetG1() == 0.) {
-    for (int n = 0; n < NMASS; ++n) {
+    for (int n = 0; n <= NVAPOR; ++n) {
       for (int k=kl; k<=ku; ++k)
         for (int j=jl; j<=ju; ++j)
 #pragma omp simd
@@ -52,7 +52,7 @@ void HydroBoundaryVariable::OutflowOuterX1(
 
   // conforms to the case without gravity
   if (pmy_block_->phydro->hsrc.GetG1() == 0.) {
-    for (int n = 0; n < NMASS; ++n) {
+    for (int n = 0; n <= NVAPOR; ++n) {
       for (int k=kl; k<=ku; ++k)
         for (int j=jl; j<=ju; ++j)
 #pragma omp simd

@@ -33,7 +33,7 @@ void TemperatureAnomaly::Finalize(AthenaArray<Real> const& w)
     for (int j = js; j <= je; ++j) {
       pcoord->CellVolume(k,j,is,ie,vol_);
       for (int i = is; i <= ie; ++i) {
-        temp_mean[i] += vol_(i)*pthermo->Temp(w.at(k,j,i));
+        temp_mean[i] += vol_(i)*pthermo->GetTemp(w.at(k,j,i));
         total_vol[i] += vol_(i);
       }
     }
@@ -47,7 +47,7 @@ void TemperatureAnomaly::Finalize(AthenaArray<Real> const& w)
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i)
-        data(k,j,i) = pthermo->Temp(w.at(k,j,i)) - temp_mean[i]/total_vol[i];
+        data(k,j,i) = pthermo->GetTemp(w.at(k,j,i)) - temp_mean[i]/total_vol[i];
 
   delete [] data_sum;
 }

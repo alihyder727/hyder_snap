@@ -107,10 +107,6 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
       for (int i = is-2; i <= ie+1; ++i) {
         Real fsig = 1., feps = 1.;
         CopyPrimitives(wl, wr, w, k, j, i, mydir_);
-        for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-          fsig += wr[n]*(pthermo->GetCvRatio(n) - 1.);
-          feps -= wr[n];
-        }
         for (int n = 1; n <= NVAPOR; ++n) {
           fsig += wr[n]*(pthermo->GetCvRatio(n) - 1.);
           feps += wr[n]*(1./pthermo->GetMassRatio(n) - 1.);

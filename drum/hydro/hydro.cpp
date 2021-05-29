@@ -193,7 +193,7 @@ void Hydro::CheckHydro() {
   for (int k = pmb->ks; k <= pmb->ke; ++k)
     for (int j = pmb->js; j <= pmb->je; ++j)
       for (int i = pmb->is; i <= pmb->ie; ++i) {
-        for (int n = 0; n < NMASS; ++n)
+        for (int n = 0; n <= NVAPOR; ++n)
           if (w(n,k,j,i) < 0.) {
             msg << "### FATAL ERROR in Hydro::CheckHydro" << std::endl
                 << "Density variable is negative at position ("
@@ -206,7 +206,7 @@ void Hydro::CheckHydro() {
               << k << "," << j << "," << i << ") in rank " << myrank;
           ATHENA_ERROR(msg);
         }
-        Real temp = pmb->pthermo->Temp(w.at(k,j,i));
+        Real temp = pmb->pthermo->GetTemp(w.at(k,j,i));
         Real grav = -hsrc.GetG1();
         if (grav != 0) {
           Real Tmin = 2.*grav*pmb->pcoord->dx1f(i)/pmb->pthermo->GetRd();

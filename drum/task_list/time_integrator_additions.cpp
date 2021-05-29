@@ -63,13 +63,13 @@ TaskStatus TimeIntegratorTaskList::IntegrateChemistry(MeshBlock *pmb, int stage)
   if (stage != nstages) return TaskStatus::next;
 
   // frictional heating
-  pmb->pchem->AddFrictionalHeating(ph->u, ph->w, pmb->pmy_mesh->dt);
+  //pmb->pchem->AddFrictionalHeating(ph->u, ph->w, pmb->pmy_mesh->dt);
 
   // do slow chemistry
-  pmb->pchem->EvolveOneStep(ph->u, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
+  //pmb->pchem->EvolveOneStep(ph->u, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
 
   // do fast chemistry
-  pmb->pthermo->SaturationAdjustment(ph->u);
+  //pmb->pthermo->SaturationAdjustment(ph->u);
 
   return TaskStatus::success;
 }

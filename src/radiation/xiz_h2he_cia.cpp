@@ -54,7 +54,7 @@ Real XizH2HeCIA::AbsorptionCoefficient(Real wave, Real const prim[]) const
   Real amagat = prim[IPR]/(kBoltz*prim[IDN]*Lo);
   Real x0 = 1.;
   if (imol_ == 0) 
-    for (int n = 1; n < NMASS; ++n) x0 -= prim[n];
+    for (int n = 1; n <= NVAPOR; ++n) x0 -= prim[n];
   else
     x0 = prim[imol_];
 

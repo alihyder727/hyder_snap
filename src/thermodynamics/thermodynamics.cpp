@@ -18,36 +18,37 @@ std::ostream& operator<<(std::ostream& os, Thermodynamics const& my)
 {
   os << "Rd [J/kg]: " << my.Rd_ << std::endl;
   os << "eps: ";
-  for (int i = 0; i < NMASS; ++i)
-    os << my.eps_[i] << " ";
+  for (int i = 0; i < 1+3*NVAPOR; ++i)
+    os << my.mu_ratios_[i] << " ";
   os << std::endl;
-  os << "rcp: ";
-  for (int i = 0; i < NMASS; ++i)
-    os << my.rcp_[i] << " ";
+  os << "cp ratios: ";
+  for (int i = 0; i < 1+3*NVAPOR; ++i)
+    os << my.cp_ratios_[i] << " ";
   os << std::endl;
-  os << "rcv: ";
-  for (int i = 0; i < NMASS; ++i)
-    os << my.rcv_[i] << " ";
+  os << "cv ratios: ";
+  for (int i = 0; i < 1+3*NVAPOR; ++i)
+    os << my.cv_ratios_[i] << " ";
   os << std::endl;
   os << "beta: ";
-  for (int i = 0; i < NMASS; ++i)
+  for (int i = 0; i < 1+3*NVAPOR; ++i)
     os << my.beta_[i] << " ";
   os << std::endl;
   os << "delta: ";
-  for (int i = 0; i < NMASS; ++i)
+  for (int i = 0; i < 1+3*NVAPOR; ++i)
     os << my.delta_[i] << " ";
   os << std::endl;
+  os << "Latent [J/kg]: ";
+  for (int i = 0; i < 1+3*NVAPOR; ++i)
+    os << my.latent_[i] << " ";
+  os << std::endl;
   os << "Ttriple [K]: ";
-  for (int i = 0; i < NMASS; ++i)
+  for (int i = 0; i < NVAPOR; ++i)
     os << my.t3_[i] << " ";
   os << std::endl;
   os << "Ptriple [pa]: ";
-  for (int i = 0; i < NMASS; ++i)
+  for (int i = 0; i < NVAPOR; ++i)
     os << my.p3_[i] << " ";
   os << std::endl;
-  os << "Latent [J/kg]: ";
-  for (int i = 0; i < NMASS; ++i)
-    os << my.latent_[i] << " ";
 
   return os;
 }
@@ -79,56 +80,49 @@ void ReadThermoProperty(Real var[], char const name[], int len, Real v0, Paramet
 
 Thermodynamics::Thermodynamics(MeshBlock *pmb, ParameterInput *pin)
 {
-  pmy_block_ = pmb;
+  pmy_block = pmb;
   Rd_ = pin->GetOrAddReal("thermodynamics", "Rd", 1.);
 
   Real gamma = pin->GetReal("hydro", "gamma");
 
-  ReadThermoProperty(eps_, "eps", NPHASE, 1., pin);
-  ReadThermoProperty(rcp_, "rcp", NPHASE, 1., pin);
-  ReadThermoProperty(beta_, "beta", NPHASE, 0., pin);
-  ReadThermoProperty(t3_, "Ttriple", NPHASE, 0., pin);
-  ReadThermoProperty(p3_, "Ptriple", NPHASE, 0., pin);
+  // Read molecular weight ratios
+  ReadThermoProperty(mu_ratios_, "mu_ratios", NPHASE, 1., pin);
 
-  // calculate latent
+  // Read cp ratios
+  ReadThermoProperty(cp_ratios_, "cp_ratios", NPHASE, 1., pin);
+
+  // Read beta parameter
+  ReadThermoProperty(beta_, "beta", NPHASE, 0., pin);
+
+  // Read triple point temperature
+  ReadThermoProperty(t3_, "Ttriple", 1, 0., pin);
+
+  // Read triple point pressure
+  ReadThermoProperty(p3_, "Ptriple", 1, 0., pin);
+
+  // calculate latent heat = $\beta\frac{R_d}{\epsilon}T^r$
   for (int n = 0; n <= NVAPOR; ++n)
     latent_[n] = 0.;
-  for (int n = 1 + NVAPOR; n < NMASS; ++n)
-    latent_[n] = beta_[n]*Rd_/eps_[n]*t3_[n];
+  for (int n = 1 + NVAPOR; n < 1 + 3*NVAPOR; ++n)
+    latent_[n] = beta_[n]*Rd_/mu_ratios_[n]*t3_[1+(n-1)%NVAPOR];
 
-  // calculate delta
+  // calculate delta = $(\sigma_j - \sigma_i)*\epsilon_i*\gamma/(\gamma - 1)$
   for (int n = 0; n <= NVAPOR; ++n)
     delta_[n] = 0.;
-  for (int n = 1 + NVAPOR; n < NMASS; ++n)
-    delta_[n] = (rcp_[n] - rcp_[1+(n-1)%NVAPOR])*eps_[n]/(1. - 1./gamma);
+  for (int n = 1 + NVAPOR; n < 1 + 3*NVAPOR; ++n)
+    delta_[n] = (cp_ratios_[n] - cp_ratios_[1+(n-1)%NVAPOR])*mu_ratios_[n]/(1. - 1./gamma);
 
-  // calculate rcv
+  // calculate cv_ratios = $\gamma\sigma_i + (1. - \gamma)/\epsilon_i$
   for (int n = 0; n <= NVAPOR; ++n)
-    rcv_[n] = gamma*rcp_[n] + (1. - gamma)/eps_[n];
-  for (int n = 1 + NVAPOR; n < NMASS; ++n)
-    rcv_[n] = rcp_[n]*gamma;
+    cv_ratios_[n] = gamma*cp_ratios_[n] + (1. - gamma)/mu_ratios_[n];
+  for (int n = 1 + NVAPOR; n < 1 + 3*NVAPOR; ++n)
+    cv_ratios_[n] = gamma*cp_ratios_[n];
 
-  // allocate temperature
-  int ncells1 = pmb->block_size.nx1 + 2*(NGHOST);
-  int ncells2 = 1, ncells3 = 1;
-  if (pmb->block_size.nx2 > 1) ncells2 = pmb->block_size.nx2 + 2*(NGHOST);
-  if (pmb->block_size.nx3 > 1) ncells3 = pmb->block_size.nx3 + 2*(NGHOST);
-
-  //temp_.NewAthenaArray(ncells3, ncells2, ncells1);
-  //pres_.NewAthenaArray(ncells3, ncells2, ncells1);
-
-  // last time that executes SaturationAdjustment
-  last_time = 0.;
-
-  // minimum time between two SaturationAdjustment
-  dt = pin->GetOrAddReal("thermodynamics", "dt", 0.1);
   ftol_ = pin->GetOrAddReal("thermodynamics", "ftol", 1.0E-4);
   max_iter_ = pin->GetOrAddInteger("thermodynamics", "max_iter", 10);
 }
 
-Thermodynamics::~Thermodynamics() {}
-
-void Thermodynamics::UpdateTPConservingU(Real q[], Real rho, Real uhat) const
+/*void Thermodynamics::UpdateTPConservingU(Real q[], Real rho, Real uhat) const
 {
   Real gamma = pmy_block_->peos->GetGamma();
   Real cv = 1., qtol = 1., qeps = 1.;
@@ -137,8 +131,8 @@ void Thermodynamics::UpdateTPConservingU(Real q[], Real rho, Real uhat) const
     qtol -= q[n];
   }
   for (int n = 1; n < NMASS; ++n) {
-    cv += (rcv_[n]*eps_[n] - 1.)*q[n];
-    qeps += q[n]*(eps_[n] - 1.);
+    cv += (cv_ratios_[n]*mu_ratios_[n] - 1.)*q[n];
+    qeps += q[n]*(mu_ratios_[n] - 1.);
   }
   q[IDN] = (gamma - 1.)*uhat/cv;
   q[IPR] = rho*Rd_*q[IDN]*qtol/qeps;
@@ -156,8 +150,8 @@ void Thermodynamics::ConservedToThermodynamic(AthenaArray<Real> &q,
         Real rho = 0., rho_hat = 0.;
         for (int n = 0; n < NMASS; ++n) {
           rho += u(n,k,j,i);
-          rho_hat += u(n,k,j,i)/eps_[n];
-          q(n,k,j,i) = u(n,k,j,i)/eps_[n];
+          rho_hat += u(n,k,j,i)/mu_ratios_[n];
+          q(n,k,j,i) = u(n,k,j,i)/mu_ratios_[n];
         }
         for (int n = 0; n < NMASS; ++n)
           q(n,k,j,i) /= rho_hat;
@@ -175,8 +169,8 @@ void Thermodynamics::ConservedToThermodynamic(AthenaArray<Real> &q,
           qtol -= q(n,k,j,i);
         }
         for (int n = 1; n < NMASS; ++n) {
-          cv += (rcv_[n]*eps_[n] - 1.)*q(n,k,j,i);
-          qeps += q(n,k,j,i)*(eps_[n] - 1.);
+          cv += (cv_ratios_[n]*mu_ratios_[n] - 1.)*q(n,k,j,i);
+          qeps += q(n,k,j,i)*(mu_ratios_[n] - 1.);
         }
         q(IDN,k,j,i) = (gamma - 1.)*uhat/cv;
         q(IPR,k,j,i) = rho*Rd_*q(IDN,k,j,i)*qtol/qeps;
@@ -194,15 +188,15 @@ void Thermodynamics::ThermodynamicToConserved(AthenaArray<Real> &u,
         for (int n = 1 + NVAPOR; n < NMASS; ++n)
           qtol -= q(n,k,j,i);
         for (int n = 1; n < NMASS; ++n)
-          qeps += q(n,k,j,i)*(eps_[n] - 1.);
+          qeps += q(n,k,j,i)*(mu_ratios_[n] - 1.);
         Real rho = (q(IPR,k,j,i)*qeps)/(Rd_*q(IDN,k,j,i)*qtol);
 
         // molar mixing ratio to density
         Real sum = 1.;
         for (int n = 1; n < NMASS; ++n)
-          sum += q(n,k,j,i)*(eps_[n] - 1.);
+          sum += q(n,k,j,i)*(mu_ratios_[n] - 1.);
         for (int n = 1; n < NMASS; ++n)
-          u(n,k,j,i) = rho*q(n,k,j,i)*eps_[n]/sum;
+          u(n,k,j,i) = rho*q(n,k,j,i)*mu_ratios_[n]/sum;
       }
 }
 
@@ -217,13 +211,13 @@ void Thermodynamics::PolytropicIndex(AthenaArray<Real> &gm, AthenaArray<Real> &w
       for (int i = il; i <= iu; ++i) {
         Real fsig = 1., feps = 1.;
         for (int n = 1 + NVAPOR; n < NMASS; ++n) {
-          fsig += w(n,k,j,i)*(rcv_[n] - 1.);
+          fsig += w(n,k,j,i)*(cv_ratios_[n] - 1.);
           feps -= w(n,k,j,i);
         }
         for (int n = 1; n <= NVAPOR; ++n) {
-          fsig += w(n,k,j,i)*(rcv_[n] - 1.);
-          feps += w(n,k,j,i)*(1./eps_[n] - 1.);
+          fsig += w(n,k,j,i)*(cv_ratios_[n] - 1.);
+          feps += w(n,k,j,i)*(1./mu_ratios_[n] - 1.);
         }
         gm(k,j,i) = 1. + (gamma - 1.)*feps/fsig;
       }
-}
+}*/

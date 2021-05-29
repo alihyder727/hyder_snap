@@ -20,7 +20,7 @@ void rk4_integrate_lnp(Real prim[], int isat[], Real const rcp[],
 
     for (int n = 1; n < 1 + NVAPOR; ++n) {
       int nc = n + NVAPOR;
-      Real rate = GasCloudIdeal(prim, n, nc, t3[nc], p3[nc], 0., beta[nc], delta[nc]);
+      Real rate = VaporCloudEquilibrium(prim, n, nc, t3[nc], p3[nc], 0., beta[nc], delta[nc]);
       prim[n] -= rate;
       prim[nc] += rate;
       if ((rate > 0.) && (isat[n] >= 0)) isat[n] = 1;
@@ -40,7 +40,7 @@ void rk4_integrate_lnp(Real prim[], int isat[], Real const rcp[],
   // recondensation
   for (int n = 1; n < 1 + NVAPOR; ++n) {
     int nc = n + NVAPOR;
-    Real rate = GasCloudIdeal(prim, n, nc, t3[n], p3[nc], 0., beta[nc], delta[nc]);
+    Real rate = VaporCloudEquilibrium(prim, n, nc, t3[n], p3[nc], 0., beta[nc], delta[nc]);
     prim[n] -= rate;
     prim[nc] += rate;
     if ((rate > 0.) && (isat[n] >= 0)) isat[n] = 1;

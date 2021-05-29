@@ -30,7 +30,7 @@ void HydroMean::Progress(AthenaArray<Real> const& w)
   for (int k = pmb->ks; k <= pmb->ke; ++k)
     for (int j = pmb->js; j <= pmb->je; ++j)
       for (int i = pmb->is; i <= pmb->ie; ++i)
-        data(IPR,k,j,i) += pmb->pthermo->Temp(w.at(k,j,i));
+        data(IPR,k,j,i) += pmb->pthermo->GetTemp(w.at(k,j,i));
 
   ncycle++;
 }
@@ -56,7 +56,7 @@ void HydroMean::Finalize(AthenaArray<Real> const& w)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j)
         for (int i = pmb->is; i <= pmb->ie; ++i)
-          data(IPR,k,j,i) = pmb->pthermo->Temp(w.at(k,j,i));
+          data(IPR,k,j,i) = pmb->pthermo->GetTemp(w.at(k,j,i));
   }
 
   // clear cycle

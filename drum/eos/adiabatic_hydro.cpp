@@ -69,13 +69,13 @@ void EquationOfState::ConservedToPrimitive(
         u_d = (u_d > density_floor_) ?  u_d : density_floor_;
 
         Real density = 0.;
-        for (int n = 0; n < NMASS; ++n)
+        for (int n = 0; n <= NVAPOR; ++n)
           density += cons(n,k,j,i);
         w_d = density;
         Real di = 1./density;
 
         // mass mixing ratio
-        for (int n = 1; n < NMASS; ++n)
+        for (int n = 1; n <= NVAPOR; ++n)
           prim(n,k,j,i) = cons(n,k,j,i)*di;
 
         #ifdef DEBUG
@@ -172,7 +172,7 @@ void EquationOfState::PrimitiveToConserved(
 
         // density
         u_d = w_d;
-        for (int n = 1; n < NMASS; ++n) {
+        for (int n = 1; n <= NVAPOR; ++n) {
           cons(n,k,j,i) = prim(n,k,j,i)*w_d;
           cons(IDN,k,j,i) -= cons(n,k,j,i);
         }

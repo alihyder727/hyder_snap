@@ -14,7 +14,7 @@ TaskStatus Physics::TopCooling(AthenaArray<Real> &u,
 
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j) {
-      Real cv = pthermo->Cv(w.at(k,j,ie));
+      Real cv = pthermo->GetCv(w.at(k,j,ie));
       u(IEN,k,j,ie) -= dt*dTdt_*w(IDN,k,j,ie)*cv;
     }
 

@@ -131,12 +131,12 @@ struct EdgeField {
 // explicitly specified enumerator values aare unnecessary, but provided for clarity:
 
 // array indices for conserved: density, momemtum, total energy, face-centered field
-enum {NMASS = 1+NPHASE*NVAPOR};
-enum ConsIndex {IDN=0, IM1=NMASS, IM2=1+NMASS, IM3=2+NMASS, IEN=3+NMASS};
+//enum {NMASS = 1+NPHASE*NVAPOR};
+enum ConsIndex {IDN=0, IM1=1+NVAPOR, IM2=2+NVAPOR, IM3=3+NVAPOR, IEN=4+NVAPOR};
 enum MagneticIndex {IB1=0, IB2=1, IB3=2};
 
 // array indices for 1D primitives: velocity, transverse components of field
-enum PrimIndex {IVX=NMASS, IVY=1+NMASS, IVZ=2+NMASS, IPR=3+NMASS, 
+enum PrimIndex {IVX=1+NVAPOR, IVY=2+NVAPOR, IVZ=3+NVAPOR, IPR=4+NVAPOR, 
   IBY=(NHYDRO), IBZ=((NHYDRO)+1), IV1=IVX, IV2=IVY, IV3=IVZ};
 
 // array indices for face-centered electric fields returned by Riemann solver
@@ -165,6 +165,7 @@ enum class BoundaryCommSubset {mesh_init, gr_amr, all};
 // TODO(felker): consider generalizing/renaming to QuantityFormulation
 enum class FluidFormulation {evolve, background, disabled}; // rename background -> fixed?
 enum class UserHistoryOperation {sum, max, min};
+enum class VariableType {prim, cons, chem};
 
 //----------------------------------------------------------------------------------------
 // function pointer prototypes for user-defined modules set at runtime

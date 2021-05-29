@@ -95,7 +95,7 @@ void HistoryOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag) {
           hst_data[6] += vol(i)*0.5*SQR(u_mz)/u_d;*/
 
           int n = 0;
-          for (; n < NMASS; ++n)
+          for (; n <= NVAPOR; ++n)
             hst_data[n] += vol(i)*phyd->u(n,k,j,i);
           hst_data[n++] += vol(i)*u_mx;
           hst_data[n++] += vol(i)*u_my;
@@ -213,7 +213,7 @@ void HistoryOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag) {
       std::fprintf(pfile,"# [%d]=time     ", iout++);
       std::fprintf(pfile,"[%d]=dt       ", iout++);
       //std::fprintf(pfile,"[%d]=mass     ", iout++);
-      for (int n = 0; n < NMASS; ++n)
+      for (int n = 0; n <= NVAPOR; ++n)
         fprintf(pfile,"[%d]=mass-%d   ", iout++, n);
       std::fprintf(pfile,"[%d]=1-mom    ", iout++);
       std::fprintf(pfile,"[%d]=2-mom    ", iout++);

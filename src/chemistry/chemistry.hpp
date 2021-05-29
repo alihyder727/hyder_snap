@@ -44,7 +44,7 @@ protected:
   std::vector<Real> kc_;
 
   // default sedimentation velocity
-  Real vsed_default_[NMASS];
+  //Real vsed_default_[NMASS];
 };
 
 class Kessler94 : public Chemistry {
