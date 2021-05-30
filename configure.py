@@ -263,11 +263,6 @@ parser.add_argument('--nvapor',
                     default='0',
                     help='set number of vapors')
 
-# --nphase==[value] argument
-parser.add_argument('--nphase',
-                    default='2',
-                    help='set number of phases for a gas')
-
 # --h2o=[value] argument
 parser.add_argument('--h2o',
                     default='-1',
@@ -474,12 +469,8 @@ else:
     definitions['NHYDRO_VARIABLES'] = '5'
     if args['eos'] == 'general/eos_table':
         definitions['EOS_TABLE_ENABLED'] = '1'
-if int(args['nvapor']) == 0:
-  args['nphase'] = '1'
 definitions['NUMBER_VAPORS'] = args['nvapor']
-definitions['NUMBER_PHASES'] = args['nphase']
-definitions['NHYDRO_VARIABLES'] = str(int(definitions['NHYDRO_VARIABLES']) 
-                                    + int(args['nphase'])*int(args['nvapor']))
+definitions['NHYDRO_VARIABLES'] = str(int(definitions['NHYDRO_VARIABLES']) + int(args['nvapor']))
 definitions['WATER_VAPOR_ID'] = args['h2o']
 definitions['AMMONIA_VAPOR_ID'] = args['nh3']
 definitions['RAT1'] = args['x1rat']
@@ -960,7 +951,6 @@ print('  Chemistry:                  ' + args['chem'])
 print('  Forcing Jacobian:           ' + args['jacobian'])
 print('  Magnetic fields:            ' + ('ON' if args['b'] else 'OFF'))
 print('  Number of vapors:           ' + args['nvapor'])
-print('  Number of phases:           ' + args['nphase'])
 print('  Number of scalars:          ' + args['nscalars'])
 print('  Special relativity:         ' + ('ON' if args['s'] else 'OFF'))
 print('  General relativity:         ' + ('ON' if args['g'] else 'OFF'))

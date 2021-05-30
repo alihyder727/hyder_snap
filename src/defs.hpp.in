@@ -120,7 +120,6 @@
 #define MAX_NSTAGE 5     // maximum number of stages per cycle for time-integrator
 #define MAX_NREGISTER 3  // maximum number of (u, b) register pairs for time-integrator
 #define NVAPOR @NUMBER_VAPORS@
-#define NPHASE @NUMBER_PHASES@
 
 //----------------------------------------------------------------------------------------
 // specific molecule ids

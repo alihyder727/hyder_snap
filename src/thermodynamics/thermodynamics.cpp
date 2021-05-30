@@ -86,13 +86,13 @@ Thermodynamics::Thermodynamics(MeshBlock *pmb, ParameterInput *pin)
   Real gamma = pin->GetReal("hydro", "gamma");
 
   // Read molecular weight ratios
-  ReadThermoProperty(mu_ratios_, "mu_ratios", NPHASE, 1., pin);
+  ReadThermoProperty(mu_ratios_, "eps", 3, 1., pin);
 
   // Read cp ratios
-  ReadThermoProperty(cp_ratios_, "cp_ratios", NPHASE, 1., pin);
+  ReadThermoProperty(cp_ratios_, "rcp", 3, 1., pin);
 
   // Read beta parameter
-  ReadThermoProperty(beta_, "beta", NPHASE, 0., pin);
+  ReadThermoProperty(beta_, "beta", 3, 0., pin);
 
   // Read triple point temperature
   ReadThermoProperty(t3_, "Ttriple", 1, 0., pin);

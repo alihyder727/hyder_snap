@@ -30,7 +30,7 @@ inline Real SatVaporPresIdeal(Real t, Real p3, Real beta, Real delta) {
 //Real qhat_eps(Real const q[], Real const eps[]);
 //Real qhat_rcp(Real const q[], Real const rcp[]);
 
-/*! Change mass mixing ratio to molar mixing ratio */
+/*! Change mass mixing ratio to molar mixing ratio
 inline void mass_to_molar(Real q[], Real const w[], Real const eps[], Real Rd) {
   // set molar mixing ratio
   Real sum = 1.;
@@ -47,7 +47,7 @@ inline void mass_to_molar(Real q[], Real const w[], Real const eps[], Real Rd) {
   q[IDN] = w[IPR]/(w[IDN]*Rd*sum);
 }
 
-/*! Change molar mixing ratio to mass mixing ratio */
+ Change molar mixing ratio to mass mixing ratio
 inline void molar_to_mass(Real w[], Real const q[], Real const eps[], Real Rd) {
   // set mass mixing ratio
   Real sum = 1.;
@@ -61,7 +61,7 @@ inline void molar_to_mass(Real w[], Real const q[], Real const eps[], Real Rd) {
   // set pressure and density
   w[IPR] = q[IPR];
   w[IDN] = sum*q[IPR]/(q[IDN]*Rd);
-}
+}*/
 
 /*! Moist adiabatic lapse rate
  *
@@ -81,7 +81,7 @@ void update_gamma(Real& gamma, Real const prim[]);
  * #param iv index of vapor
  * @param ic index of cloud
  * @param t3 triple point temperature
- * @param p3 triple poiint pressure
+ * @param p3 triple point pressure
  * @param alpha = L/cv evaluated at current temperature
  * @return molar change of vapor to cloud
  */

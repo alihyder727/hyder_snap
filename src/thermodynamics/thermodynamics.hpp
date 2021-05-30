@@ -139,12 +139,97 @@ public:
   }
 
   /*! Construct an 1d atmosphere
-   * @param method = 0 - reversible adiabat \n
-   *               = 1 - pseudo adiabat \n
-   *               = 2 - an adiabat with no latent heat release
+   * @param method choose from [reversible, pseudo, dry, isothermal]
    */
   void ConstructAtmosphere(Real **w, Real Ts, Real Ps,
     Real grav, Real dz, int len, Adiabat method, Real dTdz = 0.) const;
+
+  // conversion functions
+  //! Change mass mixing ratio to molar mixing ratio
+  template<typename T1, typename T2>
+  void PrimitiveToChemical(T1 q, T2 const w) const {
+    // set molar mixing ratio
+    Real sum = 1.;
+    for (int n = 1; n <= NVAPOR; ++n) {
+      q[n] = w[n]/mu_ratios_[n];
+      sum += w[n]*(1./mu_ratios_[n] - 1.);
+    }
+#pragma omp simd
+    for (int n = 1; n <= NVAPOR; ++n)
+      q[n] /= sum;
+
+    // set pressure and temperature
+    q[IPR] = w[IPR];
+    q[IDN] = w[IPR]/(w[IDN]*Rd_*sum);
+    q[IVX] = w[IVX];
+    q[IVY] = w[IVY];
+    q[IVZ] = w[IVZ];
+  }
+
+  //! Change molar mixing ratio to mass mixing ratio
+  template<typename T1, typename T2>
+  void ChemicalToPrimitive(T1 w, T2 const q) const {
+    // set mass mixing ratio
+    Real sum = 1.;
+    for (int n = 1; n <= NVAPOR; ++n) {
+      w[n] = q[n]*mu_ratios_[n];
+      sum += q[n]*(mu_ratios_[n] - 1.); 
+    }
+#pragma omp simd
+    for (int n = 1; n <= NVAPOR; ++n)
+      w[n] /= sum;
+
+    // set pressure and density
+    w[IPR] = q[IPR];
+    w[IDN] = sum*q[IPR]/(q[IDN]*Rd_);
+    w[IVX] = q[IVX];
+    w[IVY] = q[IVY];
+    w[IVZ] = q[IVZ];
+  }
+
+  //! Change density to molar mixing ratio
+  template<typename T1, typename T2>
+  void ConservedToChemical(T1 q, T2 const u) const {
+    Real rho = 0., feps = 0., fsig = 0.;
+    for (int n = 0; n <= NVAPOR; ++n) {
+      rho += u[n];
+      q[n] = u[n]/mu_ratios_[n];
+      feps += q[n];
+      fsig += u[n]*cv_ratios_[n];
+    }
+#pragma omp simd
+    for (int n = 0; n <= NVAPOR; ++n)
+      q[n] /= feps;
+    Real KE = 0.5*(u[IM1]*u[IM1] + u[IM2]*u[IM2] + u[IM3]*u[IM3])/rho;
+    Real gm1 = pmy_block->peos->GetGamma() - 1.;
+    q[IPR] = gm1*(u[IEN] - KE)*feps/fsig;
+    q[IDN] = q[IPR]/(feps*Rd_);
+    q[IVX] = u[IVX]/rho;
+    q[IVY] = u[IVY]/rho;
+    q[IVZ] = u[IVZ]/rho;
+  }
+
+  //! Change molar mixing ratio to density
+  template<typename T1, typename T2>
+  void ChemicalToConserved(T1 u, T2 const q) const {
+    // molar mixing ratio to density
+    Real sum = 1.;
+    for (int n = 1; n <= NVAPOR; ++n)
+      sum += q[n]*(mu_ratios_[n] - 1.);
+    Real rho = q[IPR]*sum/(Rd_*q[IDN]);
+    Real cvd = Rd_/(pmy_block->peos->GetGamma() - 1.);
+    u[IDN] = rho;
+    u[IEN] = 0.5*rho*(q[IVX]*q[IVX] + q[IVY]*q[IVY] + q[IVZ]*q[IVZ]);
+    for (int n = 1; n <= NVAPOR; ++n) {
+      u[n] = rho*q[n]*mu_ratios_[n]/sum;
+      u[IDN] -= u[n];
+      u[IEN] += u[n]*cv_ratios_[n]*cvd*q[IDN];
+    }
+    u[IEN] += u[IDN]*cvd*q[IDN];
+    u[IVX] = q[IVX]*rho;
+    u[IVY] = q[IVY]*rho;
+    u[IVZ] = q[IVZ]*rho;
+  }
 
   // uhat is the molar interal energy defined as:
   // u^\hat = (q_d^\hat c_d^\hat T 
@@ -153,35 +238,10 @@ public:
   //        - \sum_{i,j} q_{ij}^\hat \mu_{ij}^\hat)/R_d^\hat
   void UpdateTPConservingU(Real q[], Real rho, Real uhat) const;
 
-  /*! adjust conserved variable to a sub-saturated state
-   * @param u conserved variables
-   */
-  //void SaturationAdjustment(AthenaArray<Real> &u, AthenaArray<Real> &c) const;
-
-  /*! Conserved variables to thermodynamic variables
-   * @param q thermodynamic variables
-   * @param u conserved variables
-   * @param il start index in dim 1
-   * @param iu end index in dim 1
-   * @param jl start index in dim 2
-   * @param ju end index in dim 2
-   * @param kl start index in dim 3
-   * @param ku end index in dim 3
-   */
-  void ConservedToThermo(AthenaArray<Real> &q, AthenaArray<Real> const& u,
-    int il, int iu, int jl, int ju, int kl, int ku) const;
-
-  // Thermodynamic variables to conserved variables
-  // density of dry air, momentum and total energy are not updated
-  void ThermoToConserved(AthenaArray<Real> &u, AthenaArray<Real> const& q,
-    int il, int iu, int jl, int ju, int kl, int ku) const;
-
-  //void PolytropicIndex(AthenaArray<Real> &gamma, AthenaArray<Real> &w,
-  //  int kl, int ku, int jl, int ju, int il, int iu) const;
-
+  // Get thermodynamic properties
   //! polytropic index $\gamma=c_p/c_v$
   template<typename T>
-  Real GetGamma(T w) {
+  Real GetGamma(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real fsig = 1., feps = 1.;
     for (int n = 1; n <= NVAPOR; ++n) {
@@ -191,21 +251,8 @@ public:
     return 1. + (gamma - 1.)*feps/fsig;
   }
 
-  // template functions
   template<typename T>
-  void ChemicalToPrimitive(T w, Real const q[]) {
-    molar_to_mass(w1_, q, mu_ratios_, Rd_);
-    for (int n = 0; n < NHYDRO; ++n) w[n] = w1_[n];
-  }
-
-  template<typename T>
-  void PrimitiveToChemical(Real q[], T const w) {
-    for (int n = 0; n < NHYDRO; ++n) w1_[n] = w[n];
-    mass_to_molar(q, w1_, mu_ratios_, Rd_);
-  }
-
-  template<typename T>
-  Real RovRd(T w) {
+  Real RovRd(T w) const {
     Real feps = 1.;
     for (int n = 1; n <= NVAPOR; ++n)
       feps += w[n]*(1./mu_ratios_[n] - 1.);
@@ -214,14 +261,14 @@ public:
 
   //! Temperature
   template<typename T>
-  Real GetTemp(T w) {
+  Real GetTemp(T w) const {
     return w[IPR]/(w[IDN]*Rd_*RovRd(w));
   }
 
   template<typename T>
-  Real GetPres(T u) {
+  Real GetPres(T u) const {
     Real gm1 = pmy_block->peos->GetGamma() - 1;
-    Real fsig = 0., feps = 0., rho = u[IDN];
+    Real rho = 0., fsig = 0., feps = 0.;
     for (int n = 0; n <= NVAPOR; ++n) {
       rho += u[n];
       fsig += u[n]*cv_ratios_[n];
@@ -232,8 +279,7 @@ public:
   }
 
   template<typename T>
-  Real GetChi(T w) {
-    for (int n = 0; n < NHYDRO; ++n) w1_[n] = w[n];
+  Real GetChi(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real tem[1] = {GetTemp(w)};
     update_gamma(gamma, tem);
@@ -246,7 +292,7 @@ public:
   }
 
   template<typename T>
-  Real GetCp(T w) {
+  Real GetCp(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real tem[1] = {GetTemp(w)};
     update_gamma(gamma, tem);
@@ -257,7 +303,7 @@ public:
   }
 
   template<typename T>
-  Real GetCv(T w) {
+  Real GetCv(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real tem[1] = {GetTemp(w)};
     update_gamma(gamma, tem);
@@ -269,7 +315,7 @@ public:
 
   //! Potential temperature
   template<typename T>
-  Real GetTheta(T w, Real p0) {
+  Real GetTheta(T w, Real p0) const {
     Real chi = GetChi(w);
     Real temp = GetTemp(w);
     return temp*pow(p0/w[IPR], chi);
@@ -280,46 +326,30 @@ public:
    * negative value represents saturation deficit
    */
   template<typename T>
-  void SaturationSurplus(Real dw[], T v, VariableType vtype = VariableType::prim) {
+  void SaturationSurplus(Real dv[], T v, VariableType vtype = VariableType::prim) const {
+    Real q1[NHYDRO];
     // mass to molar mixing ratio
-    if (vtype == VariableType::prim) {
-      Real sum = 1.;
-      for (int n = 1; n <= NVAPOR; ++n) {
-        w1_[n] = v[n]/mu_ratios_[n];
-        sum += v[n]*(1./mu_ratios_[n] - 1.);
-      }
-      for (int n = 1; n <= NVAPOR; ++n)
-        w1_[n] /= sum;
-
-      w1_[IDN] = GetTemp(v);
-      w1_[IPR] = v[IPR];
-    } else if (vtype == VariableType::cons) {
-      Real sum = 0., feps = 0.;
-      for (int n = 0; n <= NVAPOR; ++n) {
-        w1_[n] = v[n]/mu_ratios_[n];
-        sum += w1_[n];
-      }
-      for (int n = 0; n <= NVAPOR; ++n)
-        w1_[n] /= sum;
-      w1_[IPR] = GetPres(v);
-      w1_[IDN] = w1_[IPR]/(sum*Rd_);
-    } else {  // vtype == VariableType::chem
-      for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
-        w1_[n] = v[n];
-    }
+    if (vtype == VariableType::prim)
+      PrimitiveToChemical(q1, v);
+    else if (vtype == VariableType::cons)
+      ConservedToChemical(q1, v);
+    else // vtype == VariableType::chem
+      for (int n = 0; n < NHYDRO; ++n)
+        q1[n] = v[n];
 
     for (int iv = 1; iv <= NVAPOR; ++iv) { 
-      int nc = w1_[IDN] > t3_[iv] ? iv + NVAPOR : iv + 2*NVAPOR;
+      int nc = q1[IDN] > t3_[iv] ? iv + NVAPOR : iv + 2*NVAPOR;
       int ic = NHYDRO - NVAPOR + nc - 1;
-      Real rate = VaporCloudEquilibrium(w1_, iv, ic, t3_[iv], p3_[iv], 
+      Real rate = VaporCloudEquilibrium(q1, iv, ic, t3_[iv], p3_[iv], 
           0., beta_[nc], delta_[nc], true);
-      dw[iv] = rate/w1_[iv]*v[iv];
+      dv[iv] = rate/q1[iv]*v[iv];
     }
   }
 
   //! Relative humidity
   template<typename T>
-  Real GetRelativeHumidity(T w, int iv) {
+  Real GetRelativeHumidity(T w, int iv) const {
+    Real dw_[1+NVAPOR];
     SaturationSurplus(dw_, w);
     return w[iv]/(w[iv] - dw_[iv]);
   }
@@ -333,10 +363,10 @@ private:
   int max_iter_;
 
   //! scratch array for storing variables
-  Real w1_[NHYDRO+2*NVAPOR];
+  // Real w1_[NHYDRO+2*NVAPOR];
 
   //! scratch array for storing variables
-  Real dw_[1+NVAPOR];
+  // Real dw_[1+NVAPOR];
 
   // read from inputs
   //! ideal gas constant of dry air in J/kg

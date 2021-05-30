@@ -16,7 +16,7 @@ void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
   std::fill(delta0, delta0 + 1+3*NVAPOR, 0.);
 
   for (int rk = 0; rk < 4; ++rk) {
-    // reset vapor
+    // reset vapor and cloud
     for (int iv = 1; iv <= NVAPOR; ++iv) {
       q[iv] += q[NHYDRO+iv-1] + q[NHYDRO+NVAPOR+iv-1];
       q[NHYDRO+iv-1] = 0.;
@@ -24,6 +24,7 @@ void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
       isat[iv] = 0;
     }
 
+    Real q_gas = 1., q_eps = 1.;
     for (int iv = 1; iv <= NVAPOR; ++iv) {
       int nc = q[IDN] > t3[iv] ? iv + NVAPOR : iv + 2*NVAPOR;
       int ic = NHYDRO - NVAPOR + nc - 1;
@@ -32,20 +33,13 @@ void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
       if (rate > 0.) isat[iv] = 1;
       q[iv] -= rate;
       if (method == 0) q[ic] += rate;
+      q_gas -= q[ic];
+      q_eps += (q[iv] + q[ic])*(eps[iv] - 1.);
     }
-
-    // calculate tendency
-    update_gamma(gamma, q);
-    Real q_gas = 1., q_eps = 1.;
-    for (int n = NHYDRO; n < NHYDRO + 2*NVAPOR; ++n) {
-      q_gas -= q[n];
-      q_eps += q[n]*(eps[n] -  1.);
-    }
-    // vapor
-    for (int n = 1; n <= NVAPOR; ++n)
-      q_eps += q[n]*(eps[n] - 1.);
-
     Real R_ov_Rd = q_gas/q_eps;
+
+    // calculate gamma
+    update_gamma(gamma, q);
 
     if (method == 0 || method == 1)
       chi[rk] = dlnTdlnP(q, isat, rcp, beta, delta, t3, gamma);

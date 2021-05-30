@@ -20,7 +20,7 @@ public:
   // solve independent chemistry: A*dq = b
   // the second argument Real *dq is both input (b) and output (dq)
   void SolveIndependent(Real **A, Real *dq) {
-    for (int i = 1; i <= NVAPOR; ++i) {
+    /*for (int i = 1; i <= NVAPOR; ++i) {
       // assemble matrix for each species
       #pragma ivdep
       for (int j = 0; j < NPHASE; ++j) {
@@ -38,13 +38,13 @@ public:
       for (int j = 0; j < NPHASE; ++j)
         dq[j*NVAPOR+i] = sol_(j);
     }
-    dq[0] = 0.;
+    dq[0] = 0.;*/
   }
 
 private:
   // scratch arrays
-  Eigen::Matrix<Real, NPHASE, NPHASE> a_;
-  Eigen::Matrix<Real, NPHASE, 1> sol_;
+  //Eigen::Matrix<Real, NPHASE, NPHASE> a_;
+  //Eigen::Matrix<Real, NPHASE, 1> sol_;
 
   //Real a_[NPHASE][NPHASE];
   //Real sol_[NPHASE], vv_[NPHASE];

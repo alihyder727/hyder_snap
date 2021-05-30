@@ -706,7 +706,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     }
   }
 
-  // cloud
+  /* cloud
   if (NVAPOR > 0) {
     std::string str = "cloud?";
     for (int i = 1; i < NPHASE; ++i) {
@@ -733,7 +733,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
         num_vars_+=NVAPOR;
       }
     }
-  }
+  }*/
 
   // diagnostic
   if (output_params.variable.compare("diag") == 0) {

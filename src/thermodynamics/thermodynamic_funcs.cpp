@@ -25,7 +25,6 @@ Real VaporCloudEquilibrium(Real const q[], int iv, int ic,
   Real t3, Real p3, Real alpha, Real beta, Real delta, bool no_cloud)
 {
   Real xv = q[iv];
-  Real xc = q[ic];
   Real t = q[IDN]/t3;
   Real s;
   if (iv == AMMONIA_VAPOR_ID)
@@ -38,6 +37,7 @@ Real VaporCloudEquilibrium(Real const q[], int iv, int ic,
 
   if (no_cloud) return xv - s;
 
+  Real xc = q[ic];
   // if saturation vapor pressure is larger than the total pressure
   // evaporate all condensates
   if (s > 1.) return -xc;
@@ -65,10 +65,12 @@ Real dlnTdlnP(Real const q[], int const isat[],
     q_gas -= q[n];
 
   Real f_sig = 1.;
+  // vapor
   for (int n = 1; n <= NVAPOR; ++n)
     f_sig += q[n]*(rcp[n] - 1.);
+  // cloud
   for (int n = 0; n < 2*NVAPOR; ++n)
-    f_sig += q[n]*(rcp[1+NVAPOR+n] - 1.);
+    f_sig += q[NHYDRO+n]*(rcp[1+NVAPOR+n] - 1.);
   Real cphat_ov_r = gamma/(gamma - 1.)*f_sig/q_gas;
 
   // vapor
