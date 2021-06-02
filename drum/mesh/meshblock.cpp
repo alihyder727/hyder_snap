@@ -44,6 +44,7 @@
 #include "../physics/physics.hpp"
 #include "../diagnostics/diagnostics.hpp"
 #include "../debugger/debugger.hpp"
+#include "../particles/particles.hpp"
 
 //----------------------------------------------------------------------------------------
 // MeshBlock constructor: constructs coordinate, boundary condition, hydro, field
@@ -183,6 +184,10 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   pphy = new Physics(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
+  // initialize particles and remove the first one (header)
+  ppar = new Particles(this, pin);
+  ppar = ppar->next;
+  delete ppar->prev;
 
   // Create user mesh data
   InitUserMeshBlockData(pin);
@@ -304,6 +309,10 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   pphy = new Physics(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
+  // initialize particles and remove the first one (header)
+  ppar = new Particles(this, pin);
+  ppar = ppar->next;
+  delete ppar->prev;
 
   InitUserMeshBlockData(pin);
 
@@ -415,6 +424,14 @@ MeshBlock::~MeshBlock() {
   while (pdebug->next != nullptr)
     delete pdebug->next;
   delete pdebug;
+
+  if (ppar != nullptr) {
+    while (ppar->prev != nullptr)
+      delete ppar->prev;
+    while (ppar->next != nullptr)
+      delete ppar->next;
+    delete ppar;
+  }
 }
 
 //----------------------------------------------------------------------------------------

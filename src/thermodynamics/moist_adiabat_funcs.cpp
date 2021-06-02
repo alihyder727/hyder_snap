@@ -7,7 +7,7 @@
 
 // Athena++ headers
 #include "../utils/utils.hpp"
-#include "thermodynamic_funcs.hpp"
+#include "moist_adiabat_funcs.hpp"
 #include "vapors/ammonia_vapors.hpp"
 #include "vapors/water_vapors.hpp"
 

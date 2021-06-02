@@ -17,9 +17,7 @@
 #include "../mesh/mesh.hpp"
 #include "../eos/eos.hpp"
 #include "../athena.hpp"
-#include "thermodynamic_funcs.hpp"
-#include "vapors/ammonia_vapors.hpp"
-#include "vapors/water_vapors.hpp"
+#include "moist_adiabat_funcs.hpp"
 
 class MeshBlock;
 class ParameterInput;
@@ -292,7 +290,7 @@ public:
   }
 
   template<typename T>
-  Real GetCp(T w) const {
+  Real GetMeanCp(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real tem[1] = {GetTemp(w)};
     update_gamma(gamma, tem);
@@ -303,7 +301,7 @@ public:
   }
 
   template<typename T>
-  Real GetCv(T w) const {
+  Real GetMeanCv(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real tem[1] = {GetTemp(w)};
     update_gamma(gamma, tem);
@@ -313,13 +311,6 @@ public:
     return 1./(gamma - 1.)*Rd_*qsig;
   }
 
-  //! Potential temperature
-  template<typename T>
-  Real GetTheta(T w, Real p0) const {
-    Real chi = GetChi(w);
-    Real temp = GetTemp(w);
-    return temp*pow(p0/w[IPR], chi);
-  }
 
   /*! Saturation surplus for vapors can be both positive and negative
    * positive value represents supersaturation \n
@@ -345,18 +336,6 @@ public:
       dv[iv] = rate/q1[iv]*v[iv];
     }
   }
-
-  //! Relative humidity
-  template<typename T>
-  Real GetRelativeHumidity(T w, int iv) const {
-    Real dw_[1+NVAPOR];
-    SaturationSurplus(dw_, w);
-    return w[iv]/(w[iv] - dw_[iv]);
-  }
-
-  //! Equivalent potential temperature
-  //template<typename T>
-  //Real GetThetaE(T prim, Real p0);
 
 private:
   Real ftol_;
@@ -398,9 +377,5 @@ private:
   //! ratio of specific heat capacities at constant volume
   Real cv_ratios_[1+3*NVAPOR];
 };
-
-//#if (NVAPOR > 0)
-//  #include "get_theta_e.hpp"
-//#endif
 
 #endif

@@ -14,7 +14,7 @@
 #include "../athena_arrays.hpp"
 #include "../hydro/hydro.hpp"
 #include "thermodynamics.hpp"
-#include "thermodynamic_funcs.hpp"
+#include "moist_adiabat_funcs.hpp"
 
 void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
   Real grav, Real dz, int len, Adiabat method, Real dTdz) const

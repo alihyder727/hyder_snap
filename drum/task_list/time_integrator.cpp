@@ -30,6 +30,8 @@
 #include "../reconstruct/reconstruction.hpp"
 #include "../scalars/scalars.hpp"
 #include "../diagnostics/diagnostics.hpp"
+#include "../particles/particles.hpp"
+#include "../particles/particle_buffer.hpp"
 #include "task_list.hpp"
 
 //----------------------------------------------------------------------------------------
@@ -687,6 +689,14 @@ void TimeIntegratorTaskList::StartupTaskList(MeshBlock *pmb, int stage) {
 
 TaskStatus TimeIntegratorTaskList::ClearAllBoundary(MeshBlock *pmb, int stage) {
   pmb->pbval->ClearBoundary(BoundaryCommSubset::all);
+  // particle boundary at final stage
+  if (stage == nstages) {
+    Particles *ppar = pmb->ppar;
+    while (ppar != nullptr) {
+      ppar->ppb->ClearBoundary();
+      ppar = ppar->next;
+    }
+  }
   return TaskStatus::success;
 }
 

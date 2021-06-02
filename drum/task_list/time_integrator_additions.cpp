@@ -8,6 +8,8 @@
 #include "../chemistry/chemistry.hpp"
 #include "../radiation/radiation.hpp"
 #include "../physics/physics.hpp"
+#include "../particles/particle_buffer.hpp"
+#include "../particles/particles.hpp"
 #include "task_list.hpp"
 
 //! \brief apply implicit correction and physics package
@@ -91,4 +93,46 @@ TaskStatus TimeIntegratorTaskList::CalculateRadiationFlux(MeshBlock *pmb, int st
         prad->CalculateFluxes(phydro->w, pmb->pmy_mesh->time, k, j, pmb->is, pmb->ie+1);
   }
   return TaskStatus::success;
+}
+
+TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int step) {
+  if (step != nstages) return TaskStatus::next;
+
+  Particles *ppar = pmb->ppar;
+  while (ppar != nullptr) {
+    ppar->ppb->DetachParticle(ppar->mp);
+    ppar->ppb->SendParticle();
+    ppar = ppar->next;
+  }
+
+  return TaskStatus::success;
+}
+
+TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int step) {
+  if (step != nstages) return TaskStatus::next;
+
+  bool ret = true;
+  Particles *ppar = pmb->ppar;
+  while (ppar != nullptr) {
+    ppar->ppb->RecvParticle();
+    ppar = ppar->next;
+  }
+
+  return TaskStatus::success;
+}
+
+TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int step) {
+  if (step != nstages) return TaskStatus::next;
+
+  bool ret = true;
+  Particles *ppar = pmb->ppar;
+  while (ppar != nullptr) {
+    ret = ppar->ppb->AttachParticle(ppar->mp) && ret;
+    ppar = ppar->next;
+  }
+
+  if (ret)
+    return TaskStatus::success;
+  else
+    return TaskStatus::fail;
 }

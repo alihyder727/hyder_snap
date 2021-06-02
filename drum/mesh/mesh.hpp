@@ -57,6 +57,7 @@ class Radiation;
 class Physics;
 class Diagnostics;
 class Debugger;
+class Particles;
 
 FluidFormulation GetFluidFormulation(const std::string& input_string);
 
@@ -135,6 +136,7 @@ class MeshBlock {
   Physics *pphy;
   Diagnostics *pdiag;
   Debugger *pdebug;
+  Particles *ppar;
 
   MeshBlock *prev, *next;
 

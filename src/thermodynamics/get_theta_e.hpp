@@ -8,11 +8,11 @@
 
 //! Equivalent potential temperature
 template<typename T>
-Real GetThetaE(T prim, Real p0) {
+Real Thermodynamics::GetThetaE(T prim, Real p0) const {
 #if (NVAPOR > 0)
   Real gamma = pmy_block_->peos->GetGamma();
   Real tem[1] = {Temp(prim)};
-  update_gamma(gamma, const_cast<Real*>(cp_ratios_), tem);
+  update_gamma(gamma, tem);
   Real cpd = Rd_*gamma/(gamma - 1.);
   Real temp = Temp(prim);
   Real pres = prim[IPR];
