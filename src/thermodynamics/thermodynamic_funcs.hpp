@@ -24,11 +24,11 @@ template<typename A, typename B>
 Real MoistStaticEnergy(A const w, B const c, Real gz, Thermodynamics *pthermo) {
   Real temp = pthermo->GetTemp(w);
   Real IE = w[IDN]*pthermo->GetMeanCp(w)*temp;
-  Real cpd = pthermo->GetCp(IDN);
   Real rho = w[IDN];
   for (int n = 0; n < 2*NVAPOR; ++n) {
     rho += c[n];
-    IE += c[n]*(pthermo->GetCp(n)*temp - pthermo->GetLatent(1+NVAPOR+n));
+    IE += c[n]*pthermo->GetCp(1+NVAPOR+n)*temp;
+    IE -= c[n]*pthermo->GetLatent(1+NVAPOR+n);
   }
   return IE/rho + gz;
 }
@@ -36,9 +36,9 @@ Real MoistStaticEnergy(A const w, B const c, Real gz, Thermodynamics *pthermo) {
 //! Relative humidity
 template<typename T>
 Real RelativeHumidity(T w, int iv, Thermodynamics *pthermo) {
-  Real dw_[1+NVAPOR];
-  pthermo->SaturationSurplus(dw_, w);
-  return w[iv]/(w[iv] - dw_[iv]);
+  Real dw[1+NVAPOR];
+  pthermo->SaturationSurplus(dw, w);
+  return w[iv]/(w[iv] - dw[iv]);
 }
 
 //! Equivalent potential temperature

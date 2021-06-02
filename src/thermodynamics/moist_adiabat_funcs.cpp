@@ -82,14 +82,15 @@ Real dlnTdlnP(Real const q[], int const isat[],
     xd -= q[n];
 
   Real c1 = 0., c2 = 0., c3 = 0.;
-  for (int n = 1; n <= NVAPOR; ++n) {
-    if (isat[n] > 0) {
-      int nc = n + NVAPOR;
-      Real latent = beta[nc]*t3[nc]/q[IDN] - delta[nc];
-      c1 += q[n]/xd*latent;
-      c2 += q[n]/xd*latent*latent;
+  for (int iv = 1; iv <= NVAPOR; ++iv) {
+    if (isat[iv] > 0) {
+      int nc = q[IDN] > t3[iv] ? iv + NVAPOR : iv + 2*NVAPOR;
+      //int nc = iv + NVAPOR;
+      Real latent = beta[nc]*t3[iv]/q[IDN] - delta[nc];
+      c1 += q[iv]/xd*latent;
+      c2 += q[iv]/xd*latent*latent;
     }
-    c3 += q[n]/xd;
+    c3 += q[iv]/xd;
   }
 
   return (1. + c1)/(cphat_ov_r + (c2 + c1*c1)/(1. + c3));

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <algorithm>
-#include "thermodynamics.hpp"
+#include "moist_adiabat_funcs.hpp"
 
 void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,

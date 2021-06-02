@@ -29,7 +29,7 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
   q1[IPR] = Ps;
 
   Real rcp[1+3*NVAPOR];  // molar cp ratio
-  for (int n = 0; n < 1+3*NVAPOR;  ++n)
+  for (int n = 0; n <= 3*NVAPOR;  ++n)
     rcp[n] = cp_ratios_[n]*mu_ratios_[n];
 
   int isat[1+NVAPOR];
