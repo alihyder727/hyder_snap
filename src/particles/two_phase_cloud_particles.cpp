@@ -19,4 +19,3 @@ TwoPhaseCloudParticles::TwoPhaseCloudParticles(MeshBlock *pmb, ParameterInput *p
   max_number_ = pin->GetOrAddInteger("particles", "2pcp.max_number", 1<<20);
   seeds_per_cell_ = pin->GetOrAddInteger("particles", "2pcp.seeds_per_cell", 1<<6);
 }
-

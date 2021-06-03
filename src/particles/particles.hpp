@@ -20,7 +20,7 @@ public:
   Particles *prev, *next;
   ParticleBuffer *ppb;
   AthenaArray<Real> c, dc;
-  std::vector<MaterialPoint> mp;
+  std::vector<MaterialPoint> mp, mp1;
 
 // functions
   Particles(MeshBlock *pmb, ParameterInput *pin);
@@ -40,15 +40,14 @@ public:
   }
 
   Particles* FindParticle(std::string name);
-  void Translate(Real dt);
-  void AddHydroVelocities(AthenaArray<Real> const &w);
-  void SetMeshLocation();
+  void TranslateEuler(std::vector<MaterialPoint> &mp, Real dt);
+  void ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w);
   void AggregateMass(AthenaArray<Real> &c_sum);
-  void Particulate(AthenaArray<Real> &c_new, int seeds_per_cell);
 
-  virtual void TimeIntegrate(Real time, Real dt) {
-    Translate(dt);
-  }
+  virtual void Particulate(AthenaArray<Real> &c_dif);
+  virtual void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
+  virtual void WeightedAverage(std::vector<MaterialPoint> &mp_out,
+    std::vector<MaterialPoint> const& mp_in, Real ave_wghts[]);
 
 protected:
   AthenaArray<Real> vol_;
@@ -60,6 +59,8 @@ class TwoPhaseCloudParticles : public Particles {
 public:
   TwoPhaseCloudParticles(MeshBlock *pmb, ParameterInput *pin);
   ~TwoPhaseCloudParticles() {}
+  //void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
+  //void Particulate(AthenaArray<Real> &c_dif);
 
 protected:
   int max_number_;

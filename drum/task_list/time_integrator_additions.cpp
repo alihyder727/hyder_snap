@@ -7,7 +7,7 @@
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../chemistry/chemistry.hpp"
 #include "../radiation/radiation.hpp"
-#include "../physics/physics.hpp"
+#include "../particles/material_point.hpp"
 #include "../particles/particle_buffer.hpp"
 #include "../particles/particles.hpp"
 #include "task_list.hpp"
@@ -51,10 +51,6 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   wghts[2] = 0.;
   pmb->WeightedAve(ph->u, ph->du, ph->u2, wghts);
 
-  // do physics package at the last stage
-  if (stage == nstages)
-    pmb->pphy->ApplyPhysicsPackages(ph->u, ph->w, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
-
   return TaskStatus::success;
 }
 
@@ -95,8 +91,46 @@ TaskStatus TimeIntegratorTaskList::CalculateRadiationFlux(MeshBlock *pmb, int st
   return TaskStatus::success;
 }
 
-TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int step) {
-  if (step != nstages) return TaskStatus::next;
+// particle steps
+TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage) {
+  //! \todo check if it works for vl2 integrator
+  Particles *ppar = pmb->ppar;
+  while (ppar != nullptr) {
+    ppar->ExchangeHydro(pmb->phydro->du, pmb->phydro->w);
+
+    // copy initial state
+    if (stage == 1) ppar->mp1 = ppar->mp;
+    ppar->TimeIntegrate(ppar->mp, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
+
+    if (stage > 1) {
+      Real ave_wghts[3];
+      ave_wghts[0] = stage_wghts[stage-1].gamma_1;
+      ave_wghts[1] = stage_wghts[stage-1].gamma_2;
+      ave_wghts[2] = stage_wghts[stage-1].gamma_3;
+      ppar->WeightedAverage(ppar->mp, ppar->mp1, ave_wghts);
+    }
+
+    ppar = ppar->next;
+  }
+
+  return TaskStatus::success;
+}
+
+TaskStatus TimeIntegratorTaskList::MeshToParticles(MeshBlock *pmb, int stage) {
+  if (stage != nstages) return TaskStatus::next;
+
+  Particles *ppar = pmb->ppar;
+  while (ppar != nullptr) {
+    ppar->Particulate(ppar->dc);
+    ppar = ppar->next;
+  }
+
+  return TaskStatus::success;
+}
+
+TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int stage) {
+  // only do send/recv at last rk step
+  if (stage != nstages) return TaskStatus::next;
 
   Particles *ppar = pmb->ppar;
   while (ppar != nullptr) {
@@ -108,10 +142,10 @@ TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int step) {
   return TaskStatus::success;
 }
 
-TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int step) {
-  if (step != nstages) return TaskStatus::next;
+TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int stage) {
+  // only do send/recv at last rk step
+  if (stage != nstages) return TaskStatus::next;
 
-  bool ret = true;
   Particles *ppar = pmb->ppar;
   while (ppar != nullptr) {
     ppar->ppb->RecvParticle();
@@ -121,8 +155,9 @@ TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int step) {
   return TaskStatus::success;
 }
 
-TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int step) {
-  if (step != nstages) return TaskStatus::next;
+TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int stage) {
+  // only do send/recv at last rk step
+  if (stage != nstages) return TaskStatus::next;
 
   bool ret = true;
   Particles *ppar = pmb->ppar;
@@ -135,4 +170,17 @@ TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int step) {
     return TaskStatus::success;
   else
     return TaskStatus::fail;
+}
+
+TaskStatus TimeIntegratorTaskList::ParticlesToMesh(MeshBlock *pmb, int stage) {
+  // only do send/recv at last rk step
+  if (stage != nstages) return TaskStatus::next;
+
+  Particles *ppar = pmb->ppar;
+  while (ppar != nullptr) {
+    ppar->AggregateMass(ppar->c);
+    ppar = ppar->next;
+  }
+
+  return TaskStatus::success;
 }

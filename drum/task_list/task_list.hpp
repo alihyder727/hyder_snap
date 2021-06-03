@@ -47,7 +47,7 @@ class TaskID {  // POD but not aggregate (there is a user-provided ctor)
   TaskID operator| (const TaskID& rhs) const;
 
  private:
-  constexpr static int kNField_ = 1;
+  constexpr static int kNField_ = 2;
   std::uint64_t bitfld_[kNField_];
 
   friend class TaskList;
@@ -188,9 +188,12 @@ class TimeIntegratorTaskList : public TaskList {
   TaskStatus UpdateHydro(MeshBlock *pmb, int stage);
 
   // particle tasks
+  TaskStatus IntegrateParticles(MeshBlock *pmb, int stage);
+  TaskStatus MeshToParticles(MeshBlock *pmb, int stage);
   TaskStatus SendParticles(MeshBlock *pmb, int stage);
   TaskStatus ReceiveParticles(MeshBlock *pmb, int stage);
   TaskStatus AttachParticles(MeshBlock *pmb, int stage);
+  TaskStatus ParticlesToMesh(MeshBlock *pmb, int stage);
 
  private:
   IntegratorWeight stage_wghts[MAX_NSTAGE];
@@ -306,9 +309,12 @@ const TaskID DIFFUSE_SCLR(56);
 // const TaskID SEND_SCLRSH(58);
 
 const TaskID UPDATE_HYD(59);
-const TaskID SEND_PART(60);
-const TaskID RECV_PART(61);
-const TaskID ATTACH_PART(62);
+const TaskID INT_PART(60);
+const TaskID MESH2PART(61);
+const TaskID SEND_PART(62);
+const TaskID RECV_PART(63);
+const TaskID ATTACH_PART(64);
+const TaskID PART2MESH(65);
 
 }  // namespace HydroIntegratorTaskNames
 #endif  // TASK_LIST_TASK_LIST_HPP_

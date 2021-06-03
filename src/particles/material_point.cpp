@@ -15,8 +15,7 @@
 MaterialPoint::MaterialPoint() :
   alive(1), ci(0), cj(0), ck(0), ct(0),
   mass(0), x1(0.), x2(0.), x3(0.), 
-  v1(0.), v2(0.), v3(0.),
-  a1(0.), a2(0.), a3(0.)
+  v1(0.), v2(0.), v3(0.)
 {
 #if NREAL_PARTICLE_DATA > 0
   for (int i = 0; i < NREAL_PARTICLE_DATA; ++i)
@@ -51,9 +50,6 @@ MaterialPoint& MaterialPoint::operator=(MaterialPoint const& other)
   v1 = other.v1;
   v2 = other.v2;
   v3 = other.v3;
-  a1 = other.a1;
-  a2 = other.a2;
-  a3 = other.a3;
 #if NREAL_PARTICLE_DATA > 0
   for (int i = 0; i < NREAL_PARTICLE_DATA; ++i)
     rr[i] = other.rr[i];

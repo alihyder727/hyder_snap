@@ -47,7 +47,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
 
 #ifdef MPI_PARALLEL
   // MPI_PARTICLE
-  int counts[2] = {5+NINT_PARTICLE_DATA, 10+NREAL_PARTICLE_DATA};
+  int counts[2] = {5+NINT_PARTICLE_DATA, 7+NREAL_PARTICLE_DATA};
   MPI_Datatype types[2] = {MPI_INT, MPI_ATHENA_REAL};
   MPI_Aint disps[2] = {offsetof(MaterialPoint, alive), offsetof(MaterialPoint, mass)};
 
@@ -108,6 +108,7 @@ Particles& Particles::operator=(Particles const& other)
   c = other.c;
   dc = other.dc;
   mp = other.mp;
+  mp1 = other.mp1;
 
   vol_ = other.vol_;
   coordinates_ = other.coordinates_;
@@ -134,9 +135,8 @@ Particles* Particles::FindParticle(std::string name)
   return p;
 }
 
-void Particles::AddHydroVelocities(AthenaArray<Real> const &w)
+void Particles::ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w)
 {
-  MeshBlock *pmb = pmy_block;
   AthenaArray<Real> v1, v2, v3;
   Real loc[3], vel;
 
@@ -150,21 +150,21 @@ void Particles::AddHydroVelocities(AthenaArray<Real> const &w)
     loc[2] = q->x1;
 
     interpn(&vel, loc, v1.data(), coordinates_.data(), lengths_.data(), 3);
-    q->v1 += vel;
+    q->v1 = vel;
 
     if (lengths_[1] > 1) {
       interpn(&vel, loc, v2.data(), coordinates_.data(), lengths_.data(), 3);
-      q->v2 += vel;
+      q->v2 = vel;
     }
 
     if (lengths_[0] > 1) {
       interpn(&vel, loc, v3.data(), coordinates_.data(), lengths_.data(), 3);
-      q->v3 += vel;
+      q->v3 = vel;
     }
   }
 }
 
-void Particles::SetMeshLocation()
+/*void Particles::SetMeshLocation()
 {
   MeshBlock *pmb = pmy_block;
   Real loc[3];
@@ -180,15 +180,27 @@ void Particles::SetMeshLocation()
     q->ci = pmb->is + locate(coordinates_.data() + lengths_[0] + lengths_[1], 
       loc[2], lengths_[2]);
   }
-}
+}*/
 
 void Particles::AggregateMass(AthenaArray<Real> &c_sum)
 {
   MeshBlock *pmb = pmy_block;
+  Real loc[3];
   c_sum.ZeroClear();
   for (std::vector<MaterialPoint>::iterator q = mp.begin(); q != mp.end(); ++q) {
+    loc[0] = q->x3;
+    loc[1] = q->x2;
+    loc[2] = q->x1;
+
+    if (lengths_[0] > 1)
+      q->ck = pmb->ks + locate(coordinates_.data(), loc[0], lengths_[0]);
+    if (lengths_[1] > 1)
+      q->cj = pmb->js + locate(coordinates_.data() + lengths_[0], loc[1], lengths_[1]);
+    q->ci = pmb->is + locate(coordinates_.data() + lengths_[0] + lengths_[1], 
+      loc[2], lengths_[2]);
     c_sum(q->ct, q->ck, q->cj, q->ci) += q->mass;
   }
+
   for (int t = 0; t < c_sum.GetDim4(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j) {
@@ -198,26 +210,47 @@ void Particles::AggregateMass(AthenaArray<Real> &c_sum)
       }
 }
 
-void Particles::Particulate(AthenaArray<Real> &c_new, int seeds_per_cell)
+void Particles::Particulate(AthenaArray<Real> &c_dif)
 {
-  MeshBlock *pmb;
+  MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
-  for (int t = 0; t < c_new.GetDim4(); ++t)
+  for (int t = 0; t < c_dif.GetDim4(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j) {
         pco->CellVolume(k, j, pmb->is, pmb->ie, vol_);
-        for (int i = pmb->is; i <= pmb->ie; ++i) {
-          Real mass = c_new(t,k,j,i)*vol_(i)/seeds_per_cell;
-          for (int n = 0; n < seeds_per_cell; ++n) {
+        for (int i = pmb->is; i <= pmb->ie; ++i)
+          if (c_dif(t,k,j,i) > 0.) {
             MaterialPoint p;
             p.ct = t;
             p.x1 = pco->x1f(i) + (1.*rand()/RAND_MAX)*pco->dx1f(i);
             p.x2 = pco->x2f(i) + (1.*rand()/RAND_MAX)*pco->dx2f(i);
             p.x3 = pco->x3f(i) + (1.*rand()/RAND_MAX)*pco->dx3f(i);
-            p.mass = mass;
+            p.v1 = 0.;
+            p.v2 = 0.;
+            p.v3 = 0.;
+            p.mass = c_dif(t,k,j,i)*vol_(i);
             mp.push_back(p);
           }
-        }
       }
-  c_new.ZeroClear();
+  c_dif.ZeroClear();
+}
+
+void Particles::TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt)
+{
+  TranslateEuler(mp, dt);
+}
+
+void Particles::WeightedAverage(std::vector<MaterialPoint> &mp_out,
+  std::vector<MaterialPoint> const& mp_in, Real ave_wghts[])
+{
+  size_t psize = mp_out.size();
+  for (size_t i = 0; i < psize; ++i) {
+    mp_out[i].x1 = ave_wghts[0]*mp_out[i].x1 + ave_wghts[1]*mp_in[i].x1;
+    mp_out[i].x2 = ave_wghts[0]*mp_out[i].x2 + ave_wghts[1]*mp_in[i].x2;
+    mp_out[i].x3 = ave_wghts[0]*mp_out[i].x3 + ave_wghts[1]*mp_in[i].x3;
+
+    mp_out[i].v1 = ave_wghts[0]*mp_out[i].v1 + ave_wghts[1]*mp_in[i].v1;
+    mp_out[i].v2 = ave_wghts[0]*mp_out[i].v2 + ave_wghts[1]*mp_in[i].v2;
+    mp_out[i].v3 = ave_wghts[0]*mp_out[i].v3 + ave_wghts[1]*mp_in[i].v3;
+  }
 }

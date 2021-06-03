@@ -11,6 +11,7 @@ Physics::~Physics() {
   delete ptm;
 }
 
+//! \todo THIS HAS BEEN CHANGED u -> du. CHECK other packages for updates
 void Physics::ApplyPhysicsPackages(AthenaArray<Real> &u,
   AthenaArray<Real> const& w, Real time, Real dt)
 {

@@ -33,8 +33,6 @@ struct MaterialPoint {
   Real x1, x2, x3;
   //! velocities
   Real v1, v2, v3;
-  //! accelerations
-  Real a1, a2, a3;
 
   #if NREAL_PARTICLE_DATA > 0
     Real rr[NREAL_PARTICLE_DATA];

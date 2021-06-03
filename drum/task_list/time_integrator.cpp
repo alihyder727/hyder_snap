@@ -30,6 +30,7 @@
 #include "../reconstruct/reconstruction.hpp"
 #include "../scalars/scalars.hpp"
 #include "../diagnostics/diagnostics.hpp"
+#include "../physics/physics.hpp"
 #include "../particles/particles.hpp"
 #include "../particles/particle_buffer.hpp"
 #include "task_list.hpp"
@@ -266,11 +267,18 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       AddTask(INT_HYD, (CALC_HYDFLX|CALC_RADFLX));
     }
     AddTask(SRCTERM_HYD,INT_HYD);
-    AddTask(UPDATE_HYD,SRCTERM_HYD);
+    AddTask(INT_PART, INT_HYD);
+    AddTask(UPDATE_HYD,(SRCTERM_HYD|INT_PART));
     AddTask(INT_CHM,UPDATE_HYD);
-    AddTask(SEND_HYD,INT_CHM);
+    AddTask(MESH2PART,INT_CHM);
+    AddTask(SEND_PART,MESH2PART);
+    AddTask(RECV_PART,SEND_PART);
+    AddTask(ATTACH_PART,RECV_PART);
+    AddTask(PART2MESH,ATTACH_PART);
+    // finish particles
+    AddTask(SEND_HYD,PART2MESH);
     AddTask(RECV_HYD,NONE);
-    AddTask(SETB_HYD,(RECV_HYD|INT_CHM));
+    AddTask(SETB_HYD,(RECV_HYD|PART2MESH));
     if (SHEARING_BOX) { // Shearingbox BC for Hydro
       AddTask(SEND_HYDSH,SETB_HYD);
       AddTask(RECV_HYDSH,SETB_HYD);
@@ -611,6 +619,36 @@ void TimeIntegratorTaskList::AddTask(const TaskID& id, const TaskID& dep) {
         static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
         (&TimeIntegratorTaskList::DiffuseScalars);
     task_list_[ntasks].lb_time = true;
+  } else if (id == MESH2PART) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::MeshToParticles);
+    task_list_[ntasks].lb_time = false;
+  } else if (id == INT_PART) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::IntegrateParticles);
+    task_list_[ntasks].lb_time = false;
+  } else if (id == SEND_PART) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::SendParticles);
+    task_list_[ntasks].lb_time = false;
+  } else if (id == RECV_PART) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::ReceiveParticles);
+    task_list_[ntasks].lb_time = false;
+  } else if (id == ATTACH_PART) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::AttachParticles);
+    task_list_[ntasks].lb_time = false;
+  } else if (id == PART2MESH) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::ParticlesToMesh);
+    task_list_[ntasks].lb_time = false;
   } else {
     std::stringstream msg;
     msg << "### FATAL ERROR in AddTask" << std::endl
@@ -863,6 +901,7 @@ TaskStatus TimeIntegratorTaskList::AddSourceTermsHydro(MeshBlock *pmb, int stage
     Real dt = (stage_wghts[(stage-1)].beta)*(pmb->pmy_mesh->dt);
     // Evaluate the time-dependent source terms at the time at the beginning of the stage
     ph->hsrc.AddHydroSourceTerms(t_start_stage, dt, ph->flux, ph->w, pf->bcc, ph->du);
+    pmb->pphy->ApplyPhysicsPackages(ph->du, ph->w, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
   } else {
     return TaskStatus::fail;
   }
