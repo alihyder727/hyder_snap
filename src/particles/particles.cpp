@@ -7,6 +7,7 @@
  */
 
 // C++ headers
+#include <cassert>
 #include <sstream>
 #include <stdexcept>
 #ifdef MPI_PARALLEL
@@ -23,7 +24,8 @@
 #include "particle_buffer.hpp"
 
 Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
-  pmy_block(pmb), myname("HEAD"), prev(nullptr), next(nullptr)
+  pmy_block(pmb), myname("HEAD"), prev(nullptr), next(nullptr),
+  seeds_per_cell_(1)
 {
   ppb = new ParticleBuffer(this);
 
@@ -51,9 +53,10 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
 
 #ifdef MPI_PARALLEL
   // MPI_PARTICLE
-  int counts[2] = {5+NINT_PARTICLE_DATA, 7+NREAL_PARTICLE_DATA};
+  assert(sizeof(MaterialPoint*) == sizeof(int));
+  int counts[2] = {6+NINT_PARTICLE_DATA, 8+NREAL_PARTICLE_DATA};
   MPI_Datatype types[2] = {MPI_INT, MPI_ATHENA_REAL};
-  MPI_Aint disps[2] = {offsetof(MaterialPoint, alive), offsetof(MaterialPoint, mass)};
+  MPI_Aint disps[2] = {offsetof(MaterialPoint, next), offsetof(MaterialPoint, time)};
 
   MPI_Type_create_struct(2, counts, disps, types, &MPI_PARTICLE);
   MPI_Type_commit(&MPI_PARTICLE);
@@ -61,9 +64,11 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
 }
 
 // constructor, initializes data structure and parameters
-Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name):
-  pmy_block(pmb), myname(name), prev(nullptr), next(nullptr)
+Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int nct):
+  pmy_block(pmb), myname(name), prev(nullptr), next(nullptr),
+  seeds_per_cell_(1)
 {
+  ppb = new ParticleBuffer(this);
   int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
 
   coordinates_.resize(nc3+nc2+nc1);
@@ -78,9 +83,11 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name):
   dims_[0] = nc3;
   dims_[1] = nc2;
   dims_[2] = nc1;
-  vol_.NewAthenaArray(nc1);
 
-  ppb = new ParticleBuffer(this);
+  vol_.NewAthenaArray(nc1);
+  c.NewAthenaArray(nct, nc3, nc2, nc1);
+  dc.NewAthenaArray(nct, nc3, nc2, nc1);
+  pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
 }
 
 // destructor
@@ -96,7 +103,7 @@ Particles::~Particles()
 }
 
 Particles::Particles(Particles const& other):
-  c(other.c), dc(other.dc), vol_(other.vol_)
+  c(other.c), dc(other.dc), vol_(other.vol_), pcell_(other.pcell_)
 {
   if (this == &other) return;
   *this = other;
@@ -114,10 +121,13 @@ Particles& Particles::operator=(Particles const& other)
   mp = other.mp;
   mp1 = other.mp1;
 
-  vol_ = other.vol_;
   coordinates_ = other.coordinates_;
   dims_ = other.dims_;
   cnames_ = other.cnames_;
+  available_ids_ = other.available_ids_;
+  vol_ = other.vol_;
+  pcell_ = other.pcell_;
+  seeds_per_cell_ = other.seeds_per_cell_;
 
   ppb = new ParticleBuffer(this);
 
@@ -140,7 +150,8 @@ Particles* Particles::FindParticle(std::string name)
   return p;
 }
 
-void Particles::ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w)
+void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
+  AthenaArray<Real> const &w)
 {
   AthenaArray<Real> v1, v2, v3;
   Real loc[3], vel;
@@ -193,7 +204,10 @@ void Particles::AggregateMass(AthenaArray<Real> &c_sum)
 {
   MeshBlock *pmb = pmy_block;
   Real loc[3];
+
   c_sum.ZeroClear();
+  std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
+
   for (std::vector<MaterialPoint>::iterator q = mp.begin(); q != mp.end(); ++q) {
     loc[0] = q->x3;
     loc[1] = q->x2;
@@ -210,6 +224,10 @@ void Particles::AggregateMass(AthenaArray<Real> &c_sum)
     q->ci = locate(coordinates_.data() + dims_[0] + dims_[1], 
       loc[2], dims_[2]);
     c_sum(q->ct, q->ck, q->cj, q->ci) += q->mass;
+
+    MaterialPoint *pc = pcell_(q->ct, q->ck, q->cj, q->ci);
+    while (pc != nullptr) pc = pc->next;
+    pc = &(*q);
   }
 
   for (int t = 0; t < c_sum.GetDim4(); ++t)
@@ -226,24 +244,50 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp,
 {
   MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
-  for (int t = 0; t < c_dif.GetDim4(); ++t)
+  for (int t = 0; t < Categories(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j) {
         pco->CellVolume(k, j, pmb->is, pmb->ie, vol_);
-        for (int i = pmb->is; i <= pmb->ie; ++i)
+        for (int i = pmb->is; i <= pmb->ie; ++i) {
           if (c_dif(t,k,j,i) > 0.) {
-            MaterialPoint p;
-            p.ct = t;
-            p.x1 = pco->x1f(i) + (1.*rand()/RAND_MAX)*pco->dx1f(i);
-            p.x2 = pco->x2f(j) + (1.*rand()/RAND_MAX)*pco->dx2f(j);
-            p.x3 = pco->x3f(k) + (1.*rand()/RAND_MAX)*pco->dx3f(k);
-            p.v1 = 0.;
-            p.v2 = 0.;
-            p.v3 = 0.;
-            p.mass = c_dif(t,k,j,i)*vol_(i);
-            mp.push_back(p);
+            for (int n = 0; n < seeds_per_cell_; ++n) {
+              MaterialPoint p;
+              p.id = GetNextId();
+              p.ct = t;
+              p.time = pmb->pmy_mesh->time;
+              p.x1 = pco->x1f(i) + (1.*rand()/RAND_MAX)*pco->dx1f(i);
+              p.x2 = pco->x2f(j) + (1.*rand()/RAND_MAX)*pco->dx2f(j);
+              p.x3 = pco->x3f(k) + (1.*rand()/RAND_MAX)*pco->dx3f(k);
+              p.v1 = 0.;
+              p.v2 = 0.;
+              p.v3 = 0.;
+              p.mass = c_dif(t,k,j,i)*vol_(i)/seeds_per_cell_;
+              mp.push_back(p);
+            }
+          } else {
+            int nparts = ParticlesInCell(t,k,j,i);
+            Real avg = std::abs(c_dif(t,k,j,i))/nparts;
+            MaterialPoint *pc = pcell_(t,k,j,i);
+            while (pc != nullptr) {
+              if (pc->mass > avg*vol_(i)) {
+                pc->mass -= avg*vol_(i);
+                c_dif(t,k,j,i) += avg;
+              } else {
+                available_ids_.push_back(pc->id);
+                pc->id = -1;
+                pc->mass = 0;
+                c_dif(t,k,j,i) += pc->mass/vol_(i);
+                avg = c_dif(t,k,j,i)/nparts;
+              }
+              nparts--;
+              pc = pc->next;
+            }
+            assert(nparts == 0);
+            assert(c_dif(t,k,j,i) == 0);
           }
+        }
       }
+
   c_dif.ZeroClear();
 }
 

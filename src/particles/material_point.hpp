@@ -16,8 +16,10 @@
 #include "../athena.hpp"
 
 struct MaterialPoint {
-  //! alive flag
-  int alive;
+  MaterialPoint *next;
+
+  //! particle id
+  int id;
   //! cell id
   int ci, cj, ck;
   //! category id
@@ -27,6 +29,8 @@ struct MaterialPoint {
     int  ii[NINT_PARTICLE_DATA];
   #endif
 
+  //! time instantiated
+  Real time;
   //! mass in [kg]
   Real mass;
   //! positions

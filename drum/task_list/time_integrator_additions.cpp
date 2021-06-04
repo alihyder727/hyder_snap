@@ -96,7 +96,7 @@ TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage)
   //! \todo check if it works for vl2 integrator
   Particles *ppar = pmb->ppar;
   while (ppar != nullptr) {
-    ppar->ExchangeHydro(pmb->phydro->du, pmb->phydro->w);
+    ppar->ExchangeHydro(ppar->mp, pmb->phydro->du, pmb->phydro->w);
 
     // copy initial state
     if (stage == 1) ppar->mp1 = ppar->mp;

@@ -79,14 +79,16 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
 
       // write x1, x2, x3 column headers
       fprintf(pfile,"#");
-      fprintf(pfile,"%5s","cat");
-      fprintf(pfile,"%16s","mass");
-      fprintf(pfile,"%16s","x1");
-      fprintf(pfile,"%16s","x2");
-      fprintf(pfile,"%16s","x3");
-      fprintf(pfile,"%16s","v1");
-      fprintf(pfile,"%16s","v2");
-      fprintf(pfile,"%16s","v3");
+      fprintf(pfile,"%-7s"," id");
+      fprintf(pfile,"%8s","category");
+      fprintf(pfile,"%13s","time [s]");
+      fprintf(pfile,"%13s","mass [g]");
+      fprintf(pfile,"%13s","x1 [m]");
+      fprintf(pfile,"%13s","x2 [m]");
+      fprintf(pfile,"%13s","x3 [m]");
+      fprintf(pfile,"%13s","v1 [m/s]");
+      fprintf(pfile,"%13s","v2 [m/s]");
+      fprintf(pfile,"%13s","v3 [m/s]");
       for (int j = 0; j < NREAL_PARTICLE_DATA; ++j)
         fprintf(pfile, "%14s%02d", "RDATA", j);
       for (int j = 0; j < NINT_PARTICLE_DATA; ++j)
@@ -96,8 +98,10 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
       // loop over all particles
       std::vector<MaterialPoint>::iterator it = ppar->mp.begin();
       for (; it != ppar->mp.end(); ++it) {
-        fprintf(pfile, "%-6d", it->ct);
-        fprintf(pfile, output_params.data_format.c_str(), it->mass);
+        fprintf(pfile, "%-8d", it->id);
+        fprintf(pfile, "%-8d", it->ct);
+        fprintf(pfile, output_params.data_format.c_str(), it->time);
+        fprintf(pfile, output_params.data_format.c_str(), it->mass*1.E3);
         fprintf(pfile, output_params.data_format.c_str(), it->x1);
         fprintf(pfile, output_params.data_format.c_str(), it->x2);
         fprintf(pfile, output_params.data_format.c_str(), it->x3);

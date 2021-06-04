@@ -7,9 +7,9 @@
 
 // Athena++ classes headers
 #include "../athena.hpp"
+#include "material_point.hpp"
 
 class MeshBlock;
-class MaterialPoint;
 class ParticleBuffer;
 
 class Particles {
@@ -24,7 +24,7 @@ public:
 
 // functions
   Particles(MeshBlock *pmb, ParameterInput *pin);
-  Particles(MeshBlock *pmb, ParameterInput *pin, std::string name);
+  Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int nct);
   virtual ~Particles();
   Particles(Particles const& other);
   Particles& operator=(Particles const& other);
@@ -39,39 +39,66 @@ public:
     return p->next;
   }
 
-  Particles* FindParticle(std::string name);
-  void TranslateEuler(std::vector<MaterialPoint> &mp, Real dt);
-  void ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w);
-  void AggregateMass(AthenaArray<Real> &c_sum);
   int Categories() const {
     return c.GetDim4();
   }
+
   std::string CategoryName(int i) const {
     return cnames_.at(i);
   }
 
+  int GetNextId() {
+    int id;
+    if (available_ids_.size() > 0) {
+      id = available_ids_.back();
+      available_ids_.pop_back();
+    } else
+      id = mp.size()+1;
+    return id;
+  }
+
+  int ParticlesInCell(int t, int k, int j, int i) {
+    int num = 0;
+    MaterialPoint *pc = pcell_(t,k,j,i);
+    while (pc != nullptr) {
+      pc = pc->next;
+      num++;
+    }
+    return num;
+  }
+
+  Particles* FindParticle(std::string name);
+  void TranslateEuler(std::vector<MaterialPoint> &mp, Real dt);
+  void AggregateMass(AthenaArray<Real> &c_sum);
+
+  virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
+    AthenaArray<Real> const &w);
   virtual void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c_dif);
   virtual void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
   virtual void WeightedAverage(std::vector<MaterialPoint> &mp_out,
     std::vector<MaterialPoint> const& mp_in, Real ave_wghts[]);
 
 protected:
-  AthenaArray<Real> vol_;
   std::vector<Real> coordinates_;
   std::vector<int> dims_;
   std::vector<std::string> cnames_;
+  std::vector<int> available_ids_;
+  AthenaArray<Real> vol_;
+  AthenaArray<MaterialPoint*> pcell_;
+  int seeds_per_cell_;
 };
 
 class TwoPhaseCloudParticles : public Particles {
 public:
   TwoPhaseCloudParticles(MeshBlock *pmb, ParameterInput *pin, std::string name);
   ~TwoPhaseCloudParticles() {}
+  void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
+    AthenaArray<Real> const &w);
   //void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
   //void Particulate(AthenaArray<Real> &c_dif);
 
 protected:
   int max_number_;
-  int seeds_per_cell_;
 };
 
 #endif

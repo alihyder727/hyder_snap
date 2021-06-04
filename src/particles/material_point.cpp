@@ -13,8 +13,8 @@
 #include "material_point.hpp"
 
 MaterialPoint::MaterialPoint() :
-  alive(1), ci(0), cj(0), ck(0), ct(0),
-  mass(0), x1(0.), x2(0.), x3(0.), 
+  next(nullptr), id(0), ci(0), cj(0), ck(0), ct(0),
+  time(0), mass(0), x1(0.), x2(0.), x3(0.), 
   v1(0.), v2(0.), v3(0.)
 {
 #if NREAL_PARTICLE_DATA > 0
@@ -38,11 +38,13 @@ MaterialPoint::MaterialPoint(MaterialPoint const& other)
 
 MaterialPoint& MaterialPoint::operator=(MaterialPoint const& other)
 {
-  alive = other.alive;
+  next = other.next;
+  id = other.id;
   ci = other.ci;
   cj = other.cj;
   ck = other.ck;
   ct = other.ct;
+  time = other.time;
   mass = other.mass;
   x1 = other.x1;
   x2 = other.x2;

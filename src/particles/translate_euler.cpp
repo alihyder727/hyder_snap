@@ -76,13 +76,13 @@ void Particles::TranslateEuler(std::vector<MaterialPoint> &mp, Real dt)
       // reserved implementation for multilevel, fi1, fi2
     }
 
-    int id = BoundaryBase::FindBufferID(ox1, ox2, ox3, fi1, fi2);
+    int bid = BoundaryBase::FindBufferID(ox1, ox2, ox3, fi1, fi2);
 
-    if (qi->alive && (id == -1)) { // particle is alive and inside domain
+    if (qi->id > 0 && bid == -1) { // particle is alive and inside domain
       qi++;
     } else {  // particle deseased or moved out of the domain
       std::swap(*qi, *(qj-1));
-      ppb->bufid.push_back(qi->alive ? id : -1); // Note that bufid is reversed
+      ppb->bufid.push_back(qi->id > 0 ? bid : -1); // Note that bufid is reversed
       qj--;
     }
   }
