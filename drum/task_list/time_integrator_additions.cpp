@@ -121,7 +121,7 @@ TaskStatus TimeIntegratorTaskList::MeshToParticles(MeshBlock *pmb, int stage) {
 
   Particles *ppar = pmb->ppar;
   while (ppar != nullptr) {
-    ppar->Particulate(ppar->dc);
+    ppar->Particulate(ppar->mp, ppar->dc);
     ppar = ppar->next;
   }
 

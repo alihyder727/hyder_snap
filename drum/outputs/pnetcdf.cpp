@@ -195,7 +195,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   // count total variables (vector variables are expanded into flat scalars)
   int nvars = 0;
-  while (pdata != NULL) {
+  while (pdata != nullptr) {
     nvars += pdata->data.GetDim4();
     pdata = pdata->pnext;
   }
@@ -209,7 +209,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   int *ivar = var_ids;
 
   pdata = pfirst_data_;
-  while (pdata != NULL) {
+  while (pdata != nullptr) {
     std::string name, attr;
     std::vector<std::string> longnames, units;
 
@@ -304,7 +304,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   // 4. allocate data buffer, MPI requests and status
   MeshBlock *pb = pmb;
   int max_ncells = 0,  nmb = 0;
-  while (pb != NULL) {
+  while (pb != nullptr) {
     int nf1 = pb->ie - pb->is + 2*NGHOST;
     int nf2 = pb->je - pb->js + 2*NGHOST;
     int nf3 = pb->ke - pb->ks + 2*NGHOST;
@@ -423,7 +423,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
     ivar = var_ids;
     pdata = pfirst_data_;
-    while (pdata != NULL) {
+    while (pdata != nullptr) {
       int nvar = pdata->data.GetDim4();
       if (pdata->grid == "CCF") {
         for (int n = 0; n < nvar; n++) {

@@ -241,3 +241,13 @@ public:
 };
 
 //----------------------------------------------------------------------------------------
+
+//! \class ParticlesOutput 
+//  \brief derived OutputType class for particles dumps
+class ParticlesTableOutput: public OutputType {
+public:
+  ParticlesTableOutput(OutputParameters oparams);
+  ~ParticlesTableOutput() {};
+  void WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag);
+  //void CombineBlocks();
+};

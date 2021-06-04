@@ -50,7 +50,7 @@ public:
     return cnames_.at(i);
   }
 
-  virtual void Particulate(AthenaArray<Real> &c_dif);
+  virtual void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c_dif);
   virtual void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
   virtual void WeightedAverage(std::vector<MaterialPoint> &mp_out,
     std::vector<MaterialPoint> const& mp_in, Real ave_wghts[]);

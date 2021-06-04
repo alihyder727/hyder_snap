@@ -160,12 +160,14 @@ void Particles::ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w)
     if (lengths_[1] > 1) {
       interpn(&vel, loc, v2.data(), coordinates_.data(), lengths_.data(), 3);
       q->v2 = vel;
-    }
+    } else
+      q->v2 = 0.;
 
     if (lengths_[0] > 1) {
       interpn(&vel, loc, v3.data(), coordinates_.data(), lengths_.data(), 3);
       q->v3 = vel;
-    }
+    } else
+      q->v3 = 0.;
   }
 }
 
@@ -197,10 +199,14 @@ void Particles::AggregateMass(AthenaArray<Real> &c_sum)
     loc[1] = q->x2;
     loc[2] = q->x1;
 
+    q->ck = pmb->ks;
     if (lengths_[0] > 1)
-      q->ck = pmb->ks + locate(coordinates_.data(), loc[0], lengths_[0]);
+      q->ck += locate(coordinates_.data(), loc[0], lengths_[0]);
+
+    q->cj = pmb->js;
     if (lengths_[1] > 1)
-      q->cj = pmb->js + locate(coordinates_.data() + lengths_[0], loc[1], lengths_[1]);
+      q->cj += pmb->js + locate(coordinates_.data() + lengths_[0], loc[1], lengths_[1]);
+
     q->ci = pmb->is + locate(coordinates_.data() + lengths_[0] + lengths_[1], 
       loc[2], lengths_[2]);
     c_sum(q->ct, q->ck, q->cj, q->ci) += q->mass;
@@ -215,7 +221,8 @@ void Particles::AggregateMass(AthenaArray<Real> &c_sum)
       }
 }
 
-void Particles::Particulate(AthenaArray<Real> &c_dif)
+void Particles::Particulate(std::vector<MaterialPoint> &mp, 
+  AthenaArray<Real> &c_dif)
 {
   MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
@@ -228,8 +235,8 @@ void Particles::Particulate(AthenaArray<Real> &c_dif)
             MaterialPoint p;
             p.ct = t;
             p.x1 = pco->x1f(i) + (1.*rand()/RAND_MAX)*pco->dx1f(i);
-            p.x2 = pco->x2f(i) + (1.*rand()/RAND_MAX)*pco->dx2f(i);
-            p.x3 = pco->x3f(i) + (1.*rand()/RAND_MAX)*pco->dx3f(i);
+            p.x2 = pco->x2f(j) + (1.*rand()/RAND_MAX)*pco->dx2f(j);
+            p.x3 = pco->x3f(k) + (1.*rand()/RAND_MAX)*pco->dx3f(k);
             p.v1 = 0.;
             p.v2 = 0.;
             p.v3 = 0.;

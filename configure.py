@@ -273,6 +273,16 @@ parser.add_argument('--nh3',
                     default='-1',
                     help='ammonia vapor id')
 
+# --npart_real=[value] argument
+parser.add_argument('--npart_real',
+                    default='0',
+                    help='set number of real particle data')
+
+# --npart_int=[value] argument
+parser.add_argument('--npart_int',
+                    default='0',
+                    help='set number of int particle data')
+
 # --x1rat=[value] argument
 parser.add_argument('--x1rat',
                     default='1.0',
@@ -473,6 +483,10 @@ definitions['NUMBER_VAPORS'] = args['nvapor']
 definitions['NHYDRO_VARIABLES'] = str(int(definitions['NHYDRO_VARIABLES']) + int(args['nvapor']))
 definitions['WATER_VAPOR_ID'] = args['h2o']
 definitions['AMMONIA_VAPOR_ID'] = args['nh3']
+
+definitions['NREAL_PARTICLE'] = args['npart_real']
+definitions['NINT_PARTICLE'] = args['npart_int']
+
 definitions['RAT1'] = args['x1rat']
 if args['x1rat'] == '1.0':
   definitions['STRETCHED_GRID'] = 'UNIFORM_GRID'
@@ -951,6 +965,8 @@ print('  Chemistry:                  ' + args['chem'])
 print('  Forcing Jacobian:           ' + args['jacobian'])
 print('  Magnetic fields:            ' + ('ON' if args['b'] else 'OFF'))
 print('  Number of vapors:           ' + args['nvapor'])
+print('  REAL particle data:         ' + args['npart_real'])
+print('  INT particle data:          ' + args['npart_int'])
 print('  Number of scalars:          ' + args['nscalars'])
 print('  Special relativity:         ' + ('ON' if args['s'] else 'OFF'))
 print('  General relativity:         ' + ('ON' if args['g'] else 'OFF'))

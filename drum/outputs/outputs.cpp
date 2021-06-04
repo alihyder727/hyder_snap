@@ -227,7 +227,7 @@ Outputs::Outputs(Mesh *pm, ParameterInput *pin) {
 
         // set output variable and optional data format string used in formatted writes
         if (op.file_type.compare("hst") != 0 && op.file_type.compare("rst") != 0 &&
-            op.file_type.compare("dbg") != 0) {
+            op.file_type.compare("dbg") != 0 && op.file_type.compare("ptab") != 0) {
           op.variable = pin->GetString(op.block_name, "variable");
         }
         op.data_format = pin->GetOrAddString(op.block_name, "data_format", "%12.5e");
@@ -275,6 +275,8 @@ Outputs::Outputs(Mesh *pm, ParameterInput *pin) {
 #endif
         } else if (op.file_type.compare("dbg") == 0) {
           pnew_type = new DebugOutput(op);
+        } else if (op.file_type.compare("ptab") == 0) {
+          pnew_type = new ParticlesTableOutput(op);
         } else {
           msg << "### FATAL ERROR in Outputs constructor" << std::endl
               << "Unrecognized file format = '" << op.file_type

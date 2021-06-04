@@ -55,7 +55,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   MeshBlock *pmb=pm->pblock;
 
   // Loop over MeshBlocks
-  while (pmb != NULL) {
+  while (pmb != nullptr) {
     // set start/end array indices depending on whether ghost zones are included
     out_is=pmb->is; out_ie=pmb->ie;
     out_js=pmb->js; out_je=pmb->je;
@@ -182,7 +182,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
     // count total variables (vector variables are expanded into flat scalars)
     int total_vars = 0;
-    while (pdata != NULL) {
+    while (pdata != nullptr) {
       if (pdata->grid == "-CC")
         total_vars += pdata->data.GetDim3();
       else
@@ -200,7 +200,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     int *ivar = var_ids;
 
     pdata = pfirst_data_;
-    while (pdata != NULL) {
+    while (pdata != nullptr) {
       std::string name, attr;
       std::vector<std::string> longnames, units;
 
@@ -333,7 +333,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
     ivar = var_ids;
     pdata = pfirst_data_;
-    while (pdata != NULL) {
+    while (pdata != nullptr) {
       int nvar;
       if (pdata->grid == "-CC")
         nvar = pdata->data.GetDim3();
