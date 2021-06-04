@@ -9,13 +9,17 @@
 #include "../mesh/mesh.hpp"
 #include "particles.hpp"
 
-TwoPhaseCloudParticles::TwoPhaseCloudParticles(MeshBlock *pmb, ParameterInput *pin):
-  Particles(pmb, pin, "2pcp")
+TwoPhaseCloudParticles::TwoPhaseCloudParticles(
+  MeshBlock *pmb, ParameterInput *pin, std::string name):
+  Particles(pmb, pin, name)
 {
   int nc1 = lengths_[2], nc2 = lengths_[1], nc3 = lengths_[0];
-  c.NewAthenaArray(2*NVAPOR, nc3, nc2, nc1);
-  dc.NewAthenaArray(2*NVAPOR, nc3, nc2, nc1);
+  c.NewAthenaArray(2, nc3, nc2, nc1);
+  dc.NewAthenaArray(2, nc3, nc2, nc1);
+  cnames_.resize(2);
+  cnames_[0] = "liquid";
+  cnames_[1] = "solid";
 
-  max_number_ = pin->GetOrAddInteger("particles", "2pcp.max_number", 1<<20);
-  seeds_per_cell_ = pin->GetOrAddInteger("particles", "2pcp.seeds_per_cell", 1<<6);
+  max_number_ = pin->GetOrAddInteger("particles", name + ".max_number", 1<<20);
+  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 1<<6);
 }

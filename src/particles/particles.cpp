@@ -34,8 +34,12 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
 
   while (p != NULL) {
     std::stringstream msg;
-    if (std::strcmp(p, "2pcp") == 0) {
-      AddParticles(TwoPhaseCloudParticles(pmb, pin));
+    std::string name;
+    char *c = std::strchr(p, '.');
+    if (c != NULL) name = c+1;
+    else name = p;
+    if (std::strncmp(p, "2pcp", 4) == 0) {
+      AddParticles(TwoPhaseCloudParticles(pmb, pin, name));
     } else {
       msg << "### FATAL ERROR in function Particles::Particles"
           << std::endl << "Particles '" << p << "' "
@@ -113,6 +117,7 @@ Particles& Particles::operator=(Particles const& other)
   vol_ = other.vol_;
   coordinates_ = other.coordinates_;
   lengths_ = other.lengths_;
+  cnames_ = other.cnames_;
 
   ppb = new ParticleBuffer(this);
 

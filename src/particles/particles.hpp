@@ -43,6 +43,12 @@ public:
   void TranslateEuler(std::vector<MaterialPoint> &mp, Real dt);
   void ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w);
   void AggregateMass(AthenaArray<Real> &c_sum);
+  int Categories() const {
+    return c.GetDim4();
+  }
+  std::string CategoryName(int i) const {
+    return cnames_.at(i);
+  }
 
   virtual void Particulate(AthenaArray<Real> &c_dif);
   virtual void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
@@ -53,11 +59,12 @@ protected:
   AthenaArray<Real> vol_;
   std::vector<Real> coordinates_;
   std::vector<int> lengths_;
+  std::vector<std::string> cnames_;
 };
 
 class TwoPhaseCloudParticles : public Particles {
 public:
-  TwoPhaseCloudParticles(MeshBlock *pmb, ParameterInput *pin);
+  TwoPhaseCloudParticles(MeshBlock *pmb, ParameterInput *pin, std::string name);
   ~TwoPhaseCloudParticles() {}
   //void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
   //void Particulate(AthenaArray<Real> &c_dif);

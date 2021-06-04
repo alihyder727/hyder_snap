@@ -99,6 +99,7 @@
 #include "../scalars/scalars.hpp"
 #include "../diagnostics/diagnostics.hpp"
 #include "../radiation/radiation.hpp"
+#include "../particles/particles.hpp"
 #include "outputs.hpp"
 
 //----------------------------------------------------------------------------------------
@@ -706,34 +707,24 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
     }
   }
 
-  /* cloud
-  if (NVAPOR > 0) {
-    std::string str = "cloud?";
-    for (int i = 1; i < NPHASE; ++i) {
-      if (output_params.variable.compare("prim") == 0 ||
-          output_params.variable.compare("cloud") == 0) {
+  // particles
+  if (output_params.variable.compare("prim") == 0) {
+    Particles *p = pmb->ppar;
+    while (p != nullptr) {
+      for (int i = 0; i < p->Categories(); ++i) {
         pod = new OutputData;
-        pod->type = "VECTORS";
-        char c = '1' + i - 1;
-        pod->name = str + c;
-        pod->long_name = "mass mixing ratio of " + pod->name;
-        pod->units = "kg/kg";
-        pod->data.InitWithShallowSlice(phyd->w,4,1+i*NVAPOR,NVAPOR);
+        pod->type = "SCALARS";
+        pod->name = p->myname + "_p" + std::to_string(1+i);
+        pod->long_name = "density of " + p->myname + " " +
+                         p->CategoryName(i) + " particles";
+        pod->units = "kg/m^3";
+        pod->data.InitWithShallowSlice(p->c,4,i,1);
         AppendOutputDataNode(pod);
-        num_vars_+=NVAPOR;
+        num_vars_ += 1;
       }
-
-      if (output_params.variable.compare("cons") == 0) {
-        pod = new OutputData;
-        pod->type = "VECTORS";
-        char c = '1' + i - 1;
-        pod->name = str + c;
-        pod->data.InitWithShallowSlice(phyd->u,4,1+i*NVAPOR,NVAPOR);
-        AppendOutputDataNode(pod);
-        num_vars_+=NVAPOR;
-      }
+      p = p->next;
     }
-  }*/
+  }
 
   // diagnostic
   if (output_params.variable.compare("diag") == 0) {
