@@ -13,7 +13,7 @@ TwoPhaseCloudParticles::TwoPhaseCloudParticles(
   MeshBlock *pmb, ParameterInput *pin, std::string name):
   Particles(pmb, pin, name)
 {
-  int nc1 = lengths_[2], nc2 = lengths_[1], nc3 = lengths_[0];
+  int nc1 = dims_[2], nc2 = dims_[1], nc3 = dims_[0];
   c.NewAthenaArray(2, nc3, nc2, nc1);
   dc.NewAthenaArray(2, nc3, nc2, nc1);
   cnames_.resize(2);

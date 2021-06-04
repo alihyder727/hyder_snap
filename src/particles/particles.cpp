@@ -68,16 +68,16 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name):
 
   coordinates_.resize(nc3+nc2+nc1);
   for (int k = 0; k < nc3; ++k)
-    coordinates_[k] = pmb->pcoord->x3v(k);
+    coordinates_[k] = pmb->pcoord->x3f(k);
   for (int j = 0; j < nc2; ++j)
-    coordinates_[nc3+j] = pmb->pcoord->x2v(j);
+    coordinates_[nc3+j] = pmb->pcoord->x2f(j);
   for (int i = 0; i < nc1; ++i)
-    coordinates_[nc3+nc2+i] = pmb->pcoord->x1v(i);
+    coordinates_[nc3+nc2+i] = pmb->pcoord->x1f(i);
 
-  lengths_.resize(3);
-  lengths_[0] = nc3;
-  lengths_[1] = nc2;
-  lengths_[2] = nc1;
+  dims_.resize(3);
+  dims_[0] = nc3;
+  dims_[1] = nc2;
+  dims_[2] = nc1;
   vol_.NewAthenaArray(nc1);
 
   ppb = new ParticleBuffer(this);
@@ -116,7 +116,7 @@ Particles& Particles::operator=(Particles const& other)
 
   vol_ = other.vol_;
   coordinates_ = other.coordinates_;
-  lengths_ = other.lengths_;
+  dims_ = other.dims_;
   cnames_ = other.cnames_;
 
   ppb = new ParticleBuffer(this);
@@ -154,17 +154,17 @@ void Particles::ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w)
     loc[1] = q->x2;
     loc[2] = q->x1;
 
-    interpn(&vel, loc, v1.data(), coordinates_.data(), lengths_.data(), 3);
+    interpn(&vel, loc, v1.data(), coordinates_.data(), dims_.data(), 3);
     q->v1 = vel;
 
-    if (lengths_[1] > 1) {
-      interpn(&vel, loc, v2.data(), coordinates_.data(), lengths_.data(), 3);
+    if (dims_[1] > 1) {
+      interpn(&vel, loc, v2.data(), coordinates_.data(), dims_.data(), 3);
       q->v2 = vel;
     } else
       q->v2 = 0.;
 
-    if (lengths_[0] > 1) {
-      interpn(&vel, loc, v3.data(), coordinates_.data(), lengths_.data(), 3);
+    if (dims_[0] > 1) {
+      interpn(&vel, loc, v3.data(), coordinates_.data(), dims_.data(), 3);
       q->v3 = vel;
     } else
       q->v3 = 0.;
@@ -180,12 +180,12 @@ void Particles::ExchangeHydro(AthenaArray<Real> &du, AthenaArray<Real> const &w)
     loc[1] = q->x2;
     loc[2] = q->x1;
 
-    if (lengths_[0] > 1)
-      q->ck = pmb->ks + locate(coordinates_.data(), loc[0], lengths_[0]);
-    if (lengths_[1] > 1)
-      q->cj = pmb->js + locate(coordinates_.data() + lengths_[0], loc[1], lengths_[1]);
-    q->ci = pmb->is + locate(coordinates_.data() + lengths_[0] + lengths_[1], 
-      loc[2], lengths_[2]);
+    if (dims_[0] > 1)
+      q->ck = pmb->ks + locate(coordinates_.data(), loc[0], dims_[0]);
+    if (dims_[1] > 1)
+      q->cj = pmb->js + locate(coordinates_.data() + dims_[0], loc[1], dims_[1]);
+    q->ci = pmb->is + locate(coordinates_.data() + dims_[0] + dims_[1], 
+      loc[2], dims_[2]);
   }
 }*/
 
@@ -199,16 +199,16 @@ void Particles::AggregateMass(AthenaArray<Real> &c_sum)
     loc[1] = q->x2;
     loc[2] = q->x1;
 
-    q->ck = pmb->ks;
-    if (lengths_[0] > 1)
-      q->ck += locate(coordinates_.data(), loc[0], lengths_[0]);
+    if (dims_[0] > 1)
+      q->ck = locate(coordinates_.data(), loc[0], dims_[0]);
+    else q->ck = pmb->ks;
 
-    q->cj = pmb->js;
-    if (lengths_[1] > 1)
-      q->cj += pmb->js + locate(coordinates_.data() + lengths_[0], loc[1], lengths_[1]);
+    if (dims_[1] > 1)
+      q->cj = locate(coordinates_.data() + dims_[0], loc[1], dims_[1]);
+    else q->cj = pmb->js;
 
-    q->ci = pmb->is + locate(coordinates_.data() + lengths_[0] + lengths_[1], 
-      loc[2], lengths_[2]);
+    q->ci = locate(coordinates_.data() + dims_[0] + dims_[1], 
+      loc[2], dims_[2]);
     c_sum(q->ct, q->ck, q->cj, q->ci) += q->mass;
   }
 

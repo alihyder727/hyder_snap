@@ -58,7 +58,7 @@ public:
 protected:
   AthenaArray<Real> vol_;
   std::vector<Real> coordinates_;
-  std::vector<int> lengths_;
+  std::vector<int> dims_;
   std::vector<std::string> cnames_;
 };
 
