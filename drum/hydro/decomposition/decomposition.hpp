@@ -30,7 +30,7 @@ public:
   void ChangeToBuoyancy(AthenaArray<Real> &w, int kl, int ku, int jl, int ju);
   void RestoreFromBuoyancy(AthenaArray<Real> &w, AthenaArray<Real> &wl, AthenaArray<Real> &wr,
     int k, int j, int il, int iu);
-  void ApplyBoundaryCondition(AthenaArray<Real> &w, AthenaArray<Real> &psf,
+  void ApplyHydroBoundary(AthenaArray<Real> &w, AthenaArray<Real> &psf,
     int kl, int ku, int jl, int ju);
 
   void RecvBuffer(AthenaArray<Real> &psf,

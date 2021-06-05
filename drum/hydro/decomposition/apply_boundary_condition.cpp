@@ -3,7 +3,7 @@
 #include "../../mesh/mesh.hpp"
 #include "decomposition.hpp"
 
-void Decomposition::ApplyBoundaryCondition(AthenaArray<Real> &w, AthenaArray<Real> &psf,
+void Decomposition::ApplyHydroBoundary(AthenaArray<Real> &w, AthenaArray<Real> &psf,
   int kl, int ku, int jl, int ju)
 {
   MeshBlock *pmb = pmy_hydro->pmy_block;

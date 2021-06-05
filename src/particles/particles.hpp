@@ -68,12 +68,11 @@ public:
   }
 
   Particles* FindParticle(std::string name);
-  void TranslateEuler(std::vector<MaterialPoint> &mp, Real dt);
   void AggregateMass(AthenaArray<Real> &c_sum);
+  void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c_dif);
 
   virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
     AthenaArray<Real> const &w);
-  virtual void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c_dif);
   virtual void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
   virtual void WeightedAverage(std::vector<MaterialPoint> &mp_out,
     std::vector<MaterialPoint> const& mp_in, Real ave_wghts[]);
@@ -95,7 +94,6 @@ public:
   void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
     AthenaArray<Real> const &w);
   //void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
-  //void Particulate(AthenaArray<Real> &c_dif);
 
 protected:
   int max_number_;

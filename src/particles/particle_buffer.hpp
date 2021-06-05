@@ -27,7 +27,6 @@ class ParticleBuffer {
 public:
   // data
   Particles *pmy_particle;
-  std::vector<int> bufid;
 
   // functions
   ParticleBuffer(Particles *ppar);

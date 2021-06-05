@@ -1,4 +1,4 @@
-/** @file translate_euler.cpp
+/** @file detach_particle.cpp
  * @brief
  *
  * @author Cheng Li (chengcli@umich.edu)
@@ -7,18 +7,18 @@
  */
 
 // C/C++ headers
-#include <algorithm>
+//#include <algorithm>
+//#include <iostream>
 
 // Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "../bvals/bvals.hpp"
-#include "particles.hpp"
 #include "particle_buffer.hpp"
-#include "material_point.hpp"
+#include "particles.hpp"
 
-void Particles::TranslateEuler(std::vector<MaterialPoint> &mp, Real dt)
+void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
 {
-  MeshBlock *pmb = pmy_block;
+  MeshBlock *pmb = pmy_particle->pmy_block;
   Mesh *pm = pmb->pmy_mesh;
 
   Real x1min = pmb->block_size.x1min;
@@ -33,10 +33,10 @@ void Particles::TranslateEuler(std::vector<MaterialPoint> &mp, Real dt)
   std::vector<MaterialPoint>::iterator qj = mp.end();
 
   while (qi < qj) {
-    qi->x1 += qi->v1*dt;
-    qi->x2 += qi->v2*dt;
-    qi->x3 += qi->v3*dt;
-
+    while (qi->id < 0) {
+      *qi = *(qj-1);
+      qj--;
+    } // proceed to living particle
     // take care of reflective boundary condition
     if (pmb->pbval->block_bcs[inner_x1] == BoundaryFlag::reflect && qi->x1 < x1min) {
       qi->x1 = 2*x1min - qi->x1;
@@ -48,7 +48,7 @@ void Particles::TranslateEuler(std::vector<MaterialPoint> &mp, Real dt)
     }
     ox1 = qi->x1 < x1min ? -1 : (qi->x1 > x1max ? 1 : 0);
 
-    if (pm->f2 > 1) {
+    if (pm->f2) {
       if (pmb->pbval->block_bcs[inner_x2] == BoundaryFlag::reflect && qi->x2 < x2min) {
         qi->x2 = 2*x2min - qi->x2;
         qi->v2 = - qi->v2;
@@ -60,7 +60,7 @@ void Particles::TranslateEuler(std::vector<MaterialPoint> &mp, Real dt)
       ox2 = qi->x2 < x2min ? -1 : (qi->x2 > x2max ? 1 : 0);
     }
 
-    if (pm->f3 > 1) {
+    if (pm->f3) {
       if (pmb->pbval->block_bcs[inner_x3] == BoundaryFlag::reflect && qi->x3 < x3min) {
         qi->x3 = 2*x3min - qi->x3;
         qi->v3 = - qi->v3;
@@ -77,13 +77,16 @@ void Particles::TranslateEuler(std::vector<MaterialPoint> &mp, Real dt)
     }
 
     int bid = BoundaryBase::FindBufferID(ox1, ox2, ox3, fi1, fi2);
-
-    if (qi->id > 0 && bid == -1) { // particle is alive and inside domain
+    if (bid == -1) { // particle inside domain
       qi++;
-    } else {  // particle deseased or moved out of the domain
-      std::swap(*qi, *(qj-1));
-      ppb->bufid.push_back(qi->id > 0 ? bid : -1); // Note that bufid is reversed
+    } else {  // particle moved out of the domain
+      //std::cout << qj->x2 << " ";
+      particle_send_[bid].push_back(*qi);
+      *qi = *(qj-1);
       qj--;
     }
   }
+
+  mp.resize(qi - mp.begin());
+  //std::cout << std::endl;
 }

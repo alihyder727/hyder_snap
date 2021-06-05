@@ -293,7 +293,11 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp,
 
 void Particles::TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt)
 {
-  TranslateEuler(mp, dt);
+  for (std::vector<MaterialPoint>::iterator it = mp.begin(); it != mp.end(); ++it) {
+    it->x1 += it->v1*dt;
+    it->x2 += it->v2*dt;
+    it->x3 += it->v3*dt;
+  }
 }
 
 void Particles::WeightedAverage(std::vector<MaterialPoint> &mp_out,

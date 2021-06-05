@@ -267,14 +267,14 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       AddTask(INT_HYD, (CALC_HYDFLX|CALC_RADFLX));
     }
     AddTask(SRCTERM_HYD,INT_HYD);
-    AddTask(INT_PART, INT_HYD);
-    AddTask(UPDATE_HYD,(SRCTERM_HYD|INT_PART));
-    AddTask(INT_CHM,UPDATE_HYD);
-    AddTask(MESH2PART,INT_CHM);
-    AddTask(SEND_PART,MESH2PART);
+    AddTask(INT_PART,INT_HYD);
+    AddTask(SEND_PART,INT_PART);
     AddTask(RECV_PART,SEND_PART);
     AddTask(ATTACH_PART,RECV_PART);
     AddTask(PART2MESH,ATTACH_PART);
+    AddTask(UPDATE_HYD,(SRCTERM_HYD|INT_PART));
+    AddTask(INT_CHM,(UPDATE_HYD|PART2MESH));
+    AddTask(MESH2PART,INT_CHM);
     // finish particles
     AddTask(SEND_HYD,PART2MESH);
     AddTask(RECV_HYD,NONE);

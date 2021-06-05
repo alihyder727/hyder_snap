@@ -96,7 +96,7 @@ void Decomposition::ChangeToBuoyancy(AthenaArray<Real> &w, int kl, int ku, int j
     }
 
   SyncNewVariables(w, kl, ku, jl, ju);
-  ApplyBoundaryCondition(w, psf_, kl, ku, jl, ju);
+  ApplyHydroBoundary(w, psf_, kl, ku, jl, ju);
 
   /* debug
   if (Globals::my_rank == 0) {
