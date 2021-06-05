@@ -7,18 +7,16 @@
  */
 
 // C++ headers
+#include <ctime>
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
-#ifdef MPI_PARALLEL
-#include <mpi.h>
-  MPI_Datatype MPI_PARTICLE;
-#endif
 
 // Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "../coordinates/coordinates.hpp"
 #include "../math/interpolation.h" // interpn, locate
+#include "../globals.hpp"
 #include "material_point.hpp"
 #include "particles.hpp"
 #include "particle_buffer.hpp"
@@ -50,17 +48,6 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
     }
     p = std::strtok(NULL, " ,");
   }
-
-#ifdef MPI_PARALLEL
-  // MPI_PARTICLE
-  assert(sizeof(MaterialPoint*) == sizeof(int));
-  int counts[2] = {6+NINT_PARTICLE_DATA, 8+NREAL_PARTICLE_DATA};
-  MPI_Datatype types[2] = {MPI_INT, MPI_ATHENA_REAL};
-  MPI_Aint disps[2] = {offsetof(MaterialPoint, next), offsetof(MaterialPoint, time)};
-
-  MPI_Type_create_struct(2, counts, disps, types, &MPI_PARTICLE);
-  MPI_Type_commit(&MPI_PARTICLE);
-#endif
 }
 
 // constructor, initializes data structure and parameters
@@ -96,10 +83,6 @@ Particles::~Particles()
   if (prev != nullptr) prev->next = next;
   if (next != nullptr) next->prev = prev;
   delete ppb;
-#ifdef MPI_PARALLEL
-  if ((prev == nullptr) && (next == nullptr))
-    MPI_Type_free(&MPI_PARTICLE);
-#endif
 }
 
 Particles::Particles(Particles const& other):
@@ -244,6 +227,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp,
 {
   MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
+  srand(Globals::my_rank + time(NULL));
   for (int t = 0; t < Categories(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j) {

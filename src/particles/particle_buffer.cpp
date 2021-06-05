@@ -1,12 +1,8 @@
 // C/C++ headers
 #include <sstream>
-#include <cstddef>
+//#include <cstddef>
 #include <functional>
 #include <iostream>
-#ifdef MPI_PARALLEL
-  // defined in particles.cpp
-  extern MPI_Datatype MPI_PARTICLE;
-#endif
 
 // Athena++ classes headers
 #include "../mesh/mesh.hpp"
@@ -15,6 +11,11 @@
 #include "material_point.hpp"
 #include "particle_buffer.hpp"
 #include "particles.hpp"
+
+#ifdef MPI_PARALLEL
+  // defined in main.cpp
+  extern MPI_Datatype MPI_PARTICLE;
+#endif
 
 ParticleBuffer::ParticleBuffer(Particles *ppar):
   pmy_particle(ppar)
@@ -56,7 +57,7 @@ void ParticleBuffer::SendParticle()
     }
 #ifdef MPI_PARALLEL
     else { // MPI
-      int tag = CreateBvalsMPITag(nb.lid, nb.targetid);
+      int tag = CreateMPITag(nb.snb.lid, nb.targetid);
       int ssize = particle_send_[nb.bufid].size();
       MPI_Isend(particle_send_[nb.bufid].data(), ssize, MPI_PARTICLE,
                 nb.snb.rank, tag, MPI_COMM_WORLD, &req_particle_send_[nb.bufid]);
@@ -77,12 +78,12 @@ void ParticleBuffer::RecvParticle()
     if (nb.snb.rank == Globals::my_rank) continue; // local boundary received
 
     if (particle_flag_[nb.bufid] == BoundaryStatus::waiting) {
-      int tag = CreateBvalsMPITag(pmb->lid, nb.bufid);
-      MPI_Probe(nb.rank, tag, MPI_COMM_WORLD, &status);
+      int tag = CreateMPITag(pmb->lid, nb.bufid);
+      MPI_Probe(nb.snb.rank, tag, MPI_COMM_WORLD, &status);
       MPI_Get_count(&status, MPI_PARTICLE, &rsize);
       particle_recv_[nb.bufid].resize(rsize);
       MPI_Irecv(particle_recv_[nb.bufid].data(), rsize, MPI_PARTICLE,
-                nb.rank, tag, MPI_COMM_WORLD, &req_particle_recv_[nb.bufid]);
+                nb.snb.rank, tag, MPI_COMM_WORLD, &req_particle_recv_[nb.bufid]);
     }
   }
 #endif
