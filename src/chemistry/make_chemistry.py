@@ -1,0 +1,260 @@
+#! /usr/bin/env python3
+import re, sympy, io
+
+def read_symbols(fname):
+  symbols, inblock = [], False
+  with open(fname, 'r') as file:
+    lines = file.readlines()
+    for line in lines:
+      line = line.strip()
+      if line == '# symbols':
+        inblock = True
+        continue
+      if inblock:
+        if len(line) == 0: break
+        if line[0] == '-':
+          symbols += [line.split('-')[1].strip()]
+  return symbols
+
+def read_relations(fname):
+  relations, inblock = {}, False
+  with open(fname, 'r') as file:
+    lines = file.readlines()
+    for line in lines:
+      line = line.strip()
+      if line == '# relations':
+        inblock = True
+        continue
+      if inblock:
+        if len(line) == 0: break
+        if line[0] == '-':
+          fields = line[1:].split('->')
+          name, replace = fields[0].strip(), fields[1].strip()
+          name = re.sub(' ', '', name)
+          relations[name] = replace
+  return relations
+
+def read_reactions(fname, rtype):
+  reactions, inblock = [], False
+  with open(fname, 'r') as file:
+    lines = file.readlines()
+    for line in lines:
+      line = line.strip()
+      if line == '# %s reactions' % rtype:
+        inblock = True
+        continue
+      if inblock:
+        if len(line) == 0: break
+        if line[0] == '-':
+          reactions += [line[1:].strip()]
+  return reactions
+
+def get_simple_rate(rate, inps):
+  if len(inps) == 1:
+    return rate+'*'+inps[0]
+  else:
+    return rate+'*'+'*'.join(inps)
+
+def get_derivative(rstr, s, vlist):
+  dstr = str(sympy.diff(rstr, s))
+  result = re.search('Derivative\(.+\)', dstr)
+
+  if (result):
+    x = result.group()
+    x = re.sub(' ', '', x)
+    dstr = re.sub('Derivative\(.+\)', '<sub>', dstr)
+  #for v in vlist:
+  #  dstr = re.sub(v, 'q[i'+v+']', dstr)
+  if (result):
+    dstr = re.sub('<sub>', x, dstr)
+  return dstr
+
+def split_stoichiometry(var):
+  result = re.match('[1-9][0-9]*', var)
+  if (result):
+    c = result.group()
+    var = re.sub(c, '', var)
+  else:
+    c = 1
+  return var, int(c)
+
+def parse_reaction_formula(formula):
+  formula = formula.split('->')
+  inp = formula[0].split('+')
+  inp = [x.strip() for x in inp]
+  out = formula[1].split('+')
+  out = [x.strip() for x in out]
+  return inp, out
+
+def parse_full_reaction(text):
+  rmap = {}
+  uncondition = text.split('|')
+  if len(uncondition) > 1:
+    rmap['condition'] = uncondition[1].strip()
+  else:
+    rmap['condition'] = None
+
+  uncondition = uncondition[0]
+  fields = uncondition.split(';')
+  rmap['formula'] = fields[0].strip()
+  if len(fields) > 1:
+    rmap['rate'] = fields[1].strip()
+  if len(fields) > 2:
+    rmap['enthalpy'] = fields[2].strip()
+  if len(fields) > 3:
+    raise("ERROR")
+
+  return rmap
+
+def write_reaction(formula, rate, vlist, rtype = 'simple', relations = None):
+  inps, outs = parse_reaction_formula(formula)
+  istoi = [list(split_stoichiometry(x)) for x in inps]
+  ostoi = [list(split_stoichiometry(x)) for x in outs]
+  for x in istoi:
+    for y in ostoi:
+      if x[0] == y[0]:
+        v = min(x[1], y[1])
+        x[1] -= v
+        y[1] -= v
+
+  if rtype == 'simple':
+    rstr1 = get_simple_rate(rate, inps)
+  else:
+    rstr1 = rate
+  syms = sympy.symbols(vlist)
+
+  #rstr2 = re.sub('([a-zA-z]+\w*)\([^()]+\)', '\g<1>', rstr1)
+  #for v in vlist:
+  #  rstr2 = re.sub(v, 'q[i'+v+']', rstr2)
+
+  output = '// %s; %s\n' % (formula, rate)
+
+  for name,c in istoi:
+    if c == 0: continue
+    rate_line = 'rate(i%s) -= %s\n' % (name, rstr1)
+    output += rate_line
+    for s in syms:
+      jstr = get_derivative(rstr1, s, vlist)
+      if jstr == '0': continue
+      jac_line = 'jac(i%s,i%s) -= %s\n' % (name, s, jstr)
+      output += jac_line
+
+  for name,c in ostoi:
+    if c == 0: continue
+    if c != 1:
+      rate_line = 'rate(i%s) += %s\n' % (name, str(c)+'*'+rstr1)
+    else:
+      rate_line = 'rate(i%s) += %s\n' % (name, rstr1)
+    output += rate_line
+    for s in syms:
+      jstr = get_derivative(rstr1, s, vlist)
+      if jstr == '0': continue
+      jac_line = 'jac(i%s,i%s) += %s\n' % (name, s, jstr)
+      output += jac_line
+
+  # replace relations
+  if relations != None:
+    for key in relations:
+      output = output.replace(key, relations[key])
+
+  return output
+
+def add_indent(lines, fmt = '  '):
+  lines = io.StringIO(lines)
+  newlines = ''
+  for line in lines:
+    newlines += fmt + line
+  return newlines
+
+def write_definitions(vlist):
+  output = ''
+  for i,v in enumerate(vlist):
+    output += 'int i%s = hydro_indx_[%d];\n' % (v,i)
+    output += 'Real %s = q[i%s];\n' % (v,v)
+  return output
+
+def read_coefficients(fname):
+  coeffs, inblock = [], False
+  with open(fname, 'r') as file:
+    lines = file.readlines()
+    for line in lines:
+      line = line.strip()
+      if line == '# coefficients':
+        inblock = True
+        continue
+      if inblock:
+        if len(line) == 0: break
+        if line[0] == '-':
+          coeffs += [line[1:].strip()]
+  return coeffs 
+
+def read_verbatim(fname):
+  texts, inblock, inverb = [], False, False
+  with open(fname, 'r') as file:
+    lines = file.readlines()
+    for line in lines:
+      line = line.strip()
+      if line == '# verbatim':
+        inblock = True
+        continue
+      if inblock:
+        if line[:3] == '~~~':
+          inverb = not inverb;
+          if inverb: continue
+          else: break
+        texts += [line]
+  return '\n'.join(texts)
+
+def write_header(fname):
+  with open(fname, 'r') as file:
+    line = file.readline()
+  result = re.search('# \*\*(.+)\*\*', line)
+  name = result.group(1)
+  header = '''template<typename D1, typename D2>
+void ChemistryBase<%s>::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
+  Eigen::DenseBase<D2>& jac, Real const q[], Real time)
+{'''
+  header = header % name
+  return header
+
+def write_footer():
+  footer = '''}'''
+  return footer
+
+if __name__ == '__main__':
+  vlist = read_symbols('kessler94.md')
+  relations = read_relations('kessler94.md')
+  coeffs = read_coefficients('kessler94.md')
+  verb = read_verbatim('kessler94.md')
+
+  header_str = write_header('kessler94.md')
+  footer_str = write_footer()
+
+  defs_str = write_definitions(vlist)
+  coeffs_str = add_indent('\n'.join(coeffs), 'Real ') + '\n'
+  verb_str = verb + '\n'
+
+  rtypes = ['simple', 'custom']
+  react_str = ''
+  for rtype in rtypes:
+    reactions = read_reactions('kessler94.md', rtype)
+    for r in reactions:
+      rmap = parse_full_reaction(r)
+      if rmap['condition'] != None:
+        output = 'if (%s) {\n' % rmap['condition']
+        output += add_indent(write_reaction(rmap['formula'], rmap['rate'], vlist,
+          rtype = rtype, relations = relations))
+        output += '}\n'
+      else:
+        output = write_reaction(rmap['formula'], rmap['rate'], vlist,
+          rtype = rtype, relations = relations)
+      react_str += output + '\n'
+
+  result = '\n'.join([header_str,
+    add_indent(defs_str),
+    add_indent(coeffs_str),
+    add_indent(verb_str),
+    add_indent(react_str),
+    footer_str])
+
+  print(result)
