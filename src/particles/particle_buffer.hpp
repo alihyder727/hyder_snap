@@ -29,7 +29,7 @@ public:
   Particles *pmy_particle;
 
   // functions
-  ParticleBuffer(Particles *ppar);
+  ParticleBuffer(Particles *ppart);
   ~ParticleBuffer();
   int CreateMPITag(int lid, int tid);
   void DetachParticle(std::vector<MaterialPoint> &mp);

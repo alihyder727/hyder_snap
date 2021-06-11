@@ -57,6 +57,10 @@ public:
     return id;
   }
 
+  int GetMu(int i) const {
+    return mu_[i];
+  }
+
   int ParticlesInCell(int t, int k, int j, int i) {
     int num = 0;
     MaterialPoint *pc = pcell_(t,k,j,i);
@@ -82,9 +86,19 @@ protected:
   std::vector<int> dims_;
   std::vector<std::string> cnames_;
   std::vector<int> available_ids_;
+  //! heat capacity
+  std::vector<int> cc_;
+  //! mean molecular weight
+  std::vector<int> mu_;
   AthenaArray<Real> vol_;
   AthenaArray<MaterialPoint*> pcell_;
   int seeds_per_cell_;
+};
+
+class SimpleCloudParticles : public Particles {
+public:
+  SimpleCloudParticles(MeshBlock *pmb, ParameterInput *pin, std::string name);
+  ~SimpleCloudParticles() {}
 };
 
 class TwoPhaseCloudParticles : public Particles {

@@ -729,10 +729,10 @@ TaskStatus TimeIntegratorTaskList::ClearAllBoundary(MeshBlock *pmb, int stage) {
   pmb->pbval->ClearBoundary(BoundaryCommSubset::all);
   // particle boundary at final stage
   if (stage == nstages) {
-    Particles *ppar = pmb->ppar;
-    while (ppar != nullptr) {
-      ppar->ppb->ClearBoundary();
-      ppar = ppar->next;
+    Particles *ppart = pmb->ppart;
+    while (ppart != nullptr) {
+      ppart->ppb->ClearBoundary();
+      ppart = ppart->next;
     }
   }
   return TaskStatus::success;

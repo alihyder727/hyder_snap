@@ -51,9 +51,6 @@
 // include radiative transfer? default=0 (false)
 #define RADIATION_ENABLED 0
 
-// chemistry
-#define CHEMISTRY @CHEMISTRY@
-
 // radiation
 #define @RT_SOLVER@
 

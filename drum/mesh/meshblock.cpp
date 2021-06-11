@@ -179,15 +179,15 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
 
   peos = new EquationOfState(this, pin);
   pthermo = new Thermodynamics(this, pin);
-  pchem = new CHEMISTRY(this, pin);
   prad = new Radiation(this, pin);
   pphy = new Physics(this, pin);
+  // initialize particles and remove the first one (header)
+  ppart = new Particles(this, pin);
+  ppart = ppart->next;
+  delete ppart->prev;
+  pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
-  // initialize particles and remove the first one (header)
-  ppar = new Particles(this, pin);
-  ppar = ppar->next;
-  delete ppar->prev;
 
   // Create user mesh data
   InitUserMeshBlockData(pin);
@@ -304,15 +304,15 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
 
   peos = new EquationOfState(this, pin);
   pthermo = new Thermodynamics(this, pin);
-  pchem = new CHEMISTRY(this, pin);
   prad = new Radiation(this, pin);
   pphy = new Physics(this, pin);
+  // initialize particles and remove the first one (header)
+  ppart = new Particles(this, pin);
+  ppart = ppart->next;
+  delete ppart->prev;
+  pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
-  // initialize particles and remove the first one (header)
-  ppar = new Particles(this, pin);
-  ppar = ppar->next;
-  delete ppar->prev;
 
   InitUserMeshBlockData(pin);
 
@@ -409,7 +409,6 @@ MeshBlock::~MeshBlock() {
   if (nint_user_meshblock_data_ > 0) delete [] iuser_meshblock_data;
 
   delete pthermo;
-  delete pchem;
   delete prad;
   delete pphy;
 
@@ -425,13 +424,14 @@ MeshBlock::~MeshBlock() {
     delete pdebug->next;
   delete pdebug;
 
-  if (ppar != nullptr) {
-    while (ppar->prev != nullptr)
-      delete ppar->prev;
-    while (ppar->next != nullptr)
-      delete ppar->next;
-    delete ppar;
+  if (ppart != nullptr) {
+    while (ppart->prev != nullptr)
+      delete ppart->prev;
+    while (ppart->next != nullptr)
+      delete ppart->next;
+    delete ppart;
   }
+  delete pchem;
 }
 
 //----------------------------------------------------------------------------------------

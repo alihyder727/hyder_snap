@@ -40,6 +40,8 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
     else name = p;
     if (std::strncmp(p, "2pcp", 4) == 0) {
       AddParticles(TwoPhaseCloudParticles(pmb, pin, name));
+    } else if (std::strncmp(p, "scp", 3) == 0) {
+      AddParticles(SimpleCloudParticles(pmb, pin, name));
     } else {
       msg << "### FATAL ERROR in function Particles::Particles"
           << std::endl << "Particles '" << p << "' "
@@ -108,6 +110,8 @@ Particles& Particles::operator=(Particles const& other)
   dims_ = other.dims_;
   cnames_ = other.cnames_;
   available_ids_ = other.available_ids_;
+  cc_ = other.cc_;
+  mu_ = other.mu_;
   vol_ = other.vol_;
   pcell_ = other.pcell_;
   seeds_per_cell_ = other.seeds_per_cell_;

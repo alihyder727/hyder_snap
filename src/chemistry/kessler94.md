@@ -1,9 +1,9 @@
 # **Kessler94**
 
-# symbols
+# variables
 - T
-- qv 
-- qc 
+- qv
+- qc
 - qp 
 
 # coefficients
@@ -12,26 +12,25 @@
 - k3 = coeffs_["accretion"]
 - k4 = coeffs_["evaporation"]
 
-# verbatim
-~~~C++
-Thermodynamics *pthermo = pmy_block->pthermo;
-pthermo->SaturationSurplus(dqsat_.data(), q, VariableType::chem);
-Real dq = dqsat_[iqv];
-Real qs = qv - dq;
-Real Rv = pthermo->GetRd()/pthermo->GetMassRatio(iqv);
-Real lf = pthermo->GetLatent(iqc,T)/(Rv*T) - 1.;
-Real dqsdt = lf*qs/T;
-~~~
-
 # simple reactions
 - qc -> qp ; k2
 - qc + qp -> 2qp ; k3
-- qp -> qv ; k4 ; -H1 | qv < qs
+- qc -> qv ; k1*(qs(T) - qv) | qv < qs
+- qp -> qv ; k4*(qs(T) - qv) | qv < qs
 
 # custom reactions
-- qv -> qc ; k1*(qv - qs(T)) ; H1 | qv > qs
-- qc -> qv ; k1*qc*(qs(T) - qv) ; -H1 | qv < qs
+- qv -> qc ; k1*(qv - qs(T)) | qv > qs
 
 # relations
 - Derivative(qs(T), T) -> dqsdt
 - qs(T) -> qs
+
+# verbatim
+~~~C++
+pthermo->SaturationSurplus(dqsat_.data(), q, VariableType::chem);
+Real dq = dqsat_[iqv];
+Real qs = qv - dq;
+Real Rv = pthermo->GetRd()/pthermo->GetMassRatio(iqv);
+Real lf = pthermo->GetLatent(iqc,T) - Rv*T;
+Real dqsdt = qs/T*lf/(Rv*T);
+~~~

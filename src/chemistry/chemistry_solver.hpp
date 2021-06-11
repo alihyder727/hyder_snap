@@ -10,45 +10,58 @@
 #include "../math/eigen335/Eigen/Dense"
 #include "../math/eigen335/Eigen/LU"
 
+template<int N>
 class ChemistrySolver {
 public:
-  // needed for Eigen small matrix
+// needed for Eigen small matrix
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ChemistrySolver() {}
+// data
+  enum {Size = N};
+  Eigen::Matrix<Real,N,1> sol;
 
-  // solve independent chemistry: A*dq = b
-  // the second argument Real *dq is both input (b) and output (dq)
-  void SolveIndependent(Real **A, Real *dq) {
-    /*for (int i = 1; i <= NVAPOR; ++i) {
-      // assemble matrix for each species
-      #pragma ivdep
-      for (int j = 0; j < NPHASE; ++j) {
-        for (int k = 0; k < NPHASE; ++k)
-          a_(j,k) = A[j*NVAPOR+i][k*NVAPOR+i];
-        sol_(j) = dq[j*NVAPOR+i];
-      }
-
-      //ludcmp<NPHASE>(a_, indx_, vv_);
-      //lubksb<NPHASE>(a_, indx_, sol_);
-
-      if (NPHASE <= 4) sol_ = a_.inverse()*sol_;
-      else sol_ = a_.partialPivLu().solve(sol_);
-
-      for (int j = 0; j < NPHASE; ++j)
-        dq[j*NVAPOR+i] = sol_(j);
-    }
-    dq[0] = 0.;*/
+// functions
+  ChemistrySolver() {
+    I_.setIdentity();
   }
 
-private:
-  // scratch arrays
-  //Eigen::Matrix<Real, NPHASE, NPHASE> a_;
-  //Eigen::Matrix<Real, NPHASE, 1> sol_;
+  template<typename T1, typename T2>
+  void BDF1(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt) {
+    A_ = I_/dt - Jac;
+    if (N <= 4) sol = A_.inverse()*Rate;
+    else sol = A_.partialPivLu().solve(Rate);
+  }
 
-  //Real a_[NPHASE][NPHASE];
-  //Real sol_[NPHASE], vv_[NPHASE];
-  //int indx_[NPHASE];
+  template<typename T1, typename T2>
+  void TRBDF2(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt) {
+    int gamma = 2. - sqrt(2.);
+    A_ = I_ - gamma/2.*dt*Jac;
+    B_ = dt*(1. - gamma/2.)*Rate + dt*gamma/2.*A_*Rate;
+    A_ = A_*A_;
+    if (N <= 4) sol = A_.inverse()*B_;
+    else sol = A_.partialPivLu().solve(B_);
+  }
+
+  /*template<typename T1, typename T2>
+  void TRBDF2Blend(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt, int const indx[], int size) {
+    q1_.resize(size);
+    q2_.resize(size);
+    std::memcpy(q1_.data(), q, size*sizeof(Real));
+    std::memcpy(q2_.data(), q, size*sizeof(Real));
+    BDF1(q1_.data(), Rate, Jac, time, dt);
+    TRBDF2(q2_.data(), Rate, Jac, time, dt);
+    Real alpha = 1.;
+    for (int i = 0; i < N; ++i)
+      if (q2_[indx[i]] < 0.)
+        alpha = std::min(alpha, q1_[indx[i]]/(q1_[indx[i]] - q2_[indx[i]]));
+    for (int i = 0; i < N; ++i)
+      q[indx[i]] = (1. - alpha)*q1_[indx[i]] + alpha*q2_[indx[i]];
+  }*/
+
+private:
+  // scratch array
+  Eigen::Matrix<Real,N,N> A_, I_;
+  Eigen::Matrix<Real,N,1> B_;
 };
 
 #endif

@@ -17,8 +17,8 @@
   extern MPI_Datatype MPI_PARTICLE;
 #endif
 
-ParticleBuffer::ParticleBuffer(Particles *ppar):
-  pmy_particle(ppar)
+ParticleBuffer::ParticleBuffer(Particles *ppart):
+  pmy_particle(ppart)
 {
   for (int i = 0; i < 56; ++i) {
     particle_flag_[i] = BoundaryStatus::completed;
@@ -29,7 +29,7 @@ ParticleBuffer::ParticleBuffer(Particles *ppar):
 #endif
   }
 
-  MeshBlock *pmb = ppar->pmy_block;
+  MeshBlock *pmb = ppart->pmy_block;
   for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
     NeighborBlock &nb = pmb->pbval->neighbor[n];
     particle_flag_[nb.bufid] = BoundaryStatus::waiting;
@@ -52,8 +52,8 @@ void ParticleBuffer::SendParticle()
 
     if (nb.snb.rank == Globals::my_rank) {  // on the same process
       MeshBlock *pmb = pmy_particle->pmy_block->pmy_mesh->FindMeshBlock(nb.snb.gid);
-      pmb->ppar->ppb->particle_recv_[nb.targetid] = particle_send_[nb.bufid];
-      pmb->ppar->ppb->particle_flag_[nb.targetid] = BoundaryStatus::arrived;
+      pmb->ppart->ppb->particle_recv_[nb.targetid] = particle_send_[nb.bufid];
+      pmb->ppart->ppb->particle_flag_[nb.targetid] = BoundaryStatus::arrived;
     }
 #ifdef MPI_PARALLEL
     else { // MPI

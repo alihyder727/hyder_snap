@@ -240,12 +240,6 @@ parser.add_argument('--hdf5_path',
                     default='',
                     help='path to HDF5 libraries')
 
-# --chem=[name] argument
-parser.add_argument('--chem',
-                    default='chemistry',
-                    choices=['chemistry', 'kessler94'],
-                    help='select chemistry')
-
 # --jacobian=[name] argument
 parser.add_argument('--jacobian',
                     default='JacobianGravityCoriolis',
@@ -493,8 +487,7 @@ if args['x1rat'] == '1.0':
 else:
   definitions['STRETCHED_GRID'] = 'STRETCHED_GRID'
 
-# --chem=[name] argument
-definitions['CHEMISTRY'] = args['chem'].capitalize()
+# FI forcing jacobian
 definitions['JACOBIAN'] = args['jacobian']
 
 # --flux=[name] argument
@@ -961,7 +954,6 @@ print('  Equation of state:          ' + args['eos'])
 print('  Ammonia vapor id:           ' + args['nh3'])
 print('  Water vapor id:             ' + args['h2o'])
 print('  Riemann solver:             ' + args['flux'])
-print('  Chemistry:                  ' + args['chem'])
 print('  Forcing Jacobian:           ' + args['jacobian'])
 print('  Magnetic fields:            ' + ('ON' if args['b'] else 'OFF'))
 print('  Number of vapors:           ' + args['nvapor'])

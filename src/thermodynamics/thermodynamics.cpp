@@ -12,7 +12,8 @@
 #include "../utils/utils.hpp"
 #include "../mesh/mesh.hpp"
 #include "../hydro/hydro.hpp"
-//#include "../math_funcs.hpp"
+
+Real const Thermodynamics::Rgas = 8.314462;
 
 std::ostream& operator<<(std::ostream& os, Thermodynamics const& my)
 {

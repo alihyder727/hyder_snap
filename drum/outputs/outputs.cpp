@@ -711,7 +711,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
 
   // particles
   if (output_params.variable.compare("prim") == 0) {
-    Particles *p = pmb->ppar;
+    Particles *p = pmb->ppart;
     while (p != nullptr) {
       for (int i = 0; i < p->Categories(); ++i) {
         pod = new OutputData;

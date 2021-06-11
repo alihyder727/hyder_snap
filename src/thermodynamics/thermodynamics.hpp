@@ -35,6 +35,7 @@ class Thermodynamics {
   friend std::ostream& operator<<(std::ostream& os, Thermodynamics const& my);
 public:
   // members
+  static Real const Rgas;
   MeshBlock *pmy_block; /**< pointer to MeshBlock */
 
   // member functions

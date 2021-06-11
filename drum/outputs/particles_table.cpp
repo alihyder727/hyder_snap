@@ -42,9 +42,9 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
 
   // Loop over MeshBlocks
   while (pmb != nullptr) {
-    Particles *ppar = pmb->ppar;
+    Particles *ppart = pmb->ppart;
     // Loop over ParticleGroup
-    while (ppar != nullptr) {
+    while (ppart != nullptr) {
       // create filename: "file_basename"+"."+"name"+"."+"blockid"+"."+?????+".ptab",
       // where ????? = 5-digit file_number
       std::string fname;
@@ -55,7 +55,7 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
   
       fname.assign(output_params.file_basename);
       fname.append(".");
-      fname.append(ppar->myname);
+      fname.append(ppart->myname);
       fname.append(".");
       fname.append(blockid);
       fname.append(".");
@@ -74,8 +74,8 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
       // print file header
       fprintf(pfile,"# Athena++ data at time=%e",pm->time);
       fprintf(pfile,"  cycle=%d",pmb->pmy_mesh->ncycle);
-      fprintf(pfile,"  particle=%s",ppar->myname.c_str());
-      fprintf(pfile,"  number of particles=%ld \n",ppar->mp.size());
+      fprintf(pfile,"  particle=%s",ppart->myname.c_str());
+      fprintf(pfile,"  number of particles=%ld \n",ppart->mp.size());
 
       // write x1, x2, x3 column headers
       fprintf(pfile,"#");
@@ -96,8 +96,8 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
       fprintf(pfile,"\n"); // terminate line
 
       // loop over all particles
-      std::vector<MaterialPoint>::iterator it = ppar->mp.begin();
-      for (; it != ppar->mp.end(); ++it) {
+      std::vector<MaterialPoint>::iterator it = ppart->mp.begin();
+      for (; it != ppart->mp.end(); ++it) {
         fprintf(pfile, "%-8d", it->id);
         fprintf(pfile, "%-8d", it->ct);
         fprintf(pfile, output_params.data_format.c_str(), it->time);
@@ -122,7 +122,7 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
 
       // close file, and next variable
       fclose(pfile);
-      ppar = ppar->next;
+      ppart = ppart->next;
     } // end loop over ParticleGroup
     pmb = pmb->next;
   }  // end loop over MeshBlocks

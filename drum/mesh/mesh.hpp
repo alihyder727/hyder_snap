@@ -136,7 +136,7 @@ class MeshBlock {
   Physics *pphy;
   Diagnostics *pdiag;
   Debugger *pdebug;
-  Particles *ppar;
+  Particles *ppart;
 
   MeshBlock *prev, *next;
 

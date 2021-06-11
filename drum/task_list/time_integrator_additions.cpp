@@ -63,11 +63,7 @@ TaskStatus TimeIntegratorTaskList::IntegrateChemistry(MeshBlock *pmb, int stage)
   // frictional heating
   //pmb->pchem->AddFrictionalHeating(ph->u, ph->w, pmb->pmy_mesh->dt);
 
-  // do slow chemistry
-  //pmb->pchem->EvolveOneStep(ph->u, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
-
-  // do fast chemistry
-  //pmb->pthermo->SaturationAdjustment(ph->u);
+  pmb->pchem->TimeIntegrate(ph->u, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
 
   return TaskStatus::success;
 }
@@ -94,23 +90,23 @@ TaskStatus TimeIntegratorTaskList::CalculateRadiationFlux(MeshBlock *pmb, int st
 // particle steps
 TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage) {
   //! \todo check if it works for vl2 integrator
-  Particles *ppar = pmb->ppar;
-  while (ppar != nullptr) {
-    ppar->ExchangeHydro(ppar->mp, pmb->phydro->du, pmb->phydro->w);
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    ppart->ExchangeHydro(ppart->mp, pmb->phydro->du, pmb->phydro->w);
 
     // copy initial state
-    if (stage == 1) ppar->mp1 = ppar->mp;
-    ppar->TimeIntegrate(ppar->mp, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
+    if (stage == 1) ppart->mp1 = ppart->mp;
+    ppart->TimeIntegrate(ppart->mp, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
 
     if (stage > 1) {
       Real ave_wghts[3];
       ave_wghts[0] = stage_wghts[stage-1].gamma_1;
       ave_wghts[1] = stage_wghts[stage-1].gamma_2;
       ave_wghts[2] = stage_wghts[stage-1].gamma_3;
-      ppar->WeightedAverage(ppar->mp, ppar->mp1, ave_wghts);
+      ppart->WeightedAverage(ppart->mp, ppart->mp1, ave_wghts);
     }
 
-    ppar = ppar->next;
+    ppart = ppart->next;
   }
 
   return TaskStatus::success;
@@ -119,10 +115,10 @@ TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage)
 TaskStatus TimeIntegratorTaskList::MeshToParticles(MeshBlock *pmb, int stage) {
   if (stage != nstages) return TaskStatus::next;
 
-  Particles *ppar = pmb->ppar;
-  while (ppar != nullptr) {
-    ppar->Particulate(ppar->mp, ppar->dc);
-    ppar = ppar->next;
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    ppart->Particulate(ppart->mp, ppart->dc);
+    ppart = ppart->next;
   }
 
   return TaskStatus::success;
@@ -132,11 +128,11 @@ TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int stage) {
   // only do send/recv at last rk step
   if (stage != nstages) return TaskStatus::next;
 
-  Particles *ppar = pmb->ppar;
-  while (ppar != nullptr) {
-    ppar->ppb->DetachParticle(ppar->mp);
-    ppar->ppb->SendParticle();
-    ppar = ppar->next;
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    ppart->ppb->DetachParticle(ppart->mp);
+    ppart->ppb->SendParticle();
+    ppart = ppart->next;
   }
 
   return TaskStatus::success;
@@ -146,10 +142,10 @@ TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int stage) {
   // only do send/recv at last rk step
   if (stage != nstages) return TaskStatus::next;
 
-  Particles *ppar = pmb->ppar;
-  while (ppar != nullptr) {
-    ppar->ppb->RecvParticle();
-    ppar = ppar->next;
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    ppart->ppb->RecvParticle();
+    ppart = ppart->next;
   }
 
   return TaskStatus::success;
@@ -160,10 +156,10 @@ TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int stage) {
   if (stage != nstages) return TaskStatus::next;
 
   bool ret = true;
-  Particles *ppar = pmb->ppar;
-  while (ppar != nullptr) {
-    ret = ppar->ppb->AttachParticle(ppar->mp) && ret;
-    ppar = ppar->next;
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    ret = ppart->ppb->AttachParticle(ppart->mp) && ret;
+    ppart = ppart->next;
   }
 
   if (ret)
@@ -176,10 +172,10 @@ TaskStatus TimeIntegratorTaskList::ParticlesToMesh(MeshBlock *pmb, int stage) {
   // only do send/recv at last rk step
   if (stage != nstages) return TaskStatus::next;
 
-  Particles *ppar = pmb->ppar;
-  while (ppar != nullptr) {
-    ppar->AggregateMass(ppar->c);
-    ppar = ppar->next;
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    ppart->AggregateMass(ppart->c);
+    ppart = ppart->next;
   }
 
   return TaskStatus::success;

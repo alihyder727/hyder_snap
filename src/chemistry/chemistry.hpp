@@ -1,57 +1,52 @@
+/** @file chemistry.hpp
+ * @brief
+ *
+ * @author Cheng Li (chengcli@umich.edu)
+ * @date Thursday Jun 10, 2021 09:58:18 PDT
+ * @bug No known bugs.
+ */
+
 #ifndef CHEMISTRY_HPP
 #define CHEMISTRY_HPP
 
-// C/C++ header
-#include <vector>
-
-// Athena++ header
 #include "../athena.hpp"
+#include "chemistry_base.hpp"
 
 class MeshBlock;
 class ParameterInput;
-template<typename T> class AthenaArray;
+class Kessler94;
 
 class Chemistry {
 public:
-  // data
-  Real last_time, min_dt;
+// data
+  MeshBlock *pmy_block;
 
-  // functions
   Chemistry(MeshBlock *pmb, ParameterInput *pin);
   ~Chemistry();
-  void EvolveOneStep(AthenaArray<Real> &u, Real time, Real dt);
-  void AddSedimentationFlux(AthenaArray<Real>& x1flux, AthenaArray<Real> const& wr,
-    int k, int j, int il, int iu);
-  void ConcentrationCorrection(AthenaArray<Real> &u);
-  void AddFrictionalHeating(AthenaArray<Real> &u, AthenaArray<Real> const& w, Real dt);
-  
-  virtual void SedimentationVelocity(Real vsed[], Real const w[], Real temp = 0.);
-  virtual void AssembleReactionMatrix(Real *r0, Real **r1, Real const q[], Real time);
+
+  template<typename T>
+  ChemistryBase<T>* AddToChemistry(ChemistryBase<T> *pchem,
+    ParameterInput *pin, std::string name) {
+    T* pnew = new T(pmy_block, pin, name);
+    ChemistryBase<T>* p = pchem;
+    if (p == nullptr) {
+      p = static_cast<ChemistryBase<T>*>(pnew);
+      p->prev = nullptr;
+      p->next = nullptr;
+    } else {
+      while (p->next != nullptr) p = p->next;
+      p->next = static_cast<ChemistryBase<T>*>(pnew);
+      p->next->prev = p;
+      p->next->next = nullptr;
+    }
+    return p;
+  }
+
+  void TimeIntegrate(AthenaArray<Real> &u, Real time, Real dt);
 
 protected:
-  MeshBlock *pmy_block_;
-  Real **identity_;
-  Real *r0_;
-  Real **r1_;
-
-  // integration order
-  int order_;
-  int max_iter_;
-  Real gamma_;
-  Real ftol_;
-
-  // reaction coefficients 
-  std::vector<Real> kc_;
-
-  // default sedimentation velocity
-  //Real vsed_default_[NMASS];
+  ChemistryBase<Kessler94> *pkessler94_;
 };
 
-class Kessler94 : public Chemistry {
-public:
-  Kessler94(MeshBlock *pmb, ParameterInput *pin):
-    Chemistry(pmb, pin) {}
-  void AssembleReactionMatrix(Real *r0, Real **r1, Real const q[], Real time);
-};
 
-#endif
+#endif /* end of include guard CHEMISTRY_HPP */
