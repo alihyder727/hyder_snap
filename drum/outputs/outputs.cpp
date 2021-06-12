@@ -713,7 +713,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   if (output_params.variable.compare("prim") == 0) {
     Particles *p = pmb->ppart;
     while (p != nullptr) {
-      for (int i = 0; i < p->Categories(); ++i) {
+      for (int i = 0; i < p->c.GetDim4(); ++i) {
         pod = new OutputData;
         pod->type = "SCALARS";
         pod->name = p->myname + "_p" + std::to_string(1+i);

@@ -168,11 +168,9 @@ def write_header(fname):
 
 template<typename D1, typename D2>
 void %s::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
-  Eigen::DenseBase<D2>& jac, Real const q[], Real time)
+  Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time)
 {
-  EquationOfState *peos = pmy_block->peos;
   Thermodynamics *pthermo = pmy_block->pthermo;
-  Real cvt = GetCvTotal(q);
 '''
   header = header % (name.lower(), name, name)
   return header
@@ -184,7 +182,7 @@ def write_footer():
 def write_definitions(vlist):
   output = ''
   for i,v in enumerate(vlist):
-    output += 'int i%s = index_[%d];\n' % (v,i)
+    output += 'int i%s = qindex_[%d];\n' % (v,i)
     output += 'Real %s = q[i%s];\n' % (v,v)
   return output
 
@@ -221,16 +219,16 @@ def write_reaction(rmap, vlist, rtype, relations = None):
   for name,c in istoi:
     if c == 0: continue
     if c == 1:
-      rate_line = 'rate(i%s) -= %s;\n' % (name, rstr)
+      rate_line = 'rate(%d) -= %s;\n' % (vlist.index(name), rstr)
       enthalpy += ['deltaU_[i%s]' % name]
     else:
-      rate_line = 'rate(i%s) -= %d*%s;\n' % (name, c, rstr)
+      rate_line = 'rate(%d) -= %d*%s;\n' % (vlist.index(name), c, rstr)
       enthalpy += ['%d*deltaU_[i%s]' % (c,name)]
     output += rate_line
     for s in syms:
       jstr = get_derivative(rstr, s, vlist)
       if jstr == '0': continue
-      output += 'jac(i%s,i%s) -= %s;\n' % (name, s, jstr)
+      output += 'jac(%d,%d) -= %s;\n' % (vlist.index(name), vlist.index(str(s)), jstr)
 
   enthalpy_change = '+'.join(enthalpy)
   output += '\n'
@@ -240,27 +238,28 @@ def write_reaction(rmap, vlist, rtype, relations = None):
   for name,c in ostoi:
     if c == 0: continue
     if c == 1:
-      rate_line = 'rate(i%s) += %s;\n' % (name, rstr)
+      rate_line = 'rate(%d) += %s;\n' % (vlist.index(name), rstr)
       enthalpy += ['deltaU_[i%s]' % name]
     else:
-      rate_line = 'rate(i%s) += %d*%s;\n' % (name, c, rstr)
+      rate_line = 'rate(%d) += %d*%s;\n' % (vlist.index(name), c, rstr)
       enthalpy += ['%d*deltaU_[i%s]' % (c,name)]
     output += rate_line
     for s in syms:
       jstr = get_derivative(rstr, s, vlist)
       if jstr == '0': continue
-      output += 'jac(i%s,i%s) += %s;\n' % (name, s, jstr)
+      output += 'jac(%d,%d) += %s;\n' % (vlist.index(name), vlist.index(str(s)), jstr)
 
   enthalpy_change += ' - ' + ' - '.join(enthalpy)
   output += '\n'
 
   # enthalpy change
   output += '// enthalpy change\n'
-  output += 'rate(iT) += (%s)*(%s);\n' % (rstr, enthalpy_change)
+  output += 'rate(%d) += (%s)*(%s)/cv;\n' % (vlist.index('T'), rstr, enthalpy_change)
   for s in syms:
     jstr = get_derivative(rstr, s, vlist)
     if jstr == '0': continue
-    output += 'jac(iT,i%s) += (%s)*(%s)/cvt;\n' % (s, jstr, enthalpy_change)
+    output += 'jac(%d,%d) += (%s)*(%s)/cv;\n' %  \
+      (vlist.index('T'), vlist.index(str(s)), jstr, enthalpy_change)
 
   # replace relations
   if relations != None:

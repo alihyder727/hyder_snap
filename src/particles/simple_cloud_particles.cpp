@@ -14,18 +14,18 @@ SimpleCloudParticles::SimpleCloudParticles(
   MeshBlock *pmb, ParameterInput *pin, std::string name):
   Particles(pmb, pin, name, 2)
 {
-  Thermodynamics *pthermo = pmb->pthermo;
   cnames_.resize(2);
   cnames_[0] = "cloud";
   cnames_[1] = "rain";
 
-  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 1<<6);
+  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 10);
 
-  int ic = pin->GetInteger("particles", name + ".index");
+  Real mu = pin->GetReal("particles", name + ".mu");
+  Real cc = pin->GetReal("particles", name + ".cc");
 
-  mu_.push_back(pthermo->GetMassRatio(ic)*Thermodynamics::Rgas/pthermo->GetRd());
-  mu_.push_back(pthermo->GetMassRatio(ic)*Thermodynamics::Rgas/pthermo->GetRd());
+  mu_.push_back(mu);
+  mu_.push_back(mu);
 
-  cc_.push_back(pthermo->GetCp(ic));
-  cc_.push_back(pthermo->GetCp(ic));
+  cc_.push_back(cc);
+  cc_.push_back(cc);
 }

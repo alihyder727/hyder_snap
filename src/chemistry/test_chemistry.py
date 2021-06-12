@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 from pylab import *
 
-L = 2.
+L = 1.
 
 def svp(T):
   return exp(T);
@@ -46,6 +46,18 @@ def solve_trbdf2(q, dt, params):
   dq = linalg.solve(dot(A,A), b)
   return q+dq
 
+def solve_trbdf2_new(q0, q1, dt, params):
+  gamma = 2. - sqrt(2.)
+  gamma3 = 1./(gamma*(2. - gamma))
+  jac = jacobian_matrix(q1, params)
+  A = eye(len(q0)) - gamma/2.*dt*jac
+  r0 = reaction_rate(q0, params)
+  r1 = reaction_rate(q1, params)
+  b = dt*(1. - gamma/2.)*r0 + dt*gamma/2.*dot(A, r1) \
+      + gamma3*(q0 - q1) + (1. - gamma3)*dot(A, q0 - q1)
+  dq = linalg.solve(dot(A,A), b)
+  return q1+dq
+
 def solve_bdf1(q, dt, params):
   jac = jacobian_matrix(q, params)
   rate = reaction_rate(q, params)
@@ -71,25 +83,31 @@ if __name__ == '__main__':
   # condensation
   q = array([1., 3., 0., 0.])
   for t in time:
-    q1 = q.copy()
-    q2 = q.copy()
-    q1 = solve_bdf1(q1, t, params)
-    q2 = solve_trbdf2(q2, t, params)
+    #q1 = q.copy()
+    #q2 = q.copy()
+    q1 = solve_bdf1(q, t, params)
+    #q2 = solve_trbdf2(q, t, params)
+    print('1', q1)
+    q2 = solve_trbdf2_new(q, q, t, params)
+    print('2', q2)
+
+    '''
+    if q[1] > svp(q[0]):
+      qsat = svp(q2[0])
+      if q2[1] < qsat:
+        dq = (q2[1] - qsat)/(1. + svp(q2[0])*L)
+        q2[2] += dq
+        q2[1] -= dq
+        q2[0] += L*dq
+        print(dq, q2[0], q2[1], svp(q2[0]))
+    '''
+
     alpha = 1.;
     for i in range(len(q1)):
       if q2[i] < 0.:
         alpha = min(alpha, q1[i]/(q1[i] - q2[i]))
     #print(alpha, q1, q2)
     q3 = (1. - alpha)*q1 + alpha*q2
-
-    if q[1] > svp(q[0]):
-      qsat = svp(q3[0])
-      if q3[1] < qsat:
-        dq = (q3[1] - qsat)/(1. + svp(q3[0])*L)
-        q3[2] += dq
-        q3[1] -= dq
-        q3[0] += L*dq
-        print(dq, q3[0], q3[1], svp(q3[0]))
 
     sol1.append(q1)
     sol2.append(q2)
@@ -126,5 +144,5 @@ if __name__ == '__main__':
   ax.set_xscale('log')
   ax.set_xlim([min(time), max(time)])
 
-  #show()
-  savefig('chemistry_integrator_latent.png', bbox_inches = 'tight')
+  show()
+  #savefig('chemistry_integrator_latent.png', bbox_inches = 'tight')

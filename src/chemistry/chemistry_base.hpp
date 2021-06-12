@@ -3,6 +3,7 @@
 
 // C/C++ header
 #include <vector>
+#include <array>
 #include <map>
 
 // Athena++ header
@@ -26,18 +27,33 @@ public:
 
 // functions
   ChemistryBase(MeshBlock *pmb, ParameterInput *pin):
-    pmy_block(pmb), prev(nullptr), next(nullptr) {}
+    pmy_block(pmb), prev(nullptr), next(nullptr)
+  {
+    int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
+    cvt_.NewAthenaArray(nc3, nc2, nc1);
+    mol_.NewAthenaArray(nc3, nc2, nc1);
+  }
 
-  Real GetCvTotal(Real const q[]) {
-    Real cvt = 0, qd = 1;
-    for (int i = 1; i <= NVAPOR; ++i) {
-      qd -= q[i];
-      cvt += q[i]*cv_[i];
-    }
-    for (int i = 1+NVAPOR; i < cv_.size(); ++i)
-      cvt += q[i]*cv_[i];
-    cvt = cvt + qd*cv_[0];
-    return cvt;
+  void SetTotalCv(AthenaArray<Real> const& u, Particles *ppart,
+    int il, int iu, int jl, int ju, int kl, int ku)
+  {
+    Thermodynamics *pthermo = pmy_block->pthermo;
+    cvt_.ZeroClear();
+    mol_.ZeroClear();
+    Real gm1 = pmy_block->peos->GetGamma() - 1.;
+    Real cvd = pthermo->GetRd()/gm1;
+    for (int k = kl; k <= ku; ++k)
+      for (int j = jl; j <= ju; ++j)
+        for (int i = il; i <= iu; ++i) {
+          for (int n = 0; n <= NVAPOR; ++n)
+            cvt_(k,j,i) += u(n,k,j,i)*pthermo->GetCvRatio(n)*cvd;
+          Particles *p = ppart;
+          while (p != nullptr) {
+            cvt_(k,j,i) += p->GetTotalCv(k,j,i);
+            mol_(k,j,i) += p->GetMolarDensity(k,j,i);
+            p = p->next;
+          }
+        }
   }
 
   void IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &dc,
@@ -45,20 +61,22 @@ public:
 
   template<typename D1, typename D2>
   void AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
-    Eigen::DenseBase<D2>& jac, Real const q[], Real time);
+    Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time);
 
-  void ApplyChemicalLimits(Real q0[], Real q[]);
+  void ApplyChemicalLimits(Real q0[], Real q[], Real cv);
 
 protected:
+  //! total cv, J/(K m^3)
+  AthenaArray<Real> cvt_;
+  //! molar density, mol/m^3
+  AthenaArray<Real> mol_;
   //! reaction coefficients 
   std::map<std::string, Real> coeffs_;
-  std::vector<int> index_;
-  //! molar cv ratios
-  std::vector<Real> cv_;
+  std::vector<int> qindex_;
+  //! stores saturation vapor surplus
+  std::array<Real, 1+NVAPOR> dqsat_;
   //! internal energy
   std::vector<Real> deltaU_;
-  //! stores saturation surplus
-  std::vector<Real> dqsat_;
 };
 
 #include "integrate_dense.hpp"

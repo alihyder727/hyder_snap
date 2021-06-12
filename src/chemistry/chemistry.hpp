@@ -25,21 +25,20 @@ public:
   ~Chemistry();
 
   template<typename T>
-  ChemistryBase<T>* AddToChemistry(ChemistryBase<T> *pchem,
+  void AddToChemistry(ChemistryBase<T>* &pchem,
     ParameterInput *pin, std::string name) {
     T* pnew = new T(pmy_block, pin, name);
-    ChemistryBase<T>* p = pchem;
-    if (p == nullptr) {
-      p = static_cast<ChemistryBase<T>*>(pnew);
-      p->prev = nullptr;
-      p->next = nullptr;
+    if (pchem == nullptr) {
+      pchem = static_cast<ChemistryBase<T>*>(pnew);
+      pchem->prev = nullptr;
+      pchem->next = nullptr;
     } else {
+      ChemistryBase<T>* p = pchem;
       while (p->next != nullptr) p = p->next;
       p->next = static_cast<ChemistryBase<T>*>(pnew);
       p->next->prev = p;
       p->next->next = nullptr;
     }
-    return p;
   }
 
   void TimeIntegrate(AthenaArray<Real> &u, Real time, Real dt);

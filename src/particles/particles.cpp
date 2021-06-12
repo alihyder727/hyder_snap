@@ -226,19 +226,18 @@ void Particles::AggregateMass(AthenaArray<Real> &c_sum)
       }
 }
 
-void Particles::Particulate(std::vector<MaterialPoint> &mp, 
-  AthenaArray<Real> &c_dif)
+void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c_dif)
 {
   MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
-  srand(Globals::my_rank + time(NULL));
-  for (int t = 0; t < Categories(); ++t)
+  for (int t = 0; t < c_dif.GetDim4(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j) {
         pco->CellVolume(k, j, pmb->is, pmb->ie, vol_);
         for (int i = pmb->is; i <= pmb->ie; ++i) {
-          if (c_dif(t,k,j,i) > 0.) {
+          if (c_dif(t,k,j,i) > 1.E-10) {
             for (int n = 0; n < seeds_per_cell_; ++n) {
+              std::cout << "I'm here" << std::endl;
               MaterialPoint p;
               p.id = GetNextId();
               p.ct = t;
@@ -271,7 +270,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp,
               pc = pc->next;
             }
             assert(nparts == 0);
-            assert(c_dif(t,k,j,i) == 0);
+            assert(std::abs(c_dif(t,k,j,i)) < 1.E-10);
           }
         }
       }

@@ -27,41 +27,28 @@ public:
     coeffs_["accretion"] = pin->GetReal("chemistry", name + ".accretion");
     coeffs_["evaporation"] = pin->GetReal("chemistry", name + ".evaporation");
 
-    index_.resize(4);
-    index_[0] = IDN;
-    index_[1] = pin->GetInteger("chemistry", name + ".ivapor");
-    index_[2] = NHYDRO;
-    index_[3] = NHYDRO + 1;
+    qindex_.resize(4);
+    qindex_[0] = IDN;
+    qindex_[1] = pin->GetInteger("chemistry", name + ".link_vapor");
+    qindex_[2] = NHYDRO;
+    qindex_[3] = NHYDRO + 1;
 
-    Thermodynamics *pthermo = pmb->pthermo;
-    Real Rgas = Thermodynamics::Rgas;
-    Real cvd = Rgas/(pmb->peos->GetGamma() - 1.);
-    Real Rd = pthermo->GetRd();
-    for (int i = 0; i <= NVAPOR; ++i) {
-      cv_.push_back(pthermo->GetCvRatio(i)*pthermo->GetMassRatio(i)*cvd);
-      //deltaU_.push_back(pthermo->GetLatent(i)*pthermo->GetMassRatio(i)*Rgas/Rd);
-      deltaU_.push_back(0.);
-    }
+    deltaU_.resize(NHYDRO + 2);
+    std::fill(deltaU_.begin(), deltaU_.end(), 0.);
+    deltaU_[qindex_[1]] = pin->GetReal("chemistry", name + ".deltaU");
 
-    int ic = index_[1] + NVAPOR;
-
-    cv_.push_back(pthermo->GetCvRatio(ic)*pthermo->GetMassRatio(ic)*cvd);
-    cv_.push_back(pthermo->GetCvRatio(ic)*pthermo->GetMassRatio(ic)*cvd);
-
-    deltaU_.push_back(-pthermo->GetLatent(ic)*pthermo->GetMassRatio(ic)*Rgas/Rd);
-    deltaU_.push_back(-pthermo->GetLatent(ic)*pthermo->GetMassRatio(ic)*Rgas/Rd);
-
-    std::string str = pin->GetString("chemistry", name + ".particle");
+    std::string str = pin->GetString("chemistry", name + ".link_particle");
     pmy_part = pmb->ppart->FindParticle(str);
   }
 
-  void ApplyChemicalLimits(Real q[], Real const q0[]) {
+  void ApplyChemicalLimits(Real q[], Real const q0[], Real cv)
+  {
     Thermodynamics *pthermo = pmy_block->pthermo;
 
-    int iT = index_[0];
-    int iv = index_[1];
-    int ic = index_[2];
-    int ip = index_[3];
+    int iT = qindex_[0];
+    int iv = qindex_[1];
+    int ic = qindex_[2];
+    int ip = qindex_[3];
 
     Real T0 = q0[iT];
     Real L = deltaU_[iv] - deltaU_[ic];
@@ -71,8 +58,7 @@ public:
     Real dqsdt = qs/T0*lf/(Rv*T0);
 
     if (dqsat_[iv]*(q[iv] - qs) < 0) {
-      Real cvt = GetCvTotal(q);
-      Real dq = (q[iv] - qs)/(1. + dqsdt*L/cvt);
+      Real dq = (q[iv] - qs)/(1. + dqsdt*L/cv);
       Real dqc = dq, dqp = 0.;
       q[iv] -= dq;
       q[ic] += dq;
@@ -82,13 +68,13 @@ public:
         q[ip] += q[ic];
         q[ic] = 0.;
       }
-      q[iT] += L*dq/cvt;
+      q[iT] += L*dq/cv;
     }
   }
 
   template<typename D1, typename D2>
   void AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
-    Eigen::DenseBase<D2>& jac, Real const q[], Real time);
+    Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time);
 };
 
 #include "kessler94_impl.hpp"

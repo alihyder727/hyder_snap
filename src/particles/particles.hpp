@@ -39,10 +39,6 @@ public:
     return p->next;
   }
 
-  int Categories() const {
-    return c.GetDim4();
-  }
-
   std::string CategoryName(int i) const {
     return cnames_.at(i);
   }
@@ -57,8 +53,8 @@ public:
     return id;
   }
 
-  int GetMu(int i) const {
-    return mu_[i];
+  Real GetMassRatio(int i, Real mu) const {
+    return mu_[i]/mu;
   }
 
   int ParticlesInCell(int t, int k, int j, int i) {
@@ -69,6 +65,20 @@ public:
       num++;
     }
     return num;
+  }
+
+  Real GetTotalCv(int k, int j, int i) {
+    Real cvt = 0.;
+    for (int t = 0; t < c.GetDim4(); ++t)
+      cvt += c(t,k,j,i)*cc_[t];
+    return cvt;
+  }
+
+  Real GetMolarDensity(int k, int j ,int i) {
+    Real mol = 0.;
+    for (int t = 0; t < c.GetDim4(); ++t)
+      mol += c(t,k,j,i)/mu_[t];
+    return mol;
   }
 
   Particles* FindParticle(std::string name);
@@ -87,9 +97,9 @@ protected:
   std::vector<std::string> cnames_;
   std::vector<int> available_ids_;
   //! heat capacity
-  std::vector<int> cc_;
+  std::vector<Real> cc_;
   //! mean molecular weight
-  std::vector<int> mu_;
+  std::vector<Real> mu_;
   AthenaArray<Real> vol_;
   AthenaArray<MaterialPoint*> pcell_;
   int seeds_per_cell_;
