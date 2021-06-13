@@ -716,7 +716,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       for (int i = 0; i < p->c.GetDim4(); ++i) {
         pod = new OutputData;
         pod->type = "SCALARS";
-        pod->name = p->myname + "_p" + std::to_string(1+i);
+        pod->name = p->myname + std::to_string(1+i);
         pod->long_name = "density of " + p->myname + " " +
                          p->CategoryName(i) + " particles";
         pod->units = "kg/m^3";

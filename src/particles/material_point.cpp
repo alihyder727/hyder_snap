@@ -14,7 +14,7 @@
 
 MaterialPoint::MaterialPoint() :
   next(nullptr), id(0), type(0),
-  time(0), mass(0), x1(0.), x2(0.), x3(0.), 
+  time(0), rho(0), x1(0.), x2(0.), x3(0.), 
   v1(0.), v2(0.), v3(0.)
 {
 #if NREAL_PARTICLE_DATA > 0
@@ -42,7 +42,7 @@ MaterialPoint& MaterialPoint::operator=(MaterialPoint const& other)
   id = other.id;
   type = other.type;
   time = other.time;
-  mass = other.mass;
+  rho = other.rho;
   x1 = other.x1;
   x2 = other.x2;
   x3 = other.x3;
@@ -63,7 +63,7 @@ MaterialPoint& MaterialPoint::operator=(MaterialPoint const& other)
 
 std::ostream& operator<<(std::ostream &os, MaterialPoint const& pt)
 {
-  os << "mass: " << pt.mass << " type: " << pt.type << std::endl
+  os << "density: " << pt.rho << " type: " << pt.type << std::endl
      << "x1: " << pt.x1 << " v1: " << pt.v1 << std::endl
      << "x2: " << pt.x2 << " v2: " << pt.v2 << std::endl
      << "x3: " << pt.x3 << " v3: " << pt.v3 << std::endl;

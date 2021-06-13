@@ -18,8 +18,6 @@ SimpleCloudParticles::SimpleCloudParticles(
   cnames_[0] = "cloud";
   cnames_[1] = "rain";
 
-  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 10);
-
   Real mu = pin->GetReal("particles", name + ".mu");
   Real cc = pin->GetReal("particles", name + ".cc");
 

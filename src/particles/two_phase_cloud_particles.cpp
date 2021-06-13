@@ -16,9 +16,6 @@ TwoPhaseCloudParticles::TwoPhaseCloudParticles(
   cnames_.resize(2);
   cnames_[0] = "liquid";
   cnames_[1] = "solid";
-
-  max_number_ = pin->GetOrAddInteger("particles", name + ".max_number", 1<<20);
-  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 1<<6);
 }
 
 void TwoPhaseCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,

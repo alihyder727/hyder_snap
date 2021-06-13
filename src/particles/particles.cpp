@@ -8,7 +8,6 @@
 
 // C++ headers
 #include <ctime>
-#include <cassert>
 #include <sstream>
 #include <stdexcept>
 
@@ -16,14 +15,12 @@
 #include "../mesh/mesh.hpp"
 #include "../coordinates/coordinates.hpp"
 #include "../math/interpolation.h" // interpn, locate
-#include "../globals.hpp"
-#include "material_point.hpp"
 #include "particles.hpp"
 #include "particle_buffer.hpp"
 
 Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb), myname("HEAD"), prev(nullptr), next(nullptr),
-  seeds_per_cell_(1)
+  seeds_per_cell_(1), nmax_per_cell_(1), density_floor_(0)
 {
   ppb = new ParticleBuffer(this);
 
@@ -54,8 +51,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
 
 // constructor, initializes data structure and parameters
 Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int nct):
-  pmy_block(pmb), myname(name), prev(nullptr), next(nullptr),
-  seeds_per_cell_(1)
+  pmy_block(pmb), myname(name), prev(nullptr), next(nullptr)
 {
   ppb = new ParticleBuffer(this);
   int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
@@ -76,6 +72,19 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   c.NewAthenaArray(nct, nc3, nc2, nc1);
   c1.NewAthenaArray(nct, nc3, nc2, nc1);
   pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
+
+  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 5);
+  nmax_per_cell_ = pin->GetOrAddInteger("particles", name + ".nmax_per_cell", 20);
+  density_floor_ = pin->GetOrAddReal("particles", name + ".density_floor_", 1.E-10);
+
+  std::stringstream msg;
+  if (nmax_per_cell_ < seeds_per_cell_) {
+    msg << "### FATAL ERROR in Particles::Particles"
+        << "Maximum particles per cell: " << nmax_per_cell_
+        << " is less than "
+        << "seed particles per cell: " << seeds_per_cell_ << std::endl;
+    ATHENA_ERROR(msg);
+  }
 }
 
 // destructor
@@ -113,6 +122,8 @@ Particles& Particles::operator=(Particles const& other)
   mu_ = other.mu_;
   pcell_ = other.pcell_;
   seeds_per_cell_ = other.seeds_per_cell_;
+  nmax_per_cell_ = other.nmax_per_cell_;
+  density_floor_ = other.density_floor_;
 
   ppb = new ParticleBuffer(this);
 
@@ -193,101 +204,6 @@ void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> 
       loc[2], dims_[2]);
   }
 }*/
-
-void Particles::AggregateMass(AthenaArray<Real> &c1, std::vector<MaterialPoint> const& mp)
-{
-  MeshBlock *pmb = pmy_block;
-  Real loc[3];
-
-  c1.ZeroClear();
-  std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
-  int ci, cj, ck;
-
-  for (std::vector<MaterialPoint>::const_iterator q = mp.begin(); q != mp.end(); ++q) {
-    loc[0] = q->x3;
-    loc[1] = q->x2;
-    loc[2] = q->x1;
-
-    if (dims_[0] > 1)
-      ck = locate(coordinates_.data(), loc[0], dims_[0]);
-    else ck = pmb->ks;
-
-    if (dims_[1] > 1)
-      cj = locate(coordinates_.data() + dims_[0], loc[1], dims_[1]);
-    else cj = pmb->js;
-
-    ci = locate(coordinates_.data() + dims_[0] + dims_[1], 
-      loc[2], dims_[2]);
-    c1(q->type, ck, cj, ci) += q->mass;
-
-    if (pcell_(q->type, ck, cj, ci) == nullptr) {
-      pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
-      pcell_(q->type,ck,cj,ci)->next = nullptr;
-    } else {
-      MaterialPoint *pc = pcell_(q->type, ck, cj, ci);
-      while (pc->next != nullptr) pc = pc->next;
-      pc->next = const_cast<MaterialPoint*>(&(*q));
-      pc->next->next = nullptr;
-    }
-  }
-}
-
-void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c)
-{
-  MeshBlock *pmb = pmy_block;
-  Coordinates *pco = pmb->pcoord;
-  for (int t = 0; t < c.GetDim4(); ++t)
-    for (int k = pmb->ks; k <= pmb->ke; ++k)
-      for (int j = pmb->js; j <= pmb->je; ++j) {
-        for (int i = pmb->is; i <= pmb->ie; ++i) {
-          Real delta_c = c(t,k,j,i) - c1(t,k,j,i);
-          //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1(t,k,j,i) << std::endl;
-          if (delta_c > 1.E-10) {
-            //std::cout << "I'm in 1, delta_c = : " << delta_c << std::endl;
-            //std::cout << "Particles = " << ParticlesInCell(t,k,j,i)<< std::endl;
-            for (int n = 0; n < seeds_per_cell_; ++n) {
-              MaterialPoint p;
-              p.id = GetNextId();
-              p.type = t;
-              p.time = pmb->pmy_mesh->time;
-              p.x1 = pco->x1f(i) + (1.*rand()/RAND_MAX)*pco->dx1f(i);
-              p.x2 = pco->x2f(j) + (1.*rand()/RAND_MAX)*pco->dx2f(j);
-              p.x3 = pco->x3f(k) + (1.*rand()/RAND_MAX)*pco->dx3f(k);
-              p.v1 = 0.;
-              p.v2 = 0.;
-              p.v3 = 0.;
-              p.mass = delta_c/seeds_per_cell_;
-              mp.push_back(p);
-            }
-          } else if (delta_c < -1.E-10) {
-            int nparts = ParticlesInCell(t,k,j,i);
-            //std::cout << "I'm in 2, delta_c = : " << delta_c << std::endl;
-            //std::cout << "Particles = " << nparts << std::endl;
-            Real avg = std::abs(delta_c)/nparts;
-            MaterialPoint *pc = pcell_(t,k,j,i);
-            //std::cout << "[" << pco->x1f(i) << "," << pco->x1f(i+1) << "]" << std::endl;
-            while (pc != nullptr) {
-              //std::cout << pc->x1 << " " << pc->mass << " ";
-              if (pc->mass > avg) {
-                pc->mass -= avg;
-                delta_c += avg;
-              } else {
-                available_ids_.push_back(pc->id);
-                pc->id = -1;
-                pc->mass = 0;
-                delta_c += pc->mass;
-                avg = std::abs(delta_c)/nparts;
-              }
-              //std::cout << pc->mass << std::endl;
-              nparts--;
-              pc = pc->next;
-            }
-            assert(nparts == 0);
-            assert(std::abs(delta_c) < 1.E-10);
-          }
-        }
-      }
-}
 
 void Particles::TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt)
 {

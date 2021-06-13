@@ -82,7 +82,7 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
       fprintf(pfile,"%-7s"," id");
       fprintf(pfile,"%8s","category");
       fprintf(pfile,"%13s","time [s]");
-      fprintf(pfile,"%13s","mass [g]");
+      fprintf(pfile,"%13s","rho [g/cc]");
       fprintf(pfile,"%13s","x1 [m]");
       fprintf(pfile,"%13s","x2 [m]");
       fprintf(pfile,"%13s","x3 [m]");
@@ -101,7 +101,7 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
         fprintf(pfile, "%-8d", it->id);
         fprintf(pfile, "%-8d", it->type);
         fprintf(pfile, output_params.data_format.c_str(), it->time);
-        fprintf(pfile, output_params.data_format.c_str(), it->mass*1.E3);
+        fprintf(pfile, output_params.data_format.c_str(), it->rho/1.E3);
         fprintf(pfile, output_params.data_format.c_str(), it->x1);
         fprintf(pfile, output_params.data_format.c_str(), it->x2);
         fprintf(pfile, output_params.data_format.c_str(), it->x3);

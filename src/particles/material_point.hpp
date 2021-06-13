@@ -29,8 +29,8 @@ struct MaterialPoint {
 
   //! time instantiated
   Real time;
-  //! mass in [kg]
-  Real mass;
+  //! mass density
+  Real rho;
   //! positions
   Real x1, x2, x3;
   //! velocities

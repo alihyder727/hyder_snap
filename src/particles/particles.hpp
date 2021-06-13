@@ -57,7 +57,7 @@ public:
     return mu_[i]/mu;
   }
 
-  int ParticlesInCell(int t, int k, int j, int i) {
+  int CountParticlesInCell(int t, int k, int j, int i) {
     int num = 0;
     MaterialPoint *pc = pcell_(t,k,j,i);
     while (pc != nullptr) {
@@ -83,7 +83,7 @@ public:
 
   Particles* FindParticle(std::string name);
   void Initialize();
-  void AggregateMass(AthenaArray<Real> &c1, std::vector<MaterialPoint> const& mp);
+  void AggregateDensity(AthenaArray<Real> &c1, std::vector<MaterialPoint> const& mp);
   void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c);
 
   virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
@@ -102,7 +102,10 @@ protected:
   //! mean molecular weight
   std::vector<Real> mu_;
   AthenaArray<MaterialPoint*> pcell_;
+
   int seeds_per_cell_;
+  int nmax_per_cell_;
+  Real density_floor_;
 };
 
 class SimpleCloudParticles : public Particles {
@@ -118,9 +121,6 @@ public:
   void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
     AthenaArray<Real> const &w);
   //void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
-
-protected:
-  int max_number_;
 };
 
 #endif
