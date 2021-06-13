@@ -99,7 +99,7 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
       std::vector<MaterialPoint>::iterator it = ppart->mp.begin();
       for (; it != ppart->mp.end(); ++it) {
         fprintf(pfile, "%-8d", it->id);
-        fprintf(pfile, "%-8d", it->ct);
+        fprintf(pfile, "%-8d", it->type);
         fprintf(pfile, output_params.data_format.c_str(), it->time);
         fprintf(pfile, output_params.data_format.c_str(), it->mass*1.E3);
         fprintf(pfile, output_params.data_format.c_str(), it->x1);

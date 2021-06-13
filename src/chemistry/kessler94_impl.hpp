@@ -58,7 +58,7 @@ void Kessler94::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
   rate(0) += (k3*qc*qp)*(deltaU_[iqc] - deltaU_[iqp])/cv;
   jac(0,2) += (k3*qp)*(deltaU_[iqc] - deltaU_[iqp])/cv;
   jac(0,3) += (k3*qc)*(deltaU_[iqc] - deltaU_[iqp])/cv;
-
+  
   if (qv < qs) {
     // qc -> qv; k1*(qs - qv)
     rate(2) -= k1*(qs - qv)*qc;
@@ -110,4 +110,5 @@ void Kessler94::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
     jac(0,0) += (-k1*dqsdt)*(deltaU_[iqv] - deltaU_[iqc])/cv;
     jac(0,1) += (k1)*(deltaU_[iqv] - deltaU_[iqc])/cv;
   }
+
 }

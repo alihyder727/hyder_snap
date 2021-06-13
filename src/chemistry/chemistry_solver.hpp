@@ -18,7 +18,6 @@ public:
 
 // data
   enum {Size = N};
-  Eigen::Matrix<Real,N,1> sol;
 
 // functions
   ChemistrySolver() {
@@ -26,20 +25,20 @@ public:
   }
 
   template<typename T1, typename T2>
-  void BDF1(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt) {
+  T1 BDF1(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt) {
     A_ = I_/dt - Jac;
-    if (N <= 4) sol = A_.inverse()*Rate;
-    else sol = A_.partialPivLu().solve(Rate);
+    if (N <= 4) return A_.inverse()*Rate;
+    else return A_.partialPivLu().solve(Rate);
   }
 
   template<typename T1, typename T2>
-  void TRBDF2(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt) {
+  T1 TRBDF2(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt) {
     int gamma = 2. - sqrt(2.);
     A_ = I_ - gamma/2.*dt*Jac;
     B_ = dt*(1. - gamma/2.)*Rate + dt*gamma/2.*A_*Rate;
     A_ = A_*A_;
-    if (N <= 4) sol = A_.inverse()*B_;
-    else sol = A_.partialPivLu().solve(B_);
+    if (N <= 4) return A_.inverse()*B_;
+    else return A_.partialPivLu().solve(B_);
   }
 
   /*template<typename T1, typename T2>

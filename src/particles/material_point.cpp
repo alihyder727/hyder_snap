@@ -13,7 +13,7 @@
 #include "material_point.hpp"
 
 MaterialPoint::MaterialPoint() :
-  next(nullptr), id(0), ci(0), cj(0), ck(0), ct(0),
+  next(nullptr), id(0), type(0),
   time(0), mass(0), x1(0.), x2(0.), x3(0.), 
   v1(0.), v2(0.), v3(0.)
 {
@@ -40,10 +40,7 @@ MaterialPoint& MaterialPoint::operator=(MaterialPoint const& other)
 {
   next = other.next;
   id = other.id;
-  ci = other.ci;
-  cj = other.cj;
-  ck = other.ck;
-  ct = other.ct;
+  type = other.type;
   time = other.time;
   mass = other.mass;
   x1 = other.x1;
@@ -66,8 +63,7 @@ MaterialPoint& MaterialPoint::operator=(MaterialPoint const& other)
 
 std::ostream& operator<<(std::ostream &os, MaterialPoint const& pt)
 {
-  os << "ci: " << pt.ci << " cj: " << pt.cj << " ck: " << pt.ck << std::endl
-     << "mass: " << pt.mass << std::endl
+  os << "mass: " << pt.mass << " type: " << pt.type << std::endl
      << "x1: " << pt.x1 << " v1: " << pt.v1 << std::endl
      << "x2: " << pt.x2 << " v2: " << pt.v2 << std::endl
      << "x3: " << pt.x3 << " v3: " << pt.v3 << std::endl;

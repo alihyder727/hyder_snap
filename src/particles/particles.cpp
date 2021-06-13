@@ -73,9 +73,8 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   dims_[1] = nc2;
   dims_[2] = nc1;
 
-  vol_.NewAthenaArray(nc1);
   c.NewAthenaArray(nct, nc3, nc2, nc1);
-  dc.NewAthenaArray(nct, nc3, nc2, nc1);
+  c1.NewAthenaArray(nct, nc3, nc2, nc1);
   pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
 }
 
@@ -88,7 +87,7 @@ Particles::~Particles()
 }
 
 Particles::Particles(Particles const& other):
-  c(other.c), dc(other.dc), vol_(other.vol_), pcell_(other.pcell_)
+  c(other.c), c1(other.c1), pcell_(other.pcell_)
 {
   if (this == &other) return;
   *this = other;
@@ -102,7 +101,7 @@ Particles& Particles::operator=(Particles const& other)
   next = other.next;
   // assignment operator of AthenaArray does not allocate memory
   c = other.c;
-  dc = other.dc;
+  c1 = other.c1;
   mp = other.mp;
   mp1 = other.mp1;
 
@@ -112,7 +111,6 @@ Particles& Particles::operator=(Particles const& other)
   available_ids_ = other.available_ids_;
   cc_ = other.cc_;
   mu_ = other.mu_;
-  vol_ = other.vol_;
   pcell_ = other.pcell_;
   seeds_per_cell_ = other.seeds_per_cell_;
 
@@ -135,6 +133,15 @@ Particles* Particles::FindParticle(std::string name)
   }
 
   return p;
+}
+
+void Particles::Initialize()
+{
+  Particles *p = this;
+  while (p != nullptr) {
+    Particulate(p->mp, p->c);
+    p = p->next;
+  }
 }
 
 void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
@@ -187,60 +194,61 @@ void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> 
   }
 }*/
 
-void Particles::AggregateMass(AthenaArray<Real> &c_sum)
+void Particles::AggregateMass(AthenaArray<Real> &c1, std::vector<MaterialPoint> const& mp)
 {
   MeshBlock *pmb = pmy_block;
   Real loc[3];
 
-  c_sum.ZeroClear();
+  c1.ZeroClear();
   std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
+  int ci, cj, ck;
 
-  for (std::vector<MaterialPoint>::iterator q = mp.begin(); q != mp.end(); ++q) {
+  for (std::vector<MaterialPoint>::const_iterator q = mp.begin(); q != mp.end(); ++q) {
     loc[0] = q->x3;
     loc[1] = q->x2;
     loc[2] = q->x1;
 
     if (dims_[0] > 1)
-      q->ck = locate(coordinates_.data(), loc[0], dims_[0]);
-    else q->ck = pmb->ks;
+      ck = locate(coordinates_.data(), loc[0], dims_[0]);
+    else ck = pmb->ks;
 
     if (dims_[1] > 1)
-      q->cj = locate(coordinates_.data() + dims_[0], loc[1], dims_[1]);
-    else q->cj = pmb->js;
+      cj = locate(coordinates_.data() + dims_[0], loc[1], dims_[1]);
+    else cj = pmb->js;
 
-    q->ci = locate(coordinates_.data() + dims_[0] + dims_[1], 
+    ci = locate(coordinates_.data() + dims_[0] + dims_[1], 
       loc[2], dims_[2]);
-    c_sum(q->ct, q->ck, q->cj, q->ci) += q->mass;
+    c1(q->type, ck, cj, ci) += q->mass;
 
-    MaterialPoint *pc = pcell_(q->ct, q->ck, q->cj, q->ci);
-    while (pc != nullptr) pc = pc->next;
-    pc = &(*q);
+    if (pcell_(q->type, ck, cj, ci) == nullptr) {
+      pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
+      pcell_(q->type,ck,cj,ci)->next = nullptr;
+    } else {
+      MaterialPoint *pc = pcell_(q->type, ck, cj, ci);
+      while (pc->next != nullptr) pc = pc->next;
+      pc->next = const_cast<MaterialPoint*>(&(*q));
+      pc->next->next = nullptr;
+    }
   }
-
-  for (int t = 0; t < c_sum.GetDim4(); ++t)
-    for (int k = pmb->ks; k <= pmb->ke; ++k)
-      for (int j = pmb->js; j <= pmb->je; ++j) {
-        pmb->pcoord->CellVolume(k, j, pmb->is, pmb->ie, vol_);
-        for (int i = pmb->is; i <= pmb->ie; ++i)
-          c_sum(t,k,j,i) /= vol_(i);
-      }
 }
 
-void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c_dif)
+void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c)
 {
   MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
-  for (int t = 0; t < c_dif.GetDim4(); ++t)
+  for (int t = 0; t < c.GetDim4(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j) {
-        pco->CellVolume(k, j, pmb->is, pmb->ie, vol_);
         for (int i = pmb->is; i <= pmb->ie; ++i) {
-          if (c_dif(t,k,j,i) > 1.E-10) {
+          Real delta_c = c(t,k,j,i) - c1(t,k,j,i);
+          //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1(t,k,j,i) << std::endl;
+          if (delta_c > 1.E-10) {
+            //std::cout << "I'm in 1, delta_c = : " << delta_c << std::endl;
+            //std::cout << "Particles = " << ParticlesInCell(t,k,j,i)<< std::endl;
             for (int n = 0; n < seeds_per_cell_; ++n) {
-              std::cout << "I'm here" << std::endl;
               MaterialPoint p;
               p.id = GetNextId();
-              p.ct = t;
+              p.type = t;
               p.time = pmb->pmy_mesh->time;
               p.x1 = pco->x1f(i) + (1.*rand()/RAND_MAX)*pco->dx1f(i);
               p.x2 = pco->x2f(j) + (1.*rand()/RAND_MAX)*pco->dx2f(j);
@@ -248,34 +256,37 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c
               p.v1 = 0.;
               p.v2 = 0.;
               p.v3 = 0.;
-              p.mass = c_dif(t,k,j,i)*vol_(i)/seeds_per_cell_;
+              p.mass = delta_c/seeds_per_cell_;
               mp.push_back(p);
             }
-          } else {
+          } else if (delta_c < -1.E-10) {
             int nparts = ParticlesInCell(t,k,j,i);
-            Real avg = std::abs(c_dif(t,k,j,i))/nparts;
+            //std::cout << "I'm in 2, delta_c = : " << delta_c << std::endl;
+            //std::cout << "Particles = " << nparts << std::endl;
+            Real avg = std::abs(delta_c)/nparts;
             MaterialPoint *pc = pcell_(t,k,j,i);
+            //std::cout << "[" << pco->x1f(i) << "," << pco->x1f(i+1) << "]" << std::endl;
             while (pc != nullptr) {
-              if (pc->mass > avg*vol_(i)) {
-                pc->mass -= avg*vol_(i);
-                c_dif(t,k,j,i) += avg;
+              //std::cout << pc->x1 << " " << pc->mass << " ";
+              if (pc->mass > avg) {
+                pc->mass -= avg;
+                delta_c += avg;
               } else {
                 available_ids_.push_back(pc->id);
                 pc->id = -1;
                 pc->mass = 0;
-                c_dif(t,k,j,i) += pc->mass/vol_(i);
-                avg = c_dif(t,k,j,i)/nparts;
+                delta_c += pc->mass;
+                avg = std::abs(delta_c)/nparts;
               }
+              //std::cout << pc->mass << std::endl;
               nparts--;
               pc = pc->next;
             }
             assert(nparts == 0);
-            assert(std::abs(c_dif(t,k,j,i)) < 1.E-10);
+            assert(std::abs(delta_c) < 1.E-10);
           }
         }
       }
-
-  c_dif.ZeroClear();
 }
 
 void Particles::TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt)

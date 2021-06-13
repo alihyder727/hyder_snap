@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
   }
 
   // commit MPI_PARTICLE
-  int counts[3] = {1, 5+NINT_PARTICLE_DATA, 8+NREAL_PARTICLE_DATA};
+  int counts[3] = {1, 2+NINT_PARTICLE_DATA, 8+NREAL_PARTICLE_DATA};
   MPI_Datatype types[3] = {MPI_AINT, MPI_INT, MPI_ATHENA_REAL};
   MPI_Aint disps[3] = {offsetof(MaterialPoint, next), offsetof(MaterialPoint, id),
     offsetof(MaterialPoint, time)};

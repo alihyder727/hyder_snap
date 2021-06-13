@@ -56,8 +56,8 @@ public:
         }
   }
 
-  void IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &dc,
-    AthenaArray<Real> const& c, Real time, Real dt);
+  void IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c, 
+    Real time, Real dt);
 
   template<typename D1, typename D2>
   void AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,

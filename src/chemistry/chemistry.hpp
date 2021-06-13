@@ -41,7 +41,7 @@ public:
     }
   }
 
-  void TimeIntegrate(AthenaArray<Real> &u, Real time, Real dt);
+  void TimeIntegrate(Real time, Real dt) const;
 
 protected:
   ChemistryBase<Kessler94> *pkessler94_;

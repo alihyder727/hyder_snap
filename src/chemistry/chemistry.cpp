@@ -10,6 +10,7 @@
 #include <cstring>
 
 // Athena++ headers
+#include "../hydro/hydro.hpp"
 #include "chemistry.hpp"
 #include "kessler94.hpp"
 
@@ -50,8 +51,10 @@ Chemistry::~Chemistry()
   }
 }
 
-void Chemistry::TimeIntegrate(AthenaArray<Real> &u, Real time, Real dt)
+void Chemistry::TimeIntegrate(Real time, Real dt) const
 {
+  Hydro *phydro = pmy_block->phydro;
+  // integrate Kessler94 
   Particles *ppart = pkessler94_->pmy_part;
-  pkessler94_->IntegrateDense(u, ppart->dc, ppart->c, time, dt);
+  pkessler94_->IntegrateDense(phydro->u, ppart->c, time, dt);
 }

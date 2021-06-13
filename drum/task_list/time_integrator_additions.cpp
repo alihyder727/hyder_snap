@@ -54,20 +54,6 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   return TaskStatus::success;
 }
 
-//! \brief integrate chemistry
-TaskStatus TimeIntegratorTaskList::IntegrateChemistry(MeshBlock *pmb, int stage) {
-  Hydro *ph = pmb->phydro;
-
-  if (stage != nstages) return TaskStatus::next;
-
-  // frictional heating
-  //pmb->pchem->AddFrictionalHeating(ph->u, ph->w, pmb->pmy_mesh->dt);
-
-  pmb->pchem->TimeIntegrate(ph->u, pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
-
-  return TaskStatus::success;
-}
-
 //! \brief calculate radiation flux
 TaskStatus TimeIntegratorTaskList::CalculateRadiationFlux(MeshBlock *pmb, int stage) {
   // only do radiation at last rk step
@@ -112,18 +98,6 @@ TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage)
   return TaskStatus::success;
 }
 
-TaskStatus TimeIntegratorTaskList::MeshToParticles(MeshBlock *pmb, int stage) {
-  if (stage != nstages) return TaskStatus::next;
-
-  Particles *ppart = pmb->ppart;
-  while (ppart != nullptr) {
-    ppart->Particulate(ppart->mp, ppart->dc);
-    ppart = ppart->next;
-  }
-
-  return TaskStatus::success;
-}
-
 TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int stage) {
   // only do send/recv at last rk step
   if (stage != nstages) return TaskStatus::next;
@@ -152,7 +126,7 @@ TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int stage) {
 }
 
 TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int stage) {
-  // only do send/recv at last rk step
+  // only do send/recv at the last rk step
   if (stage != nstages) return TaskStatus::next;
 
   bool ret = true;
@@ -169,12 +143,38 @@ TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int stage) {
 }
 
 TaskStatus TimeIntegratorTaskList::ParticlesToMesh(MeshBlock *pmb, int stage) {
-  // only do send/recv at last rk step
+  // only do particle/mesh at the last rk step
   if (stage != nstages) return TaskStatus::next;
 
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
-    ppart->AggregateMass(ppart->c);
+    ppart->AggregateMass(ppart->c1, ppart->mp);
+    ppart = ppart->next;
+  }
+
+  return TaskStatus::success;
+}
+
+//! \brief integrate chemistry
+TaskStatus TimeIntegratorTaskList::IntegrateChemistry(MeshBlock *pmb, int stage) {
+  // only do chemistry at the last rk step
+  if (stage != nstages) return TaskStatus::next;
+
+  // frictional heating
+  //pmb->pchem->AddFrictionalHeating(ph->u, ph->w, pmb->pmy_mesh->dt);
+
+  pmb->pchem->TimeIntegrate(pmb->pmy_mesh->time, pmb->pmy_mesh->dt);
+
+  return TaskStatus::success;
+}
+
+TaskStatus TimeIntegratorTaskList::MeshToParticles(MeshBlock *pmb, int stage) {
+  // only do mesh/particle at the last rk step
+  if (stage != nstages) return TaskStatus::next;
+
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    ppart->Particulate(ppart->mp, ppart->c);
     ppart = ppart->next;
   }
 

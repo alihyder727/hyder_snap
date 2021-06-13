@@ -19,7 +19,7 @@ public:
   std::string myname;
   Particles *prev, *next;
   ParticleBuffer *ppb;
-  AthenaArray<Real> c, dc;
+  AthenaArray<Real> c, c1;
   std::vector<MaterialPoint> mp, mp1;
 
 // functions
@@ -82,8 +82,9 @@ public:
   }
 
   Particles* FindParticle(std::string name);
-  void AggregateMass(AthenaArray<Real> &c_sum);
-  void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> &c_dif);
+  void Initialize();
+  void AggregateMass(AthenaArray<Real> &c1, std::vector<MaterialPoint> const& mp);
+  void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c);
 
   virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
     AthenaArray<Real> const &w);
@@ -100,7 +101,6 @@ protected:
   std::vector<Real> cc_;
   //! mean molecular weight
   std::vector<Real> mu_;
-  AthenaArray<Real> vol_;
   AthenaArray<MaterialPoint*> pcell_;
   int seeds_per_cell_;
 };

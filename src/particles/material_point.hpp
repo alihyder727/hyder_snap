@@ -20,10 +20,8 @@ struct MaterialPoint {
 
   //! particle id
   int id;
-  //! cell id
-  int ci, cj, ck;
   //! category id
-  int ct;
+  int type;
 
   #if NINT_PARTICLE_DATA > 0
     int  ii[NINT_PARTICLE_DATA];
