@@ -74,7 +74,8 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
 
   seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 5);
-  nmax_per_cell_ = pin->GetOrAddInteger("particles", name + ".nmax_per_cell", 20);
+  nmax_per_cell_ = pin->GetOrAddInteger("particles", name + ".nmax_per_cell",
+    5*seeds_per_cell_);
   density_floor_ = pin->GetOrAddReal("particles", name + ".density_floor_", 1.E-10);
 
   std::stringstream msg;

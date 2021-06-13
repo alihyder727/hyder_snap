@@ -40,11 +40,20 @@ void Particles::AggregateDensity(AthenaArray<Real> &c1, std::vector<MaterialPoin
     if (pcell_(q->type, ck, cj, ci) == nullptr) {
       pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
       pcell_(q->type,ck,cj,ci)->next = nullptr;
-    } else {
-      MaterialPoint *pc = pcell_(q->type, ck, cj, ci);
-      while (pc->next != nullptr) pc = pc->next;
-      pc->next = const_cast<MaterialPoint*>(&(*q));
-      pc->next->next = nullptr;
+    } else {  // insert sort from low density to high density
+      MaterialPoint *pc = pcell_(q->type,ck,cj,ci);
+      MaterialPoint *tmp;
+      if (pc->rho > q->rho) {
+        tmp = pcell_(q->type,ck,cj,ci);
+        pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
+        pcell_(q->type,ck,cj,ci)->next = tmp;
+      } else {
+        while ((pc->next != nullptr) && (q->rho > pc->next->rho))
+          pc = pc->next;
+        tmp = pc->next;
+        pc->next = const_cast<MaterialPoint*>(&(*q));
+        pc->next->next = tmp;
+      }
     }
   }
 }

@@ -27,3 +27,13 @@ SimpleCloudParticles::SimpleCloudParticles(
   cc_.push_back(cc);
   cc_.push_back(cc);
 }
+
+void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
+  AthenaArray<Real> &du, AthenaArray<Real> const &w)
+{
+  //Particles::ExchangeHydro(mp, du, w);
+  for (std::vector<MaterialPoint>::iterator it = mp.begin(); it != mp.end(); ++it) {
+    //it->v1 += -10.*it->type;
+    it->v1 = -10.;
+  }
+}

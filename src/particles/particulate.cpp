@@ -25,10 +25,9 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
         for (int i = pmb->is; i <= pmb->ie; ++i) {
           Real delta_c = c(t,k,j,i) - c1(t,k,j,i);
           int nparts = CountParticlesInCell(t,k,j,i);
-          //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1(t,k,j,i) << std::endl;
           if (delta_c > density_floor_) {
             Real avg = delta_c/seeds_per_cell_;
-            Real num = std::min(std::max(0, nmax_per_cell_ - nparts), seeds_per_cell_);
+            int num = std::min(std::max(0, nmax_per_cell_ - nparts), seeds_per_cell_);
             for (int n = 0; n < num; ++n) {
               MaterialPoint p;
               p.id = GetNextId();
@@ -52,22 +51,24 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
           } else if (delta_c < -density_floor_) {
             Real avg = std::abs(delta_c)/nparts;
             MaterialPoint *pc = pcell_(t,k,j,i);
+            //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1(t,k,j,i) << std::endl;
             //std::cout << "[" << pco->x1f(i) << "," << pco->x1f(i+1) << "]" << std::endl;
             //std::cout << "delta_c = " << delta_c << " nparts = " << nparts << std::endl;
             while (pc != nullptr) {
               //std::cout << pc->x1 << " " << pc->rho << " ";
+              nparts--;
               if (pc->rho > avg) {
-                pc->rho -= avg;
                 delta_c += avg;
+                pc->rho -= avg;
               } else {
+                delta_c += pc->rho;
+                avg = std::abs(delta_c)/nparts;
                 available_ids_.push_back(pc->id);
                 pc->id = -1;
                 pc->rho = 0;
-                delta_c += pc->rho;
-                avg = std::abs(delta_c)/nparts;
               }
               //std::cout << pc->rho << std::endl;
-              nparts--;
+              //std::cout << delta_c << " " << avg << std::endl;
               pc = pc->next;
             }
             assert(nparts == 0);

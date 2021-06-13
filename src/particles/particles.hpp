@@ -112,6 +112,8 @@ class SimpleCloudParticles : public Particles {
 public:
   SimpleCloudParticles(MeshBlock *pmb, ParameterInput *pin, std::string name);
   ~SimpleCloudParticles() {}
+  void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
+    AthenaArray<Real> const &w);
 };
 
 class TwoPhaseCloudParticles : public Particles {
