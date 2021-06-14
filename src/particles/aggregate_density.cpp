@@ -11,12 +11,12 @@
 #include "../math/interpolation.h" // locate
 #include "particles.hpp"
 
-void Particles::AggregateDensity(AthenaArray<Real> &c1, std::vector<MaterialPoint> const& mp)
+void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> const& mp)
 {
   MeshBlock *pmb = pmy_block;
   Real loc[3];
 
-  c1.ZeroClear();
+  c.ZeroClear();
   std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
   int ci, cj, ck;
 
@@ -35,7 +35,7 @@ void Particles::AggregateDensity(AthenaArray<Real> &c1, std::vector<MaterialPoin
 
     ci = locate(coordinates_.data() + dims_[0] + dims_[1], 
       loc[2], dims_[2]);
-    c1(q->type, ck, cj, ci) += q->rho;
+    c(q->type, ck, cj, ci) += q->rho;
 
     if (pcell_(q->type, ck, cj, ci) == nullptr) {
       pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
@@ -56,5 +56,8 @@ void Particles::AggregateDensity(AthenaArray<Real> &c1, std::vector<MaterialPoin
       }
     }
   }
+
+  // make a copy
+  c1_ = c;
 }
 

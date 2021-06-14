@@ -148,7 +148,7 @@ TaskStatus TimeIntegratorTaskList::ParticlesToMesh(MeshBlock *pmb, int stage) {
 
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
-    ppart->AggregateDensity(ppart->c1, ppart->mp);
+    ppart->AggregateDensity(ppart->c, ppart->mp);
     ppart = ppart->next;
   }
 

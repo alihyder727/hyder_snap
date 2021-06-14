@@ -70,7 +70,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   dims_[2] = nc1;
 
   c.NewAthenaArray(nct, nc3, nc2, nc1);
-  c1.NewAthenaArray(nct, nc3, nc2, nc1);
+  c1_.NewAthenaArray(nct, nc3, nc2, nc1);
   pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
 
   seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 5);
@@ -97,7 +97,7 @@ Particles::~Particles()
 }
 
 Particles::Particles(Particles const& other):
-  c(other.c), c1(other.c1), pcell_(other.pcell_)
+  c(other.c), c1_(other.c1_), pcell_(other.pcell_)
 {
   if (this == &other) return;
   *this = other;
@@ -111,7 +111,6 @@ Particles& Particles::operator=(Particles const& other)
   next = other.next;
   // assignment operator of AthenaArray does not allocate memory
   c = other.c;
-  c1 = other.c1;
   mp = other.mp;
   mp1 = other.mp1;
 
@@ -121,6 +120,7 @@ Particles& Particles::operator=(Particles const& other)
   available_ids_ = other.available_ids_;
   cc_ = other.cc_;
   mu_ = other.mu_;
+  c1_ = other.c1_;
   pcell_ = other.pcell_;
   seeds_per_cell_ = other.seeds_per_cell_;
   nmax_per_cell_ = other.nmax_per_cell_;

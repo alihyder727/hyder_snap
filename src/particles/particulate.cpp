@@ -23,7 +23,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j)
         for (int i = pmb->is; i <= pmb->ie; ++i) {
-          Real delta_c = c(t,k,j,i) - c1(t,k,j,i);
+          Real delta_c = c(t,k,j,i) - c1_(t,k,j,i);
           int nparts = CountParticlesInCell(t,k,j,i);
           if (delta_c > density_floor_) {
             Real avg = delta_c/seeds_per_cell_;
@@ -51,7 +51,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
           } else if (delta_c < -density_floor_) {
             Real avg = std::abs(delta_c)/nparts;
             MaterialPoint *pc = pcell_(t,k,j,i);
-            //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1(t,k,j,i) << std::endl;
+            //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1_(t,k,j,i) << std::endl;
             //std::cout << "[" << pco->x1f(i) << "," << pco->x1f(i+1) << "]" << std::endl;
             //std::cout << "delta_c = " << delta_c << " nparts = " << nparts << std::endl;
             while (pc != nullptr) {
