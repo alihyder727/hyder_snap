@@ -89,11 +89,11 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
     Real rd = 1.;
     if (ubar > 0.) {
       // volume mixing ratio to mass mixing ratio
-      for (int n = 1; n < NMASS; ++n)
+      for (int n = 1; n <= NVAPOR; ++n)
         rd -= wli[n];
 
       flx(IDN,k,j,i) = ubar*wli[IDN]*rd;
-      for (int n = 1; n < NMASS; ++n)
+      for (int n = 1; n <= NVAPOR; ++n)
         flx(n,k,j,i) = ubar*wli[IDN]*wli[n];
       flx(ivx,k,j,i) = ubar*wli[IDN]*wli[ivx] + pbar;
       flx(ivy,k,j,i) = ubar*wli[IDN]*wli[ivy];
@@ -101,11 +101,11 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
       flx(IEN,k,j,i) = ubar*wli[IDN]*hl;
     } else {
       // volume mixing ratio to mass mixing ratio
-      for (int n = 1; n < NMASS; ++n)
+      for (int n = 1; n <= NVAPOR; ++n)
         rd -= wri[n];
 
       flx(IDN,k,j,i) = ubar*wri[IDN]*rd;
-      for (int n = 1; n < NMASS; ++n)
+      for (int n = 1; n <= NVAPOR; ++n)
         flx(n,k,j,i) = ubar*wri[IDN]*wri[n];
       flx(ivx,k,j,i) = ubar*wri[IDN]*wri[ivx] + pbar;
       flx(ivy,k,j,i) = ubar*wri[IDN]*wri[ivy];

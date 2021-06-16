@@ -21,6 +21,7 @@ public:
     ChemistryBase<Kessler94>(pmb, pin)
   {
     myname = name;
+    particle_name = pin->GetString("chemistry", name + ".link_particle");
 
     coeffs_["condensation"] = pin->GetReal("chemistry", name + ".condensation");
     coeffs_["autoconversion"] = pin->GetReal("chemistry", name + ".autoconversion");
@@ -37,8 +38,6 @@ public:
     std::fill(deltaU_.begin(), deltaU_.end(), 0.);
     deltaU_[qindex_[1]] = pin->GetReal("chemistry", name + ".deltaU");
 
-    std::string str = pin->GetString("chemistry", name + ".link_particle");
-    pmy_part = pmb->ppart->FindParticle(str);
   }
 
   void ApplyChemicalLimits(Real q[], Real const q0[], Real cv)

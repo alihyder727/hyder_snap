@@ -54,9 +54,10 @@ Chemistry::~Chemistry()
 void Chemistry::TimeIntegrate(Real time, Real dt) const
 {
   Hydro *phydro = pmy_block->phydro;
+  Particles *ppart = pmy_block->ppart;
   // integrate Kessler94 
   if (pkessler94_ != nullptr) {
-    Particles *ppart = pkessler94_->pmy_part;
-    pkessler94_->IntegrateDense(phydro->u, ppart->c, time, dt);
+    Particles *pp = ppart->FindParticle(pkessler94_->particle_name);
+    pkessler94_->IntegrateDense(phydro->u, pp->c, time, dt);
   }
 }

@@ -21,8 +21,8 @@ class ChemistryBase {
 public:
 // data
   MeshBlock *pmy_block;
-  Particles *pmy_part;
   std::string myname;
+  std::string particle_name;
   ChemistryBase<T> *prev, *next;
 
 // functions

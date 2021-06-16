@@ -6,6 +6,9 @@
  * @bug No known bugs.
  */
 
+// C/C++ headers
+#include <iostream>
+
 // Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "../math/interpolation.h" // locate
@@ -35,24 +38,29 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
 
     ci = locate(coordinates_.data() + dims_[0] + dims_[1], 
       loc[2], dims_[2]);
+
+    assert(ck >= pmb->ks && ck <= pmb->ke);
+    assert(cj >= pmb->js && cj <= pmb->je);
+    assert(ci >= pmb->is && ci <= pmb->ie);
+
     c(q->type, ck, cj, ci) += q->rho;
 
-    if (pcell_(q->type, ck, cj, ci) == nullptr) {
+    if (pcell_(q->type,ck,cj,ci) == nullptr) {
       pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
       pcell_(q->type,ck,cj,ci)->next = nullptr;
-    } else {  // insert sort from low density to high density
-      MaterialPoint *pc = pcell_(q->type,ck,cj,ci);
+    } else {  // insert sort from low to high density
       MaterialPoint *tmp;
-      if (pc->rho > q->rho) {
-        tmp = pcell_(q->type,ck,cj,ci);
-        pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
-        pcell_(q->type,ck,cj,ci)->next = tmp;
-      } else {
-        while ((pc->next != nullptr) && (q->rho > pc->next->rho))
+      if (pcell_(q->type,ck,cj,ci)->rho < q->rho) {
+        MaterialPoint *pc = pcell_(q->type,ck,cj,ci);
+        while (pc->next != nullptr && pc->next->rho < q->rho)
           pc = pc->next;
         tmp = pc->next;
         pc->next = const_cast<MaterialPoint*>(&(*q));
         pc->next->next = tmp;
+      } else {
+        tmp = pcell_(q->type,ck,cj,ci);
+        pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
+        pcell_(q->type,ck,cj,ci)->next = tmp;
       }
     }
   }

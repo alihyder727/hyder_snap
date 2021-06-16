@@ -49,22 +49,12 @@ public:
       id = available_ids_.back();
       available_ids_.pop_back();
     } else
-      id = mp.size()+1;
+      id = mp.size() + mp1.size() +1;
     return id;
   }
 
   Real GetMassRatio(int i, Real mu) const {
     return mu_[i]/mu;
-  }
-
-  int CountParticlesInCell(int t, int k, int j, int i) {
-    int num = 0;
-    MaterialPoint *pc = pcell_(t,k,j,i);
-    while (pc != nullptr) {
-      pc = pc->next;
-      num++;
-    }
-    return num;
   }
 
   Real GetTotalCv(int k, int j, int i) {

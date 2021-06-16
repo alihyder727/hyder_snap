@@ -19,12 +19,21 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
 {
   MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
+  // use mp1 for buffer
+  mp1.clear();
   for (int t = 0; t < c.GetDim4(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j)
         for (int i = pmb->is; i <= pmb->ie; ++i) {
           Real delta_c = c(t,k,j,i) - c1_(t,k,j,i);
-          int nparts = CountParticlesInCell(t,k,j,i);
+          // count particles
+          int nparts = 0;
+          MaterialPoint *pc = pcell_(t,k,j,i);
+          while (pc != nullptr) {
+            pc = pc->next;
+            nparts++;
+          }
+          // add new particles to mp1
           if (delta_c > density_floor_) {
             Real avg = delta_c/seeds_per_cell_;
             int num = std::min(std::max(0, nmax_per_cell_ - nparts), seeds_per_cell_);
@@ -40,7 +49,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
               p.v2 = 0.;
               p.v3 = 0.;
               p.rho = avg;
-              mp.push_back(p);
+              mp1.push_back(p);
             }
 
             MaterialPoint *pc = pcell_(t,k,j,i);
@@ -48,7 +57,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
               pc->rho += avg;
               pc = pc->next;
             }
-          } else if (delta_c < -density_floor_) {
+          } else if (delta_c < -density_floor_) { // remove particles
             Real avg = std::abs(delta_c)/nparts;
             MaterialPoint *pc = pcell_(t,k,j,i);
             //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1_(t,k,j,i) << std::endl;
@@ -81,5 +90,9 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
             }
           }
         }
+
+  // transfer from mp1 to mp;
+  mp.reserve(mp.size() + std::distance(mp1.begin(), mp1.end()));
+  mp.insert(mp.end(), mp1.begin(), mp1.end());
 }
 

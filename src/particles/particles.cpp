@@ -70,7 +70,9 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   dims_[2] = nc1;
 
   c.NewAthenaArray(nct, nc3, nc2, nc1);
+  c.ZeroClear();
   c1_.NewAthenaArray(nct, nc3, nc2, nc1);
+  c1_.ZeroClear();
   pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
 
   seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 5);

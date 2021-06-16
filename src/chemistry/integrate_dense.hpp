@@ -7,6 +7,8 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
 {
   MeshBlock *pmb = pmy_block;
   Thermodynamics *pthermo = pmb->pthermo;
+  Particles *ppart = pmb->ppart->FindParticle(particle_name);
+
   int ks = pmb->ks, js = pmb->js, is = pmb->is;
   int ke = pmb->ke, je = pmb->je, ie = pmb->ie;
 
@@ -20,10 +22,10 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
 
   T* pchem = static_cast<T*>(this);
   Eigen::Matrix<Real, T::Solver::Size, T::Solver::Size> Jac;
-  Eigen::Matrix<Real, T::Solver::Size, 1> Rate, Sol;
+  Eigen::Matrix<Real, T::Solver::Size, 1> Rate, sol;
 
   // 0. calculate cv for later use
-  SetTotalCv(u, pmb->ppart, is, ie, js, je, ks, ke);
+  SetTotalCv(u, ppart, is, ie, js, je, ks, ke);
 
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
@@ -32,15 +34,15 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
         Rate.setZero();
         Jac.setZero();
 
-        // 2. from density to molar mixin ratio
+        // 2. from density to molar mixing ratio
         pthermo->ConservedToChemical(q, u.at(k,j,i));
         mol_(k,j,i) += q[IPR]/(Thermodynamics::Rgas*q[IDN]);
 
         Real qd = 1.;
         for (int n = 1; n <= NVAPOR; ++n) qd -= q[n];
         for (int n = 0; n < c.GetDim4(); ++n) {
-          Real epsc = pmy_part->GetMassRatio(n, mu_d);
-          q[NHYDRO+n] = (c(n,k,j,i)/epsc)/u(0,k,j,i)*qd;
+          Real eps = ppart->GetMassRatio(n, mu_d);
+          q[NHYDRO+n] = (c(n,k,j,i)/eps)/u(0,k,j,i)*qd;
         }
 
         // 3. make two copies, one for BDF1 and another for TR-BDF2
@@ -51,22 +53,22 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
         pchem->AssembleReactionMatrix(Rate, Jac, q, cvt_(k,j,i)/mol_(k,j,i), time);
 
         // 5. BDF1 solver
-        Sol = pchem->solver.BDF1(q1, Rate, Jac, time, dt);
-        for (int i = 0; i < T::Solver::Size; ++i)
-          q1[qindex_[i]] += Sol(i);
+        sol = pchem->solver.BDF1(Rate, Jac, time, dt);
+        for (int n = 0; n < T::Solver::Size; ++n)
+          q1[qindex_[n]] += sol(n);
 
         // 6. TR-BDF2 solver
-        Sol = pchem->solver.TRBDF2(q2, Rate, Jac, time, dt);
-        for (int i = 0; i < T::Solver::Size; ++i)
-          q2[qindex_[i]] += Sol(i);
+        sol = pchem->solver.TRBDF2(Rate, Jac, time, dt);
+        for (int n = 0; n < T::Solver::Size; ++n)
+          q2[qindex_[n]] += sol(n);
 
         // 7. Blend solutions
         Real alpha = 1.;
-        for (int i = 0; i < T::Solver::Size; ++i)
-          if (q2[qindex_[i]] < 0.)
-            alpha = std::min(alpha, q1[qindex_[i]]/(q1[qindex_[i]] - q2[qindex_[i]]));
-        for (int i = 0; i < T::Solver::Size; ++i)
-          q2[qindex_[i]] = (1. - alpha)*q1[qindex_[i]] + alpha*q2[qindex_[i]];
+        for (int n = 0; n < T::Solver::Size; ++n)
+          if (q2[qindex_[n]] < 0.)
+            alpha = std::min(alpha, q1[qindex_[n]]/(q1[qindex_[n]] - q2[qindex_[n]]));
+        for (int n = 0; n < T::Solver::Size; ++n)
+          q2[qindex_[n]] = (1. - alpha)*q1[qindex_[n]] + alpha*q2[qindex_[n]];
 
         // 8. Adjust pressure
         Real pd = u(0,k,j,i)*Rd*q2[IDN];
@@ -94,8 +96,8 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
         // 9. from molar mixing ratio to density
         pthermo->ChemicalToConserved(u.at(k,j,i), q2);
         for (int n = 0; n < c.GetDim4(); ++n) {
-          Real epsc = pmy_part->GetMassRatio(n, mu_d);
-          c(n,k,j,i) = (q2[NHYDRO+n]*epsc)/qd*u(0,k,j,i);
+          Real eps = ppart->GetMassRatio(n, mu_d);
+          c(n,k,j,i) = (q2[NHYDRO+n]*eps)/qd*u(0,k,j,i);
         }
 
         /* debug
