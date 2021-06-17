@@ -19,9 +19,9 @@ TwoPhaseCloudParticles::TwoPhaseCloudParticles(
 }
 
 void TwoPhaseCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
-  AthenaArray<Real> &du, AthenaArray<Real> const &w)
+  AthenaArray<Real> &du, AthenaArray<Real> const &w, Real dt)
 {
-  Particles::ExchangeHydro(mp, du, w);
+  Particles::ExchangeHydro(mp, du, w, dt);
   //for (std::vector<MaterialPoint>::iterator it = mp.begin(); it != mp.end(); ++it) {
   //  it->v1 += -10.;
   //}

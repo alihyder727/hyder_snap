@@ -27,7 +27,7 @@ public:
   Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int nct);
   virtual ~Particles();
   Particles(Particles const& other);
-  Particles& operator=(Particles const& other);
+  //Particles& operator=(Particles const& other);
 
   template<typename T> Particles* AddParticles(T const& other) {
     T* pt = new T(other);
@@ -77,13 +77,14 @@ public:
   void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c);
 
   virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
-    AthenaArray<Real> const &w);
+    AthenaArray<Real> const &w, Real dt);
   virtual void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
   virtual void WeightedAverage(std::vector<MaterialPoint> &mp_out,
     std::vector<MaterialPoint> const& mp_in, Real ave_wghts[]);
 
 protected:
-  std::vector<Real> coordinates_;
+  std::vector<Real> xface_;
+  std::vector<Real> xcenter_;
   std::vector<int> dims_;
   std::vector<std::string> cnames_;
   std::vector<int> available_ids_;
@@ -99,6 +100,7 @@ protected:
   int seeds_per_cell_;
   int nmax_per_cell_;
   Real density_floor_;
+  bool has_gravity_;
 };
 
 class SimpleCloudParticles : public Particles {
@@ -106,7 +108,7 @@ public:
   SimpleCloudParticles(MeshBlock *pmb, ParameterInput *pin, std::string name);
   ~SimpleCloudParticles() {}
   void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
-    AthenaArray<Real> const &w);
+    AthenaArray<Real> const &w, Real dt);
 };
 
 class TwoPhaseCloudParticles : public Particles {
@@ -114,7 +116,7 @@ public:
   TwoPhaseCloudParticles(MeshBlock *pmb, ParameterInput *pin, std::string name);
   ~TwoPhaseCloudParticles() {}
   void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
-    AthenaArray<Real> const &w);
+    AthenaArray<Real> const &w, Real dt);
   //void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
 };
 

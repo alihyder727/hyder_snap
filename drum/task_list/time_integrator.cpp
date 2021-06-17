@@ -267,7 +267,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       AddTask(INT_HYD, (CALC_HYDFLX|CALC_RADFLX));
     }
     AddTask(SRCTERM_HYD,INT_HYD);
-    AddTask(INT_PART,INT_HYD);
+    AddTask(INT_PART,SRCTERM_HYD);
     AddTask(SEND_PART,INT_PART);
     AddTask(RECV_PART,SEND_PART);
     AddTask(ATTACH_PART,RECV_PART);
