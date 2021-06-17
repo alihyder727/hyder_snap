@@ -8,6 +8,7 @@
 
 // C/C++ header
 #include <sstream>
+#include <stdexcept>
 
 // Athena++ headers
 #include "../mesh/mesh.hpp"
@@ -55,6 +56,7 @@ bool ParticleBuffer::AttachParticle(std::vector<MaterialPoint>& mp)
              (pm->f2 && (it->x2 < pmb->block_size.x2min || it->x2 > pmb->block_size.x2max)) ||
              (pm->f3 && (it->x3 < pmb->block_size.x3min || it->x3 > pmb->block_size.x3max));
         if (out_of_domain) {
+//#if DEBUG_LEVEL > 1
           success = false;
           std::stringstream msg;
           msg << "### FATAL ERROR in ParticleBuffer::AttachParticles. Particles " 
@@ -64,9 +66,8 @@ bool ParticleBuffer::AttachParticle(std::vector<MaterialPoint>& mp)
           msg << it->x2 << " " << pmb->block_size.x2min << " " << pmb->block_size.x2max << std::endl;
           msg << it->x3 << " " << pmb->block_size.x3min << " " << pmb->block_size.x3max << std::endl;
           ATHENA_ERROR(msg);
-        }
-
-        mp.push_back(*it);
+//#endif
+        } else mp.push_back(*it);
       }
       particle_flag_[nb.bufid] = BoundaryStatus::completed; // completed
     }

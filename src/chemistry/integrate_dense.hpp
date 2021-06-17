@@ -1,3 +1,6 @@
+// C/C++ headers
+#include <sstream>
+
 // Athena++ header files
 #include "chemistry_solver.hpp"
 
@@ -5,6 +8,7 @@ template<typename T>
 void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c,
   Real time, Real dt)
 {
+  std::stringstream msg;
   MeshBlock *pmb = pmy_block;
   Thermodynamics *pthermo = pmb->pthermo;
   Particles *ppart = pmb->ppart->FindParticle(particle_name);
@@ -37,6 +41,11 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
         // 2. from density to molar mixing ratio
         pthermo->ConservedToChemical(q, u.at(k,j,i));
         mol_(k,j,i) += q[IPR]/(Thermodynamics::Rgas*q[IDN]);
+        if (q[IDN] < 0.) {
+          msg << "### FATAL ERROR in ChemistryBase::IntegrateDense:" << std::endl
+              << "Negative temperature encountered, T = " << q[IDN] << std::endl;
+          ATHENA_ERROR(msg);
+        }
 
         Real qd = 1.;
         for (int n = 1; n <= NVAPOR; ++n) qd -= q[n];
@@ -70,7 +79,10 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
         for (int n = 0; n < T::Solver::Size; ++n)
           q2[qindex_[n]] = (1. - alpha)*q1[qindex_[n]] + alpha*q2[qindex_[n]];
 
-        // 8. Adjust pressure
+        // 8. Apply limits
+        pchem->ApplyConcentrationLimit(q2, q);
+
+        // 9. Adjust pressure
         Real pd = u(0,k,j,i)*Rd*q2[IDN];
         q2[IPR] = pd;
         for (int n = 1; n <= NVAPOR; ++n) q2[IPR] += q2[n]/qd*pd;

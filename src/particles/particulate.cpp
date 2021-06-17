@@ -84,6 +84,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
             std::stringstream msg;
             if (std::abs(delta_c) > density_floor_) {
               msg << "### FATAL ERROR in Particles::Particulate:" << std::endl
+                  << "c = " << c(t,k,j,i) << " c1 = " << c1_(t,k,j,i) << std::endl
                   << "delta_c = " << delta_c << std::endl
                   << "density_floor_ = " << density_floor_ << std::endl;
               ATHENA_ERROR(msg);

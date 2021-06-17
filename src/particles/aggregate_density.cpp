@@ -22,35 +22,35 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
 
   c.ZeroClear();
   std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
-  int ci, cj, ck;
+  int i, j, k;
 
   for (std::vector<MaterialPoint>::const_iterator q = mp.begin(); q != mp.end(); ++q) {
-    ck = dims_[0] > 1 ? locate(xface_.data(), q->x3, dims_[0]) : pmb->ks;
-    cj = dims_[1] > 1 ? locate(xface_.data()+dims_[0], q->x2, dims_[1]) : pmb->js;
-    ci = locate(xface_.data()+dims_[0]+dims_[1], q->x1, dims_[2]);
+    k = locate(xface_.data(), q->x3, dims_[0]+1);
+    j = locate(xface_.data()+dims_[0]+1, q->x2, dims_[1]+1);
+    i = locate(xface_.data()+dims_[0]+dims_[1]+2, q->x1, dims_[2]+1);
 
-    assert(ck >= pmb->ks && ck <= pmb->ke);
-    assert(cj >= pmb->js && cj <= pmb->je);
-    assert(ci >= pmb->is && ci <= pmb->ie);
+    assert(k >= pmb->ks && k <= pmb->ke);
+    assert(j >= pmb->js && j <= pmb->je);
+    assert(i >= pmb->is && i <= pmb->ie);
 
-    c(q->type,ck,cj,ci) += q->rho;
+    c(q->type,k,j,i) += q->rho;
 
-    if (pcell_(q->type,ck,cj,ci) == nullptr) {
-      pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
-      pcell_(q->type,ck,cj,ci)->next = nullptr;
+    if (pcell_(q->type,k,j,i) == nullptr) {
+      pcell_(q->type,k,j,i) = const_cast<MaterialPoint*>(&(*q));
+      pcell_(q->type,k,j,i)->next = nullptr;
     } else {  // insert sort from low to high density
       MaterialPoint *tmp;
-      if (pcell_(q->type,ck,cj,ci)->rho < q->rho) {
-        MaterialPoint *pc = pcell_(q->type,ck,cj,ci);
+      if (pcell_(q->type,k,j,i)->rho < q->rho) {
+        MaterialPoint *pc = pcell_(q->type,k,j,i);
         while (pc->next != nullptr && pc->next->rho < q->rho)
           pc = pc->next;
         tmp = pc->next;
         pc->next = const_cast<MaterialPoint*>(&(*q));
         pc->next->next = tmp;
       } else {
-        tmp = pcell_(q->type,ck,cj,ci);
-        pcell_(q->type,ck,cj,ci) = const_cast<MaterialPoint*>(&(*q));
-        pcell_(q->type,ck,cj,ci)->next = tmp;
+        tmp = pcell_(q->type,k,j,i);
+        pcell_(q->type,k,j,i) = const_cast<MaterialPoint*>(&(*q));
+        pcell_(q->type,k,j,i)->next = tmp;
       }
     }
   }
@@ -58,4 +58,3 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
   // make a copy
   c1_ = c;
 }
-

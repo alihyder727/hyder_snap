@@ -72,6 +72,9 @@ patch_files
 # netcdf outputs
 *.nc
 
+# particle files
+*.ptab
+
 # doxygen folders
 doc/doxygen/html/
 doc/doxygen/latex/

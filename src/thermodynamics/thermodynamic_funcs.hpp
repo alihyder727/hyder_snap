@@ -10,6 +10,7 @@
 #define THERMODYNAMICS_FUNCS_HPP
 
 #include "thermodynamics.hpp"
+#include "../particles/particles.hpp"
 
 //! Potential temperature
 template<typename T>
@@ -20,15 +21,19 @@ Real PotentialTemp(T w, Real p0, Thermodynamics *pthermo) {
 }
 
 //! Moist static energy
-template<typename A, typename B>
-Real MoistStaticEnergy(A const w, B const c, Real gz, Thermodynamics *pthermo) {
-  Real temp = pthermo->GetTemp(w);
-  Real IE = w[IDN]*pthermo->GetMeanCp(w)*temp;
-  Real rho = w[IDN];
-  for (int n = 0; n < 2*NVAPOR; ++n) {
-    rho += c[n];
-    IE += c[n]*pthermo->GetCp(1+NVAPOR+n)*temp;
-    IE -= c[n]*pthermo->GetLatent(1+NVAPOR+n);
+Real MoistStaticEnergy(AthenaArray<Real> const& w, Real gz, 
+  Thermodynamics *pthermo, Particles *ppart, int k, int j, int i) {
+  Real temp = pthermo->GetTemp(w.at(k,j,i));
+  Real IE = w(IDN,k,j,i)*pthermo->GetMeanCp(w.at(k,j,i))*temp;
+  Real rho = w(IDN,k,j,i);
+  for (int n = 0; n < NVAPOR; ++n) {
+    assert(ppart != nullptr);
+    for (int t = 0; t < ppart->c.GetDim4(); ++t) {
+      rho += ppart->c(t,k,j,i);
+      IE -= ppart->c(t,k,j,i)*pthermo->GetLatent(1+NVAPOR+n);
+    }
+    IE += ppart->GetTotalCv(k,j,i)*temp;
+    ppart = ppart->next;
   }
   return IE/rho + gz;
 }
@@ -42,8 +47,8 @@ Real RelativeHumidity(T w, int iv, Thermodynamics *pthermo) {
 }
 
 //! Equivalent potential temperature
-template<typename A, typename B>
-Real MoistEntropy(A const, B const p0, Thermodynamics *pthermo) {
+Real MoistEntropy(AthenaArray<Real> const& w, Thermodynamics *pthermo, Particles *ppart,
+  int k, int j, int i) {
 /*#if (NVAPOR > 0)
   Real gamma = pthermo->pmy_block->peos->GetGamma();
   Real tem[1] = {pthermo->GetTemp(prim)};

@@ -63,6 +63,8 @@ public:
   void AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
     Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time);
 
+  void ApplyConcentrationLimit(Real q[], Real const q0[]) {}
+
 protected:
   //! total cv, J/(K m^3)
   AthenaArray<Real> cvt_;

@@ -14,9 +14,6 @@
 // Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "../coordinates/coordinates.hpp"
-#include "../math/interpolation.h" // interpn, locate
-#include "../hydro/hydro.hpp"
-#include "../hydro/srcterms/hydro_srcterms.hpp"
 #include "particles.hpp"
 #include "particle_buffer.hpp"
 
@@ -58,13 +55,13 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   ppb = new ParticleBuffer(this);
   int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
 
-  xface_.resize(nc3+nc2+nc1);
-  for (int k = 0; k < nc3; ++k)
+  xface_.resize(nc3+nc2+nc1+3);
+  for (int k = 0; k <= nc3; ++k)
     xface_[k] = pmb->pcoord->x3f(k);
-  for (int j = 0; j < nc2; ++j)
-    xface_[nc3+j] = pmb->pcoord->x2f(j);
-  for (int i = 0; i < nc1; ++i)
-    xface_[nc3+nc2+i] = pmb->pcoord->x1f(i);
+  for (int j = 0; j <= nc2; ++j)
+    xface_[nc3+1+j] = pmb->pcoord->x2f(j);
+  for (int i = 0; i <= nc1; ++i)
+    xface_[nc3+nc2+2+i] = pmb->pcoord->x1f(i);
 
   xcenter_.resize(nc3+nc2+nc1);
   for (int k = 0; k < nc3; ++k)
@@ -88,7 +85,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 5);
   nmax_per_cell_ = pin->GetOrAddInteger("particles", name + ".nmax_per_cell",
     5*seeds_per_cell_);
-  density_floor_ = pin->GetOrAddReal("particles", name + ".density_floor_", 1.E-10);
+  density_floor_ = pin->GetOrAddReal("particles", name + ".dfloor", 1.E-10);
   has_gravity_ = false;
 
   std::stringstream msg;
@@ -169,60 +166,6 @@ void Particles::Initialize()
   while (p != nullptr) {
     Particulate(p->mp, p->c);
     p = p->next;
-  }
-}
-
-void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
-  AthenaArray<Real> const &w, Real dt)
-{
-  MeshBlock *pmb = pmy_block;
-  AthenaArray<Real> v1, v2, v3;
-  Real loc[3];
-
-  v1.InitWithShallowSlice(const_cast<AthenaArray<Real>&>(w),4,IM1,1);
-  v2.InitWithShallowSlice(const_cast<AthenaArray<Real>&>(w),4,IM2,1);
-  v3.InitWithShallowSlice(const_cast<AthenaArray<Real>&>(w),4,IM3,1);
-
-  Real g1 = pmb->phydro->hsrc.GetG1();
-  Real g2 = pmb->phydro->hsrc.GetG2();
-  Real g3 = pmb->phydro->hsrc.GetG3();
-
-  for (std::vector<MaterialPoint>::iterator q = mp.begin(); q != mp.end(); ++q) {
-    loc[0] = q->x3;
-    loc[1] = q->x2;
-    loc[2] = q->x1;
-
-    interpn(&q->v1, loc, v1.data(), xcenter_.data(), dims_.data(), 3);
-
-    if (dims_[1] > 1)
-      interpn(&q->v2, loc, v2.data(), xcenter_.data(), dims_.data(), 3);
-    else
-      q->v2 = 0.;
-
-    if (dims_[0] > 1)
-      interpn(&q->v3, loc, v3.data(), xcenter_.data(), dims_.data(), 3);
-    else
-      q->v3 = 0.;
-
-    assert(!std::isnan(q->v1));
-    assert(!std::isnan(q->v2));
-    assert(!std::isnan(q->v3));
-
-    // add gravititional acceleration
-    if (has_gravity_) {
-      int k, j, i;
-      k = dims_[0] > 1 ? locate(xface_.data(), q->x3, dims_[0]) : pmb->ks;
-      j = dims_[1] > 1 ? locate(xface_.data()+dims_[0], q->x2, dims_[1]) : pmb->js;
-      i = locate(xface_.data()+dims_[0]+dims_[1], q->x1, dims_[2]);
-
-      Real src = dt*q->rho;
-      //std::cout << k << " " << j << " " << i << " " << du(IM1,k,j,i) << std::endl;
-      du(IM1,k,j,i) += src*g1;
-      //std::cout << "after " << du(IM1,k,j,i) << std::endl;
-      du(IM2,k,j,i) += src*g2;
-      du(IM3,k,j,i) += src*g3;
-      du(IEN,k,j,i) += src*(g1*q->v1 + g2*q->v2 + g3*q->v3);
-    }
   }
 }
 
