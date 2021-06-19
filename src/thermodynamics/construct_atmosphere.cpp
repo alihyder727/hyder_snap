@@ -23,8 +23,13 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
 
   // hydro + liquid + ice
   Real q1[NHYDRO+2*NVAPOR];
+  w[0][IDN] = w[0][IPR] = 1.;
   PrimitiveToChemical(q1, w[0]);
   for (int n = NHYDRO; n < NHYDRO+2*NVAPOR; ++n) q1[n] = 0.;
+  // change molar concentration to mixing ratio
+  Real mols = q1[IPR]/(q1[IDN]*Thermodynamics::Rgas);
+  for (int n = 1; n <= NVAPOR; ++n) q1[n] /= mols;
+  // reset TP
   q1[IDN] = Ts;
   q1[IPR] = Ps;
 
@@ -49,33 +54,36 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
     xg -= rate;
   }
 
-  // re-calculate vapor molar mixing ratios
-  for (int iv = 1; iv <= NVAPOR; ++iv) q1[iv] /= xg;
-  // vapor
+  // change molar mixing ratio to molar concentration
+  Real qv = 1.;
+  for (int n = NHYDRO; n < NHYDRO + 2*NVAPOR; ++n) qv -= q1[n];
+  mols = q1[IPR]/(q1[IDN]*Thermodynamics::Rgas)/qv;
+  for (int n = 1; n <= NVAPOR; ++n) q1[n] *= mols;
+  // set vapor
   ChemicalToPrimitive(w[0], q1);
-  // set back
-  for (int iv = 1; iv <= NVAPOR; ++iv) q1[iv] *= xg;
-  // clouds, density
-  // $\frac{\rho_{ij}}{\rho_1} = \frac{\hat{q}_{ij}}{\hat{q}_1}\frac{\mu_i}{\mu_1}
+  // change back
+  for (int n = 1; n <= NVAPOR; ++n) q1[n] /= mols;
+  // set clouds, mass density
+  Real mu_d = Rgas/Rd_;
   for (int n = 0; n < 2*NVAPOR; ++n)
-    w[0][NHYDRO+n] = (w[0][0]*w[0][1])*(q1[NHYDRO+n]/q1[1])
-                    *(mu_ratios_[1+NVAPOR+n]/mu_ratios_[1]);
+    w[0][NHYDRO+n] = q1[NHYDRO+n]*mols*mu_ratios_[1+NVAPOR+n]*mu_d;
 
   for (int i = 1; i < len; ++i) {
     // RK4 integration 
     rk4_integrate_z_adaptive(q1, isat, rcp, mu_ratios_, beta_, delta_, t3_, p3_, gamma,
       grav/Rd_, dz, ftol_, (int)method, dTdz);
-
-    xg = 1.;
-    for (int n = 0; n < 2*NVAPOR; ++n) xg -= q1[NHYDRO+n];
-    for (int iv = 1; iv <= NVAPOR; ++iv) q1[iv] /= xg;
-    // vapor
+    // reset mols
+    qv = 1.;
+    for (int n = NHYDRO; n < NHYDRO + 2*NVAPOR; ++n) qv -= q1[n];
+    mols = q1[IPR]/(q1[IDN]*Thermodynamics::Rgas)/qv;
+    // change molar mixing ratio to molar concentration
+    for (int n = 1; n <= NVAPOR; ++n) q1[n] *= mols;
+    // set vapor
     ChemicalToPrimitive(w[i], q1);
-    // set back
-    for (int iv = 1; iv <= NVAPOR; ++iv) q1[iv] *= xg;
-    // clouds
+    // change back
+    for (int n = 1; n <= NVAPOR; ++n) q1[n] /= mols;
+    // set clouds, mass density
     for (int n = 0; n < 2*NVAPOR; ++n)
-      w[i][NHYDRO+n] = (w[i][0]*w[i][1])*(q1[NHYDRO+n]/q1[1])
-                      *(mu_ratios_[1+NVAPOR+n]/mu_ratios_[1]);
+      w[i][NHYDRO+n] = q1[NHYDRO+n]*mols*mu_ratios_[1+NVAPOR+n]*mu_d;
   }
 }

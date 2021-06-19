@@ -2,34 +2,33 @@
 #include <sstream>
 
 // Athena++ header files
+#include "validate_chemistry.hpp"
 #include "chemistry_solver.hpp"
 
 template<typename T>
-void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c,
+void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &up,
   Real time, Real dt)
 {
   std::stringstream msg;
   MeshBlock *pmb = pmy_block;
   Thermodynamics *pthermo = pmb->pthermo;
+  EquationOfState *peos = pmb->peos;
   Particles *ppart = pmb->ppart->FindParticle(particle_name);
 
   int ks = pmb->ks, js = pmb->js, is = pmb->is;
   int ke = pmb->ke, je = pmb->je, ie = pmb->ie;
 
-  int size = u.GetDim4() + c.GetDim4();
+  int size = uh.GetDim4() + up.GetDim4();
 
-  Real* q = new Real [size];
-  Real* q1 = new Real [size];
-  Real* q2 = new Real [size];
-  Real Rd = pthermo->GetRd();
-  Real mu_d = Thermodynamics::Rgas/Rd;
+  Real* c0 = new Real [size];
+  Real* c1 = new Real [size];
+  Real* c2 = new Real [size];
 
   T* pchem = static_cast<T*>(this);
   Eigen::Matrix<Real, T::Solver::Size, T::Solver::Size> Jac;
   Eigen::Matrix<Real, T::Solver::Size, 1> Rate, sol;
 
-  // 0. calculate cv for later use
-  SetTotalCv(u, ppart, is, ie, js, je, ks, ke);
+  Real cvd = pthermo->GetRd()/(peos->GetGamma() - 1.);
 
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
@@ -38,79 +37,59 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
         Rate.setZero();
         Jac.setZero();
 
-        // 2. from density to molar mixing ratio
-        pthermo->ConservedToChemical(q, u.at(k,j,i));
-        mol_(k,j,i) += q[IPR]/(Thermodynamics::Rgas*q[IDN]);
-        if (q[IDN] < 0.) {
-          msg << "### FATAL ERROR in ChemistryBase::IntegrateDense:" << std::endl
-              << "Negative temperature encountered, T = " << q[IDN] << std::endl;
-          ATHENA_ERROR(msg);
-        }
+        // 2. from mass density to molar density
+        pthermo->ConservedToChemical(c0, uh.at(k,j,i));
+        Real cd = c0[IPR]/(Thermodynamics::Rgas*c0[IDN]);
+        for (int n = 1; n <= NVAPOR; ++n) cd -= c0[n];
 
-        Real qd = 1.;
-        for (int n = 1; n <= NVAPOR; ++n) qd -= q[n];
-        for (int n = 0; n < c.GetDim4(); ++n) {
-          Real eps = ppart->GetMassRatio(n, mu_d);
-          q[NHYDRO+n] = (c(n,k,j,i)/eps)/u(0,k,j,i)*qd;
-        }
+        for (int n = 0; n < up.GetDim4(); ++n)
+          c0[NHYDRO+n] = up(n,k,j,i)/ppart->GetMolecularWeight(n);
 
         // 3. make two copies, one for BDF1 and another for TR-BDF2
-        std::memcpy(q1, q, size*sizeof(Real));
-        std::memcpy(q2, q, size*sizeof(Real));
+        std::memcpy(c1, c0, size*sizeof(Real));
+        std::memcpy(c2, c0, size*sizeof(Real));
 
-        // 4. set reaction rate and jacobian matrix
-        pchem->AssembleReactionMatrix(Rate, Jac, q, cvt_(k,j,i)/mol_(k,j,i), time);
+        // 4. calculate heat capacity 
+        Real cvt = 0.;
+        for (int n = 0; n <= NVAPOR; ++n)
+          cvt += uh(n,k,j,i)*pthermo->GetCvRatio(n)*cvd;
+        for (int n = 0; n < up.GetDim4(); ++n)
+          cvt += up(n,k,j,i)*ppart->GetCv(n);
 
-        // 5. BDF1 solver
+        // 5. set reaction rate and jacobian matrix
+        pchem->AssembleReactionMatrix(Rate, Jac, c0, cvt, time);
+
+        // 6. BDF1 solver
         sol = pchem->solver.BDF1(Rate, Jac, time, dt);
         for (int n = 0; n < T::Solver::Size; ++n)
-          q1[qindex_[n]] += sol(n);
+          c1[index_[n]] += sol(n);
 
-        // 6. TR-BDF2 solver
+        // 7. TR-BDF2 solver
         sol = pchem->solver.TRBDF2(Rate, Jac, time, dt);
         for (int n = 0; n < T::Solver::Size; ++n)
-          q2[qindex_[n]] += sol(n);
+          c2[index_[n]] += sol(n);
 
-        // 7. Blend solutions
+        // 8. Blend solutions
         Real alpha = 1.;
         for (int n = 0; n < T::Solver::Size; ++n)
-          if (q2[qindex_[n]] < 0.)
-            alpha = std::min(alpha, q1[qindex_[n]]/(q1[qindex_[n]] - q2[qindex_[n]]));
+          if (c2[index_[n]] < 0.)
+            alpha = std::min(alpha, c1[index_[n]]/(c1[index_[n]] - c2[index_[n]]));
         for (int n = 0; n < T::Solver::Size; ++n)
-          q2[qindex_[n]] = (1. - alpha)*q1[qindex_[n]] + alpha*q2[qindex_[n]];
+          c2[index_[n]] = (1. - alpha)*c1[index_[n]] + alpha*c2[index_[n]];
 
-        // 8. Apply limits
-        pchem->ApplyConcentrationLimit(q2, q);
+        // 9. Apply limits
+        pchem->ApplyConcentrationLimit(c2);
 
-        // 9. Adjust pressure
-        Real pd = u(0,k,j,i)*Rd*q2[IDN];
-        q2[IPR] = pd;
-        for (int n = 1; n <= NVAPOR; ++n) q2[IPR] += q2[n]/qd*pd;
+        // 10. Adjust pressure
+        c2[IPR] = cd*Thermodynamics::Rgas*c2[IDN];
+        for (int n = 1; n <= NVAPOR; ++n)
+          c2[IPR] += c2[n]*Thermodynamics::Rgas*c2[IDN];
 
-        //std::cout << "==== iter ends ===="<< std::endl;
-        //std::cout << "iter = " << iter << std::endl;
-        //std::cout << "norm = " << norm << std::endl;
-
-        /* debug
-        for (int n = 0; n < NHYDRO; ++n)
-          std::cout << u(n,k,j,i) << " ";
-        std::cout << c(0,k,j,i) << " ";
-        std::cout << c(1,k,j,i) << std::endl;;
-        std::cout << "i = " << i << " ===================" << std::endl;
-        for (int n = 0; n < size; ++n)
-          std::cout << q[n] << " ";
-        std::cout << std::endl;
-        for (int n = 0; n < size; ++n)
-          std::cout << q1[n] << " ";
-        std::cout << std::endl;
-        std::cout << "=========================" << std::endl;*/
-
-        // 9. from molar mixing ratio to density
-        pthermo->ChemicalToConserved(u.at(k,j,i), q2);
-        for (int n = 0; n < c.GetDim4(); ++n) {
-          Real eps = ppart->GetMassRatio(n, mu_d);
-          c(n,k,j,i) = (q2[NHYDRO+n]*eps)/qd*u(0,k,j,i);
-        }
+        // 11. from molar density to mass density
+        pthermo->ChemicalToConserved(uh.at(k,j,i), c2);
+        for (int n = 0; n < up.GetDim4(); ++n)
+          up(n,k,j,i) = c2[NHYDRO+n]*ppart->GetMolecularWeight(n);
+        //validate_chemistry(c3, c, c0, c1, c2, k, j, i, Rate);
 
         /* debug
         for (int n = 0; n < NHYDRO; ++n)
@@ -119,7 +98,7 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c
         std::cout << c(1,k,j,i) << std::endl;;
         std::cout << std::endl;*/
       }
-  delete[] q;
-  delete[] q1;
-  delete[] q2;
+  delete[] c0;
+  delete[] c1;
+  delete[] c2;
 }

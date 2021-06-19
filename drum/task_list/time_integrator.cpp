@@ -272,7 +272,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
     AddTask(RECV_PART,SEND_PART);
     AddTask(ATTACH_PART,RECV_PART);
     AddTask(PART2MESH,ATTACH_PART);
-    AddTask(UPDATE_HYD,(SRCTERM_HYD|INT_PART));
+    AddTask(UPDATE_HYD,INT_PART);
     AddTask(INT_CHM,(UPDATE_HYD|PART2MESH));
     AddTask(MESH2PART,INT_CHM);
     // finish particles

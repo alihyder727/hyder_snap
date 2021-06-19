@@ -43,6 +43,14 @@ public:
     return cnames_.at(i);
   }
 
+  Real GetMolecularWeight(int n) const {
+    return mu_[n];
+  }
+
+  Real GetCv(int n) const {
+    return cc_[n];
+  }
+
   int GetNextId() {
     int id;
     if (available_ids_.size() > 0) {
@@ -51,24 +59,6 @@ public:
     } else
       id = mp.size() + mp1.size() +1;
     return id;
-  }
-
-  Real GetMassRatio(int i, Real mu) const {
-    return mu_[i]/mu;
-  }
-
-  Real GetTotalCv(int k, int j, int i) {
-    Real cvt = 0.;
-    for (int t = 0; t < c.GetDim4(); ++t)
-      cvt += c(t,k,j,i)*cc_[t];
-    return cvt;
-  }
-
-  Real GetMolarDensity(int k, int j ,int i) {
-    Real mol = 0.;
-    for (int t = 0; t < c.GetDim4(); ++t)
-      mol += c(t,k,j,i)/mu_[t];
-    return mol;
   }
 
   Particles* FindParticle(std::string name);

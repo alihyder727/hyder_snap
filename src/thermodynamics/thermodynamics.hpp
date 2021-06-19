@@ -146,96 +146,93 @@ public:
   // conversion functions
   //! Change mass mixing ratio to molar mixing ratio
   template<typename T1, typename T2>
-  void PrimitiveToChemical(T1 q, T2 const w) const {
+  void PrimitiveToChemical(T1 c, T2 const w) const {
     // set molar mixing ratio
     Real sum = 1.;
     for (int n = 1; n <= NVAPOR; ++n) {
-      q[n] = w[n]/mu_ratios_[n];
+      c[n] = w[n]/mu_ratios_[n];
       sum += w[n]*(1./mu_ratios_[n] - 1.);
     }
-#pragma omp simd
-    for (int n = 1; n <= NVAPOR; ++n)
-      q[n] /= sum;
+    // set pressure, temperature, velocity
+    c[IPR] = w[IPR];
+    c[IDN] = w[IPR]/(w[IDN]*Rd_*sum);
+    c[IVX] = w[IVX];
+    c[IVY] = w[IVY];
+    c[IVZ] = w[IVZ];
 
-    // set pressure and temperature
-    q[IPR] = w[IPR];
-    q[IDN] = w[IPR]/(w[IDN]*Rd_*sum);
-    q[IVX] = w[IVX];
-    q[IVY] = w[IVY];
-    q[IVZ] = w[IVZ];
+    Real mols = c[IPR]/(c[IDN]*Rgas);
+#pragma omp simd
+    for (int n = 1; n <= NVAPOR; ++n) {
+      c[n] *= mols/sum;
+    }
   }
 
   //! Change molar mixing ratio to mass mixing ratio
   template<typename T1, typename T2>
-  void ChemicalToPrimitive(T1 w, T2 const q) const {
+  void ChemicalToPrimitive(T1 w, T2 const c) const {
     // set mass mixing ratio
-    Real sum = 1.;
+    Real sum = 1., mols = c[IPR]/(c[IDN]*Rgas);
     for (int n = 1; n <= NVAPOR; ++n) {
-      w[n] = q[n]*mu_ratios_[n];
-      sum += q[n]*(mu_ratios_[n] - 1.); 
+      w[n] = c[n]/mols*mu_ratios_[n];
+      sum += c[n]/mols*(mu_ratios_[n] - 1.); 
     }
 #pragma omp simd
     for (int n = 1; n <= NVAPOR; ++n)
       w[n] /= sum;
 
-    // set pressure and density
-    w[IPR] = q[IPR];
-    w[IDN] = sum*q[IPR]/(q[IDN]*Rd_);
-    w[IVX] = q[IVX];
-    w[IVY] = q[IVY];
-    w[IVZ] = q[IVZ];
+    // set pressure, density, velocity
+    w[IPR] = c[IPR];
+    w[IDN] = sum*c[IPR]/(c[IDN]*Rd_);
+    w[IVX] = c[IVX];
+    w[IVY] = c[IVY];
+    w[IVZ] = c[IVZ];
   }
 
   //! Change density to molar mixing ratio
   template<typename T1, typename T2>
-  void ConservedToChemical(T1 q, T2 const u) const {
+  void ConservedToChemical(T1 c, T2 const u) const {
     Real rho = 0., feps = 0., fsig = 0.;
     for (int n = 0; n <= NVAPOR; ++n) {
       rho += u[n];
-      q[n] = u[n]/mu_ratios_[n];
-      feps += q[n];
+      c[n] = u[n]/mu_ratios_[n];
+      feps += c[n];
       fsig += u[n]*cv_ratios_[n];
     }
-#pragma omp simd
-    for (int n = 0; n <= NVAPOR; ++n)
-      q[n] /= feps;
     Real KE = 0.5*(u[IM1]*u[IM1] + u[IM2]*u[IM2] + u[IM3]*u[IM3])/rho;
     Real gm1 = pmy_block->peos->GetGamma() - 1.;
-    q[IPR] = gm1*(u[IEN] - KE)*feps/fsig;
-    q[IDN] = q[IPR]/(feps*Rd_);
-    q[IVX] = u[IVX]/rho;
-    q[IVY] = u[IVY]/rho;
-    q[IVZ] = u[IVZ]/rho;
+    c[IPR] = gm1*(u[IEN] - KE)*feps/fsig;
+    c[IDN] = c[IPR]/(feps*Rd_);
+    c[IVX] = u[IVX]/rho;
+    c[IVY] = u[IVY]/rho;
+    c[IVZ] = u[IVZ]/rho;
+
+    Real mols = c[IPR]/(Rgas*c[IDN]);
+#pragma omp simd
+    for (int n = 1; n <= NVAPOR; ++n)
+      c[n] *= mols/feps;
   }
 
   //! Change molar mixing ratio to density
   template<typename T1, typename T2>
-  void ChemicalToConserved(T1 u, T2 const q) const {
+  void ChemicalToConserved(T1 u, T2 const c) const {
     // molar mixing ratio to density
-    Real sum = 1.;
+    Real sum = 1., mols = c[IPR]/(Rgas*c[IDN]);
     for (int n = 1; n <= NVAPOR; ++n)
-      sum += q[n]*(mu_ratios_[n] - 1.);
-    Real rho = q[IPR]*sum/(Rd_*q[IDN]);
+      sum += c[n]/mols*(mu_ratios_[n] - 1.);
+    Real rho = c[IPR]*sum/(Rd_*c[IDN]);
     Real cvd = Rd_/(pmy_block->peos->GetGamma() - 1.);
     u[IDN] = rho;
-    u[IEN] = 0.5*rho*(q[IVX]*q[IVX] + q[IVY]*q[IVY] + q[IVZ]*q[IVZ]);
+    u[IEN] = 0.5*rho*(c[IVX]*c[IVX] + c[IVY]*c[IVY] + c[IVZ]*c[IVZ]);
     for (int n = 1; n <= NVAPOR; ++n) {
-      u[n] = rho*q[n]*mu_ratios_[n]/sum;
+      u[n] = rho*c[n]/mols*mu_ratios_[n]/sum;
       u[IDN] -= u[n];
-      u[IEN] += u[n]*cv_ratios_[n]*cvd*q[IDN];
+      u[IEN] += u[n]*cv_ratios_[n]*cvd*c[IDN];
     }
-    u[IEN] += u[IDN]*cvd*q[IDN];
-    u[IVX] = q[IVX]*rho;
-    u[IVY] = q[IVY]*rho;
-    u[IVZ] = q[IVZ]*rho;
+    u[IEN] += u[IDN]*cvd*c[IDN];
+    u[IVX] = c[IVX]*rho;
+    u[IVY] = c[IVY]*rho;
+    u[IVZ] = c[IVZ]*rho;
   }
-
-  // uhat is the molar interal energy defined as:
-  // u^\hat = (q_d^\hat c_d^\hat T 
-  //        + \sum_i q_i^\hat c_i^\hat T
-  //        + \sum_{i,j} q_{ij}^\hat c_{ij}^\hat T
-  //        - \sum_{i,j} q_{ij}^\hat \mu_{ij}^\hat)/R_d^\hat
-  void UpdateTPConservingU(Real q[], Real rho, Real uhat) const;
 
   // Get thermodynamic properties
   //! polytropic index $\gamma=c_p/c_v$
@@ -328,6 +325,9 @@ public:
     else // vtype == VariableType::chem
       for (int n = 0; n < NHYDRO; ++n)
         q1[n] = v[n];
+    // change molar density to molar mixing ratio
+    Real mols = q1[IPR]/(q1[IDN]*Rgas);
+    for (int n = 1; n <= NVAPOR; ++n) q1[n] /= mols;
 
     for (int iv = 1; iv <= NVAPOR; ++iv) { 
       int nc = q1[IDN] > t3_[iv] ? iv + NVAPOR : iv + 2*NVAPOR;

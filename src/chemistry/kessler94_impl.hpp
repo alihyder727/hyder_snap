@@ -13,13 +13,13 @@ void Kessler94::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
 {
   Thermodynamics *pthermo = pmy_block->pthermo;
 
-  int iT = qindex_[0];
+  int iT = index_[0];
   Real T = q[iT];
-  int iqv = qindex_[1];
+  int iqv = index_[1];
   Real qv = q[iqv];
-  int iqc = qindex_[2];
+  int iqc = index_[2];
   Real qc = q[iqc];
-  int iqp = qindex_[3];
+  int iqp = index_[3];
   Real qp = q[iqp];
 
   pthermo->SaturationSurplus(dqsat_.data(), q, VariableType::chem);

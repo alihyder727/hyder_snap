@@ -182,7 +182,7 @@ def write_footer():
 def write_definitions(vlist):
   output = ''
   for i,v in enumerate(vlist):
-    output += 'int i%s = qindex_[%d];\n' % (v,i)
+    output += 'int i%s = index_[%d];\n' % (v,i)
     output += 'Real %s = q[i%s];\n' % (v,v)
   return output
 
