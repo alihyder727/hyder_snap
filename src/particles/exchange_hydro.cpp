@@ -46,22 +46,5 @@ void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> 
     assert(!std::isnan(q->v1));
     assert(!std::isnan(q->v2));
     assert(!std::isnan(q->v3));
-
-    // add gravititional acceleration
-    if (has_gravity_) {
-      int k, j, i;
-      k = locate(xface_.data(), q->x3, dims_[0]+1);
-      j = locate(xface_.data()+dims_[0]+1, q->x2, dims_[1]+1);
-      i = locate(xface_.data()+dims_[0]+dims_[1]+2, q->x1, dims_[2]+1);
-
-      Real src = dt*q->rho;
-      //std::cout << k << " " << j << " " << i << " " << du(IM1,k,j,i) << std::endl;
-      du(IM1,k,j,i) += src*g1;
-      //std::cout << "after " << du(IM1,k,j,i) << std::endl;
-      du(IM2,k,j,i) += src*g2;
-      du(IM3,k,j,i) += src*g3;
-      du(IEN,k,j,i) += src*(g1*q->v1 + g2*q->v2 + g3*q->v3);
-    }
   }
 }
-

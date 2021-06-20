@@ -25,14 +25,14 @@ public:
   }
 
   template<typename T1, typename T2>
-  T1 BDF1(T1 const& Rate, T2 const& Jac, Real time, Real dt) {
+  T1 BDF1(T1 const& Rate, T2 const& Jac, Real dt) {
     A_ = I_/dt - Jac;
     if (N <= 4) return A_.inverse()*Rate;
     else return A_.partialPivLu().solve(Rate);
   }
 
   template<typename T1, typename T2>
-  T1 TRBDF2(T1 const& Rate, T2 const& Jac, Real time, Real dt) {
+  T1 TRBDF2(T1 const& Rate, T2 const& Jac, Real dt) {
     int gamma = 2. - sqrt(2.);
     A_ = I_ - gamma/2.*dt*Jac;
     B_ = dt*(1. - gamma/2.)*Rate + dt*gamma/2.*A_*Rate;
@@ -40,22 +40,6 @@ public:
     if (N <= 4) return A_.inverse()*B_;
     else return A_.partialPivLu().solve(B_);
   }
-
-  /*template<typename T1, typename T2>
-  void TRBDF2Blend(Real q[], T1 &Rate, T2 &Jac, Real time, Real dt, int const indx[], int size) {
-    q1_.resize(size);
-    q2_.resize(size);
-    std::memcpy(q1_.data(), q, size*sizeof(Real));
-    std::memcpy(q2_.data(), q, size*sizeof(Real));
-    BDF1(q1_.data(), Rate, Jac, time, dt);
-    TRBDF2(q2_.data(), Rate, Jac, time, dt);
-    Real alpha = 1.;
-    for (int i = 0; i < N; ++i)
-      if (q2_[indx[i]] < 0.)
-        alpha = std::min(alpha, q1_[indx[i]]/(q1_[indx[i]] - q2_[indx[i]]));
-    for (int i = 0; i < N; ++i)
-      q[indx[i]] = (1. - alpha)*q1_[indx[i]] + alpha*q2_[indx[i]];
-  }*/
 
 private:
   // scratch array

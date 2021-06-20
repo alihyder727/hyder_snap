@@ -60,43 +60,45 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         pchem->AssembleReactionMatrix(Rate, Jac, c0, cvt, time);
 
         // 6. BDF1 solver
-        sol = pchem->solver.BDF1(Rate, Jac, time, dt);
+        sol = pchem->solver.BDF1(Rate, Jac, dt);
         for (int n = 0; n < T::Solver::Size; ++n)
           c1[index_[n]] += sol(n);
 
-        // 7. TR-BDF2 solver
-        sol = pchem->solver.TRBDF2(Rate, Jac, time, dt);
+        /* 7. TR-BDF2 solver
+        sol = pchem->solver.TRBDF2(Rate, Jac, dt);
         for (int n = 0; n < T::Solver::Size; ++n)
           c2[index_[n]] += sol(n);
 
         // 8. Blend solutions
         Real alpha = 1.;
-        for (int n = 0; n < T::Solver::Size; ++n)
+        for (int n = 1; n < T::Solver::Size; ++n)
           if (c2[index_[n]] < 0.)
             alpha = std::min(alpha, c1[index_[n]]/(c1[index_[n]] - c2[index_[n]]));
         for (int n = 0; n < T::Solver::Size; ++n)
           c2[index_[n]] = (1. - alpha)*c1[index_[n]] + alpha*c2[index_[n]];
 
+        if (c1[0] < 0.) {
+          std::cout << cvt << std::endl;
+          for (int n = 0; n < NHYDRO+2; ++n)
+            std::cout << c0[n] << " ";
+          std::cout << std::endl;
+          for (int n = 0; n < NHYDRO+2; ++n)
+            std::cout << c1[n] << " ";
+          std::cout << std::endl << std::endl;
+        }*/
+
         // 9. Apply limits
-        pchem->ApplyConcentrationLimit(c2);
+        pchem->ApplyConcentrationLimit(c1);
 
         // 10. Adjust pressure
-        c2[IPR] = cd*Thermodynamics::Rgas*c2[IDN];
+        c1[IPR] = cd*Thermodynamics::Rgas*c1[IDN];
         for (int n = 1; n <= NVAPOR; ++n)
-          c2[IPR] += c2[n]*Thermodynamics::Rgas*c2[IDN];
+          c1[IPR] += c1[n]*Thermodynamics::Rgas*c1[IDN];
 
         // 11. from molar density to mass density
-        pthermo->ChemicalToConserved(uh.at(k,j,i), c2);
+        pthermo->ChemicalToConserved(uh.at(k,j,i), c1);
         for (int n = 0; n < up.GetDim4(); ++n)
-          up(n,k,j,i) = c2[NHYDRO+n]*ppart->GetMolecularWeight(n);
-        //validate_chemistry(c3, c, c0, c1, c2, k, j, i, Rate);
-
-        /* debug
-        for (int n = 0; n < NHYDRO; ++n)
-          std::cout << u(n,k,j,i) << " ";
-        std::cout << c(0,k,j,i) << " ";
-        std::cout << c(1,k,j,i) << std::endl;;
-        std::cout << std::endl;*/
+          up(n,k,j,i) = c1[NHYDRO+n]*ppart->GetMolecularWeight(n);
       }
   delete[] c0;
   delete[] c1;

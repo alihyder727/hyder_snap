@@ -15,8 +15,8 @@
 # simple reactions
 - qc -> qp ; k2
 - qc + qp -> 2qp ; k3
-- qc -> qv ; k1*(qs(T) - qv) | qv < qs
-- qp -> qv ; k4*(qs(T) - qv) | qv < qs
+- qc -> qv ; k1*(qs(T) - qv)/mols | qv < qs
+- qp -> qv ; k4*(qs(T) - qv)/mols | qv < qs
 
 # custom reactions
 - qv -> qc ; k1*(qv - qs(T)) | qv > qs
@@ -33,4 +33,5 @@ Real qs = qv - dq;
 Real Rv = pthermo->GetRd()/pthermo->GetMassRatio(iqv);
 Real lf = pthermo->GetLatent(iqc,T) - Rv*T;
 Real dqsdt = qs/T*lf/(Rv*T);
+Real mols = q[IPR]/(Thermodynamics::Rgas*q[IDN]);
 ~~~

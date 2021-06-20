@@ -318,13 +318,14 @@ public:
   void SaturationSurplus(Real dv[], T v, VariableType vtype = VariableType::prim) const {
     Real q1[NHYDRO];
     // mass to molar mixing ratio
-    if (vtype == VariableType::prim)
+    if (vtype == VariableType::prim) {
       PrimitiveToChemical(q1, v);
-    else if (vtype == VariableType::cons)
+    } else if (vtype == VariableType::cons) {
       ConservedToChemical(q1, v);
-    else // vtype == VariableType::chem
+    } else { // VariableType::chem
       for (int n = 0; n < NHYDRO; ++n)
         q1[n] = v[n];
+    }
     // change molar density to molar mixing ratio
     Real mols = q1[IPR]/(q1[IDN]*Rgas);
     for (int n = 1; n <= NVAPOR; ++n) q1[n] /= mols;

@@ -47,5 +47,4 @@ protected:
   ChemistryBase<Kessler94> *pkessler94_;
 };
 
-
 #endif /* end of include guard CHEMISTRY_HPP */

@@ -38,32 +38,22 @@ public:
     std::fill(deltaU_.begin(), deltaU_.end(), 0.);
     deltaU_[index_[1]] = pin->GetReal("chemistry", name + ".deltaU");
 
-    qfloor_ = pin->GetOrAddReal("chemistry", name + ".qfloor", 0.);
+    Particles *part = pmb->ppart->FindParticle(particle_name);
+    Real concentration_floor_ = 1.;
+    for (int n = 0; n < part->c.GetDim4(); ++n)
+      concentration_floor_ = std::min(concentration_floor_, 
+        part->GetDensityFloor()*part->GetMolecularWeight(n));
   }
 
   void ApplyConcentrationLimit(Real c[]) {
-    /*if (!(q[index_[0]] > 0.)) {
-      for (int n = 0; n < 4; ++n)
-        std::cout << q0[n] << " " ;
-      std::cout << std::endl;
-      for (int n = 0; n < 4; ++n)
-        std::cout << q1[n] << " " ;
-      std::cout << std::endl;
-      for (int n = 0; n < 4; ++n)
-        std::cout << q2[n] << " " ;
-      std::cout << std::endl;
-      for (int n = 0; n < 4; ++n)
-        std::cout << q[n] << " " ;
-      std::cout << std::endl;
-    }*/
     assert(c[index_[0]] > 0.);
 
-    if (c[index_[2]] < qfloor_) {
+    if (c[index_[2]] < concentration_floor_) {
       c[index_[2]] = 0;
       c[index_[1]] += c[index_[2]];
     }
 
-    if (c[index_[3]] < qfloor_) {
+    if (c[index_[3]] < concentration_floor_) {
       c[index_[3]] = 0;
       c[index_[1]] += c[index_[3]];
     }
@@ -76,7 +66,7 @@ public:
     Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time);
 
 protected:
-  Real qfloor_;
+  Real concentration_floor_;
 };
 
 #include "kessler94_impl.hpp"

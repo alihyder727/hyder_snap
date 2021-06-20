@@ -51,6 +51,10 @@ public:
     return cc_[n];
   }
 
+  Real GetDensityFloor() const {
+    return density_floor_;
+  }
+
   int GetNextId() {
     int id;
     if (available_ids_.size() > 0) {
