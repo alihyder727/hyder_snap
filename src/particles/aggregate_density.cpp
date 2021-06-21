@@ -16,11 +16,11 @@
 #include "../globals.hpp"
 #include "particles.hpp"
 
-void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> &mp)
+void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_block;
 
-  c.ZeroClear();
+  u.ZeroClear();
   std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
   int i, j, k;
 
@@ -33,7 +33,7 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
     assert(j >= pmb->js && j <= pmb->je);
     assert(i >= pmb->is && i <= pmb->ie);
 
-    c(q->type,k,j,i) += q->rho;
+    u(q->type,k,j,i) += q->rho;
 
     if (pcell_(q->type,k,j,i) == nullptr) {
       pcell_(q->type,k,j,i) = &(*q);
@@ -56,5 +56,5 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
   }
 
   // make a copy
-  c1_ = c;
+  u1_ = u;
 }

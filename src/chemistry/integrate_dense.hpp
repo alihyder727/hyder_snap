@@ -10,7 +10,7 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
   Real time, Real dt)
 {
   std::stringstream msg;
-  MeshBlock *pmb = pmy_block;
+  MeshBlock *pmb = pmy_chem->pmy_block;
   Thermodynamics *pthermo = pmb->pthermo;
   EquationOfState *peos = pmb->peos;
   Particles *ppart = pmb->ppart->FindParticle(particle_name);

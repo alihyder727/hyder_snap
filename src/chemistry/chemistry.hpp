@@ -27,7 +27,7 @@ public:
   template<typename T>
   void AddToChemistry(ChemistryBase<T>* &pchem,
     ParameterInput *pin, std::string name) {
-    T* pnew = new T(pmy_block, pin, name);
+    T* pnew = new T(this, pin, name);
     if (pchem == nullptr) {
       pchem = static_cast<ChemistryBase<T>*>(pnew);
       pchem->prev = nullptr;

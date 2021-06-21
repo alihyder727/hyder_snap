@@ -170,7 +170,7 @@ template<typename D1, typename D2>
 void %s::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
   Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time)
 {
-  Thermodynamics *pthermo = pmy_block->pthermo;
+  Thermodynamics *pthermo = pmy_chem->pmy_block->pthermo;
 '''
   header = header % (name.lower(), name, name)
   return header

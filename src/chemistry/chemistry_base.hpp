@@ -9,28 +9,27 @@
 // Athena++ header
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../particles/particles.hpp"
-#include "../mesh/mesh.hpp"
 #include "../parameter_input.hpp"
 #include "../athena.hpp"
 
 // Eigen header files
 #include "../math/eigen335/Eigen/Core"
 
+class Chemisry;
+
 template<typename T>
 class ChemistryBase {
 public:
 // data
-  MeshBlock *pmy_block;
+  Chemistry *pmy_chem;
   std::string myname;
   std::string particle_name;
   ChemistryBase<T> *prev, *next;
 
 // functions
-  ChemistryBase(MeshBlock *pmb, ParameterInput *pin):
-    pmy_block(pmb), prev(nullptr), next(nullptr)
-  {
-    int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
-  }
+  ChemistryBase(Chemistry *pchem, ParameterInput *pin):
+    pmy_chem(pchem), prev(nullptr), next(nullptr)
+  {}
 
   void IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c, 
     Real time, Real dt);

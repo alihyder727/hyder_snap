@@ -11,7 +11,7 @@ template<typename D1, typename D2>
 void Kessler94::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
   Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time)
 {
-  Thermodynamics *pthermo = pmy_block->pthermo;
+  Thermodynamics *pthermo = pmy_chem->pmy_block->pthermo;
 
   int iT = index_[0];
   Real T = q[iT];

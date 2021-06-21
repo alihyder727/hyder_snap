@@ -16,17 +16,17 @@
 #include "particles.hpp"
 #include "../globals.hpp"
 
-void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c)
+void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& u)
 {
   MeshBlock *pmb = pmy_block;
   Coordinates *pco = pmb->pcoord;
   // use mp1 for particle buffer
   mp1.clear();
-  for (int t = 0; t < c.GetDim4(); ++t)
+  for (int t = 0; t < u.GetDim4(); ++t)
     for (int k = pmb->ks; k <= pmb->ke; ++k)
       for (int j = pmb->js; j <= pmb->je; ++j)
         for (int i = pmb->is; i <= pmb->ie; ++i) {
-          Real delta_u = c(t,k,j,i) - c1_(t,k,j,i);
+          Real delta_u = u(t,k,j,i) - u1_(t,k,j,i);
           // 1. count particles
           int nparts = 0;
           MaterialPoint *pc = pcell_(t,k,j,i);
@@ -83,7 +83,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
           } else if (delta_u < 0) { // 4. remove particles
             Real avg = std::abs(delta_u)/nparts;
             pc = pcell_(t,k,j,i);
-            //std::cout << "c =  " << c(t,k,j,i) << " c1 = " << c1_(t,k,j,i) << std::endl;
+            //std::cout << "c =  " << u(t,k,j,i) << " c1 = " << u1_(t,k,j,i) << std::endl;
             //std::cout << "[" << pco->x1f(i) << "," << pco->x1f(i+1) << "]" << std::endl;
             //std::cout << "delta_u = " << delta_u << " nparts = " << nparts << std::endl;
             for (int n = 0; n < nparts; ++n) {
@@ -105,7 +105,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
             std::stringstream msg;
             if (std::abs(delta_u) > density_floor_) {
               msg << "### FATAL ERROR in Particles::Particulate:" << std::endl
-                  << "c = " << c(t,k,j,i) << " c1 = " << c1_(t,k,j,i) << std::endl
+                  << "u = " << u(t,k,j,i) << " u1 = " << u1_(t,k,j,i) << std::endl
                   << "delta_u = " << delta_u << std::endl
                   << "density_floor_ = " << density_floor_ << std::endl;
               ATHENA_ERROR(msg);

@@ -76,10 +76,10 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   dims_[1] = nc2;
   dims_[2] = nc1;
 
-  c.NewAthenaArray(nct, nc3, nc2, nc1);
-  c.ZeroClear();
-  c1_.NewAthenaArray(nct, nc3, nc2, nc1);
-  c1_.ZeroClear();
+  u.NewAthenaArray(nct, nc3, nc2, nc1);
+  u.ZeroClear();
+  u1_.NewAthenaArray(nct, nc3, nc2, nc1);
+  u1_.ZeroClear();
   pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
 
   seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 1);
@@ -107,42 +107,12 @@ Particles::~Particles()
 }
 
 Particles::Particles(Particles const& other):
-  c(other.c), c1_(other.c1_), pcell_(other.pcell_)
+  u(other.u), u1_(other.u1_), pcell_(other.pcell_)
 {
   if (this == &other) return;
   *this = other;
   ppb = new ParticleBuffer(this);
 }
-
-/*Particles& Particles::operator=(Particles const& other)
-{
-  pmy_block = other.pmy_block;
-  myname = other.myname;
-  prev = other.prev;
-  next = other.next;
-  // assignment operator of AthenaArray does not allocate memory
-  c = other.c;
-  mp = other.mp;
-  mp1 = other.mp1;
-
-  xface_ = other.xface_;
-  xcenter_ = other.xcenter_;
-  dims_ = other.dims_;
-  cnames_ = other.cnames_;
-  available_ids_ = other.available_ids_;
-  cc_ = other.cc_;
-  mu_ = other.mu_;
-  c1_ = other.c1_;
-  pcell_ = other.pcell_;
-  seeds_per_cell_ = other.seeds_per_cell_;
-  nmax_per_cell_ = other.nmax_per_cell_;
-  density_floor_ = other.density_floor_;
-  has_gravity_ = other.has_gravity_;
-
-  ppb = new ParticleBuffer(this);
-
-  return *this;
-}*/
 
 // functions
 Particles* Particles::FindParticle(std::string name)
@@ -164,7 +134,7 @@ void Particles::Initialize()
 {
   Particles *p = this;
   while (p != nullptr) {
-    Particulate(p->mp, p->c);
+    Particulate(p->mp, p->u);
     p = p->next;
   }
 }

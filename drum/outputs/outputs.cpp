@@ -713,14 +713,14 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   if (output_params.variable.compare("prim") == 0) {
     Particles *p = pmb->ppart;
     while (p != nullptr) {
-      for (int i = 0; i < p->c.GetDim4(); ++i) {
+      for (int i = 0; i < p->u.GetDim4(); ++i) {
         pod = new OutputData;
         pod->type = "SCALARS";
         pod->name = p->myname + std::to_string(1+i);
         pod->long_name = "density of " + p->myname + " " +
                          p->CategoryName(i) + " particles";
         pod->units = "kg/m^3";
-        pod->data.InitWithShallowSlice(p->c,4,i,1);
+        pod->data.InitWithShallowSlice(p->u,4,i,1);
         AppendOutputDataNode(pod);
         num_vars_ += 1;
       }

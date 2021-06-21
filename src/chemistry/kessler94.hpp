@@ -5,6 +5,7 @@
 #include <sstream>
 
 // Athena++ header
+#include "chemistry.hpp"
 #include "chemistry_base.hpp"
 #include "../utils/utils.hpp"
 
@@ -17,8 +18,8 @@ public:
   Solver solver;
 
 // functions
-  Kessler94(MeshBlock *pmb, ParameterInput *pin, std::string name) :
-    ChemistryBase<Kessler94>(pmb, pin)
+  Kessler94(Chemistry *pchem, ParameterInput *pin, std::string name) :
+    ChemistryBase<Kessler94>(pchem, pin)
   {
     myname = name;
     particle_name = pin->GetString("chemistry", name + ".link_particle");
@@ -38,9 +39,9 @@ public:
     std::fill(deltaU_.begin(), deltaU_.end(), 0.);
     deltaU_[index_[1]] = pin->GetReal("chemistry", name + ".deltaU");
 
-    Particles *part = pmb->ppart->FindParticle(particle_name);
+    Particles *part = pchem->pmy_block->ppart->FindParticle(particle_name);
     Real cfloor_ = 1.;
-    for (int n = 0; n < part->c.GetDim4(); ++n)
+    for (int n = 0; n < part->u.GetDim4(); ++n)
       cfloor_ = std::min(cfloor_, part->GetDensityFloor()*part->GetMolecularWeight(n));
   }
 

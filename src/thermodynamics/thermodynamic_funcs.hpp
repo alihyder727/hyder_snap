@@ -28,10 +28,10 @@ Real MoistStaticEnergy(AthenaArray<Real> const& w, Real gz,
   Real rho = w(IDN,k,j,i);
   for (int n = 0; n < NVAPOR; ++n) {
     assert(ppart != nullptr);
-    for (int t = 0; t < ppart->c.GetDim4(); ++t) {
-      rho += ppart->c(t,k,j,i);
-      IE -= ppart->c(t,k,j,i)*pthermo->GetLatent(1+NVAPOR+n);
-      IE += ppart->c(t,k,j,i)*ppart->GetCv(t)*temp;
+    for (int t = 0; t < ppart->u.GetDim4(); ++t) {
+      rho += ppart->u(t,k,j,i);
+      IE -= ppart->u(t,k,j,i)*pthermo->GetLatent(1+NVAPOR+n);
+      IE += ppart->u(t,k,j,i)*ppart->GetCv(t)*temp;
     }
     ppart = ppart->next;
   }

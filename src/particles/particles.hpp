@@ -19,7 +19,7 @@ public:
   std::string myname;
   Particles *prev, *next;
   ParticleBuffer *ppb;
-  AthenaArray<Real> c;
+  AthenaArray<Real> u;
   std::vector<MaterialPoint> mp, mp1;
 
 // functions
@@ -87,7 +87,7 @@ protected:
   //! mean molecular weight
   std::vector<Real> mu_;
   //! copy of c before doing chemistry
-  AthenaArray<Real> c1_;
+  AthenaArray<Real> u1_;
   //! linked list of particles in cell
   AthenaArray<MaterialPoint*> pcell_;
 
