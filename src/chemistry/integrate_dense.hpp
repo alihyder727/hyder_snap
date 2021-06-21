@@ -77,14 +77,20 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         for (int n = 0; n < T::Solver::Size; ++n)
           c2[index_[n]] = (1. - alpha)*c1[index_[n]] + alpha*c2[index_[n]];
 
-        if (c1[0] < 0.) {
+        if (c1[1] > c1[IPR]/(c1[0]*Thermodynamics::Rgas)) {
           std::cout << cvt << std::endl;
+          for (int n = 0; n < NHYDRO; ++n)
+            std::cout << uh(n,k,j,i) << " ";
+          for (int n = 0; n < 2; ++n)
+            std::cout << up(n,k,j,i) << " ";
+          std::cout << std::endl;
           for (int n = 0; n < NHYDRO+2; ++n)
             std::cout << c0[n] << " ";
           std::cout << std::endl;
           for (int n = 0; n < NHYDRO+2; ++n)
             std::cout << c1[n] << " ";
           std::cout << std::endl << std::endl;
+          exit(1);
         }*/
 
         // 9. Apply limits

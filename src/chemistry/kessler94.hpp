@@ -39,21 +39,20 @@ public:
     deltaU_[index_[1]] = pin->GetReal("chemistry", name + ".deltaU");
 
     Particles *part = pmb->ppart->FindParticle(particle_name);
-    Real concentration_floor_ = 1.;
+    Real cfloor_ = 1.;
     for (int n = 0; n < part->c.GetDim4(); ++n)
-      concentration_floor_ = std::min(concentration_floor_, 
-        part->GetDensityFloor()*part->GetMolecularWeight(n));
+      cfloor_ = std::min(cfloor_, part->GetDensityFloor()*part->GetMolecularWeight(n));
   }
 
   void ApplyConcentrationLimit(Real c[]) {
     assert(c[index_[0]] > 0.);
 
-    if (c[index_[2]] < concentration_floor_) {
+    if (c[index_[2]] < cfloor_) {
       c[index_[2]] = 0;
       c[index_[1]] += c[index_[2]];
     }
 
-    if (c[index_[3]] < concentration_floor_) {
+    if (c[index_[3]] < cfloor_) {
       c[index_[3]] = 0;
       c[index_[1]] += c[index_[3]];
     }
@@ -66,7 +65,7 @@ public:
     Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time);
 
 protected:
-  Real concentration_floor_;
+  Real cfloor_;
 };
 
 #include "kessler94_impl.hpp"

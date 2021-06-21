@@ -15,8 +15,8 @@
 # simple reactions
 - qc -> qp ; k2
 - qc + qp -> 2qp ; k3
-- qc -> qv ; k1*(qs(T) - qv)/mols | qv < qs
-- qp -> qv ; k4*(qs(T) - qv)/mols | qv < qs
+- qc -> qv ; k1*(qs - qv)/mols | qv < qs
+- qp -> qv ; k4*(qs - qv)/mols | qv < qs
 
 # custom reactions
 - qv -> qc ; k1*(qv - qs(T)) | qv > qs

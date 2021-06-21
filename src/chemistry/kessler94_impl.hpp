@@ -63,37 +63,31 @@ void Kessler94::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
   if (qv < qs) {
     // qc -> qv; k1*(qs - qv)/mols
     rate(2) -= k1*(qs - qv)/mols*qc;
-    jac(2,0) -= k1*qc*dqsdt/mols;
     jac(2,1) -= -k1*qc/mols;
-    jac(2,2) -= k1*(-qv + qs)/mols;
+    jac(2,2) -= k1*(qs - qv)/mols;
     
     rate(1) += k1*(qs - qv)/mols*qc;
-    jac(1,0) += k1*qc*dqsdt/mols;
     jac(1,1) += -k1*qc/mols;
-    jac(1,2) += k1*(-qv + qs)/mols;
+    jac(1,2) += k1*(qs - qv)/mols;
     
     // enthalpy change
     rate(0) += (k1*(qs - qv)/mols*qc)*(deltaU_[iqc] - deltaU_[iqv])/cv;
-    jac(0,0) += (k1*qc*dqsdt/mols)*(deltaU_[iqc] - deltaU_[iqv])/cv;
     jac(0,1) += (-k1*qc/mols)*(deltaU_[iqc] - deltaU_[iqv])/cv;
-    jac(0,2) += (k1*(-qv + qs)/mols)*(deltaU_[iqc] - deltaU_[iqv])/cv;
+    jac(0,2) += (k1*(qs - qv)/mols)*(deltaU_[iqc] - deltaU_[iqv])/cv;
     
     // qp -> qv; k4*(qs - qv)/mols
     rate(3) -= k4*(qs - qv)/mols*qp;
-    jac(3,0) -= k4*qp*dqsdt/mols;
     jac(3,1) -= -k4*qp/mols;
-    jac(3,3) -= k4*(-qv + qs)/mols;
+    jac(3,3) -= k4*(qs - qv)/mols;
     
     rate(1) += k4*(qs - qv)/mols*qp;
-    jac(1,0) += k4*qp*dqsdt/mols;
     jac(1,1) += -k4*qp/mols;
-    jac(1,3) += k4*(-qv + qs)/mols;
+    jac(1,3) += k4*(qs - qv)/mols;
     
     // enthalpy change
     rate(0) += (k4*(qs - qv)/mols*qp)*(deltaU_[iqp] - deltaU_[iqv])/cv;
-    jac(0,0) += (k4*qp*dqsdt/mols)*(deltaU_[iqp] - deltaU_[iqv])/cv;
     jac(0,1) += (-k4*qp/mols)*(deltaU_[iqp] - deltaU_[iqv])/cv;
-    jac(0,3) += (k4*(-qv + qs)/mols)*(deltaU_[iqp] - deltaU_[iqv])/cv;
+    jac(0,3) += (k4*(qs - qv)/mols)*(deltaU_[iqp] - deltaU_[iqv])/cv;
   }
   
   if (qv > qs) {
