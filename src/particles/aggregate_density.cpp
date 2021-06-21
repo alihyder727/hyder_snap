@@ -16,7 +16,7 @@
 #include "../globals.hpp"
 #include "particles.hpp"
 
-void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> const& mp)
+void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_block;
 
@@ -24,7 +24,7 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
   std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
   int i, j, k;
 
-  for (std::vector<MaterialPoint>::const_iterator q = mp.begin(); q != mp.end(); ++q) {
+  for (std::vector<MaterialPoint>::iterator q = mp.begin(); q != mp.end(); ++q) {
     k = locate(xface_.data(), q->x3, dims_[0]+1);
     j = locate(xface_.data()+dims_[0]+1, q->x2, dims_[1]+1);
     i = locate(xface_.data()+dims_[0]+dims_[1]+2, q->x1, dims_[2]+1);
@@ -36,7 +36,7 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
     c(q->type,k,j,i) += q->rho;
 
     if (pcell_(q->type,k,j,i) == nullptr) {
-      pcell_(q->type,k,j,i) = const_cast<MaterialPoint*>(&(*q));
+      pcell_(q->type,k,j,i) = &(*q);
       pcell_(q->type,k,j,i)->next = nullptr;
     } else {  // insert sort from low to high density
       MaterialPoint *tmp;
@@ -45,11 +45,11 @@ void Particles::AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint
         while (pc->next != nullptr && pc->next->rho < q->rho)
           pc = pc->next;
         tmp = pc->next;
-        pc->next = const_cast<MaterialPoint*>(&(*q));
+        pc->next = &(*q);
         pc->next->next = tmp;
       } else {
         tmp = pcell_(q->type,k,j,i);
-        pcell_(q->type,k,j,i) = const_cast<MaterialPoint*>(&(*q));
+        pcell_(q->type,k,j,i) = &(*q);
         pcell_(q->type,k,j,i)->next = tmp;
       }
     }

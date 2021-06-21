@@ -215,7 +215,6 @@ public:
   //! Change molar mixing ratio to density
   template<typename T1, typename T2>
   void ChemicalToConserved(T1 u, T2 const c) const {
-    // molar mixing ratio to density
     Real sum = 1., mols = c[IPR]/(Rgas*c[IDN]);
     for (int n = 1; n <= NVAPOR; ++n)
       sum += c[n]/mols*(mu_ratios_[n] - 1.);

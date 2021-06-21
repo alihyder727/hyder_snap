@@ -11,6 +11,7 @@
 #include "../particles/particle_buffer.hpp"
 #include "../particles/particles.hpp"
 #include "task_list.hpp"
+#include "../globals.hpp"
 
 //! \brief apply implicit correction and physics package
 enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
@@ -75,6 +76,8 @@ TaskStatus TimeIntegratorTaskList::CalculateRadiationFlux(MeshBlock *pmb, int st
 
 // particle steps
 TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage) {
+  //if (Globals::my_rank == 0)
+  //  std::cout << "I'm integrating particles" << std::endl;
   //! \todo check if it works for vl2 integrator
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
@@ -101,6 +104,8 @@ TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage)
 TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int stage) {
   // only do send/recv at last rk step
   if (stage != nstages) return TaskStatus::next;
+  //if (Globals::my_rank == 0)
+  //  std::cout << "I'm sending particles" << std::endl;
 
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
@@ -115,6 +120,8 @@ TaskStatus TimeIntegratorTaskList::SendParticles(MeshBlock *pmb, int stage) {
 TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int stage) {
   // only do send/recv at last rk step
   if (stage != nstages) return TaskStatus::next;
+  //if (Globals::my_rank == 0)
+  //  std::cout << "I'm receiving particles" << std::endl;
 
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
@@ -128,6 +135,8 @@ TaskStatus TimeIntegratorTaskList::ReceiveParticles(MeshBlock *pmb, int stage) {
 TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int stage) {
   // only do send/recv at the last rk step
   if (stage != nstages) return TaskStatus::next;
+  //if (Globals::my_rank == 0)
+  //  std::cout << "I'm attaching particles" << std::endl;
 
   bool ret = true;
   Particles *ppart = pmb->ppart;
@@ -145,6 +154,8 @@ TaskStatus TimeIntegratorTaskList::AttachParticles(MeshBlock *pmb, int stage) {
 TaskStatus TimeIntegratorTaskList::ParticlesToMesh(MeshBlock *pmb, int stage) {
   // only do particle/mesh at the last rk step
   if (stage != nstages) return TaskStatus::next;
+  //if (Globals::my_rank == 0)
+  //  std::cout << "I'm doing particle to mesh" << std::endl;
 
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
@@ -159,6 +170,8 @@ TaskStatus TimeIntegratorTaskList::ParticlesToMesh(MeshBlock *pmb, int stage) {
 TaskStatus TimeIntegratorTaskList::IntegrateChemistry(MeshBlock *pmb, int stage) {
   // only do chemistry at the last rk step
   if (stage != nstages) return TaskStatus::next;
+  //if (Globals::my_rank == 0)
+  //  std::cout << "I'm doing chemistry" << std::endl;
 
   // frictional heating
   //pmb->pchem->AddFrictionalHeating(ph->u, ph->w, pmb->pmy_mesh->dt);
@@ -171,6 +184,7 @@ TaskStatus TimeIntegratorTaskList::IntegrateChemistry(MeshBlock *pmb, int stage)
 TaskStatus TimeIntegratorTaskList::MeshToParticles(MeshBlock *pmb, int stage) {
   // only do mesh/particle at the last rk step
   if (stage != nstages) return TaskStatus::next;
+  //  std::cout << "I'm doing mesh to particle" << std::endl;
 
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {

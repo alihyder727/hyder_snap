@@ -82,7 +82,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   c1_.ZeroClear();
   pcell_.NewAthenaArray(nct, nc3, nc2, nc1);
 
-  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 5);
+  seeds_per_cell_ = pin->GetOrAddInteger("particles", name + ".seeds_per_cell", 1);
   nmax_per_cell_ = pin->GetOrAddInteger("particles", name + ".nmax_per_cell",
     5*seeds_per_cell_);
   density_floor_ = pin->GetOrAddReal("particles", name + ".dfloor", 1.E-10);

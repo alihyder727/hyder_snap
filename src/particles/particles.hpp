@@ -67,7 +67,7 @@ public:
 
   Particles* FindParticle(std::string name);
   void Initialize();
-  void AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> const& mp);
+  void AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> &mp);
   void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c);
 
   virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
