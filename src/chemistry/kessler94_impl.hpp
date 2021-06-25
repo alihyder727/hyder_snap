@@ -26,7 +26,7 @@ void Kessler94::AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
   Real dq = dqsat_[iqv];
   Real qs = qv - dq;
   Real Rv = pthermo->GetRd()/pthermo->GetMassRatio(iqv);
-  Real lf = pthermo->GetLatent(iqc,T) - Rv*T;
+  Real lf = pthermo->GetLatent(NVAPOR+iqv,T) - Rv*T;
   Real dqsdt = qs/T*lf/(Rv*T);
   Real mols = q[IPR]/(Thermodynamics::Rgas*q[IDN]);
 

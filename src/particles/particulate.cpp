@@ -54,10 +54,8 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
             pc = pc->next;
           }
 
-          //if (Globals::my_rank == 0)
-          //  std::cout << "(" << k << "," << j << "," << i << ") = " << nparts << std::endl;
           // 3. add new particles to mp1
-          if (delta_u > seeds_per_cell_*density_floor_) {
+          if (delta_u > density_floor_) {
             avg = delta_u/seeds_per_cell_;
             int num = std::min(nmax_per_cell_ - nparts, seeds_per_cell_);
             for (int n = 0; n < num; ++n) {
@@ -80,7 +78,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
               pc->rho += avg;
               pc = pc->next;
             }
-          } else if (delta_u < 0) { // 4. remove particles
+          } else if (delta_u < -density_floor_) { // 4. remove particles
             Real avg = std::abs(delta_u)/nparts;
             pc = pcell_(t,k,j,i);
             //std::cout << "c =  " << u(t,k,j,i) << " c1 = " << u1_(t,k,j,i) << std::endl;
@@ -105,6 +103,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
             std::stringstream msg;
             if (std::abs(delta_u) > density_floor_) {
               msg << "### FATAL ERROR in Particles::Particulate:" << std::endl
+                  << "(" << k << "," << j << "," << i << ") = " << nparts << std::endl;
                   << "u = " << u(t,k,j,i) << " u1 = " << u1_(t,k,j,i) << std::endl
                   << "delta_u = " << delta_u << std::endl
                   << "density_floor_ = " << density_floor_ << std::endl;

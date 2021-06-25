@@ -7,15 +7,13 @@
 #include <map>
 
 // Athena++ header
-#include "../thermodynamics/thermodynamics.hpp"
-#include "../particles/particles.hpp"
 #include "../parameter_input.hpp"
 #include "../athena.hpp"
 
 // Eigen header files
 #include "../math/eigen335/Eigen/Core"
 
-class Chemisry;
+class Chemistry;
 
 template<typename T>
 class ChemistryBase {
@@ -28,8 +26,7 @@ public:
 
 // functions
   ChemistryBase(Chemistry *pchem, ParameterInput *pin):
-    pmy_chem(pchem), prev(nullptr), next(nullptr)
-  {}
+    pmy_chem(pchem), prev(nullptr), next(nullptr) {}
 
   void IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c, 
     Real time, Real dt);
@@ -38,7 +35,9 @@ public:
   void AssembleReactionMatrix(Eigen::DenseBase<D1>& rate,
     Eigen::DenseBase<D2>& jac, Real const q[], Real cv, Real time);
 
-  void ApplyConcentrationLimit(Real q[], Real const q0[]) {}
+  template<typename D1>
+  void ApplySolutionLimit(Real c[], Real const c0[],
+    Eigen::DenseBase<D1>& dc, Real cv) {}
 
 protected:
   //! reaction coefficients 
@@ -49,7 +48,5 @@ protected:
   //! internal energy
   std::vector<Real> deltaU_;
 };
-
-#include "integrate_dense.hpp"
 
 #endif

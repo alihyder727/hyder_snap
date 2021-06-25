@@ -69,7 +69,8 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         for (int n = 0; n < T::Solver::Size; ++n)
           c2[index_[n]] += sol(n);
 
-        // 8. Blend solutions
+        // 8. Blend solver
+        //sol = pchem->solver.TRBDF2_Blend(c2, Rate, Jac, index_.data(), dt);
         Real alpha = 1.;
         for (int n = 1; n < T::Solver::Size; ++n)
           if (c2[index_[n]] < 0.)
@@ -93,8 +94,8 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
           exit(1);
         }*/
 
-        // 9. Apply limits
-        pchem->ApplyConcentrationLimit(c1);
+        // 9. Apply solution
+        pchem->ApplySolutionLimit(c1, c0, sol, cvt);
 
         // 10. Adjust pressure
         c1[IPR] = cd*Thermodynamics::Rgas*c1[IDN];

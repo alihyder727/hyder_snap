@@ -41,10 +41,34 @@ public:
     else return A_.partialPivLu().solve(B_);
   }
 
+  template<typename T1, typename T2>
+  T1 TRBDF2_Blend(Real c[], T1 const& Rate, T2 const& Jac, int const indx[], Real dt) {
+    // BDF1 solver
+    Eigen::Matrix<Real,N,1> sol = BDF1(Rate, Jac, dt);
+    for (int n = 0; n < Size; ++n)
+      S1_(n) = c[indx[n]] + sol(n);
+
+    // TR-BDF2 solver
+    sol = TRBDF2(Rate, Jac, dt);
+    for (int n = 0; n < Size; ++n)
+      S2_(n) = c[indx[n]] + sol(n);
+
+    // Blend solutions
+    Real alpha = 1.;
+    for (int n = 0; n < Size; ++n)
+      if (S2_(n) < 0.)
+        alpha = std::min(alpha, S1_(n)/(S1_(n) - S2_(n)));
+    for (int n = 0; n < Size; ++n) {
+      sol(n) = (1. - alpha)*S1_(n) + alpha*S2_(n) - c[indx[n]];
+      c[indx[n]] += sol(n);
+    }
+    return sol;
+  }
+
 private:
   // scratch array
   Eigen::Matrix<Real,N,N> A_, I_;
-  Eigen::Matrix<Real,N,1> B_;
+  Eigen::Matrix<Real,N,1> B_, S1_, S2_;
 };
 
 #endif
