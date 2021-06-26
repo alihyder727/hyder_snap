@@ -13,6 +13,7 @@
 #include "../hydro/hydro.hpp"
 #include "chemistry.hpp"
 #include "kessler94.hpp"
+#include "integrate_dense.hpp"
 
 Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin) :
   pmy_block(pmb), pkessler94_(nullptr)

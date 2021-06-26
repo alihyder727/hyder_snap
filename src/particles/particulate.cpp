@@ -103,7 +103,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
             std::stringstream msg;
             if (std::abs(delta_u) > density_floor_) {
               msg << "### FATAL ERROR in Particles::Particulate:" << std::endl
-                  << "(" << k << "," << j << "," << i << ") = " << nparts << std::endl;
+                  << "(" << k << "," << j << "," << i << ") = " << nparts << std::endl
                   << "u = " << u(t,k,j,i) << " u1 = " << u1_(t,k,j,i) << std::endl
                   << "delta_u = " << delta_u << std::endl
                   << "density_floor_ = " << density_floor_ << std::endl;

@@ -43,14 +43,28 @@ bool ParticleBuffer::AttachParticle(std::vector<MaterialPoint>& mp)
       std::vector<MaterialPoint>::iterator it = particle_recv_[nb.bufid].begin();
       for (; it != particle_recv_[nb.bufid].end(); ++it) {
         // 0:INNER_X1, 1:OUTER_X1
-        if (pm->mesh_bcs[nb.ni.ox1+1>>1] == BoundaryFlag::periodic)
-          it->x1 += nb.ni.ox1*(pm->mesh_size.x1max - pm->mesh_size.x1min);
+        if (pm->mesh_bcs[nb.ni.ox1+1>>1] == BoundaryFlag::periodic) {
+          if (it->x1 > pm->mesh_size.x1max)
+            it->x1 -= pm->mesh_size.x1max - pm->mesh_size.x1min;
+          if (it->x1 < pm->mesh_size.x1min)
+            it->x1 += pm->mesh_size.x1max - pm->mesh_size.x1min;
+        }
+
         // 2:INNER_X2, 3:OUTER_X2
-        if (pm->mesh_bcs[2+(nb.ni.ox2+1>>1)] == BoundaryFlag::periodic)
-          it->x2 += nb.ni.ox2*(pm->mesh_size.x2max - pm->mesh_size.x2min);
+        if (pm->mesh_bcs[2+(nb.ni.ox2+1>>1)] == BoundaryFlag::periodic) {
+          if (it->x2 > pm->mesh_size.x2max)
+            it->x2 -= pm->mesh_size.x2max - pm->mesh_size.x2min;
+          if (it->x2 < pm->mesh_size.x2min)
+            it->x2 += pm->mesh_size.x2max - pm->mesh_size.x2min;
+        }
+
         // 4:INNER_X3, 5:OUTER_X3
-        if (pm->mesh_bcs[4+(nb.ni.ox3+1>>1)] == BoundaryFlag::periodic) 
-          it->x3 += nb.ni.ox3*(pm->mesh_size.x3max - pm->mesh_size.x3min);
+        if (pm->mesh_bcs[4+(nb.ni.ox3+1>>1)] == BoundaryFlag::periodic) {
+          if (it->x3 > pm->mesh_size.x3max)
+            it->x3 -= pm->mesh_size.x3max - pm->mesh_size.x3min;
+          if (it->x3 < pm->mesh_size.x3min)
+            it->x3 += pm->mesh_size.x3max - pm->mesh_size.x3min;
+        }
 
         bool out_of_domain = (it->x1 < pmb->block_size.x1min || it->x1 > pmb->block_size.x1max) ||
              (pm->f2 && (it->x2 < pmb->block_size.x2min || it->x2 > pmb->block_size.x2max)) ||

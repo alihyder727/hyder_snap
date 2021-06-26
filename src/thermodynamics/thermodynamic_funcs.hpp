@@ -42,7 +42,7 @@ Real MoistStaticEnergy(AthenaArray<Real> const& w, Real gz,
 template<typename T>
 Real RelativeHumidity(T w, int iv, Thermodynamics *pthermo) {
   Real dw[1+NVAPOR];
-  pthermo->SaturationSurplus(dw, w);
+  pthermo->SaturationSurplus(dw, w, VariableType::prim);
   return w[iv]/(w[iv] - dw[iv]);
 }
 

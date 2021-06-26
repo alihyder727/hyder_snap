@@ -314,7 +314,7 @@ public:
    * negative value represents saturation deficit
    */
   template<typename T>
-  void SaturationSurplus(Real dv[], T v, VariableType vtype = VariableType::prim) const {
+  void SaturationSurplus(Real dv[], T v, VariableType vtype) const {
     Real q1[NHYDRO];
     // mass to molar mixing ratio
     if (vtype == VariableType::prim) {
@@ -334,7 +334,7 @@ public:
       int ic = NHYDRO - NVAPOR + nc - 1;
       Real rate = VaporCloudEquilibrium(q1, iv, ic, t3_[iv], p3_[iv], 
           0., beta_[nc], delta_[nc], true);
-      dv[iv] = rate*mols;
+      dv[iv] = rate/q1[iv]*v[iv];
     }
   }
 
