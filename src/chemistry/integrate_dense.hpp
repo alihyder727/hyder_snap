@@ -9,6 +9,10 @@ template<typename T>
 void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &up,
   Real time, Real dt)
 {
+  //std::cout << "Integrating " << myname << std::endl;
+  //for (int n = 0; n < 4; ++n)
+  //  std::cout << index_[n] << " ";
+  //std::cout << std::endl;
   std::stringstream msg;
   MeshBlock *pmb = pmy_chem->pmy_block;
   Thermodynamics *pthermo = pmb->pthermo;

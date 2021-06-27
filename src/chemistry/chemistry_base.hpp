@@ -28,6 +28,11 @@ public:
   ChemistryBase(Chemistry *pchem, ParameterInput *pin):
     pmy_chem(pchem), prev(nullptr), next(nullptr) {}
 
+  virtual ~ChemistryBase() {
+    if (prev != nullptr) prev->next = next;
+    if (next != nullptr) next->prev = prev;
+  }
+
   void IntegrateDense(AthenaArray<Real> &u, AthenaArray<Real> &c, 
     Real time, Real dt);
 
