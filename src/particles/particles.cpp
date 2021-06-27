@@ -19,7 +19,7 @@
 
 Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb), myname("HEAD"), prev(nullptr), next(nullptr),
-  seeds_per_cell_(1), nmax_per_cell_(1), density_floor_(0), has_gravity_(false)
+  seeds_per_cell_(1), nmax_per_cell_(1), density_floor_(0)
 {
   ppb = new ParticleBuffer(this);
 
@@ -86,7 +86,6 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   nmax_per_cell_ = pin->GetOrAddInteger("particles", name + ".nmax_per_cell",
     5*seeds_per_cell_);
   density_floor_ = pin->GetOrAddReal("particles", name + ".dfloor", 1.E-10);
-  has_gravity_ = false;
 
   std::stringstream msg;
   if (nmax_per_cell_ < seeds_per_cell_) {

@@ -35,8 +35,6 @@ SimpleCloudParticles::SimpleCloudParticles(
 
   cc_.push_back(cc);
   cc_.push_back(cc);
-
-  has_gravity_ = true;
 }
 
 void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
@@ -94,17 +92,15 @@ void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
     if (q->type == 1) q->v1 += -10.;
 
     // add gravititional acceleration
-    if (has_gravity_) {
-      int k, j, i;
-      k = locate(xface_.data(), q->x3, dims_[0]+1);
-      j = locate(xface_.data()+dims_[0]+1, q->x2, dims_[1]+1);
-      i = locate(xface_.data()+dims_[0]+dims_[1]+2, q->x1, dims_[2]+1);
+    int k, j, i;
+    k = locate(xface_.data(), q->x3, dims_[0]+1);
+    j = locate(xface_.data()+dims_[0]+1, q->x2, dims_[1]+1);
+    i = locate(xface_.data()+dims_[0]+dims_[1]+2, q->x1, dims_[2]+1);
 
-      Real src = dt*q->rho;
-      du(IM1,k,j,i) += src*g1;
-      du(IM2,k,j,i) += src*g2;
-      du(IM3,k,j,i) += src*g3;
-      du(IEN,k,j,i) += src*(g1*q->v1 + g2*q->v2 + g3*q->v3);
-    }
+    Real src = dt*q->rho;
+    du(IM1,k,j,i) += src*g1;
+    du(IM2,k,j,i) += src*g2;
+    du(IM3,k,j,i) += src*g3;
+    du(IEN,k,j,i) += src*(g1*q->v1 + g2*q->v2 + g3*q->v3);
   }
 }

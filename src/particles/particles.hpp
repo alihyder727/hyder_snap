@@ -94,7 +94,6 @@ protected:
   int seeds_per_cell_;
   int nmax_per_cell_;
   Real density_floor_;
-  bool has_gravity_;
 };
 
 class SimpleCloudParticles : public Particles {
