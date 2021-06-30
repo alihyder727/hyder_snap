@@ -28,6 +28,7 @@
 #include "../parameter_input.hpp"
 #include "../scalars/scalars.hpp"
 #include "../physics/physics.hpp"
+#include "../particles/particles.hpp"
 #include "outputs.hpp"
 
 
@@ -202,6 +203,8 @@ void RestartOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool force_wr
     }
     // physics data:
     pdata += pmb->pphy->DumpRestartData(pdata);
+    // particle data
+    pdata += pmb->ppart->DumpRestartData(pdata);
 
     pmb = pmb->next;
   }

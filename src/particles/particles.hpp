@@ -7,6 +7,7 @@
 
 // Athena++ classes headers
 #include "../athena.hpp"
+#include "../globals.hpp"
 #include "material_point.hpp"
 
 class MeshBlock;
@@ -61,7 +62,8 @@ public:
       id = available_ids_.back();
       available_ids_.pop_back();
     } else
-      id = mp.size() + mp1.size() +1;
+      id = mp.size() + mp1.size() + 1;
+      id = (id << 2) + Globals::my_rank;
     return id;
   }
 
@@ -69,6 +71,9 @@ public:
   void Initialize();
   void AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> &mp);
   void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c);
+  size_t RestartDataSizeInBytes();
+  size_t DumpRestartData(char *pdst);
+  size_t LoadRestartData(char *psrt);
 
   virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
     AthenaArray<Real> const &w, Real dt);

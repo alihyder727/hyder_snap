@@ -21,18 +21,12 @@ ParticleBuffer::ParticleBuffer(Particles *ppart):
   pmy_particle(ppart)
 {
   for (int i = 0; i < 56; ++i) {
-    particle_flag_[i] = BoundaryStatus::completed;
+    particle_flag_[i] = BoundaryStatus::waiting;
 
 #ifdef MPI_PARALLEL
     req_particle_send_[i]=MPI_REQUEST_NULL;
     req_particle_recv_[i]=MPI_REQUEST_NULL;
 #endif
-  }
-
-  MeshBlock *pmb = ppart->pmy_block;
-  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
-    NeighborBlock &nb = pmb->pbval->neighbor[n];
-    particle_flag_[nb.bufid] = BoundaryStatus::waiting;
   }
 }
 

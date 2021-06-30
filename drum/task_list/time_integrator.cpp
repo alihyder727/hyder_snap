@@ -278,7 +278,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
     // finish particles
     AddTask(SEND_HYD,PART2MESH);
     AddTask(RECV_HYD,NONE);
-    AddTask(SETB_HYD,(RECV_HYD|PART2MESH));
+    AddTask(SETB_HYD,(RECV_HYD|INT_CHM));
     if (SHEARING_BOX) { // Shearingbox BC for Hydro
       AddTask(SEND_HYDSH,SETB_HYD);
       AddTask(RECV_HYDSH,SETB_HYD);

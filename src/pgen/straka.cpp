@@ -39,7 +39,7 @@
 #include "../mesh/mesh.hpp"
 // Finally, the Thermodynamics class works with thermodynamic aspects of the problem
 // such as the temperature, potential temperature, condensation of vapor, etc.
-#include "../thermodynamics/thermodynamics.hpp"
+#include "../thermodynamics/thermodynamic_funcs.hpp"
 
 // Functions in the math library are protected by a specific namespace because math
 // functions are usually concise in the names, such as <code>min</code>,
@@ -73,7 +73,7 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 // all grids and calculates the value of temperature and potential temperature before the output time step. 
 // Particularly, the pointer to the Thermodynamics class
 // <code>pthermo</code> calculates the temperature and potential temperature using its
-// own member function Thermodynamics::Temp and Thermodynamics::Theta.
+// own member function Thermodynamics::GetTemp and PotentialTemp.
 // <code>pthermo</code>, is a member of a
 // higher level management class MeshBlock. So, you can use it directly inside a member
 // function of class MeshBlock.
@@ -89,8 +89,8 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
       // <code>user_out_var</code> stores the actual data.
       // <code>phydro</code> is a pointer to the Hydro class, which has a member
       // <code>w</code> that stores density, pressure, and velocities at each grid.
-      user_out_var(0,j,i) = pthermo->Temp(phydro->w.at(j,i));
-      user_out_var(1,j,i) = pthermo->Theta(phydro->w.at(j,i), p0);
+      user_out_var(0,j,i) = pthermo->GetTemp(phydro->w.at(j,i));
+      user_out_var(1,j,i) = PotentialTemp(phydro->w.at(j,i), p0, pthermo);
     }
 }
 
@@ -125,15 +125,15 @@ void Diffusion(MeshBlock *pmb, Real const time, Real const dt,
 
       // Similar to what we have done in MeshBlock::UserWorkBeforeOutput, we use the
       // Thermodynamics class to calculate temperature and potential temperature.
-      Real temp = pthermo->Temp(w.at(j,i));
-      Real theta = pthermo->Theta(w.at(j,i), p0);
+      Real temp = pthermo->GetTemp(w.at(j,i));
+      Real theta = PotentialTemp(w.at(j,i), p0, pthermo);
 
       // The thermal diffusion is applied to the potential temperature field, which is
       // not exactly correct. But this is the setting of the test program.
-      Real theta_ip1_j = pthermo->Theta(w.at(j+1,i), p0);
-      Real theta_im1_j = pthermo->Theta(w.at(j-1,i), p0);
-      Real theta_i_jp1 = pthermo->Theta(w.at(j,i+1), p0);
-      Real theta_i_jm1 = pthermo->Theta(w.at(j,i-1), p0);
+      Real theta_ip1_j = PotentialTemp(w.at(j+1,i), p0, pthermo);
+      Real theta_im1_j = PotentialTemp(w.at(j-1,i), p0, pthermo);
+      Real theta_i_jp1 = PotentialTemp(w.at(j,i+1), p0, pthermo);
+      Real theta_i_jm1 = PotentialTemp(w.at(j,i-1), p0, pthermo);
 
       // Add viscous dissipation to the velocities. Now you encounter another variable
       // called <code>u</code>. <code>u</code> stands for `conserved variables`, which

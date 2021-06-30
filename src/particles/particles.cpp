@@ -133,7 +133,7 @@ void Particles::Initialize()
 {
   Particles *p = this;
   while (p != nullptr) {
-    Particulate(p->mp, p->u);
+    p->Particulate(p->mp, p->u);
     p = p->next;
   }
 }
@@ -160,4 +160,49 @@ void Particles::WeightedAverage(std::vector<MaterialPoint> &mp_out,
     mp_out[i].v2 = ave_wghts[0]*mp_out[i].v2 + ave_wghts[1]*mp_in[i].v2;
     mp_out[i].v3 = ave_wghts[0]*mp_out[i].v3 + ave_wghts[1]*mp_in[i].v3;
   }
+}
+
+size_t Particles::RestartDataSizeInBytes()
+{
+  size_t size = 0;
+  Particles *p = this;
+
+  while (p != nullptr) {
+    size += sizeof(int) + p->mp.size()*sizeof(MaterialPoint);
+    p = p->next;
+  }
+
+  return size;
+}
+
+size_t Particles::DumpRestartData(char *pdst)
+{
+  Particles *p = this;
+
+  while (p != nullptr) {
+    int size = p->mp.size();
+    std::memcpy(pdst, &size, sizeof(int));
+    pdst += sizeof(int);
+    std::memcpy(pdst, p->mp.data(), size*sizeof(MaterialPoint));
+    pdst += size*sizeof(MaterialPoint);
+    p = p->next;
+  }
+  return RestartDataSizeInBytes();
+}
+
+size_t Particles::LoadRestartData(char *psrc)
+{
+  Particles *p = this;
+  int size;
+
+  while (p != nullptr) {
+    std::memcpy(&size, psrc, sizeof(int));
+    psrc += sizeof(int);
+    p->mp.resize(size);
+    std::memcpy(p->mp.data(), psrc, size*sizeof(MaterialPoint));
+    psrc += size*sizeof(MaterialPoint);
+    p = p->next;
+  }
+
+  return RestartDataSizeInBytes();
 }

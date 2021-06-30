@@ -183,8 +183,13 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   pphy = new Physics(this, pin);
   // initialize particles and remove the first one (header)
   ppart = new Particles(this, pin);
-  ppart = ppart->next;
-  delete ppart->prev;
+  if (ppart->next != nullptr) {
+    ppart = ppart->next;
+    delete ppart->prev;
+  } else {
+    delete ppart;
+    ppart = nullptr;
+  }
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
@@ -308,8 +313,13 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   pphy = new Physics(this, pin);
   // initialize particles and remove the first one (header)
   ppart = new Particles(this, pin);
-  ppart = ppart->next;
-  delete ppart->prev;
+  if (ppart->next != nullptr) {
+    ppart = ppart->next;
+    delete ppart->prev;
+  } else {
+    delete ppart;
+    ppart = nullptr;
+  }
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
   pdebug = new Debugger(this);
@@ -375,6 +385,9 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
 
   // load physics data
   os += pphy->LoadRestartData(&(mbdata[os]));
+
+  // load particle data
+  os += ppart->LoadRestartData(&(mbdata[os]));
 
   return;
 }
@@ -536,6 +549,9 @@ std::size_t MeshBlock::GetBlockSizeInBytes() {
 
   // physics data
   size += pphy->RestartDataSizeInBytes();
+
+  // particle data
+  size += ppart->RestartDataSizeInBytes();
 
   return size;
 }
