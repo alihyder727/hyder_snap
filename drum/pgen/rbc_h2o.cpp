@@ -1,4 +1,4 @@
-/** @file rbc.cpp
+/** @file rayleigh_benard.cpp
  * @brief Rayleigh-Benard convection in planetary atmospheres
  *
  * @author Cheng Li (chengcli@umich.edu)
@@ -30,7 +30,7 @@ namespace math {
 };
 
 // molecules
-enum {iH2O = 1, iH2Oc = 2, iH2Op = 3};
+enum {ivapor = 1};
 
 // global parameters
 Real grav, P0, T0, Tmin, radius, omega;
@@ -38,31 +38,29 @@ bool use_polar_beta;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
-  AllocateUserOutputVariables(5);
+  AllocateUserOutputVariables(4+NVAPOR);
   SetUserOutputVariableName(0, "temp", "temperature", "K");
   SetUserOutputVariableName(1, "theta", "potential temperature", "K");
   SetUserOutputVariableName(2, "thetav", "virtual potential temperature", "K");
   SetUserOutputVariableName(3, "mse", "moist static energy", "J/kg");
-  SetUserOutputVariableName(4, "rh_h2o", "relative humidity");
+  for (int n = 0; n < NVAPOR; ++n)
+    SetUserOutputVariableName(4+i, "rh" + std::tostring(n+1), "relative humidity");
 }
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 {
-  Real dq[1+NVAPOR], rh;
-
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
-        user_out_var(0,k,j,i) = pthermo->Temp(phydro->w.at(k,j,i));
-        user_out_var(1,k,j,i) = pthermo->Theta(phydro->w.at(k,j,i), P0);
+        user_out_var(0,k,j,i) = pthermo->GetTemp(phydro->w.at(k,j,i));
+        user_out_var(1,k,j,i) = PotentialTemp(phydro->w.at(k,j,i), P0, pthermo);
         // theta_v
-        user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->Qeps(phydro->w.at(k,j,i));
+        user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->RovRd(phydro->w.at(k,j,i));
         // mse
-        user_out_var(3,k,j,i) = pthermo->MSE(phydro->w.at(k,j,i), grav*pcoord->x1v(i));
-        pthermo->SaturationSurplus(dq, phydro->w.at(k,j,i));
-        rh = phydro->w(iH2O,k,j,i)/(phydro->w(iH2O,k,j,i) - dq[iH2O]);
-        // rh
-        user_out_var(4,k,j,i) = rh;
+        user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w, grav*pcoord->x1v(i),
+          pthermo, ppart, k, j, i);
+        for (int n = 0; n < NVAPOR; ++n)
+          user_out_var(4+n,k,j,i) = RelativeHumidity(phydro->w.at(k,j,i), ivapor+n, pthermo);
       }
 }
 
@@ -104,7 +102,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
-  Real qH2O = pin->GetReal("problem", "qH2O")/1.E3;
+  std::stringstream msg;
   Real gamma = pin->GetReal("hydro", "gamma");
 
   // construct a 1D pseudo-moist adiabat with given relative humidity
@@ -120,7 +118,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     dz = (x1max - x1min)/pmy_mesh->mesh_size.nx1/2.;
   }
   int nx1 = (int)((x1max - x1min)/dz);
-  NewCArray(w1, nx1, NHYDRO);
+  NewCArray(w1, nx1, NHYDRO+2);
   z1 = new Real [nx1];
   p1 = new Real [nx1];
   t1 = new Real [nx1];
@@ -132,14 +130,17 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   Real Ps = P0*pow(Ts/T0, cp/Rd);
   int max_iter = 200, iter = 0;
 
-  w1[0][iH2O] = qH2O;
+  for (int n = 0; n < NVAPOR; ++n) {
+    Real qv = pin->GetReal("problem", "qvapor" + std::tostring(n+1))/1.E3;
+    w1[0][ivapor+n] = qv;
+  }
   z1[0] = x1min;
   for (int i = 1; i < nx1; ++i)
     z1[i] = z1[i-1] + dz;
 
   Real t0, p0;
   while (iter++ < max_iter) {
-    pthermo->ConstructAdiabat(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo);
+    pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo);
 
     // 1.2 replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
     int ii = 0;
@@ -167,7 +168,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
 
   if (iter > max_iter) {
-    std::stringstream msg;
     msg << "### FATAL ERROR in problem generator"
         << std::endl << "maximum iteration reached."
         << std::endl << "T0 = " << t0
@@ -176,29 +176,37 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
 
   // setup initial condition
-  srand(Globals::my_rank + time(0));
+  //srand(Globals::my_rank + time(0));
   for (int i = is; i <= ie; ++i) {
-    Real buf[NHYDRO];
-    interpn(buf, &pcoord->x1v(i), *w1, z1, &nx1, 1, NHYDRO);
+    Real buf[NHYDRO+2*NVAPOR];
+    interpn(buf, &pcoord->x1v(i), *w1, z1, &nx1, 1, NHYDRO+2*NVAPOR);
     buf[IVX] = buf[IVY] = buf[IVZ] = 0.;
 
-    // set cloud to zero
-    for (int n = 1+NVAPOR; n < NMASS; ++n)
-      buf[n] = 0.;
-
+    // set gas concentration
     for (int n = 0; n < NHYDRO; ++n)
       for (int k = ks; k <= ke; ++k)
         for (int j = js; j <= je; ++j)
           phydro->w(n,k,j,i) = buf[n];
 
-    // add noise
-    for (int k = ks; k <= ke; ++k)
-      for (int j = js; j <= je; ++j)
-      phydro->w(IV1,k,j,i) = 0.001*(1.*rand()/RAND_MAX - 0.5);
+    // set cloud concentration
+    Particle *pp = ppart;
+    for (int n = 0; n < NVAPOR; ++n) {
+      if (pp == nullptr) {
+        msg << "### FATAL ERROR in problem generator"
+            << std::endl << "Vapor #" << n
+            << "does not associate with any particle.";
+        ATHENA_ERROR(msg);
+      }
+      for (int k = ks; k <= ke; ++k)
+        for (int j = js; j <= je; ++j)
+          pp->c(0,k,j,i) = buf[NHYDRO+n] + buf[NHYDRO+NVAPOR+n];
+      pp = pp->next;
+    }
   }
 
-  peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
+  ppart->Initialize();
   pphy->Initialize(phydro->w);
+  peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
 
   FreeCArray(w1);
   delete[] z1;

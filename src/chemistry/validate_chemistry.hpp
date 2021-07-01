@@ -9,33 +9,24 @@
 #ifndef VALIDATE_CHEMISTRY_HPP
 #define VALIDATE_CHEMISTRY_HPP
 
-template<typename T>
-inline void validate_chemistry(Real const q[], AthenaArray<Real> const& c, 
-  Real const q0[], Real const q1[], Real const q2[], int k, int j, int i, T rate)
+inline void validate_chemistry(Real const c[], Real const c0[], Real const c1[])
 {
   for (int n = 0; n <= NVAPOR; ++n) {
-    if (!(q[n] >= 0.)) {
-      std::cout << rate << std::endl;
+    if (!(c[n] >= 0.)) {
       for (int t = 0; t < NHYDRO; ++t)
-        std::cout << q[t] << " ";
+        std::cout << c[t] << " ";
       std::cout << std::endl;
       for (int t = 0; t < NHYDRO; ++t)
-        std::cout << q0[t] << " ";
+        std::cout << c0[t] << " ";
       std::cout << std::endl;
       for (int t = 0; t < NHYDRO; ++t)
-        std::cout << q1[t] << " ";
-      std::cout << std::endl;
-      for (int t = 0; t < NHYDRO; ++t)
-        std::cout << q2[t] << " ";
+        std::cout << c1[t] << " ";
       std::cout << std::endl << std::endl;
     }
-    assert(q[n] >= 0.);
+    assert(c[n] >= 0.);
   }
 
-  assert(q[IPR] >= 0.);
-
-  for (int t = 0; t < c.GetDim4(); ++t)
-    assert(c(t,k,j,i) >= 0.);
+  assert(c[IPR] >= 0.);
 }
 
 #endif /* end of include guard VALIDATE_CHEMISTRY_HPP */
