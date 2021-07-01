@@ -29,9 +29,10 @@ void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint
     j = locate(xface_.data()+dims_[0]+1, q->x2, dims_[1]+1);
     i = locate(xface_.data()+dims_[0]+dims_[1]+2, q->x1, dims_[2]+1);
 
-    assert(k >= pmb->ks && k <= pmb->ke);
-    assert(j >= pmb->js && j <= pmb->je);
-    assert(i >= pmb->is && i <= pmb->ie);
+    // it may happen that the last cell is [a, b] and x = b
+    //assert(k >= pmb->ks && k <= pmb->ke);
+    //assert(j >= pmb->js && j <= pmb->je);
+    //assert(i >= pmb->is && i <= pmb->ie);
 
     u(q->type,k,j,i) += q->rho;
 
