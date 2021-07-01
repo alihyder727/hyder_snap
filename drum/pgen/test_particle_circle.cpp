@@ -15,6 +15,7 @@
 #include "../math/interpolation.h"
 #include "../math/core.h"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
+#include "../chemistry/kessler94.hpp"
 
 enum {iH2O = 1, iH2Oc = 2, iH2Op = 3};
 
@@ -39,8 +40,8 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
         user_out_var(0,k,j,i) = pthermo->GetTemp(phydro->w.at(k,j,i));
         user_out_var(1,k,j,i) = PotentialTemp(phydro->w.at(k,j,i), p0, pthermo);
         user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->RovRd(phydro->w.at(k,j,i));
-        user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w.at(k,j,i), ppart->c.at(k,j,i),
-          grav*pcoord->x1v(i), pthermo);
+        user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w, grav*pcoord->x1v(i),
+          pthermo, ppart, k, j, i);
         user_out_var(4,k,j,i) = RelativeHumidity(phydro->w.at(k,j,i), iH2O, pthermo);
         //user_out_var(4,i) = pthermo->GetThetaE(phydro->w.at(i), p0);
       }
@@ -72,6 +73,35 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   std::fill(w1[0], w1[0] + NHYDRO+2*NVAPOR, 0.);
   w1[0][iH2O] = Qs;
+  /* #### TEST ####
+  w1[0][IDN] = p0/(pthermo->GetRd()*Ts);
+  w1[0][IPR] = p0;
+  w1[0][IVX] = 10.;
+  w1[0][IVY] = 10.;
+  w1[0][IVZ] = 10.;
+  Real c[NHYDRO];
+  for (int n = 0; n < NHYDRO; ++n)
+    std::cout << w1[0][n] << " ";
+  std::cout << std::endl;
+  pthermo->PrimitiveToChemical(c, w1[0]);
+  for (int n = 0; n < NHYDRO; ++n)
+    std::cout << c[n] << " ";
+  std::cout << std::endl;
+  pthermo->ChemicalToConserved(w1[1], c);
+  for (int n = 0; n < NHYDRO; ++n)
+    std::cout << w1[1][n] << " ";
+  std::cout << std::endl;
+  pthermo->ConservedToChemical(c, w1[1]);
+  for (int n = 0; n < NHYDRO; ++n)
+    std::cout << c[n] << " ";
+  std::cout << std::endl;
+  pthermo->ChemicalToPrimitive(w1[0], c);
+  for (int n = 0; n < NHYDRO; ++n)
+    std::cout << w1[0][n] << " ";
+  std::cout << std::endl;
+  exit(1);
+  // ##############*/
+
   Real Ps = p0;
   pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::reversible);
   z1[0] = x1min;
@@ -91,7 +121,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         Real x1 = pcoord->x1v(i) - 8.E3;
         Real x2 = pcoord->x2v(j) - 2.E3;
         if (sqrt(x1*x1 + x2*x2) < 400.)
-          pp->c(0,k,j,i) = buf[NHYDRO] + buf[NHYDRO+1];
+          pp->u(0,k,j,i) = buf[NHYDRO] + buf[NHYDRO+1];
         x1 = pcoord->x1v(i) - 5.E3;
         x2 = pcoord->x2v(j) - 5.E3;
         phydro->w(IM1,k,j,i) = -omega*x2;
