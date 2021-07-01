@@ -61,9 +61,10 @@ public:
     if (available_ids_.size() > 0) {
       id = available_ids_.back();
       available_ids_.pop_back();
-    } else
+    } else {
       id = mp.size() + mp1.size() + 1;
-      id = (id << 2) + Globals::my_rank;
+      id = std::stoi(std::to_string(Globals::my_rank)+std::to_string(id));
+    }
     return id;
   }
 

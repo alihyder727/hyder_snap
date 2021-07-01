@@ -79,7 +79,7 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
 
       // write x1, x2, x3 column headers
       fprintf(pfile,"#");
-      fprintf(pfile,"%-7s"," id");
+      fprintf(pfile,"%-9s"," id");
       fprintf(pfile,"%8s","category");
       fprintf(pfile,"%13s","time [s]");
       fprintf(pfile,"%13s","rho [kg/m^3]");
@@ -98,7 +98,7 @@ void ParticlesTableOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool f
       // loop over all particles
       std::vector<MaterialPoint>::iterator it = ppart->mp.begin();
       for (; it != ppart->mp.end(); ++it) {
-        fprintf(pfile, "%-8d", it->id);
+        fprintf(pfile, "%-10d", it->id);
         fprintf(pfile, "%-8d", it->type);
         fprintf(pfile, output_params.data_format.c_str(), it->time);
         fprintf(pfile, output_params.data_format.c_str(), it->rho);
