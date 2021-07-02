@@ -55,7 +55,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
           }
 
           // 3. add new particles to mp1
-          if (delta_u > density_floor_) {
+          if (delta_u > 0.) {
             avg = delta_u/seeds_per_cell_;
             int num = std::min(nmax_per_cell_ - nparts, seeds_per_cell_);
             for (int n = 0; n < num; ++n) {
@@ -78,7 +78,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
               pc->rho += avg;
               pc = pc->next;
             }
-          } else if (delta_u < -density_floor_) { // 4. remove particles
+          } else if (delta_u < 0.) { // 4. remove particles
             Real avg = std::abs(delta_u)/nparts;
             pc = pcell_(t,k,j,i);
             //std::cout << "c =  " << u(t,k,j,i) << " c1 = " << u1_(t,k,j,i) << std::endl;
