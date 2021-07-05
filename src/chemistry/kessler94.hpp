@@ -45,7 +45,7 @@ public:
     Particles *part = pchem->pmy_block->ppart->FindParticle(particle_name);
     Real cfloor_ = 1.;
     for (int n = 0; n < part->u.GetDim4(); ++n)
-      cfloor_ = std::min(cfloor_, part->GetDensityFloor()*part->GetMolecularWeight(n));
+      cfloor_ = std::min(cfloor_, part->GetDensityFloor()/part->GetMolecularWeight(n));
   }
 
   template<typename T>

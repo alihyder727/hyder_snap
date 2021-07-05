@@ -173,7 +173,9 @@ size_t Particles::RestartDataSizeInBytes()
   }
 
   // gather maximum size
+#ifdef MPI_PARALLEL
   MPI_Allreduce(MPI_IN_PLACE, &size, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#endif
 
   return size;
 }
