@@ -30,6 +30,7 @@
 #include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
 #include "../scalars/scalars.hpp"
+#include "../particles/particles.hpp"
 #include "outputs.hpp"
 
 // NEW_OUTPUT_TYPES:
@@ -65,6 +66,7 @@ void HistoryOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag) {
     }
   }
 
+  int nparts = 0; // number of particles
   // Loop over MeshBlocks
   while (pmb != nullptr) {
     Hydro *phyd = pmb->phydro;
@@ -151,17 +153,26 @@ void HistoryOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag) {
         }
       }
     }
+
+    Particles *pp = pmb->ppart;
+    while (pp != nullptr) {
+      nparts += pp->mp.size();
+      pp = pp->next;
+    }
     pmb = pmb->next;
   }  // end loop over MeshBlocks
+
 
 #ifdef MPI_PARALLEL
   // sum built-in/predefined hst_data[] over all ranks
   if (Globals::my_rank == 0) {
     MPI_Reduce(MPI_IN_PLACE, hst_data.get(), NHISTORY_VARS, MPI_ATHENA_REAL, MPI_SUM, 0,
                MPI_COMM_WORLD);
+    MPI_Reduce(MPI_IN_PLACE, &nparts, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   } else {
     MPI_Reduce(hst_data.get(), hst_data.get(), NHISTORY_VARS, MPI_ATHENA_REAL, MPI_SUM,
                0, MPI_COMM_WORLD);
+    MPI_Reduce(&nparts, &nparts, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   }
   // apply separate chosen operations to each user-defined history output
   for (int n=0; n<pm->nuser_history_output_; n++) {
@@ -234,6 +245,7 @@ void HistoryOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag) {
       for (int n=0; n<pm->nuser_history_output_; n++)
         std::fprintf(pfile,"[%d]=%-8s", iout++,
                      pm->user_history_output_names_[n].c_str());
+      std::fprintf(pfile,"[%d]=npart     ", iout++);
       std::fprintf(pfile,"\n");                              // terminate line
     }
 
@@ -242,6 +254,7 @@ void HistoryOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag) {
     std::fprintf(pfile, output_params.data_format.c_str(), pm->dt);
     for (int n=0; n<nhistory_output; ++n)
       std::fprintf(pfile, output_params.data_format.c_str(), hst_data[n]);
+    std::fprintf(pfile, "%12d", nparts);
     std::fprintf(pfile,"\n"); // terminate line
     std::fclose(pfile);
   }
