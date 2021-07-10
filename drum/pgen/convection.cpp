@@ -19,18 +19,12 @@
 #include "../field/field.hpp"
 #include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
-#include "../math/interpolation.h"
 #include "../globals.hpp"
 #include "../utils/utils.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
 #include "../physics/physics.hpp"
-
-namespace math {
-  #include "../math/core.h"
-};
-
-// molecules
-enum {ivapor = 1};
+#include "../math/interpolation.h"
+#include "../math/core.h"
 
 // global parameters
 Real grav, P0, T0, Tmin, radius, omega;
@@ -43,9 +37,9 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
   SetUserOutputVariableName(1, "theta", "potential temperature", "K");
   SetUserOutputVariableName(2, "thetav", "virtual potential temperature", "K");
   SetUserOutputVariableName(3, "mse", "moist static energy", "J/kg");
-  for (int n = 0; n < NVAPOR; ++n) {
-    std::string name = "rh" + std::to_string(n+1);
-    SetUserOutputVariableName(4+n, name.c_str(), "relative humidity");
+  for (int n = 1; n <= NVAPOR; ++n) {
+    std::string name = "rh" + std::to_string(n);
+    SetUserOutputVariableName(3+n, name.c_str(), "relative humidity");
   }
 }
 
@@ -61,8 +55,8 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
         // mse
         user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w, grav*pcoord->x1v(i),
           pthermo, ppart, k, j, i);
-        for (int n = 0; n < NVAPOR; ++n)
-          user_out_var(4+n,k,j,i) = RelativeHumidity(phydro->w.at(k,j,i), ivapor+n, pthermo);
+        for (int n = 1; n <= NVAPOR; ++n)
+          user_out_var(3+n,k,j,i) = RelativeHumidity(phydro->w.at(k,j,i), n, pthermo);
       }
 }
 
@@ -80,7 +74,7 @@ void Forcing(MeshBlock *pmb, Real const time, Real const dt,
           Real x3 = pmb->pcoord->x3v(k);
           Real dist = sqrt(x2*x2 + x3*x3);
 
-          Real fcor = -omega*math::sqr(dist/radius);
+          Real fcor = -omega*sqr(dist/radius);
           u(IM2,k,j,i) += dt*fcor*w(IDN,k,j,i)*w(IM3,k,j,i);
           u(IM3,k,j,i) -= dt*fcor*w(IDN,k,j,i)*w(IM2,k,j,i);
         }
@@ -132,9 +126,9 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   Real Ps = P0*pow(Ts/T0, cp/Rd);
   int max_iter = 200, iter = 0;
 
-  for (int n = 0; n < NVAPOR; ++n) {
-    Real qv = pin->GetReal("problem", "qvapor" + std::to_string(n+1))/1.E3;
-    w1[0][ivapor+n] = qv;
+  for (int n = 1; n <= NVAPOR; ++n) {
+    Real qv = pin->GetReal("problem", "qvapor" + std::to_string(n))/1.E3;
+    w1[0][n] = qv;
   }
   z1[0] = x1min;
   for (int i = 1; i < nx1; ++i)

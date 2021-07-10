@@ -1,5 +1,5 @@
-#! /usr/bin/env python2.7
-from pylab import *
+#! /usr/bin/env python3
+from numpy import genfromtxt
 
 data = genfromtxt('armada_atm_NH3_2.7_H2O_2.7.txt', skip_header = 2)
 temp = data[::-2,2]
@@ -18,7 +18,8 @@ with open('jupiter_real_gas_cp.cpp', 'w') as file:
   file.write("\n")
 
   file.write('#include "../athena.hpp"\n')
-  file.write('#include "../math_funcs.hpp"\n')
+  file.write('#include "../math/interpolation.h"\n')
+  file.write('#include "thermodynamics.hpp"\n')
   file.write("\n")
 
   file.write("Real cp[%d] = {    // J/(mol K)\n" % ntemp)
@@ -37,10 +38,7 @@ with open('jupiter_real_gas_cp.cpp', 'w') as file:
   file.write("  %.2f};\n" % temp[-1])
   file.write("\n")
 
-  file.write("Real const Rgas = 8.314462;\n")
-  file.write("\n")
-
-  file.write("void update_gamma(Real& gamma, Real rcp[], Real const prim[]) {\n")
-  file.write("  Real cp_real = _interp1(prim[IDN], cp, temp, %d);\n" % ntemp)
-  file.write("  gamma = cp_real/(cp_real - Rgas);\n")
+  file.write("void update_gamma(Real& gamma, Real const q[]) {\n")
+  file.write("  Real cp_real = interp1(q[IDN], cp, temp, %d);\n" % ntemp)
+  file.write("  gamma = cp_real/(cp_real - Thermodynamics::Rgas);\n")
   file.write("}\n")

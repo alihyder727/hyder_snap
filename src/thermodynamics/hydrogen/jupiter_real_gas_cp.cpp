@@ -9,6 +9,7 @@
 
 #include "../athena.hpp"
 #include "../math/interpolation.h"
+#include "thermodynamics.hpp"
 
 Real cp[400] = {    // J/(mol K)
   21.24,  21.26,  21.29,  21.31,  21.34,  21.37,  21.39,  21.42,  21.45,  21.48,
@@ -94,9 +95,7 @@ Real temp[400] = {  // K;
   1823.69,  1836.90,  1850.18,  1863.55,  1876.99,  1890.51,  1904.10,  1917.78,  1931.54,  1945.37,
   1959.26,  1973.27,  1987.35,  2001.52,  2015.77,  2030.10,  2044.51,  2059.00,  2073.58,  2088.24};
 
-Real const Rgas = 8.314462;
-
-void update_gamma(Real& gamma, Real rcp[], Real const prim[]) {
-  Real cp_real = interp1(prim[IDN], cp, temp, 400);
-  gamma = cp_real/(cp_real - Rgas);
+void update_gamma(Real& gamma, Real const q[]) {
+  Real cp_real = interp1(q[IDN], cp, temp, 400);
+  gamma = cp_real/(cp_real - Thermodynamics::Rgas);
 }

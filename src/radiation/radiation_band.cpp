@@ -70,6 +70,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   // spectral properties
   tem_ = new Real [ncells1];
   NewCArray(tau_, ncells1, nspec);
+  std::fill(tau_[0], tau_[0] + ncells1*nspec, 0.);
   NewCArray(ssa_, ncells1, nspec);
   NewCArray(pmom_, ncells1, nspec, npmom+1);
   NewCArray(flxup_, ncells1+1, nspec);
@@ -197,6 +198,9 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
   while (a != NULL) {
     for (int i = il; i <= iu; ++i) {
       pthermo->PrimitiveToChemical(q, w.at(k,j,i));
+      // molar concentration to molar mixing ratio
+      Real nmols = q[IPR]/(Thermodynamics::Rgas*q[IDN]);
+      for (int n = 1; n <= NVAPOR; ++n) q[n] /= nmols;
       tem_[i] = q[IDN];
       //std::cout << i << " " << tem_[i] << std::endl;
       for (int m = 0; m < nspec; ++m) {

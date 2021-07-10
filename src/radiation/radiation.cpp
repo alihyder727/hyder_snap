@@ -135,6 +135,7 @@ void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
   }
 
   while (p != NULL) {
+    // iu ~= ie + 1
     p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
     p->RadtranFlux(*rin_, dist_, k, j, il, iu);
     p = p->next;
@@ -155,6 +156,7 @@ void Radiation::CalculateRadiances(AthenaArray<Real> const& w, Real time,
   }
 
   while (p != NULL) {
+    // iu ~= ie + 1
     p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
     p->RadtranRadiance(*rin_, rout_, nrout_, dist_, k, j, il, iu);
     p = p->next;
