@@ -17,7 +17,6 @@
 #   -eos_table        enable EOS table
 #   --h2o=xxx         h2o vapor id
 #   --nh3=xxx         nh3 vapor id
-#   --use_cp=xxx      set temperature dependent heat capacity
 #   -b                enable magnetic fields
 #   -s                enable special relativity
 #   -g                enable general relativity
@@ -137,11 +136,6 @@ parser.add_argument('--nghost',
 parser.add_argument('--nscalars',
                     default='0',
                     help='set number of passive scalars')
-
-# --use_cp=[value] argument
-parser.add_argument('--use_cp',
-                    default='none',
-                    help='temperature variation heat capacity')
 
 # -b argument
 parser.add_argument('-b',
@@ -506,20 +500,6 @@ definitions['NUMBER_GHOST_CELLS'] = args['nghost']
 
 # --nscalars=[value] argument
 definitions['NUMBER_PASSIVE_SCALARS'] = args['nscalars']
-
-# --use_cp=[name] argument
-if args['use_cp'] != 'none':
-  # Look for cp file
-  path = 'src/thermodynamics/'
-  fname = args['use_cp'] + '.cpp'
-  lname = '%s%s' % (path, fname)
-  if os.path.islink(lname):
-    os.remove(lname)
-  for root, _, files in os.walk(path):
-    if fname in files:
-      dirs = os.path.join('.',*root.split('/')[2:])
-      os.system('ln -s %s %s' % (os.path.join(dirs, fname), lname))
-      break
 
 # -b argument
 # set variety of macros based on whether MHD/hydro or adi/iso are defined
@@ -975,7 +955,6 @@ print('  X1 Grid ratio:              ' + args['x1rat'])
 print('  Equation of state:          ' + args['eos'])
 print('  Ammonia vapor id:           ' + args['nh3'])
 print('  Water vapor id:             ' + args['h2o'])
-print('  Heat capacity:              ' + args['use_cp'])
 print('  Riemann solver:             ' + args['flux'])
 print('  Forcing Jacobian:           ' + args['jacobian'])
 print('  Magnetic fields:            ' + ('ON' if args['b'] else 'OFF'))

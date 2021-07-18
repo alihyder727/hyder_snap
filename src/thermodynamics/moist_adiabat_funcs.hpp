@@ -73,7 +73,7 @@ inline void molar_to_mass(Real w[], Real const q[], Real const eps[], Real Rd) {
 Real dlnTdlnP(Real const q[], int const isat[], 
   Real const rcp[], Real const beta[], Real const delta[], Real const t3[], Real gamma);
 
-void update_gamma(Real& gamma, Real const prim[]);
+void update_gamma(Real& gamma, Real const q[]);
 
 /*! Calculate the equilibrium between vapor and cloud
  *

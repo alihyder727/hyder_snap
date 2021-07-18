@@ -16,6 +16,7 @@
 #include "../globals.hpp"
 #include "../utils/utils.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
+#include "../thermodynamics/molecules.hpp"
 #include "../radiation/radiation.hpp"
 #include "../radiation/microwave/mwr_absorbers.hpp"
 //#include "../inversion/inversion.hpp"
@@ -27,7 +28,7 @@
 enum {iH2O = 1, iNH3 = 2};
 
 // molecules
-Real grav, P0, T0, Tmin;
+Real grav, P0, T0, Tmin, xHe, xCH4;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -79,8 +80,8 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
 {
   std::stringstream msg;
 
-  Real xHe = pin->GetReal("problem", "xHe");
-  Real xCH4 = pin->GetReal("problem", "xCH4");
+  xHe = pin->GetReal("problem", "xHe");
+  xCH4 = pin->GetReal("problem", "xCH4");
 
   if (name == "mw_CIA") {
     pabs->AddAbsorber(MwrAbsorberCIA(this, xHe, xCH4));
@@ -96,6 +97,19 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
         << std::endl << "unknow absorber: '" << name <<"' ";
     ATHENA_ERROR(msg);
   }
+}
+
+void update_gamma(Real& gamma, Real const q[]) {
+	Real T = q[IDN], cp_h2, cp_he, cp_ch4;
+	if (T < 300.)
+    cp_h2 = Hydrogen::cp_norm(T);
+	else
+    cp_h2 = Hydrogen::cp_nist(T);
+  cp_he = Helium::cp_nist(T);
+  cp_ch4 = Methane::cp_nist(T);
+
+	Real cp_real = (1. - xHe - xCH4)*cp_h2 + xHe*cp_he + xCH4*cp_ch4;
+  gamma = cp_real/(cp_real - Thermodynamics::Rgas);
 }
 
 //void Inversion::Finish()
