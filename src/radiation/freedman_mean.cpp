@@ -9,10 +9,10 @@
 // Athena++ headers
 #include "../athena_arrays.hpp"
 #include "../globals.hpp"
-#include "absorber.hpp"
-#include "radiation.hpp"
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
+#include "absorber.hpp"
+#include "radiation.hpp"
 #include "freedman_mean.hpp"
 
 // coefficient from Richard S. Freedman 2014. APJS
@@ -20,15 +20,12 @@
 Real c1 = 10.602, c2 = 2.882, c3 = 6.09e-15, c4 = 2.954, c5 = -2.526, c6 = 0.843, c7 = -5.490;
 Real c8, c9, c10, c11, c12;
 
-Real FreedmanMean::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real FreedmanMean::AbsorptionCoefficient(Real wave, Real const chem[]) const
 { 
-  static const Real Rgas = 8.314462;
-  const Absorber *pabs = this;
-  Thermodynamics * pthermo = pabs->pmy_band->pmy_rad->pmy_block->pthermo;
-  Real mu = Rgas/pthermo->GetRd();
+  Thermodynamics *pthermo = pmy_band->pmy_rad->pmy_block->pthermo;
 
-  Real p = prim[IPR];
-  Real T = prim[IDN];
+  Real p = chem[IPR];
+  Real T = chem[IDN];
   if (T < 800.){
     c8  = -14.051;
     c9  = 3.055;
@@ -51,7 +48,7 @@ Real FreedmanMean::AbsorptionCoefficient(Real wave, Real const prim[]) const
     
   Real result = pow(10.0,klowp) + pow(10.0,khigp); // cm^2/g
   
-  Real dens   = p*mu/(Rgas * T); // kg/m^3
+  Real dens   = p/(pthermo->GetRd()*T); // kg/m^3
   
   if (p > 5e1)
     return 0.1*dens*result;     // -> 1/m

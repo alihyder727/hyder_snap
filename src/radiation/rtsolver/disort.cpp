@@ -122,10 +122,16 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
   pmy_rad->pmy_block->pcoord->Face1Area(k, j, il, iu, farea);
    
   if (ds->flag.planck) {
-    ds->temper[iu-il] = interp_weno5(tem_[il+1], tem_[il], tem_[il-1], tem_[il-2], tem_[il-3]);
+    /*ds->temper[iu-il] = interp_weno5(tem_[il+1], tem_[il], tem_[il-1], tem_[il-2], tem_[il-3]);
     for (int i = il+1; i < iu; ++i)
       ds->temper[iu-i] = interp_cp6(tem_[i+2], tem_[i+1], tem_[i], tem_[i-1], tem_[i-2], tem_[i-3]);
-    ds->temper[0] = interp_weno5(tem_[iu-2], tem_[iu-1], tem_[iu], tem_[iu+1], tem_[iu+2]);
+    ds->temper[0] = interp_weno5(tem_[iu-2], tem_[iu-1], tem_[iu], tem_[iu+1],
+    tem_[iu+2]);*/
+    ds->temper[iu-il] = interp_weno5(tem_[il-2], tem_[il-1], tem_[il], tem_[il+1], tem_[il+2]);
+    for (int i = il+1; i < iu; ++i)
+      ds->temper[iu-i] = interp_cp4(tem_[i-2], tem_[i-1], tem_[i], tem_[i+1]);
+    ds->temper[0] = interp_weno5(tem_[iu+1], tem_[iu], tem_[iu-1], tem_[iu-2],
+    tem_[iu-3]);
   }
 
   ds->bc.umu0 = rin.mu > 1.E-3 ? rin.mu : 1.E-3;

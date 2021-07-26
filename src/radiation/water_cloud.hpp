@@ -7,6 +7,15 @@
 // Athena++ header
 #include "absorber.hpp"
 
+class SimpleCloud: public Absorber {
+public:
+  SimpleCloud(RadiationBand *pband, int id, Real mixr = 1.):
+    Absorber(pband, "H2O_l", id, mixr) {}
+  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real SingleScateringAlbedo(Real wave, Real const prim[]) const;
+  void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const;
+};
+
 class FuWaterLiquidCloud: public Absorber {
 public:
   FuWaterLiquidCloud(RadiationBand *pband, int id):

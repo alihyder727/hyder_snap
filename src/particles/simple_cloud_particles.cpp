@@ -88,7 +88,8 @@ void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
       std::cout << k << " " << pcoord->x3v(k) << " " << pcoord->x3v(k+1);
       ATHENA_ERROR(msg);
     }
-
+  
+    // \todo TODO: hard coded sedimentation
     if (q->type == 1) q->v1 += -10.;
 
     // add gravititional acceleration

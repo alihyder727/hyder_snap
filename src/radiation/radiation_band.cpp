@@ -11,6 +11,7 @@
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../particles/particles.hpp"
 #include "../utils/utils.hpp" // Vectorize, ReadTabular, ReplaceChar
 
 RadiationBand::RadiationBand(Radiation *prad):
@@ -192,15 +193,40 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
   Absorber *a = pabs;
   Thermodynamics *pthermo = pmy_rad->pmy_block->pthermo;
   Coordinates *pcoord = pmy_rad->pmy_block->pcoord;
-  Real q[NHYDRO];
   Real *mypmom = new Real[1+npmom];
+
+  int num_clouds = 0.;
+  Particles *ppart = pmb->ppart;
+  while (ppart != nullptr) {
+    num_clouds += ppart->u.GetDim4();
+    ppart = ppart->next;
+  }
+  Real *q = new Real [NHYDRO + num_clouds];
 
   while (a != NULL) {
     for (int i = il; i <= iu; ++i) {
       pthermo->PrimitiveToChemical(q, w.at(k,j,i));
       // molar concentration to molar mixing ratio
+      // \todo TODO: do we need it?
       Real nmols = q[IPR]/(Thermodynamics::Rgas*q[IDN]);
       for (int n = 1; n <= NVAPOR; ++n) q[n] /= nmols;
+
+      // molar density of clouds
+      ppart = pmb->ppart;
+      int ip  = 0;
+      while (ppart != nullptr) {
+        for (int n = 0; n < ppart->u.GetDim4(); ++n) {
+          q[NHYDRO + ip] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
+          if (std::isnan(q[NHYDRO+ip])) {
+            std::cout << ppart->myname << std::endl;
+            std::cout << n << " " << k <<" " << j << " " << i << " " << ppart->u(n,k,j,i) << std::endl;
+          }
+          assert(!std::isnan(q[NHYDRO+ip]));
+          ip++;
+        }
+        ppart = ppart->next;
+      }
+
       tem_[i] = q[IDN];
       //std::cout << i << " " << tem_[i] << std::endl;
       for (int m = 0; m < nspec; ++m) {
@@ -220,6 +246,7 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
   }
 
   delete [] mypmom; 
+  delete [] q;
 
   // absorption coefficiunts -> optical thickness
   for (int i = il; i <= iu; ++i) {

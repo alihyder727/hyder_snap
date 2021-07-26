@@ -59,6 +59,8 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
 TaskStatus TimeIntegratorTaskList::CalculateRadiationFlux(MeshBlock *pmb, int stage) {
   // only do radiation at last rk step
   if (stage != nstages) return TaskStatus::next;
+  //if (Globals::my_rank == 0)
+  //  std::cout << "I'm calculating radiation flux" << std::endl;
 
   Radiation *prad = pmb->prad;
   Hydro *phydro=pmb->phydro;
