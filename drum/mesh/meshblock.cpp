@@ -387,7 +387,8 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   os += pphy->LoadRestartData(&(mbdata[os]));
 
   // load particle data
-  os += ppart->LoadRestartData(&(mbdata[os]));
+  if (ppart != nullptr)
+    os += ppart->LoadRestartData(&(mbdata[os]));
 
   return;
 }
@@ -551,7 +552,8 @@ std::size_t MeshBlock::GetBlockSizeInBytes() {
   size += pphy->RestartDataSizeInBytes();
 
   // particle data
-  size += ppart->RestartDataSizeInBytes();
+  if (ppart != nullptr)
+    size += ppart->RestartDataSizeInBytes();
 
   return size;
 }
