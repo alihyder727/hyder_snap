@@ -52,10 +52,14 @@ void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
       if (pmb->pbval->block_bcs[inner_x2] == BoundaryFlag::reflect && qi->x2 < x2min) {
         qi->x2 = 2*x2min - qi->x2;
         qi->v2 = - qi->v2;
+      } else if (pmb->pbval->block_bcs[inner_x2] == BoundaryFlag::polar && qi->x2 < 0.) {
+        // \todo TODO: fix pole problem
       }
       if (pmb->pbval->block_bcs[outer_x2] == BoundaryFlag::reflect && qi->x2 > x2max) {
         qi->x2 = 2*x2max - qi->x2;
         qi->v2 = - qi->v2;
+      } else if (pmb->pbval->block_bcs[outer_x2] == BoundaryFlag::polar && qi->x2 > 2.*M_PI) {
+        // \todo TODO: fix pole problem
       }
       ox2 = qi->x2 < x2min ? -1 : (qi->x2 > x2max ? 1 : 0);
     }

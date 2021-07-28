@@ -140,10 +140,18 @@ void Particles::Initialize()
 
 void Particles::TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt)
 {
-  for (std::vector<MaterialPoint>::iterator it = mp.begin(); it != mp.end(); ++it) {
-    it->x1 += it->v1*dt;
-    it->x2 += it->v2*dt;
-    it->x3 += it->v3*dt;
+  if (std::strcmp(COORDINATE_SYSTEM, "cartesian") == 0) {
+    for (std::vector<MaterialPoint>::iterator it = mp.begin(); it != mp.end(); ++it) {
+      it->x1 += it->v1*dt;
+      it->x2 += it->v2*dt;
+      it->x3 += it->v3*dt;
+    }
+  } else if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
+    for (std::vector<MaterialPoint>::iterator it = mp.begin(); it != mp.end(); ++it) {
+      it->x1 += it->v1*dt;
+      it->x2 += it->v2*dt/it->x1;
+      it->x3 += it->v3*dt/(it->x1*sin(it->x2));
+    }
   }
 }
 
