@@ -35,7 +35,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
-        user_out_var(0,k,j,i) = pthermo->Temp(phydro->w.at(k,j,i));
+        user_out_var(0,k,j,i) = pthermo->GetTemp(phydro->w.at(k,j,i));
         user_out_var(1,k,j,i) = pthermo->Theta(phydro->w.at(k,j,i), P0);
       }
 }
@@ -121,7 +121,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     // 1.2 replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
     int ii = 0;
     for (; ii < nx1-1; ++ii)
-      if (pthermo->Temp(w1[ii]) < Tmin) break;
+      if (pthermo->GetTemp(w1[ii]) < Tmin) break;
     Real Tv = w1[ii][IPR]/(w1[ii][IDN]*Rd);
     for (int i = ii; i < nx1; ++i) {
       w1[i][IPR] = w1[ii][IPR]*exp(-grav*(z1[i] - z1[ii])/(Rd*Tv));
@@ -133,7 +133,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     // 1.3 find TP at z = Z0
     for (int i = 0; i < nx1; ++i) {
       p1[i] = w1[i][IPR];
-      t1[i] = pthermo->Temp(w1[i]);
+      t1[i] = pthermo->GetTemp(w1[i]);
     }
     p0 = interp1(Z0, p1, z1, nx1);
     t0 = interp1(Z0, t1, z1, nx1);
@@ -177,7 +177,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         for (int n = 0; n < NHYDRO; ++n)
           w1[0][n] = phydro->w(n,k,j,is);
         Real P1 = w1[0][IPR];
-        Real T1 = pthermo->Temp(w1[0]);
+        Real T1 = pthermo->GetTemp(w1[0]);
         Real dz = pcoord->dx1f(is);
         // adiabatic extrapolate half a grid down
         pthermo->ConstructAdiabat(w1, T1, P1, grav, -dz/2., 2, Adiabat::reversible);

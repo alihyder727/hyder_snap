@@ -27,7 +27,7 @@
 #include "../math/core.h"
 
 // global parameters
-Real grav, P0, T0, Tmin, radius, omega;
+Real grav, P0, T0, Z0, Tmin, radius, omega;
 bool use_polar_beta;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
@@ -86,6 +86,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   grav = - pin->GetReal("hydro", "grav_acc1");
   P0 = pin->GetReal("problem", "P0");
   T0 = pin->GetReal("problem", "T0");
+  Z0 = pin->GetOrAddReal("problem", "Z0", 0.);
   use_polar_beta = pin->GetOrAddBoolean("problem", "use_polar_beta", false);
   if (use_polar_beta) {
     radius = pin->GetReal("problem", "radius");
@@ -122,7 +123,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   // 1.1 estimate surface temperature and pressure
   Real Rd = pthermo->GetRd();
   Real cp = gamma/(gamma - 1.)*Rd;
-  Real Ts = T0 - grav/cp*x1min;
+  Real Ts = T0 - grav/cp*(x1min - Z0);
   Real Ps = P0*pow(Ts/T0, cp/Rd);
   int max_iter = 200, iter = 0;
 
@@ -150,13 +151,13 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         w1[i][n] = w1[ii][n];
     }
 
-    // 1.3 find TP at z = 0
+    // 1.3 find TP at z =  Z0
     for (int i = 0; i < nx1; ++i) {
       p1[i] = w1[i][IPR];
       t1[i] = pthermo->GetTemp(w1[i]);
     }
-    p0 = interp1(0., p1, z1, nx1);
-    t0 = interp1(0., t1, z1, nx1);
+    p0 = interp1(Z0, p1, z1, nx1);
+    t0 = interp1(Z0, t1, z1, nx1);
 
     Ts += T0 - t0;
     Ps *= P0/p0;
@@ -184,7 +185,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         for (int j = js; j <= je; ++j)
           phydro->w(n,k,j,i) = buf[n];
 
-    // set cloud concentration
+    /* set cloud concentration
     Particles *pp = ppart;
     for (int n = 0; n < NVAPOR; ++n) {
       if (pp == nullptr) {
@@ -197,7 +198,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         for (int j = js; j <= je; ++j)
           pp->u(0,k,j,i) = buf[NHYDRO+n] + buf[NHYDRO+NVAPOR+n];
       pp = pp->next;
-    }
+    }*/
 
     // add noise
     for (int k = ks; k <= ke; ++k)
@@ -205,7 +206,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
       phydro->w(IV1,k,j,i) = 0.01*(1.*rand()/RAND_MAX - 0.5);
   }
 
-  ppart->Initialize();
+  //if (ppart != nullptr)
+  //ppart->Initialize();
   pphy->Initialize(phydro->w);
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
 

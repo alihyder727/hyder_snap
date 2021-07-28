@@ -217,11 +217,6 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
       while (ppart != nullptr) {
         for (int n = 0; n < ppart->u.GetDim4(); ++n) {
           q[NHYDRO + ip] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
-          if (std::isnan(q[NHYDRO+ip])) {
-            std::cout << ppart->myname << std::endl;
-            std::cout << n << " " << k <<" " << j << " " << i << " " << ppart->u(n,k,j,i) << std::endl;
-          }
-          assert(!std::isnan(q[NHYDRO+ip]));
           ip++;
         }
         ppart = ppart->next;

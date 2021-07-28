@@ -205,6 +205,11 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
       for (int k = ks; k <= ke; ++k)
         for (int j = js; j <= je; ++j)
           phydro->w(n,k,j,i) = buf[n];
+
+    // add noise
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+      phydro->w(IV1,k,j,i) = 0.01*(1.*rand()/RAND_MAX - 0.5);
   }
 
   pphy->Initialize(phydro->w);
