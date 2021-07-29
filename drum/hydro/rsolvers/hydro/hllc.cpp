@@ -23,6 +23,7 @@
 // Athena++ headers
 #include "../../../athena.hpp"
 #include "../../../athena_arrays.hpp"
+#include "../../../thermodynamics/thermodynamics.hpp"
 #include "../../../eos/eos.hpp"
 #include "../../hydro.hpp"
 
@@ -34,6 +35,7 @@ void Hydro::RiemannSolver(const int k, const int j, const int il, const int iu,
                           const int ivx, AthenaArray<Real> &wl,
                           AthenaArray<Real> &wr, AthenaArray<Real> &flx,
                           const AthenaArray<Real> &dxw) {
+  Thermodynamics *pthermo = pmy_block->pthermo;
   int ivy = IVX + ((ivx-IVX)+1)%3;
   int ivz = IVX + ((ivx-IVX)+2)%3;
   Real wli[(NHYDRO)],wri[(NHYDRO)];
@@ -63,6 +65,23 @@ void Hydro::RiemannSolver(const int k, const int j, const int il, const int iu,
     wri[IVZ]=wr(ivz,i);
     wri[IPR]=wr(IPR,i);
 
+    // correction for gamma
+    // left
+    Real fsig = 1., feps = 1.;
+    for (int n = 1; n <= NVAPOR; ++n) {
+      fsig += wli[n]*(pthermo->GetCvRatio(n) - 1.);
+      feps += wli[n]*(1./pthermo->GetMassRatio(n) - 1.);
+    }
+    Real kappal = 1./(gamma - 1.)*fsig/feps;
+
+    // right
+    fsig = 1., feps = 1.;
+    for (int n = 1; n <= NVAPOR; ++n) {
+      fsig += wri[n]*(pthermo->GetCvRatio(n) - 1.);
+      feps += wri[n]*(1./pthermo->GetMassRatio(n) - 1.);
+    }
+    Real kappar = 1./(gamma - 1.)*fsig/feps;
+
     //--- Step 2.  Compute middle state estimates with PVRS (Toro 10.5.2)
 
     Real al, ar, el, er;
@@ -74,8 +93,8 @@ void Hydro::RiemannSolver(const int k, const int j, const int il, const int iu,
       er = pmy_block->peos->EgasFromRhoP(wri[IDN], wri[IPR]) +
            0.5*wri[IDN]*(SQR(wri[IVX]) + SQR(wri[IVY]) + SQR(wri[IVZ]));
     } else {
-      el = wli[IPR]*igm1 + 0.5*wli[IDN]*(SQR(wli[IVX]) + SQR(wli[IVY]) + SQR(wli[IVZ]));
-      er = wri[IPR]*igm1 + 0.5*wri[IDN]*(SQR(wri[IVX]) + SQR(wri[IVY]) + SQR(wri[IVZ]));
+      el = wli[IPR]*kappal + 0.5*wli[IDN]*(SQR(wli[IVX]) + SQR(wli[IVY]) + SQR(wli[IVZ]));
+      er = wri[IPR]*kappar + 0.5*wri[IDN]*(SQR(wri[IVX]) + SQR(wri[IVY]) + SQR(wri[IVZ]));
     }
     Real rhoa = .5 * (wli[IDN] + wri[IDN]); // average density
     Real ca = .5 * (cl + cr); // average sound speed
