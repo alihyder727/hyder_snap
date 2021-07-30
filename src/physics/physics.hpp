@@ -31,25 +31,25 @@ public:
   size_t DumpRestartData(char *pdst);
   size_t LoadRestartData(char *psrc);
 
-  void ApplyPhysicsPackages(AthenaArray<Real> &u,
+  void ApplyPhysicsPackages(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
 
 // package functions 
-  TaskStatus RelaxBotTemperature(AthenaArray<Real> &u,
+  TaskStatus RelaxBotTemperature(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
-  TaskStatus RelaxBotVelocity(AthenaArray<Real> &u,
+  TaskStatus RelaxBotVelocity(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
-  TaskStatus RelaxBotComposition(AthenaArray<Real> &u,
-    AthenaArray<Real> const& w, Real time, Real dt);
-
-  TaskStatus TopSpongeLayer(AthenaArray<Real> &u,
-    AthenaArray<Real> const& w, Real time, Real dt);
-  TaskStatus BotSpongeLayer(AthenaArray<Real> &u,
+  TaskStatus RelaxBotComposition(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
 
-  TaskStatus TopCooling(AthenaArray<Real> &u,
+  TaskStatus TopSpongeLayer(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
-  TaskStatus BotHeating(AthenaArray<Real> &u,
+  TaskStatus BotSpongeLayer(AthenaArray<Real> &du,
+    AthenaArray<Real> const& w, Real time, Real dt);
+
+  TaskStatus TopCooling(AthenaArray<Real> &du,
+    AthenaArray<Real> const& w, Real time, Real dt);
+  TaskStatus BotHeating(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
 
 protected:

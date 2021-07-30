@@ -65,6 +65,11 @@ void Hydro::RiemannSolver(const int k, const int j, const int il, const int iu,
     wri[IVZ]=wr(ivz,i);
     wri[IPR]=wr(IPR,i);
 
+    for (int n = 1; n <= NVAPOR; ++n) {
+      wli[n] = wl(n,i);
+      wri[n] = wr(n,i);
+    }
+
     // correction for gamma
     // left
     Real fsig = 1., feps = 1.;
@@ -73,6 +78,7 @@ void Hydro::RiemannSolver(const int k, const int j, const int il, const int iu,
       feps += wli[n]*(1./pthermo->GetMassRatio(n) - 1.);
     }
     Real kappal = 1./(gamma - 1.)*fsig/feps;
+    Real gammal = 1./kappal + 1.;
 
     // right
     fsig = 1., feps = 1.;
@@ -81,6 +87,7 @@ void Hydro::RiemannSolver(const int k, const int j, const int il, const int iu,
       feps += wri[n]*(1./pthermo->GetMassRatio(n) - 1.);
     }
     Real kappar = 1./(gamma - 1.)*fsig/feps;
+    Real gammar = 1./kappar + 1.;
 
     //--- Step 2.  Compute middle state estimates with PVRS (Toro 10.5.2)
 
@@ -115,9 +122,9 @@ void Hydro::RiemannSolver(const int k, const int j, const int il, const int iu,
            std::sqrt(1.0 + (gr + 1) / (2 * gr) * (pmid / wri[IPR]-1.0));
     } else {
       ql = (pmid <= wli[IPR]) ? 1.0 :
-           std::sqrt(1.0 + (gamma + 1) / (2 * gamma) * (pmid / wli[IPR]-1.0));
+           std::sqrt(1.0 + (gammal + 1) / (2 * gammal) * (pmid / wli[IPR]-1.0));
       qr = (pmid <= wri[IPR]) ? 1.0 :
-           std::sqrt(1.0 + (gamma + 1) / (2 * gamma) * (pmid / wri[IPR]-1.0));
+           std::sqrt(1.0 + (gammar + 1) / (2 * gammar) * (pmid / wri[IPR]-1.0));
     }
 
     //--- Step 4.  Compute the max/min wave speeds based on L/R

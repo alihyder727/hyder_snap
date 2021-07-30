@@ -5,7 +5,7 @@
 #include "physics.hpp"
 #include "../globals.hpp"
 
-TaskStatus Physics::TopSpongeLayer(AthenaArray<Real> &u,
+TaskStatus Physics::TopSpongeLayer(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
   //if (Globals::my_rank == 0)
@@ -26,16 +26,16 @@ TaskStatus Physics::TopSpongeLayer(AthenaArray<Real> &u,
         Real eta = (pcoord->x1v(i) - x1min)/(x1max - x1min);
         Real eta_sp = 1. - width_top_/(x1max - x1min);
         Real scale = eta > eta_sp ? sqr(sin(M_PI/2.*(eta - eta_sp)/(1. - eta_sp))) : 0.;
-        u(IVX,k,j,i) -= w(IDN,k,j,i)*w(IVX,k,j,i)/tau_top_*scale*dt;
-        u(IVY,k,j,i) -= w(IDN,k,j,i)*w(IVY,k,j,i)/tau_top_*scale*dt;
-        u(IVZ,k,j,i) -= w(IDN,k,j,i)*w(IVZ,k,j,i)/tau_top_*scale*dt;
+        du(IVX,k,j,i) -= w(IDN,k,j,i)*w(IVX,k,j,i)/tau_top_*scale*dt;
+        du(IVY,k,j,i) -= w(IDN,k,j,i)*w(IVY,k,j,i)/tau_top_*scale*dt;
+        du(IVZ,k,j,i) -= w(IDN,k,j,i)*w(IVZ,k,j,i)/tau_top_*scale*dt;
       }
     }
 
   return TaskStatus::success;
 }
 
-TaskStatus Physics::BotSpongeLayer(AthenaArray<Real> &u,
+TaskStatus Physics::BotSpongeLayer(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
   //if (Globals::my_rank == 0)
@@ -57,9 +57,9 @@ TaskStatus Physics::BotSpongeLayer(AthenaArray<Real> &u,
         Real eta_sp = width_bot_/(x1max - x1min);
         if (eta > eta_sp) break;
         Real scale = sqr(sin(M_PI/2.*(eta_sp - eta)/eta_sp));
-        u(IVX,k,j,i) -= w(IDN,k,j,i)*w(IVX,k,j,i)/tau_bot_*scale*dt;
-        u(IVY,k,j,i) -= w(IDN,k,j,i)*w(IVY,k,j,i)/tau_bot_*scale*dt;
-        u(IVZ,k,j,i) -= w(IDN,k,j,i)*w(IVZ,k,j,i)/tau_bot_*scale*dt;
+        du(IVX,k,j,i) -= w(IDN,k,j,i)*w(IVX,k,j,i)/tau_bot_*scale*dt;
+        du(IVY,k,j,i) -= w(IDN,k,j,i)*w(IVY,k,j,i)/tau_bot_*scale*dt;
+        du(IVZ,k,j,i) -= w(IDN,k,j,i)*w(IVZ,k,j,i)/tau_bot_*scale*dt;
       }
     }
 

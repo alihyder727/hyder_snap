@@ -4,7 +4,7 @@
 #include "../coordinates/coordinates.hpp"
 #include "physics.hpp"
 
-TaskStatus Physics::TopCooling(AthenaArray<Real> &u,
+TaskStatus Physics::TopCooling(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
   MeshBlock *pmb = pmy_block;
@@ -15,13 +15,13 @@ TaskStatus Physics::TopCooling(AthenaArray<Real> &u,
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j) {
       Real cv = pthermo->GetMeanCv(w.at(k,j,ie));
-      u(IEN,k,j,ie) -= dt*dTdt_*w(IDN,k,j,ie)*cv;
+      du(IEN,k,j,ie) -= dt*dTdt_*w(IDN,k,j,ie)*cv;
     }
 
   return TaskStatus::success;
 }
 
-TaskStatus Physics::BotHeating(AthenaArray<Real> &u,
+TaskStatus Physics::BotHeating(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
   MeshBlock *pmb = pmy_block;
@@ -31,7 +31,7 @@ TaskStatus Physics::BotHeating(AthenaArray<Real> &u,
 
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j) {
-      u(IEN,k,j,is) += dt*hflux_*pcoord->GetFace1Area(k,j,is)
+      du(IEN,k,j,is) += dt*hflux_*pcoord->GetFace1Area(k,j,is)
 				/pcoord->GetCellVolume(k,j,is);
     }
 
