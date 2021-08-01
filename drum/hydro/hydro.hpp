@@ -23,6 +23,7 @@ class MeshBlock;
 class ParameterInput;
 class Decomposition;
 class ImplicitSolver;
+class RingFilter;
 
 // TODO(felker): consider adding a struct FaceFlux w/ overloaded ctor in athena.hpp, or:
 // using FaceFlux = AthenaArray<Real>[3];
@@ -67,6 +68,7 @@ class Hydro {
   HydroDiffusion hdif;
   Decomposition *pdec;
   ImplicitSolver *pimp;
+  RingFilter *rfilter;
 
   // functions
   void NewBlockTimeStep();    // computes new timestep on a MeshBlock
