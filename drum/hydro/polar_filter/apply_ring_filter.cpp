@@ -60,10 +60,8 @@ void RingFilter::ApplyRingFilter(AthenaArray<Real> &u, bool north_pole) {
           int r4 = (r+1) % nchunk;
           int r5 = (r+2) % nchunk;
           //std::cout << r1 << " " << r2 << " " << r3 << " " << r4 << " " << r5 << std::endl;
-          Real ul = interp_weno5(hydro_mean(n,r1*len,j,i), hydro_mean(n,r2*len,j,i),
-            hydro_mean(n,r3*len,j,i), hydro_mean(n,r4*len,j,i), hydro_mean(n,r5*len,j,i));
-          Real ur = interp_weno5(hydro_mean(n,r5*len,j,i), hydro_mean(n,r4*len,j,i),
-            hydro_mean(n,r3*len,j,i), hydro_mean(n,r2*len,j,i), hydro_mean(n,r1*len,j,i));
+          Real ul = interp_weno3(hydro_mean(n,r2*len,j,i), hydro_mean(n,r3*len,j,i), hydro_mean(n,r4*len,j,i));
+          Real ur = interp_weno3(hydro_mean(n,r4*len,j,i), hydro_mean(n,r3*len,j,i), hydro_mean(n,r2*len,j,i));
           Real um = hydro_mean(n,r3*len,j,i);
           //std::cout << ul << " " << ur << " " << um << std::endl;
 

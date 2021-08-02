@@ -20,7 +20,7 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   Real dt = pmb->pmy_mesh->dt;
 
   // polar filter
-  ph->pfilter->ApplyPolarFilter(ph->du);
+  //ph->pfilter->ApplyPolarFilter(ph->du);
 
   // do implicit coorection at every stage
   // X3DIR
@@ -57,7 +57,7 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   pmb->WeightedAve(ph->u, ph->du, ph->u2, wghts);
 
   // polar filter
-  //ph->pfilter->ApplyPolarFilter(ph->u);
+  ph->pfilter->ApplyPolarFilter(ph->u);
 
   return TaskStatus::success;
 }
