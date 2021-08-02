@@ -3,6 +3,7 @@
 
 // Athena++ headers
 #include "../hydro/implicit/implicit_solver.hpp"
+#include "../hydro/polar_filter/ring_filter.hpp"
 #include "../hydro/hydro.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../chemistry/chemistry.hpp"
@@ -17,6 +18,9 @@
 enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   Hydro *ph = pmb->phydro;
   Real dt = pmb->pmy_mesh->dt;
+
+  // polar filter
+  ph->pfilter->ApplyPolarFilter(ph->du);
 
   // do implicit coorection at every stage
   // X3DIR
@@ -51,6 +55,9 @@ enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   wghts[1] = 1.;
   wghts[2] = 0.;
   pmb->WeightedAve(ph->u, ph->du, ph->u2, wghts);
+
+  // polar filter
+  //ph->pfilter->ApplyPolarFilter(ph->u);
 
   return TaskStatus::success;
 }

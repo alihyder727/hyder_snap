@@ -29,6 +29,7 @@
 #include "srcterms/hydro_srcterms.hpp"
 #include "implicit/implicit_solver.hpp"
 #include "decomposition/decomposition.hpp"
+#include "polar_filter/ring_filter.hpp"
 
 // constructor, initializes data structures and parameters
 
@@ -168,6 +169,7 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   }
 
   pimp = new ImplicitSolver(this, n3max, n2max);
+  pfilter = new RingFilter(this);
 }
 
 //----------------------------------------------------------------------------------------
@@ -183,6 +185,7 @@ Real Hydro::GetWeightForCT(Real dflx, Real rhol, Real rhor, Real dx, Real dt) {
 Hydro::~Hydro() {
   delete pdec;
   delete pimp;
+  delete pfilter;
 }
 
 void Hydro::CheckHydro() {

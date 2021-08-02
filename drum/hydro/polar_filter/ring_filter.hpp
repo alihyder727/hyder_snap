@@ -19,14 +19,14 @@ public:
   AthenaArray<Real> hydro_mean;
   int nlevel;
   int my_rank;
-  bool has_north_pole, has_south_pole;
 
 // functions
   RingFilter(Hydro *phydro);
   ~RingFilter();
   void FindNeighbors();
-  void PopulateConserved(AthenaArray<Real> const& u);
-  void ApplyRingFilter(AthenaArray<Real> &u);
+  void PopulateConserved(AthenaArray<Real> const& u, bool north_pole);
+  void ApplyRingFilter(AthenaArray<Real> &u, bool north_pole);
+  void ApplyPolarFilter(AthenaArray<Real> &u);
 
 private:
   int *lrank_, *color_;   // left block rank and color

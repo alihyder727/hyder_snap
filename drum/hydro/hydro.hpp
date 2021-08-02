@@ -68,7 +68,7 @@ class Hydro {
   HydroDiffusion hdif;
   Decomposition *pdec;
   ImplicitSolver *pimp;
-  RingFilter *rfilter;
+  RingFilter *pfilter;
 
   // functions
   void NewBlockTimeStep();    // computes new timestep on a MeshBlock

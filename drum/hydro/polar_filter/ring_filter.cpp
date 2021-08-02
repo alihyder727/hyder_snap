@@ -7,6 +7,7 @@
  */
 
 // C++ headers
+#include <iostream>
 #include <sstream>
 
 // Athena++ headers
@@ -15,7 +16,7 @@
 #include "ring_filter.hpp"
 
 RingFilter::RingFilter(Hydro *phydro):
-  pmy_hydro(phydro), has_north_pole(false), has_south_pole(false)
+  pmy_hydro(phydro), my_rank(0)
 {
   std::stringstream msg;
   MeshBlock *pmb = phydro->pmy_block;
@@ -36,17 +37,6 @@ RingFilter::RingFilter(Hydro *phydro):
   buffer_recv_ = new Real [NHYDRO*nc1*nlevel*nx3];
 
   hydro_mean.NewAthenaArray(NHYDRO,nx3,nlevel,nc1);
-  if (pmb->pbval->block_bcs[2] == BoundaryFlag::polar)
-    has_south_pole = true;
-  if (pmb->pbval->block_bcs[3] == BoundaryFlag::polar)
-    has_north_pole = true;
-
-  if (has_south_pole && has_north_pole) {
-    msg << "### FATAL ERROR in RingFilter::RingFilter" << std::endl
-        << "RingFilter does not support a MeshBlock that contains both north "
-        << "and south poles.";
-    ATHENA_ERROR(msg);
-  }
 }
 
 RingFilter::~RingFilter()
@@ -69,11 +59,17 @@ void RingFilter::FindNeighbors()
   MeshBlock *pmb = pmy_hydro->pmy_block;
   for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
     NeighborBlock& nb = pmb->pbval->neighbor[n];
-    if ((nb.ni.ox1 == -1) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == 0)) {
+    if ((nb.ni.ox1 == 0) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == -1)) {
       lblock = nb;
-    } if ((nb.ni.ox1 == 1) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == 0)) {
+    } if ((nb.ni.ox1 == 0) && (nb.ni.ox2 == 0) && (nb.ni.ox3 == 1)) {
       rblock = nb;
     }
+  }
+
+  // set first block
+  if (pmb->block_size.x3min == pmb->pmy_mesh->mesh_size.x3min) {
+    lblock.snb.gid = -1;
+    lblock.snb.rank = -1;
   }
 
 #ifdef MPI_PARALLEL
@@ -91,27 +87,25 @@ void RingFilter::FindNeighbors()
   }
 }
 
-void RingFilter::PopulateConserved(AthenaArray<Real> const& u) {
+void RingFilter::PopulateConserved(AthenaArray<Real> const& u, bool north_pole) {
+  // std::cout << "I'm in PopulateConserved" << std::endl;
   // pack data into 1D array
   MeshBlock *pmb = pmy_hydro->pmy_block;
   Mesh *pm = pmb->pmy_mesh;
   int nc1 = pmb->block_size.nx1, nc3 = pmb->block_size.nx3;
   int nx3 = pm->mesh_size.nx3;
   int ssize = NHYDRO*nc1*nlevel*nc3;
-  int rsize = NHYDRO*nc1*nlevel*nx3;
   int ks = pmb->ks, js = pmb->js, is = pmb->is;
   int ke = pmb->ke, je = pmb->je, ie = pmb->ie;
   int p = 0;
 
-  if (has_south_pole) {
+  if (north_pole) {
     for (int n = 0; n < NHYDRO; ++n)
       for (int k = ks; k <= ke; ++k)
         for (int j = js; j < js + nlevel; ++j) 
           for (int i = is; i <= ie; ++i)
             buffer_send_[p++] = u(n,k,j,i);
-  }
-
-  if (has_north_pole) {
+  } else {  // south pole
     for (int n = 0; n < NHYDRO; ++n)
       for (int k = ks; k <= ke; ++k)
         for (int j = je; j > je - nlevel; --j)
@@ -124,7 +118,7 @@ void RingFilter::PopulateConserved(AthenaArray<Real> const& u) {
   MPI_Comm comm_ring;
   MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm_ring);
   // assuming correct ordering
-  MPI_Allgather(buffer_send_, ssize, MPI_ATHENA_REAL, buffer_recv_, rsize, 
+  MPI_Allgather(buffer_send_, ssize, MPI_ATHENA_REAL, buffer_recv_, ssize, 
         MPI_ATHENA_REAL, comm_ring);
   MPI_Comm_rank(comm_ring, &my_rank);
   MPI_Comm_free(&comm_ring);
@@ -138,4 +132,26 @@ void RingFilter::PopulateConserved(AthenaArray<Real> const& u) {
         for (int j = 0; j < nlevel; ++j)
           for (int i = 0; i < nc1; ++i)
             hydro_mean(n,r*nc3 + k,j,i) = buffer_recv_[p++];
+
+  /*if (Globals::my_rank == 0)
+    for (int k = 0; k < nx3; ++k)
+      std::cout << hydro_mean(IV1,k,0,0) << std::endl;*/
+}
+
+void RingFilter::ApplyPolarFilter(AthenaArray<Real> &u)
+{
+  if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") != 0)
+    return;
+
+  MeshBlock *pmb = pmy_hydro->pmy_block;
+  FindNeighbors();
+  PopulateConserved(u, 1);
+  // south pole
+  if (pmb->block_size.x2min < 0.01)
+    ApplyRingFilter(u, 1);
+
+  // north pole
+  PopulateConserved(u, 0);
+  if (pmb->block_size.x2max > 3.13)
+    ApplyRingFilter(u, 0);
 }
