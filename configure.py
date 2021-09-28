@@ -117,7 +117,7 @@ parser.add_argument(
 # --eos=[name] argument
 parser.add_argument('--eos',
                     default='adiabatic',
-                    choices=['adiabatic', 'isothermal', 'general/eos_table',
+                    choices=['adiabatic', 'isothermal', 'shallow_water', 'general/eos_table',
                              'general/hydrogen', 'general/ideal'],
                     help='select equation of state')
 
@@ -405,6 +405,8 @@ if args['flux'] == 'default':
         args['flux'] = 'hlld'
     elif args['eos'] == 'isothermal':
         args['flux'] = 'hlle'
+    elif args['eos'] == 'shallow_water':
+        args['flux'] = 'roe'
     else:
         args['flux'] = 'hllc'
 
@@ -415,6 +417,11 @@ if args['flux'] == 'hllc' and args['b']:
     raise SystemExit('### CONFIGURE ERROR: HLLC flux cannot be used with MHD')
 if args['flux'] == 'hlld' and not args['b']:
     raise SystemExit('### CONFIGURE ERROR: HLLD flux can only be used with MHD')
+if args['eos'] == 'shallow_water':
+    if args['flux'] == 'roe':
+        args['flux'] += '_shallow_water'
+    else:
+        raise SystemExit('### CONFIGURE ERROR: Shallow water model can only be used with ROE flux')
 
 # Check relativity
 if args['s'] and args['g']:
@@ -459,6 +466,8 @@ definitions['COORDINATE_SYSTEM'] = makefile_options['COORDINATES_FILE'] = args['
 
 # --eos=[name] argument
 definitions['NON_BAROTROPIC_EOS'] = '0' if args['eos'] == 'isothermal' else '1'
+if args['eos'] == 'shallow_water':
+    definitions['NON_BAROTROPIC_EOS'] = '0'
 makefile_options['EOS_FILE'] = args['eos']
 definitions['EQUATION_OF_STATE'] = args['eos']
 # set number of hydro variables for adiabatic/isothermal
@@ -469,6 +478,8 @@ if args['eos'] == 'isothermal':
     definitions['NHYDRO_VARIABLES'] = '4'
 elif args['eos'] == 'adiabatic':
     definitions['NHYDRO_VARIABLES'] = '5'
+elif args['eos'] == 'shallow_water':
+    definitions['NHYDRO_VARIABLES'] = '4'
 else:
     definitions['GENERAL_EOS'] = '1'
     makefile_options['GENERAL_EOS_FILE'] = 'general'
