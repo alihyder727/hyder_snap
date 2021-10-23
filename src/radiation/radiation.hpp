@@ -3,6 +3,7 @@
 
 // C/C++ headers
 #include <string>
+#include <vector>
 
 // Athena++ headers
 #include "../athena.hpp"
@@ -86,6 +87,8 @@ public:
   ~Radiation();
   RadiationBand* GetBand(int n);
   int GetNumBands();
+  std::vector<Direction> GetOutgoingRays();
+  std::vector<Direction> GetIncomingRays();
   void CalculateFluxes(AthenaArray<Real> const& w, Real time,
     int k, int j, int il, int iu);
   void CalculateRadiances(AthenaArray<Real> const& w, Real time,

@@ -44,6 +44,7 @@
 #include "parameter_input.hpp"
 #include "utils/utils.hpp"
 #include "particles/material_point.hpp"
+#include "task_list/inversion_task_list.hpp"
 
 // MPI/OpenMP headers
 #ifdef MPI_PARALLEL
@@ -335,11 +336,13 @@ int main(int argc, char *argv[]) {
   //--- Step 5. --------------------------------------------------------------------------
   // Construct and initialize TaskList
 
-  TimeIntegratorTaskList *ptlist;
+  //TimeIntegratorTaskList *ptlist;
+  TaskList *ptlist;
 #ifdef ENABLE_EXCEPTIONS
   try {
 #endif
-    ptlist = new TimeIntegratorTaskList(pinput, pmesh);
+    ptlist = new MAIN_TASKLIST(pinput, pmesh);
+    //ptlist = new TimeIntegratorTaskList(pinput, pmesh);
 #ifdef ENABLE_EXCEPTIONS
   }
   catch(std::bad_alloc& ba) {
@@ -353,7 +356,8 @@ int main(int argc, char *argv[]) {
 #endif // ENABLE_EXCEPTIONS
 
   SuperTimeStepTaskList *pststlist = nullptr;
-  if (STS_ENABLED) {
+#if STS_ENABLED != 0
+  //if (STS_ENABLED) {
 #ifdef ENABLE_EXCEPTIONS
     try {
 #endif
@@ -369,7 +373,7 @@ int main(int argc, char *argv[]) {
       return(0);
     }
 #endif // ENABLE_EXCEPTIONS
-  }
+#endif
 
   //--- Step 6. --------------------------------------------------------------------------
   // Set initial conditions by calling problem generator, or reading restart file

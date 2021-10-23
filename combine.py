@@ -105,9 +105,13 @@ if __name__ == '__main__':
   cases, fields, stamps = ParseOutputFields(args['dir'])
   fields.sort()
 
+  print('##########################')
+  print('## Combine output files ##')
+  print('##########################')
   for case in cases:
-    print('working on case %s...' % case)
+    print('Working on case %s...' % case)
     for field in fields:
       CombineTimeseries(case, field, stamps, remove = not args['no_remove'], path = args['dir'])
     CombineFields(case, fields, args['output'], path = args['dir'])
     CombineFITS(case, args['output'], path = args['dir'], remove = not args['no_remove'])
+  print('Done.\n')

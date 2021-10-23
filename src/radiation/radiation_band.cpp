@@ -24,6 +24,7 @@ RadiationBand::RadiationBand(Radiation *prad):
 
 RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *pin)
 {
+  ATHENA_LOG("RadiationBand");
   std::stringstream msg;
 
   myname = name;
@@ -34,7 +35,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   // number of Legendre moments
   npmom = pin->GetOrAddInteger("radiation", "npmom", 0);
 
-  // name radiation band in the format of "min_wave max_wave dwave"
+  // name radiation band in the format of "min_wave max_wave nwave"
   std::string str = pin->GetString("radiation", name);
   char default_file[80];
   sprintf(default_file, "kcoeff.%s.nc", str.c_str());
@@ -48,14 +49,31 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
     ATHENA_ERROR(msg);
   }
 
-  // wave number and weights
-  nspec = (int)((v[1] - v[0])/v[2]) + 1; // including the last one
-  spec = new Spectrum [nspec];
-  for (int i = 0; i < nspec; ++i) {
-    spec[i].wav = v[0] + v[2]*i;
-    spec[i].wgt = (i == 0) || (i == nspec - 1) ? 0.5*v[2] : v[2];
+  // set default wave number and weights
+  nspec = (int)v[2];
+  if (nspec < 1) {
+    msg << "### FATAL ERROR in construction function RadiationBand"
+        << "Length of some spectral band is not a positive number";
+    ATHENA_ERROR(msg);
   }
-  if (nspec == 1) spec[0].wgt = 1.;
+
+  spec = new Spectrum [nspec];
+  if (nspec == 1) {
+    if (v[0] != v[1]) {
+      msg << "### FATAL ERROR in construction function RadiationBand"
+          << std::endl << "The first spectrum must equal the last spectrum "
+          << "if the length of the spectral band is 1.";
+      ATHENA_ERROR(msg);
+    }
+    spec[0].wav = v[0];
+    spec[0].wgt = 1.;
+  } else {
+    Real dwave = (v[1] - v[0])/(nspec - 1);
+    for (int i = 0; i < nspec; ++i) {
+      spec[i].wav = v[0] + dwave*i;
+      spec[i].wgt = (i == 0) || (i == nspec - 1) ? 0.5*dwave : dwave;
+    }
+  }
 
   // outgoing radiation direction (mu,phi) in degree
   str = pin->GetOrAddString("radiation", "outdir", "(0.,0.)");
@@ -113,6 +131,10 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
 #ifdef RT_DISORT
   init_disort(pin);
 #endif
+
+  std::cout << "- Finish setting spectral BAND " << name
+            << " with RANGE " << spec[0].wav << " - " << spec[nspec-1].wav
+            << " and LENGTH " << nspec << std::endl;
 }
 
 RadiationBand::~RadiationBand()

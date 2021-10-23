@@ -14,6 +14,9 @@
 // macros which define physics and algorithms
 
 // configure.py dict(definitions) string values:
+// main task
+#define MAIN_TASKLIST @TASK@
+
 // problem generator
 #define PROBLEM_GENERATOR "@PROBLEM@"
 
@@ -93,6 +96,9 @@
 // PNETCDF output (PNETCDFOUTPUT or NO_PNETCDFOUTPUT)
 #define @PNETCDF_OPTION@
 
+// FITS output (FITSOUTPUT or NO_FITSOUTPUT)
+#define @FITS_OPTION@
+
 // debug build macros (DEBUG or NOT_DEBUG)
 #define @DEBUG_OPTION@
 #define DEBUG_LEVEL @DEBUG_LEVEL@
@@ -152,5 +158,7 @@
 #else
 #define ATHENA_ERROR(x) std::cout << x.str(); std::exit(EXIT_FAILURE)
 #endif
+#define ATHENA_WARN(x) std::cout << "WARNING: " << x << std::endl;
+#define ATHENA_LOG(x) std::cout << "1. Log from " << x << std::endl;
 
 #endif // DEFS_HPP_

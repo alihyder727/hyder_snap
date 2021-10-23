@@ -21,7 +21,7 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
 {
   Real gamma = pmy_block->peos->GetGamma();
 
-  // hydro + liquid + ice
+  // hydro + vapor + condensate
   Real q1[NHYDRO+2*NVAPOR];
   w[0][IDN] = w[0][IPR] = 1.;
   PrimitiveToChemical(q1, w[0]);

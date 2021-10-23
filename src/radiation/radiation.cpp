@@ -121,6 +121,20 @@ int Radiation::GetNumBands() {
   return n;
 }
 
+std::vector<Direction> Radiation::GetOutgoingRays() {
+  std::vector<Direction> dir;
+  for (int i = 0; i < nrout_; ++i)
+    dir.push_back(rout_[i]);
+  return dir;
+}
+
+std::vector<Direction> Radiation::GetIncomingRays() {
+  std::vector<Direction> dir;
+  for (int i = 0; i < nrin_; ++i)
+    dir.push_back(rin_[i]);
+  return dir;
+}
+
 void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
   int k, int j, int il, int iu)
 {

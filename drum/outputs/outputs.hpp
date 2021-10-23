@@ -241,6 +241,17 @@ public:
 };
 
 //----------------------------------------------------------------------------------------
+//! \class FITSOutput
+//  \brief derived OutputType class for FITS dumps
+
+class FITSOutput : public OutputType {
+public:
+  FITSOutput(OutputParameters oparams);
+  ~FITSOutput() {}
+  void WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag);
+};
+
+//----------------------------------------------------------------------------------------
 
 //! \class ParticlesOutput 
 //  \brief derived OutputType class for particles dumps

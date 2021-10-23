@@ -38,10 +38,21 @@ public:
     pmy_band(pband), myname("NULL"), prev(NULL), next(NULL), imol_(-1), mixr_(0) {}
 
   Absorber(RadiationBand *pband, std::string name, int imol, Real mixr = 1.): 
-    pmy_band(pband), myname(name), prev(NULL), next(NULL), imol_(imol), mixr_(mixr) {}
+    pmy_band(pband), myname(name), prev(NULL), next(NULL), imol_(imol), mixr_(mixr) {
+    std::cout << "- Initializing ABSORBER " << name 
+              << " with molar mixing RATIO " << mixr
+              << " and ID " << imol << std::endl;
+  }
 
   Absorber(RadiationBand *pband, std::string name, std::vector<int> imols, Real mixr = 1): 
-    pmy_band(pband), myname(name), prev(NULL), next(NULL), imols_(imols), mixr_(mixr) {}
+    pmy_band(pband), myname(name), prev(NULL), next(NULL), imols_(imols), mixr_(mixr) {
+    std::cout << "- Initializing ABSORBER " << name 
+              << " with molar mixing RATIO " << mixr
+              << " and dependent ID ";
+    for (int i = 0; i < imols.size(); ++i)
+      std::cout << imols_[i] << " ";
+    std::cout << std::endl;
+  }
 
   virtual ~Absorber() {
     if (prev != NULL) prev->next = next;

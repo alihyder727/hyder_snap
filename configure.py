@@ -87,6 +87,12 @@ athena_epilog = (
 )
 parser = argparse.ArgumentParser(description=athena_description, epilog=athena_epilog)
 
+# --task=[name] argument
+parser.add_argument('--task',
+    default='TimeIntegratorTaskList',
+    choices=['TimeIntegratorTaskList', 'InversionTaskList'],
+    help='select main task list')
+
 # --prob=[name] argument
 pgen_directory = 'src/pgen/'
 # set pgen_choices to list of .cpp files in src/pgen/
@@ -308,6 +314,18 @@ parser.add_argument('--pnetcdf_path',
                     default='',
                     help='path to parallel NETCDF libraries')
 
+# -fits argument
+parser.add_argument('-fits',
+                    action='store_true',
+                    default=False,
+                    help='enable FITS output')
+
+# --fits_path argument
+parser.add_argument('--fits_path',
+                    type=str,
+                    default='',
+                    help='path to FITS libraries')
+
 # The main choices for --cxx flag, using "ctype[-suffix]" formatting, where "ctype" is the
 # major family/suite/group of compilers and "suffix" may represent variants of the
 # compiler version and/or predefined sets of compiler options. The C++ compiler front ends
@@ -456,6 +474,9 @@ if args['eos'][:8] == 'general/':
 definitions = {}
 makefile_options = {}
 makefile_options['LOADER_FLAGS'] = ''
+
+# --task[name] argument
+definitions['TASK'] = makefile_options['TASK'] = args['task']
 
 # --prob=[name] argument
 definitions['PROBLEM'] = makefile_options['PROBLEM_FILE'] = args['prob']
@@ -901,6 +922,17 @@ if args['pnetcdf']:
 else:
   definitions['PNETCDF_OPTION'] = 'NO_PNETCDFOUTPUT'
 
+# -fits argument
+if args['fits']:
+  definitions['FITS_OPTION'] = 'FITSOUTPUT'
+  if args['fits_path'] != '':
+    makefile_options['PREPROCESSOR_FLAGS'] += ' -I%s/include' % args['fits_path']
+    makefile_options['LINKER_FLAGS'] += ' -L%s/lib' % args['fits_path']
+  if args['cxx'] == 'g++' or args['cxx'] == 'icc' or args['cxx'] == 'cray':
+    makefile_options['LIBRARY_FLAGS'] += ' -lcfitsio'
+else:
+  definitions['FITS_OPTION'] = 'NO_FITSOUTPUT'
+
 # --cflag=[string] argument
 if args['cflag'] is not None:
     makefile_options['COMPILER_FLAGS'] += ' '+args['cflag']
@@ -960,6 +992,7 @@ elif args['grav'] == 'mg':
     self_grav_string = 'Multigrid'
 
 print('Your Athena++ distribution has now been configured with the following options:')
+print('  Main Task:                  ' + args['task'])
 print('  Problem generator:          ' + args['prob'])
 print('  Coordinate system:          ' + args['coord'])
 print('  X1 Grid ratio:              ' + args['x1rat'])

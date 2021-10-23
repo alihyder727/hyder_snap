@@ -49,6 +49,7 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
     }
   }
   g1_ = pin->GetOrAddReal("hydro","grav_acc1",0.0);
+  if (g1_ > 0.) ATHENA_WARN("grav_acc1 is positive.");
   if (g1_ != 0.0) hydro_sourceterms_defined = true;
 
   g2_ = pin->GetOrAddReal("hydro","grav_acc2",0.0);

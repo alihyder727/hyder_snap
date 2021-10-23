@@ -273,6 +273,15 @@ Outputs::Outputs(Mesh *pm, ParameterInput *pin) {
               << "is requested in output block '" << op.block_name << "'" << std::endl;
           ATHENA_ERROR(msg);
 #endif
+        } else if (op.file_type.compare("fits") == 0) {
+#ifdef FITSOUTPUT
+          pnew_type = new FITSOutput(op);
+#else
+          msg << "### FATAL ERROR in Outputs constructor" << std::endl
+              << "Executable not configured for FITS outputs, but FITS file format "
+              << "is requested in output block '" << op.block_name << "'" << std::endl;
+          ATHENA_ERROR(msg);
+#endif
         } else if (op.file_type.compare("dbg") == 0) {
           pnew_type = new DebugOutput(op);
         } else if (op.file_type.compare("ptab") == 0) {
@@ -828,6 +837,13 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
 
       p = p->next;
     }
+  }
+
+  // mcmc inversion
+  if (output_params.variable.compare("mcmc")) {
+    pod = new OutputData;
+    AppendOutputDataNode(pod);
+    num_vars_ += 1;
   }
 
   // throw an error if output variable name not recognized
