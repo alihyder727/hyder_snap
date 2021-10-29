@@ -11,6 +11,7 @@
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../hydro/hydro.hpp"
 #include "../particles/particles.hpp"
 #include "../utils/utils.hpp" // Vectorize, ReadTabular, ReplaceChar
 
@@ -215,6 +216,7 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
   Absorber *a = pabs;
   Thermodynamics *pthermo = pmy_rad->pmy_block->pthermo;
   Coordinates *pcoord = pmy_rad->pmy_block->pcoord;
+  Hydro *phydro = pmy_rad->pmy_block->phydro;
   Real *mypmom = new Real[1+npmom];
 
   int num_clouds = 0.;
@@ -278,7 +280,13 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
         for (int p = 1; p <= npmom; ++p)
           pmom_[i][m][p] = 0.;
       }
-      tau_[i][m] *= pcoord->dx1f(i);
+      if (HYDROSTATIC) {
+        Real grav = -phydro->hsrc.GetG1();
+        // \delta z = \delt Z * P/(\rho g H), cli, TODO
+        tau_[i][m] *= pcoord->dx1f(i)*w(IPR,k,j,i)/(w(IDN,k,j,i)*grav*phydro->scale_height);
+      } else {
+        tau_[i][m] *= pcoord->dx1f(i);
+      }
     }
 
     // aggregated band properties

@@ -33,17 +33,14 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout,
   //  std::cout << i << " " << temf[i] << " " << tem_[i] << " " << temf[i+1] << std::endl;
 
   // integrate from top to bottom
-  Real dtau;
   for (int m = 0; m < nrout; ++m) {
     btoa(m,k,j) = 0.;
     for (int n = 0; n < nspec; ++n) {
       taut[iu] = 0.;
-      dtau = interp_weno5(tau_[iu+1][n], tau_[iu][n], tau_[iu-1][n], tau_[iu-2][n], tau_[iu-3][n]);
-      toa_[m][n] = temf[iu]*dtau/rout[m].mu;
+      toa_[m][n] = 0.;
       for (int i = iu-1; i >= il; --i) {
         taut[i] = taut[i+1] + tau_[i][n]/rout[m].mu;
-        dtau = interp_cp4(tau_[i-2][n], tau_[i-1][n], tau_[i][n], tau_[i+1][n]);
-        toa_[m][n] += temf[i]*exp(-taut[i])*dtau/rout[m].mu;
+        toa_[m][n] += 0.5*(temf[i+1]*exp(-taut[i+1]) + temf[i]*exp(-taut[i]))*tau_[i][n]/rout[m].mu;
         //if (m == 0)
         //  std::cout << taut[i] << " " << temf[i] << " " << temf[i]*exp(-taut[i]) << " " << tau_[i][n] << std::endl;
       }

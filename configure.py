@@ -143,6 +143,12 @@ parser.add_argument('--nscalars',
                     default='0',
                     help='set number of passive scalars')
 
+# -hydrostatic argument
+parser.add_argument('-hydrostatic',
+                    action='store_true',
+                    default = False,
+                    help = 'assume hydrostatic atmosphere (log pressure coordinate)')
+
 # -b argument
 parser.add_argument('-b',
                     action='store_true',
@@ -593,6 +599,12 @@ if args['shear']:
 else:
     definitions['SHEARING_BOX'] = '0'
 
+# -hydrostatic argument
+if args['hydrostatic']:
+    definitions['HYDROSTATIC'] = '1'
+else:
+    definitions['HYDROSTATIC'] = '0'
+
 # --cxx=[name] argument
 if args['cxx'] == 'g++':
     # GCC is C++11 feature-complete since v4.8.1 (2013-05-31)
@@ -1001,6 +1013,7 @@ print('  Ammonia vapor id:           ' + args['nh3'])
 print('  Water vapor id:             ' + args['h2o'])
 print('  Riemann solver:             ' + args['flux'])
 print('  Forcing Jacobian:           ' + args['jacobian'])
+print('  Hydrostatic:                ' + ('YES' if args['hydrostatic'] else 'NO'))
 print('  Magnetic fields:            ' + ('ON' if args['b'] else 'OFF'))
 print('  Number of vapors:           ' + args['nvapor'])
 print('  REAL particle data:         ' + args['npart_real'])

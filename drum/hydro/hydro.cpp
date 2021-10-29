@@ -157,6 +157,13 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   implicit_flag = pin->GetOrAddInteger("hydro", "implicit_flag", 0);
   limit_to_advection = pin->GetOrAddBoolean("time", "limit_to_advection", true);
   min_tem = pin->GetOrAddReal("hydro", "min_tem", 10.);
+  
+  // hydrostatic scale height
+  if (HYDROSTATIC) {
+    scale_height = pin->GetReal("hydro", "scale_height");
+  } else {
+    scale_height = pin->GetOrAddReal("hydro", "scale_height", 0.);
+  }
 
   int n2max = nc2, n3max = nc3;
   if (implicit_flag & 2) {

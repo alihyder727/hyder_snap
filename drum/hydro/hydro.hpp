@@ -55,6 +55,9 @@ class Hydro {
   bool limit_to_advection;
   Real min_tem;
 
+  // hydrostatic scale height
+  Real scale_height;
+
   // storage for SMR/AMR
   // TODO(KGF): remove trailing underscore or revert to private:
   AthenaArray<Real> coarse_cons_, coarse_prim_;
