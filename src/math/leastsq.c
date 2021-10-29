@@ -36,8 +36,7 @@ void leastsq(double **A, double *b, int n1, int n2)
 
   // calculate (A^T.A)^{-1}.(A^T.b)
   int *indx = (int*)malloc(n2*sizeof(int));
-  double d;
-  ludcmp(B, n2, indx, &d);
+  ludcmp(B, n2, indx);
   lubksb(B, n2, indx, b);
 
   free(c);

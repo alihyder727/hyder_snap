@@ -45,6 +45,7 @@ Real junomwr_root_func(Real Tv2, void *aux) {
 
 Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *obj)
 {
+  ATHENA_LOG("RadioObservationLnProb");
   // ######################   Load fitting data ############################# //
   RadioData *pobj = static_cast<RadioData*>(obj);
   std::vector<Real>& zfrac = pobj->zfrac;
@@ -57,6 +58,8 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
   Real const& NH3std = pobj->NH3std;
   Real const& NH3len = pobj->NH3len;
   Real const& grav = pobj->grav;
+  Real Z0 = 0.;
+  Real P0 = 1.E5;
 
   int const& iH2O = pobj->iH2O;
   int const& iNH3 = pobj->iNH3;
@@ -91,14 +94,17 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
   // 0..nsample-1 : zfrac, the first one is fixed
   // nsample..2*nsample-1 : TpSample
   // 2*nsample..3*nsample-1 : NH3pSample
+  std::cout << "- Parameters: ";
   for (int i = 0; i < nsample; ++i) {
-    zfrac[i] = par[i];
-    if (zfrac[i] < 0. || zfrac[i] > 1.) return NAN;
+    zfrac[i] = par[i]*1.E5; // bar -> pa
+    //if (zfrac[i] < 0. || zfrac[i] > 1.) return NAN;
     TpSample[i] = par[nsample + i];
-    NH3pSample[i] = par[2*nsample + i];
+    NH3pSample[i] = par[2*nsample + i]/1.E3;  // g/kg -> kg/kg
+    std::cout << par[i] << " " << par[nsample + i] << " " << par[2*nsample + i] << " ";
   }
+  std::cout << std::endl;
 
-  // 1. copy baseline
+  // 1. copy baseline js -> js+1 .. je
   for (int n = 0; n < NHYDRO; ++n)
     for (int k = ks; k <= ke; ++k)
       for (int j = js+1; j <= je; ++j)
@@ -108,16 +114,17 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
   // 2. locate height given pressure divides
   std::vector<Real> zlev(nsample), plev(nsample), tlev(nsample);
 
-  if (pobj->IsTestRun())
-    std::cout << "Sampling levels" << std::endl;
+  std::cout << "- Sample levels: ";
   for (int i = 0; i < nsample; ++i) {
-    zlev[i] = zdiv[i]*(1.-zfrac[i]) + zdiv[i+1]*zfrac[i];
-    plev[i] = interp1(zlev[i], p1, z1, nx1);
-    tlev[i] = interp1(zlev[i], t1, z1, nx1);
+    zlev[i] = Z0 - phydro->scale_height*log(zfrac[i]/P0);
+    std::cout << zlev[i] << " ";
+    //plev[i] = interp1(zlev[i], p1, z1, nx1);
+    //tlev[i] = interp1(zlev[i], t1, z1, nx1);
     // report
-    if (pobj->IsTestRun())
-      printf("%12.4g km %12.4g bar %12.4g K\n", zlev[i]/1.E3, plev[i]/1.E5, tlev[i]);
+    //if (pobj->IsTestRun())
+    //  printf("%12.4g km %12.4g bar %12.4g K\n", zlev[i]/1.E3, plev[i]/1.E5, tlev[i]);
   }
+  std::cout << std::endl;
 
   // 3 calculate the covariance matrix of temperature
   Real *stdAll = new Real [nlayer];
@@ -131,7 +138,7 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
   for (int i = 0; i < nsample; ++i)
     stdSample[i] = Tstd;
 
-  gp_predict(SquaredExponential, Tp, pcoord->x1v.data() + is, stdAll, nlayer,
+  gp_predict(SquaredExponential, Tp, &pcoord->x1v(is), stdAll, nlayer,
     TpSample.data(), zlev.data(), stdSample, nsample, Tlen);
 
   // fix boundary condition
@@ -147,30 +154,35 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
   for (int i = 0; i < nsample; ++i)
     stdSample[i] = NH3std;
     
-  gp_predict(SquaredExponential, NH3p, pcoord->x1v.data() + is, stdAll, nlayer,
+  gp_predict(SquaredExponential, NH3p, &pcoord->x1v(is), stdAll, nlayer,
     NH3pSample.data(), zlev.data(), stdSample, nsample, NH3len);
 
   // 6. save perturbed ammonia profile
+  std::cout << "- Calculate Tb if only NH3 were perturbed" << std::endl;
   Real rho, Rd = pthermo->GetRd();
   int j1 = js+1, j2 = js+2, j3 = js+3;
-  for (int i = is; i <= ie; ++i)
+  for (int i = is; i <= ie; ++i) {
+    Real temp = pthermo->GetTemp(w.at(j1,i));
     w(iNH3,j1,i) += NH3p[i-is];
+    w(iNH3,j1,i) = std::max(w(iNH3,j1,i), 0.);
+    w(IDN,j1,i) = w(IPR,j1,i)/(Rd*temp*pthermo->RovRd(w.at(j1,i)));
+  }
 
   // calculate new radiation if only ammonia is changed
-  if (pobj->IsTestRun())
-    prad->CalculateRadiances(w, 0., ks, j1, is, ie+1);
+  prad->CalculateRadiances(w, 0., ks, j1, is, ie+1);
 
   // 7. save perturbed temperature profile
+  std::cout << "- Calculate Tb if only T were perturbed" << std::endl;
   for (int i = is; i <= ie; ++i) {
-    Real temp = pthermo->GetTemp(w.at(js,i));
-    w(IPR,j2,i) = w(IDN,js,i)*Rd*(temp + Tp[i-is])*pthermo->RovRd(w.at(js,i));
+    Real temp = pthermo->GetTemp(w.at(j2,i));
+    if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
+    w(IDN,j2,i) = w(IPR,j2,i)/(Rd*(temp + Tp[i-is])*pthermo->RovRd(w.at(j2,i)));
   }
 
   // calculate new radiation if only temperature is changed
-  if (pobj->IsTestRun())
-    prad->CalculateRadiances(w, 0., ks, j2, is, ie+1);
+  prad->CalculateRadiances(w, 0., ks, j2, is, ie+1);
 
-  // 8. rectify profile
+  /* 8. rectify profile
   Real **w2;
   NewCArray(w2, 2, NHYDRO);
   std::fill(*w2, *w2 + 2*NHYDRO, 0.);
@@ -355,14 +367,14 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
     zlev.data(), stdSample, nsample, Tlen);
 
   if (pobj->IsTestRun())
-    std::cout << "lnprob4 = " << lnprob << std::endl;
+    std::cout << "lnprob4 = " << lnprob << std::endl; */
 
   delete[] stdAll;
   delete[] stdSample;
   delete[] Tp;
   delete[] NH3p;
 
-  FreeCArray(B);
+  /*FreeCArray(B);
   delete[] b;
   delete[] misfit;
   delete[] rr;
@@ -371,8 +383,8 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
   delete[] p2;
   delete[] t2;
   delete[] told;
-  FreeCArray(w2);
+  FreeCArray(w2);*/
 
-  return lnprob;
+  return 0.;
   // ######################     End     ############################# //
 }

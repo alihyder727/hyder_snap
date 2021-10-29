@@ -3,7 +3,7 @@
 
 double vvdot(double const *a, double const *b, int n);
 void mvdot(double *r, double **m, double const *v, int n1, int n2);
-void ludcmp(double **a, int n, int *indx, double *vv);
+int ludcmp(double **a, int n, int *indx);
 void lubksb(double **a, int n, int *indx, double *b);
 void leastsq(double **A, double *b, int n1, int n2);
 void tridiag(int n, double *a, double *b, double *c, double *r, double *u, int pivot_type);

@@ -266,19 +266,19 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   int nsample = myradio.TpSample.size();
   for (int i = 0; i < nsample; ++i) {
     par[0][i] = myradio.zfrac[i];
-    if (myradio.zfrac[i] < 0. || myradio.zfrac[i] > 1.) {
+    /*if (myradio.zfrac[i] < 0. || myradio.zfrac[i] > 1.) {
       msg << "### FATAL ERROR in ProblemGenerator" << std::endl 
           << "zfrac[" << i << "] should between [0.,1.]";
       ATHENA_ERROR(msg);
-    }
+    }*/
     par[0][nsample+i] = myradio.TpSample[i];
     par[0][2*nsample+i] = myradio.NH3pSample[i];
   }
 
-  /* Modify profile based on input
-  //RadioObservationLnProb(*par, *val, ndim, nwave*3, &myradio);
+  // Modify profile based on input
+  RadioObservationLnProb(*par, *val, ndim, nwave*3, &myradio);
 
-  // copy modified model to baseline
+  /* copy modified model to baseline
   for (int n = 0; n < NHYDRO; ++n)
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j < js+3; ++j)

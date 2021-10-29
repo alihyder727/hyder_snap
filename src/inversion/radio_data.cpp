@@ -119,9 +119,6 @@ RadioData::RadioData(MeshBlock *pmb, ParameterInput *pin,
   // read ammonia perturbation
   NH3pSample = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
 
-  for (int i = 0; i < NH3pSample.size(); ++i)
-    NH3pSample[i] /= 1.E3;  // g/kg -> kg/kg
-
   // check size
   if (NH3pSample.size() != nsample) {
     msg << "### FATAL ERROR in RadioData" << std::endl

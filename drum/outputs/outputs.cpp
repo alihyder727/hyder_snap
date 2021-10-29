@@ -782,7 +782,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->name = p->myname+"tau";
-      pod->long_name = "optical depth";
+      pod->long_name = "optical thickness";
       pod->units = "1";
       pod->data.InitWithShallowSlice(p->btau,4,0,1);
       AppendOutputDataNode(pod);

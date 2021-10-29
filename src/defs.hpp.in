@@ -33,6 +33,9 @@
 // Equation of state
 #define EQUATION_OF_STATE "@EQUATION_OF_STATE@"
 
+// use hydrostatic coordinate default=0 (false)
+#define HYDROSTATIC @HYDROSTATIC@
+
 // use general EOS framework default=0 (false).
 #define GENERAL_EOS @GENERAL_EOS@
 

@@ -2,10 +2,9 @@
 #include <iostream>
 #include <cmath>
 
-
 // Athena++ headers
-#include "../utils/utils.hpp"
 #include "../math/linalg.h"
+#include "../utils/utils.hpp"
 #include "../math/eigen335/Eigen/Dense"
 #include "gaussian_process.hpp"
 
@@ -42,14 +41,14 @@ double gp_predict(KernelFunction_t kernel, double *arr2,
   // copy arr1 to b because the solution x=A^{-1}*b will be stored 
   // in b after calling lubksb
   int *indx = new int [n1];
-  double d, *b = new double [n1];
+  double *b = new double [n1];
   memcpy(b, arr1, n1*sizeof(double));
 
-  ludcmp(cov1, n1, indx, &d);
+  ludcmp(cov1, n1, indx);
   lubksb(cov1, n1, indx, b);
   mvdot(arr2, cov2, b, n2, n1);
 
-  d = -0.5*vvdot(arr1, b, n1);
+  double d = -0.5*vvdot(arr1, b, n1);
 
   delete[] b;
   delete[] indx;
@@ -72,7 +71,7 @@ double gp_lnprior(KernelFunction_t kernel, double const *arr1,
   double d, *b = new double [n1];
   memcpy(b, arr1, n1*sizeof(double));
 
-  ludcmp(cov1, n1, indx, &d);
+  ludcmp(cov1, n1, indx);
   lubksb(cov1, n1, indx, b);
 
   d = -0.5*vvdot(arr1, b, n1);
