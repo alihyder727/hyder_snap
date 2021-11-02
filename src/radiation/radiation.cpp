@@ -22,6 +22,7 @@ Radiation::Radiation(MeshBlock *pmb):
 
 Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
 {
+  ATHENA_LOG("Radiation");
   pmy_block = pmb;
   pband = NULL;
   RadiationBand *plast = pband;

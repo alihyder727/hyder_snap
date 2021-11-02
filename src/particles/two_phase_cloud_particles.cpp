@@ -6,6 +6,10 @@
  * @bug No known bugs.
  */
 
+// C/C++ headers
+#include <iostream>
+
+// Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "particles.hpp"
 
@@ -13,9 +17,12 @@ TwoPhaseCloudParticles::TwoPhaseCloudParticles(
   MeshBlock *pmb, ParameterInput *pin, std::string name):
   Particles(pmb, pin, name, 2)
 {
+  ATHENA_LOG("TwoPhaseCloudParticles")
   cnames_.resize(2);
   cnames_[0] = "liquid";
   cnames_[1] = "solid";
+  std::cout << "- First category is " << name + " liquid" << std::endl;
+  std::cout << "- Second category is " << name + " solid" << std::endl;
 }
 
 void TwoPhaseCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,

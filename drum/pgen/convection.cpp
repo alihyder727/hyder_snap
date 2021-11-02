@@ -99,6 +99,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
+  ATHENA_LOG("convection");
   std::stringstream msg;
   Real gamma = pin->GetReal("hydro", "gamma");
 
@@ -136,6 +137,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     z1[i] = z1[i-1] + dz;
 
   Real t0, p0;
+  std::cout << "- Request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
   while (iter++ < max_iter) {
     pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo);
 
@@ -162,6 +164,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     Ts += T0 - t0;
     Ps *= P0/p0;
     if ((fabs(T0 - t0) < 0.01) && (fabs(P0/p0 - 1.) < 1.E-4)) break;
+    std::cout << "- Iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
   }
 
   if (iter > max_iter) {

@@ -23,6 +23,9 @@ SimpleCloudParticles::SimpleCloudParticles(
   MeshBlock *pmb, ParameterInput *pin, std::string name):
   Particles(pmb, pin, name, 2)
 {
+  ATHENA_LOG("SimpleCloudParticles");
+  std::cout << "- First category is " << name + " cloud" << std::endl;
+  std::cout << "- Second category is " << name + " precipitation" << std::endl;
   cnames_.resize(2);
   cnames_[0] = "cloud";
   cnames_[1] = "rain";

@@ -18,6 +18,7 @@
 Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin) :
   pmy_block(pmb), pkessler94_(nullptr)
 {
+  ATHENA_LOG("Chemistry");
   char chem_names[1024], *p;
   std::string str = pin->GetOrAddString("chemistry", "chemistry", "");
   std::strcpy(chem_names, str.c_str());

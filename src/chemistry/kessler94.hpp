@@ -24,8 +24,10 @@ public:
   Kessler94(Chemistry *pchem, ParameterInput *pin, std::string name) :
     ChemistryBase<Kessler94>(pchem, pin)
   {
+    ATHENA_LOG("Chemistry<Kessler94> for " + name);
     myname = name;
     particle_name = pin->GetString("chemistry", name + ".link_particle");
+    std::cout << "- particle " << particle_name << " linked to " << name << " chemistry" << std::endl;
 
     coeffs_["condensation"] = pin->GetReal("chemistry", name + ".condensation");
     coeffs_["autoconversion"] = pin->GetReal("chemistry", name + ".autoconversion");
@@ -37,6 +39,7 @@ public:
     index_[1] = pin->GetInteger("chemistry", name + ".link_vapor");
     index_[2] = NHYDRO;
     index_[3] = NHYDRO + 1;
+    std::cout << "- vapor #" << index_[1] << " linked to " << name << " chemistry" << std::endl;
 
     deltaU_.resize(NHYDRO + 2);
     std::fill(deltaU_.begin(), deltaU_.end(), 0.);
