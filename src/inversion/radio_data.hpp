@@ -7,12 +7,11 @@
 // Athena++ headers
 #include "../athena.hpp"
 
+// Eigen header files
+#include "../math/eigen335/Eigen/Core"
+
 class MeshBlock;
 class ParameterInput;
-class Coordinates;
-class Hydro;
-class Thermodynamics;
-class Radiation;
 
 struct TPData {
   Real P, T, ERR;
@@ -21,38 +20,25 @@ struct TPData {
 class RadioData {
 public:
   // data
-  Real **target;
-  Real ***icov;
-  Real *z1, *p1, *t1;
+  MeshBlock *pmy_block;
 
-  Real Tstd, Tlen, NH3std, NH3len;
-  Real grav;
-  int is, ie, js, je, ks, ke, nx1;
-  //int nwave, nangle;
-  int iH2O, iNH3;
-  std::vector<Real> pdiv, zdiv, zfrac;
-  std::vector<Real> TpSample, NH3pSample;
-  std::vector<TPData> tpdata;
+  Eigen::VectorXd target;
+  Eigen::MatrixXd icov;
 
-  Thermodynamics *pthermo;
-  Hydro *phydro;
-  Radiation *prad;
-  Coordinates *pcoord;
+  Real Tstd, Tlen, Xstd, Xlen;
+  int ix;
+  //std::vector<TPData> tpdata;
 
   // functions
-  RadioData(MeshBlock *pmb, ParameterInput *pin,
-    Real grav_, int iH2O_, int iNH3_,
-    Real *z1_, Real *p1_, Real *t1_, int nx1_, bool testrun_ = false);
-  ~RadioData();
+  RadioData(MeshBlock *pmb, ParameterInput *pin);
   void ReadObservationFile(char const *fname);
-  void WriteObservationFile(char const *fname);
-
-  bool IsTestRun() {
-    return testrun_;
-  }
-
-private:
-  bool testrun_;
+  //void WriteObservationFile(char const *fname);
 };
+
+void update_atm_profiles(MeshBlock *pmb,
+    Real *PrSample, Real *TpSample, Real *XpSample, int nsample, int ix,
+    Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real P0, Real Z0 = 0.);
+
+void calculate_fit_target(MeshBlock *pmb, int j, Real *val, int nvalue);
 
 #endif

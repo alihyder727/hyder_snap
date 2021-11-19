@@ -85,8 +85,8 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   if (name == "mw_CIA") {
     pabs->AddAbsorber(MwrAbsorberCIA(this, xHe, xCH4));
   } else if (name == "mw_NH3") {
-    pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelBellottiSwitch());
-    //pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
+    //pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelBellottiSwitch());
+    pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
   } else if (name == "mw_H2O") {
     pabs->AddAbsorber(MwrAbsorberH2O(this, iH2O, xHe));
   } else {
@@ -96,8 +96,8 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   }
 }
 
-// If you want to use real gas cp
-/*void update_gamma(Real& gamma, Real const q[]) {
+/* If you want to use real gas cp
+void update_gamma(Real& gamma, Real const q[]) {
 	Real T = q[IDN], cp_h2, cp_he, cp_ch4;
 	if (T < 300.)
     cp_h2 = Hydrogen::cp_norm(T);
@@ -247,36 +247,47 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   // Calculate baseline radiation
   prad->CalculateRadiances(phydro->w, 0., ks, js, is, ie+1);
 
-  //bool run_forward= pin->GetInteger("time", "nlim") > 0;
-  bool run_forward= true;
+  // read profile updates from input
+  std::vector<Real> PrSample, TpSample, XpSample;
+  PrSample = Vectorize<Real>(pin->GetString("problem", "Pr").c_str());
+  int nsample = PrSample.size();
+  TpSample = Vectorize<Real>(pin->GetString("problem", "Tp").c_str());
+  XpSample = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
+
+  // check size
+  if (TpSample.size() != nsample) {
+    msg << "### FATAL ERROR in ProblemGenerator" << std::endl
+        << "size of temperature perturbation (Tp) should be "
+        << nsample;
+    ATHENA_ERROR(msg);
+  }
+
+  if (XpSample.size() != nsample) {
+    msg << "### FATAL ERROR in ProblemGenerator" << std::endl
+        << "size of ammonia perturbation (NH3p) should be "
+        << nsample;
+    ATHENA_ERROR(msg);
+  }
 
   // Initialize objective function
-  RadioData myradio = RadioData(this, pin, 
-    grav, iH2O, iNH3, z1, p1, t1, nx1, run_forward);
+  RadioData myradio = RadioData(this, pin);
 
-  int nwalker = pin->GetInteger("problem", "nwalker");
-  int ndim = 3*myradio.zfrac.size();  // location, T and NH3
+  int nwalker = pin->GetInteger("inversion", "nwalker");
+  int ndim = 3*nsample;  // location, T and NH3
   int nwave = prad->GetNumBands();
 
   // parameter array and output value array
-  Real **par, **val;
+  Real **par, *val = new Real [nwave*3];
   NewCArray(par, nwalker, ndim); 
-  NewCArray(val, nwave, 3);
 
-  int nsample = myradio.TpSample.size();
   for (int i = 0; i < nsample; ++i) {
-    par[0][i] = myradio.zfrac[i];
-    /*if (myradio.zfrac[i] < 0. || myradio.zfrac[i] > 1.) {
-      msg << "### FATAL ERROR in ProblemGenerator" << std::endl 
-          << "zfrac[" << i << "] should between [0.,1.]";
-      ATHENA_ERROR(msg);
-    }*/
-    par[0][nsample+i] = myradio.TpSample[i];
-    par[0][2*nsample+i] = myradio.NH3pSample[i];
+    par[0][i] = PrSample[i];
+    par[0][nsample+i] = TpSample[i];
+    par[0][2*nsample+i] = XpSample[i];
   }
 
   // Modify profile based on input
-  RadioObservationLnProb(*par, *val, ndim, nwave*3, &myradio);
+  RadioObservationLnProb(*par, val, ndim, nwave*3, &myradio);
 
   /* copy modified model to baseline
   for (int n = 0; n < NHYDRO; ++n)
@@ -317,7 +328,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   FreeCArray(w1);
   FreeCArray(par);
-  FreeCArray(val);
+  delete[] val;
   delete[] z1;
   delete[] p1;
   delete[] t1;

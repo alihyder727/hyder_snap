@@ -26,6 +26,7 @@
 // HydroSourceTerms constructor
 
 HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
+  ATHENA_LOG("HydroSourceTerms");
   pmy_hydro_ = phyd;
   hydro_sourceterms_defined = false;
 
@@ -69,13 +70,22 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
   if (omega3_ != 0.0) hydro_sourceterms_defined = true;*/
 
   omegax_ = pin->GetOrAddReal("hydro","OmegaX",0.0);
-  if (omegax_ != 0.0) hydro_sourceterms_defined = true;
+  if (omegax_ != 0.0) {
+    hydro_sourceterms_defined = true;
+    std::cout << "- Rotation in X-direction: " << omegax_ << std::endl;
+  }
 
   omegay_ = pin->GetOrAddReal("hydro","OmegaY",0.0);
-  if (omegay_ != 0.0) hydro_sourceterms_defined = true;
+  if (omegay_ != 0.0) {
+    hydro_sourceterms_defined = true;
+    std::cout << "- Rotation in Y-direction: " << omegay_ << std::endl;
+  }
 
   omegaz_ = pin->GetOrAddReal("hydro","OmegaZ",0.0);
-  if (omegaz_ != 0.0) hydro_sourceterms_defined = true;
+  if (omegaz_ != 0.0) {
+    hydro_sourceterms_defined = true;
+    std::cout << "- Rotation in Z-direction: " << omegaz_ << std::endl;
+  }
 
   // read shearing box parameters from input block
   Omega_0_ = pin->GetOrAddReal("problem","Omega0",0.0);
