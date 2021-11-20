@@ -8,6 +8,7 @@
 
 // C/C++ headers
 #include <iostream>
+#include <algorithm>
 
 // Athena++ headers
 #include "../athena.hpp"
@@ -19,8 +20,9 @@
 #include "gaussian_process.hpp"
 
 void update_atm_profiles(MeshBlock *pmb,
-    Real *PrSample, Real *TpSample, Real *XpSample, int nsample, int ix,
-    Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real P0, Real Z0 = 0.)
+    Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample, 
+		std::vector<int> const& ix,
+		Real Tstd, Real Tlen, Real Xstd, Real Xlen)
 {
   ATHENA_LOG("update_atm_profiles");
   Thermodynamics *pthermo = pmb->pthermo;
@@ -34,7 +36,8 @@ void update_atm_profiles(MeshBlock *pmb,
 
   std::cout << "* Sample levels: ";
   for (int i = 0; i < nsample; ++i) {
-    zlev[i] = Z0 - phydro->scale_height*log(PrSample[i]/P0);
+    zlev[i] = phydro->reference_height 
+			- phydro->scale_height*log(PrSample[i]/phydro->reference_pressure);
     std::cout << zlev[i] << " ";
   }
   std::cout << std::endl;
@@ -75,29 +78,44 @@ void update_atm_profiles(MeshBlock *pmb,
     for (int j = js+1; j <= je; ++j)
       for (int i = is; i <= ie; ++i)
         phydro->w(n,j,i) = phydro->w(n,js,i);
+	int j1 = js+1, j2 = js+2;
+  Real Rd = pthermo->GetRd();
 
-  // save perturbed X profile to model 1
+  // save perturbed T profile to model 1
+	if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
+		std::cout << "* Calculate Tb if only T was perturbed" << std::endl;
+		for (int i = is; i <= ie; ++i) {
+			Real temp = pthermo->GetTemp(phydro->w.at(j1,i));
+			if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
+			phydro->w(IDN,j1,i) = phydro->w(IPR,j1,i)/(Rd*(temp + Tp[i-is])*
+					pthermo->RovRd(phydro->w.at(j1,i)));
+		}
+	}
+
+  // save perturbed X profile to model 2
   std::cout << "* Calculate Tb if only X was perturbed" << std::endl;
-  Real rho, Rd = pthermo->GetRd();
-  int j1 = js+1, j2 = js+2, j3 = js+3;
-  for (int i = is; i <= ie; ++i) {
-    Real temp = pthermo->GetTemp(phydro->w.at(j1,i));
-    phydro->w(ix,j1,i) += Xp[i-is];
-    phydro->w(ix,j1,i) = std::max(phydro->w(ix,j1,i), 0.);
-    phydro->w(IDN,j1,i) = phydro->w(IPR,j1,i)/
-      (Rd*temp*pthermo->RovRd(phydro->w.at(j1,i)));
-  }
-
-  // save perturbed T profile to model 2
-  std::cout << "* Calculate Tb if only T was perturbed" << std::endl;
   for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(j2,i));
-    if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
-    phydro->w(IDN,j2,i) = phydro->w(IPR,j2,i)/(Rd*(temp + Tp[i-is])*
-        pthermo->RovRd(phydro->w.at(j2,i)));
+		int ic = 0;
+		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
+			if (*m != 0) {
+				phydro->w(*m,j2,i) += Xp[ic*nsample + i-is];
+				phydro->w(*m,j2,i) = std::max(phydro->w(*m,j2,i), 0.);
+				phydro->w(IDN,j2,i) = phydro->w(IPR,j2,i)/
+					(Rd*temp*pthermo->RovRd(phydro->w.at(j2,i)));
+				ic++;
+			}
+		}
   }
 
   // save convectively adjusted profile to model 3
+	for (int i = is; i <= ie; ++i) {
+    Real temp = pthermo->GetTemp(phydro->w.at(j1,i));
+		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
+			if (*m != 0) phydro->w(*m,je,i) = phydro->w(*m,j2,i);
+    phydro->w(IDN,je,i) = phydro->w(IPR,je,i)/
+      (Rd*temp*pthermo->RovRd(phydro->w.at(je,i)));
+	}
 
   delete[] zlev;
   delete[] stdAll;

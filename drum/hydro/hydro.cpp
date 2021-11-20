@@ -164,6 +164,8 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   } else {
     scale_height = pin->GetOrAddReal("hydro", "scale_height", 0.);
   }
+  reference_height = pin->GetOrAddReal("hydro", "reference_height", 0.);
+  reference_pressure = pin->GetOrAddReal("hydro", "reference_pressure", 1.E5);
 
   int n2max = nc2, n3max = nc3;
   if (implicit_flag & 2) {

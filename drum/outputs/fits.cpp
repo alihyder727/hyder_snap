@@ -44,7 +44,7 @@ void FITSOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 
   while (pmb != NULL) {   // loop over MeshBLocks
     Inversion *pinvt = pmb->pinvt;
-    if (pinvt->method == "mcmc") {
+    if (pinvt->task == "radio") {
       pinvt->MakeMCMCOutputs(fname);
       pinvt->ResetChain();
     }

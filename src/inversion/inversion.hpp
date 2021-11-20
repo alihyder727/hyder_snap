@@ -10,37 +10,31 @@
 
 class MeshBlock;
 class ParameterInput;
-template<typename T> class AthenaArray;
+class RadioObservation;
 
 class Inversion {
 public:
   // data
-  std::string method;
-  void *obj;  // objective values to fit
+  std::string task;
+  MeshBlock *pmy_block;
+  RadioObservation *pradio;
 
   // functions
   Inversion(MeshBlock *pmb, ParameterInput *pin);
   ~Inversion();
   void Initialize(Real **pos, int nwalker, int ndim, int nvalue);
-  void Finish();
 
   // MCMC functions
-  void EnrollObjectives(ObjectiveFunction_t lnprob, void *myobj);
   void MakeMCMCOutputs(std::string fname);
-  void MCMCStep(void *myobj);
+  void MCMCStep();
   void ResetChain();
 
 private:
-  MeshBlock *pmy_block_;
-  // objective function
-  ObjectiveFunction_t lnprob_;
-
   // mcmc variables
   mcmc_opts opts_;
   mcmc_recs recs_;
   
-  //bool objective_function_enrolled_;
-  bool initialized_;
+  bool mcmc_initialized_;
 };
 
 #endif

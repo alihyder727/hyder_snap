@@ -55,8 +55,10 @@ class Hydro {
   bool limit_to_advection;
   Real min_tem;
 
-  // hydrostatic scale height
+  // hydrostatic option variables
   Real scale_height;
+  Real reference_height;
+  Real reference_pressure;
 
   // storage for SMR/AMR
   // TODO(KGF): remove trailing underscore or revert to private:

@@ -73,8 +73,7 @@ TaskStatus InversionTaskList::Optimize(MeshBlock *pmb, int step) {
 }
 
 TaskStatus InversionTaskList::Sample(MeshBlock *pmb, int step) {
-  Inversion *pinvt = pmb->pinvt;
-  pinvt->MCMCStep(pinvt->obj);
+  pmb->pinvt->MCMCStep();
   //std::cout << "Sample" << std::endl;
   return TaskStatus::success;
 }

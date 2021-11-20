@@ -17,13 +17,13 @@
 #include "../utils/utils.hpp"
 #include "../math/linalg.h"
 
-void calculate_fit_target(MeshBlock *pmb, int j, Real *val, int nvalue)
+void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue, int jcol)
 {
   ATHENA_LOG("calculate_fit_target");
   std::stringstream msg;
   std::vector<Direction> out_dir = pmb->prad->GetOutgoingRays();
   int nangle = 0;
-  std::cout << "* Model id: " << j - pmb->js << std::endl;
+  std::cout << "* Model id: " << jcol - pmb->js << std::endl;
   std::cout << "* Emission angles used: ";
   for (int i = 0; i < out_dir.size(); ++i)
     if (out_dir[i].mu >= cos(45./180.*M_PI)) {
@@ -48,7 +48,7 @@ void calculate_fit_target(MeshBlock *pmb, int j, Real *val, int nvalue)
   int i = 0;
   while (pband != NULL) {
     for (int n = 0; n < nangle; ++n)
-      b[n] = pband->btoa(n,pmb->ks,j);
+      b[n] = pband->btoa(n,pmb->ks,jcol);
     leastsq(B, b, nangle, 3);
 
     for (int n = 0; n < 3; ++n)
