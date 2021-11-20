@@ -22,6 +22,7 @@ public:
   Inversion(MeshBlock *pmb, ParameterInput *pin);
   ~Inversion();
   void Initialize(Real **pos, int nwalker, int ndim, int nvalue);
+  void Finish();
 
   // MCMC functions
   void EnrollObjectives(ObjectiveFunction_t lnprob, void *myobj);

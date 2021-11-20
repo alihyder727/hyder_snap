@@ -78,8 +78,8 @@ Real RadioObservationLnProb(Real *par, Real *val, int ndim, int nvalue, void *ob
       pobj->ix, pobj->Tstd, pobj->Tlen, pobj->Xstd, pobj->Xlen, P0, Z0);
 
   // calculate radiation for updated profiles
-  for (int j = js; j <= je; ++j)
-    prad->CalculateRadiances(phydro->w, 0., ks, j, is, ie+1);
+  //for (int j = js; j <= je; ++j)
+    prad->CalculateRadiances(phydro->w, 0., ks, js+1, is, ie+1);
 
   // 3. log probability
   calculate_fit_target(pmb, js+1, val, nvalue);

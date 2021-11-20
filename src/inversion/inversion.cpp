@@ -37,6 +37,8 @@ Inversion::~Inversion()
   }
 }
 
+void __attribute__((weak)) Inversion::Finish() {} // override in pgen
+
 void Inversion::EnrollObjectives(ObjectiveFunction_t lnprob, void *myobj)
 {
   lnprob_ = lnprob;
@@ -53,7 +55,7 @@ void Inversion::Initialize(Real **pos, int nwalker, int ndim, int nvalue)
   }
 
   if (method == "mcmc") {
-    mcmc_alloc(&recs_, (int)pmy_block_->pmy_mesh->tlim + 1, nwalker, ndim, nvalue);
+    mcmc_alloc(&recs_, pmy_block_->pmy_mesh->nlim+1, nwalker, ndim, nvalue);
     mcmc_init(lnprob_, pos, &opts_, &recs_, obj);
   }
 

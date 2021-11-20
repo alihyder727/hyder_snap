@@ -96,6 +96,12 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   }
 }
 
+void Inversion::Finish()
+{
+  RadioData *pobj = static_cast<RadioData*>(obj);
+  if (pobj != NULL) delete pobj;
+}
+
 /* If you want to use real gas cp
 void update_gamma(Real& gamma, Real const q[]) {
 	Real T = q[IDN], cp_h2, cp_he, cp_ch4;
@@ -270,59 +276,41 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
 
   // Initialize objective function
-  RadioData myradio = RadioData(this, pin);
+  RadioData *myradio = new RadioData(this, pin);
 
   int nwalker = pin->GetInteger("inversion", "nwalker");
   int ndim = 3*nsample;  // location, T and NH3
   int nwave = prad->GetNumBands();
+  int nvalue = nwave*3;
 
   // parameter array and output value array
-  Real **par, *val = new Real [nwave*3];
+  Real **par, *val = new Real [nvalue];
   NewCArray(par, nwalker, ndim); 
 
-  for (int i = 0; i < nsample; ++i) {
-    par[0][i] = PrSample[i];
-    par[0][nsample+i] = TpSample[i];
-    par[0][2*nsample+i] = XpSample[i];
-  }
+  for (int n = 0; n < nwalker; ++n)
+    for (int i = 0; i < nsample; ++i) {
+      par[n][i] = PrSample[i];  // bar
+      par[n][nsample+i] = TpSample[i];  // K
+      par[n][2*nsample+i] = XpSample[i];  // g/kg
+    }
 
   // Modify profile based on input
-  RadioObservationLnProb(*par, val, ndim, nwave*3, &myradio);
-
-  /* copy modified model to baseline
-  for (int n = 0; n < NHYDRO; ++n)
-    for (int k = ks; k <= ke; ++k)
-      for (int j = js; j < js+3; ++j)
-        for (int i = is; i <= ie; ++i)
-          phydro->w(n,k,j,i) = phydro->w(n,k,js+3,i);
-
-  // recalculate baseline radiation
-  prad->CalculateRadiances(phydro->w, 0., ks, js, is, ie + 1);
-
-  // update baseline z,p,t
-  for (int i = is; i <= ie; ++i) {
-    myradio.z1[i-is] = pcoord->x1v(i);
-    myradio.p1[i-is] = phydro->w(IPR,ks,js,i);
-    myradio.t1[i-is] = pthermo->GetTemp(phydro->w.at(ks,js,i));
-  }
-  myradio.nx1 = ie - is + 1; // ie - is + 1 < nx1
-  for (int i = 0; i < nsample; ++i)
-    myradio.zdiv[i] = interp1(myradio.pdiv[i]*1.E5, myradio.z1, myradio.p1, myradio.nx1);
+  // RadioObservationLnProb(*par, val, ndim, nvalue, &myradio);
 
   // initialize random positions
   srand(time(NULL) + Globals::my_rank);
 
   for (int n = 0; n < nwalker; ++n) {
-    for (int i = 0; i < ndim/3; ++i)
-      par[n][i] = 1.*rand()/RAND_MAX;
-    for (int i = ndim/3; i < 2*ndim/3; ++i)
-      par[n][i] = (1.*rand()/RAND_MAX - 0.5)*myradio.Tstd;
+    //for (int i = 0; i < ndim/3; ++i)
+    //  par[n][i] = 1.*rand()/RAND_MAX;
+    //for (int i = ndim/3; i < 2*ndim/3; ++i)
+    //  par[n][i] = (1.*rand()/RAND_MAX - 0.5)*myradio->Tstd;
     for (int i = 2*ndim/3; i < ndim; ++i)
-      par[n][i] = (1.*rand()/RAND_MAX - 0.5)*myradio.NH3std;
+      par[n][i] = (1.*rand()/RAND_MAX - 0.5)*myradio->Xstd*1.E3;  // kg/kg -> g/kg
   }
 
-  pinvt->EnrollObjectives(RadioObservationLnProb, &myradio);
-  pinvt->Initialize(par, nwalker, ndim, nwave*3);*/
+  pinvt->EnrollObjectives(RadioObservationLnProb, myradio);
+  pinvt->Initialize(par, nwalker, ndim, nvalue);
 
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
 

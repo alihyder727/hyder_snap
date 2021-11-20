@@ -76,7 +76,7 @@ void update_atm_profiles(MeshBlock *pmb,
       for (int i = is; i <= ie; ++i)
         phydro->w(n,j,i) = phydro->w(n,js,i);
 
-  // save perturbed X profile
+  // save perturbed X profile to model 1
   std::cout << "* Calculate Tb if only X was perturbed" << std::endl;
   Real rho, Rd = pthermo->GetRd();
   int j1 = js+1, j2 = js+2, j3 = js+3;
@@ -88,7 +88,7 @@ void update_atm_profiles(MeshBlock *pmb,
       (Rd*temp*pthermo->RovRd(phydro->w.at(j1,i)));
   }
 
-  // save perturbed T profile
+  // save perturbed T profile to model 2
   std::cout << "* Calculate Tb if only T was perturbed" << std::endl;
   for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(j2,i));
@@ -97,7 +97,7 @@ void update_atm_profiles(MeshBlock *pmb,
         pthermo->RovRd(phydro->w.at(j2,i)));
   }
 
-  // convective adjustment
+  // save convectively adjusted profile to model 3
 
   delete[] zlev;
   delete[] stdAll;

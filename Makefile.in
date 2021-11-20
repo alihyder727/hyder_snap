@@ -27,6 +27,8 @@ GCOV_CMD := @GCOV_COMMAND@
 # Preliminary definitions
 
 EXE_DIR := bin/
+TOOLS_DIR := tools/
+TOOLS := $(addprefix $(EXE_DIR), fitsmerge)
 EXECUTABLE := $(EXE_DIR)@PROBLEM@
 SRC_FILES := $(wildcard src/*.cpp) \
 	     $(wildcard src/bvals/*.cpp) \
@@ -86,7 +88,7 @@ VPATH := $(SRC_DIRS)
 
 .PHONY : all dirs clean
 
-all : dirs $(EXECUTABLE)
+all : dirs $(EXECUTABLE) $(TOOLS)
 
 objs : dirs $(OBJ_FILES)
 
@@ -110,6 +112,12 @@ $(OBJ_DIR):
 
 $(EXECUTABLE) : $(OBJ_FILES) $(MATH_LIBRARY) $(DISORT_LIBRARY)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $(OBJ_FILES) $(LDFLAGS) $(LDLIBS)
+
+$(OBJ_DIR)fitsmerge.o : $(TOOLS_DIR)fitsmerge.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+$(EXE_DIR)fitsmerge : $(OBJ_DIR)fitsmerge.o $(OBJ_DIR)mcmc.o $(MATH_LIBRARY)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $< $(OBJ_DIR)mcmc.o $(LDFLAGS) $(LDLIBS)
 
 $(MATH_LIBRARY):
 	make -C src/math CC=$(CXX)
