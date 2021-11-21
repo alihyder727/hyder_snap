@@ -17,7 +17,8 @@
 #include "../utils/utils.hpp"
 #include "../math/linalg.h"
 
-void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue, int jcol)
+void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
+    int jcol, bool differential)
 {
   ATHENA_LOG("calculate_fit_target");
   std::stringstream msg;
@@ -50,9 +51,16 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue, int jcol)
     for (int n = 0; n < nangle; ++n)
       b[n] = pband->btoa(n,pmb->ks,jcol);
     leastsq(B, b, nangle, 3);
-
     for (int n = 0; n < 3; ++n)
       val[i*3+n] = b[n];
+
+    if (differential) {
+      for (int n = 0; n < nangle; ++n)
+        b[n] = pband->btoa(n,pmb->ks,pmb->js);
+      leastsq(B, b, nangle, 3);
+      for (int n = 0; n < 3; ++n)
+        val[i*3+n] -= b[n];
+    }
 
     i++;
     pband = pband->next;
@@ -66,7 +74,7 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue, int jcol)
 
   std::cout << "* Foward model results: ";
   for (int i = 0; i < nvalue; ++i)
-    std::cout << std::setprecision(4) << val[i] << " ";
+    std::cout << std::setprecision(5) << val[i] << " ";
   std::cout << std::endl;
 
   FreeCArray(B);

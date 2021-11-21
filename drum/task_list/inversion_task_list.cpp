@@ -22,15 +22,19 @@ InversionTaskList::InversionTaskList(ParameterInput *pin, Mesh *pm)
   std::cout << "## A High-performance Atmospheric Radiative Package ##" << std::endl;
   std::cout << "######################################################" << std::endl;
   nstages = 1;
-  std::string method = pin->GetString("inversion", "method");
+  std::string task = pin->GetString("inversion", "task");
 
   // Now assemble list of tasks for each step of inversion task
 
-  if (method == "LM") {
-    AddTask(CALC_GRAD,NONE);
-    AddTask(OPTIMIZE,CALC_GRAD);
-  } else if (method == "mcmc") {
+  if (task == "radio") {
     AddTask(SAMPLE,NONE);
+  } else {
+    std::stringstream msg;
+    msg << "### FATAL ERROR in InversionTaskList::InversionTaskList"
+        << std::endl << "Unrecognized inversion task";
+    ATHENA_ERROR(msg);
+    //AddTask(CALC_GRAD,NONE);
+    //AddTask(OPTIMIZE,CALC_GRAD);
   }
 }
 
@@ -52,7 +56,7 @@ void InversionTaskList::AddTask(const TaskID& id, const TaskID& dep) {
         (&InversionTaskList::Sample);
   } else {
       std::stringstream msg;
-      msg << "### FATAL ERROR in AddTask" << std::endl
+      msg << "### FATAL ERROR in InversionTaskList::AddTask" << std::endl
           << "Invalid Task is specified" << std::endl;
       ATHENA_ERROR(msg);
   }

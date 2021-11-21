@@ -22,8 +22,6 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
     std::cout << target.transpose() << std::endl;
     std::cout << "- inverse covariance matrix" << std::endl;
     std::cout << icov << std::endl;
-    //target.setZero();
-    //icov.setZero();
   }
 
   // T correlation 
@@ -43,6 +41,9 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
 
 	for (std::vector<Real>::iterator m = plevel.begin(); m != plevel.end(); ++m)
 		(*m) *= 1.E5;	// bar -> pa
+
+  // fit differential
+  fit_differential_ = pin->GetOrAddBoolean("inversion", "differential", false);
 }
 
 #define MAX_LINE 512

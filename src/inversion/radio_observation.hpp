@@ -32,12 +32,14 @@ public:
 private:
   Inversion *pmy_invt_;
   Real Tstd_, Tlen_, Xstd_, Xlen_;
+  bool fit_differential_;
 };
 
 void update_atm_profiles(MeshBlock *pmb,
     Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample,
 		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen);
 
-void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue, int jcol);
+void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
+    int jcol, bool differential = false);
 
 #endif

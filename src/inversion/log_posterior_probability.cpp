@@ -64,7 +64,7 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
   // posterior probability
   Eigen::VectorXd misfit(nvalue);
 
-  calculate_fit_target(pmb, val, nvalue, je);
+  calculate_fit_target(pmb, val, nvalue, je, fit_differential_);
   for (int m = 0; m < nvalue; ++m)
     misfit(m) = val[m] - target(m);
   Real lnpost = -0.5*misfit.transpose()*icov*misfit;
