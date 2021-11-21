@@ -63,7 +63,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 
 void Mesh::InitUserMeshData(ParameterInput *pin)
 {
-  P0 = pin->GetReal("problem", "P0");
+  P0 = pin->GetReal("hydro", "reference_pressure");
   T0 = pin->GetReal("problem", "T0");
   Z0 = pin->GetOrAddReal("problem", "Z0", 0.);
   Tmin = pin->GetReal("problem", "Tmin");

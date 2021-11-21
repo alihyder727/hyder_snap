@@ -13,8 +13,9 @@
 #include "mcmc_impl.hpp"
 
 Inversion::Inversion(MeshBlock *pmb, ParameterInput *pin):
-  pmy_block(pmb)
+  pmy_block(pmb), pradio(nullptr)
 {
+  std::stringstream msg;
   ATHENA_LOG("Inversion");
   task = pin->GetOrAddString("inversion", "task", "none");
   mcmc_initialized_ = false;
@@ -28,10 +29,14 @@ Inversion::Inversion(MeshBlock *pmb, ParameterInput *pin):
 
   strcpy(opts_.logfile, pin->GetOrAddString("inversion", "logfile", "inversion.log").c_str());
 
-  if (task == "radio") {
-    pradio = new RadioObservation(this, pin);
-  } else {
-    pradio = nullptr;
+  if (task != "none") {
+    if (task == "radio") {
+      pradio = new RadioObservation(this, pin);
+    } else {
+      msg << "### FATAL ERROR in function Inversion::Inversion"
+          << std::endl << "Unrecognized inversion task.";
+      ATHENA_ERROR(msg);
+    }
   }
 }
 

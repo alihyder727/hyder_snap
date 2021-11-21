@@ -14,17 +14,17 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   pmy_invt_(pinvt)
 {
   ATHENA_LOG("RadioObservation");
-  std::string obsfile = pin->GetOrAddString("inversion", "obsfile", "");
+  std::string obsfile = pin->GetOrAddString("inversion", "obsfile", "none");
 
-  if (obsfile != "") {
+  if (obsfile != "none") {
     ReadObservationFile(obsfile.c_str());
+    std::cout << "- target: ";
+    std::cout << target.transpose() << std::endl;
+    std::cout << "- inverse covariance matrix" << std::endl;
+    std::cout << icov << std::endl;
     //target.setZero();
     //icov.setZero();
-  } 
-  std::cout << "- target: ";
-  std::cout << target.transpose() << std::endl;
-  std::cout << "- inverse covariance matrix" << std::endl;
-  std::cout << icov << std::endl;
+  }
 
   // T correlation 
   Tstd_ = pin->GetReal("inversion", "Tstd");
@@ -39,6 +39,7 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
 
 	// Pressure sample
 	plevel = Vectorize<Real>(pin->GetString("inversion", "PrSample").c_str());
+  std::cout << "- number of inversion variables: " << plevel.size()*ix.size() << std::endl;
 
 	for (std::vector<Real>::iterator m = plevel.begin(); m != plevel.end(); ++m)
 		(*m) *= 1.E5;	// bar -> pa

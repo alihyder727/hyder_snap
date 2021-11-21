@@ -83,7 +83,7 @@ void update_atm_profiles(MeshBlock *pmb,
 
   // save perturbed T profile to model 1
 	if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
-		std::cout << "* Calculate Tb if only T was perturbed" << std::endl;
+		std::cout << "* Update temperature" << std::endl;
 		for (int i = is; i <= ie; ++i) {
 			Real temp = pthermo->GetTemp(phydro->w.at(j1,i));
 			if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
@@ -93,7 +93,7 @@ void update_atm_profiles(MeshBlock *pmb,
 	}
 
   // save perturbed X profile to model 2
-  std::cout << "* Calculate Tb if only X was perturbed" << std::endl;
+  std::cout << "* Update composition" << std::endl;
   for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(j2,i));
 		int ic = 0;
