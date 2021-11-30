@@ -29,8 +29,11 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   Tlen_ = pin->GetReal("inversion", "Tlen")*1.E3; // km -> m
 
   // X correlation
-  Xstd_ = pin->GetReal("inversion", "Xstd")/1.E3;  // g/kg -> kg/kg
-  Xlen_ = pin->GetReal("inversion", "Xlen")*1.E3; // km -> m
+  Xstd_ = pin->GetReal("inversion", "Xstd")/1.E3;   // g/kg -> kg/kg
+  Xlen_ = pin->GetReal("inversion", "Xlen")*1.E3;   // km -> m
+
+  // power law coefficient
+  chi_ = pin->GetOrAddReal("inversion", "chi", 0.1);
 
   // composition id
   ix = Vectorize<int>(pin->GetString("inversion", "Variables").c_str());

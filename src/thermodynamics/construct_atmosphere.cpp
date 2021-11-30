@@ -27,7 +27,7 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
   PrimitiveToChemical(q1, w[0]);
   for (int n = NHYDRO; n < NHYDRO+2*NVAPOR; ++n) q1[n] = 0.;
   // change molar concentration to mixing ratio
-  Real mols = q1[IPR]/(q1[IDN]*Thermodynamics::Rgas);
+  Real mols = q1[IPR]/(q1[IDN]*Rgas);
   for (int n = 1; n <= NVAPOR; ++n) q1[n] /= mols;
   // reset TP
   q1[IDN] = Ts;
@@ -57,7 +57,7 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
   // change molar mixing ratio to molar concentration
   Real qv = 1.;
   for (int n = NHYDRO; n < NHYDRO + 2*NVAPOR; ++n) qv -= q1[n];
-  mols = q1[IPR]/(q1[IDN]*Thermodynamics::Rgas)/qv;
+  mols = q1[IPR]/(q1[IDN]*Rgas)/qv;
   for (int n = 1; n <= NVAPOR; ++n) q1[n] *= mols;
   // set vapor
   ChemicalToPrimitive(w[0], q1);
@@ -70,12 +70,19 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
 
   for (int i = 1; i < len; ++i) {
     // RK4 integration 
+#if HYDROSTATIC
+    Real dlnp = dz;
+    Real dlnTdlnP = dTdz;
+    rk4_integrate_lnp_adaptive(q1, isat, rcp, beta_, delta_, t3_, p3_, gamma,
+      dlnp, ftol_, (int)method, dlnTdlnP);
+#else
     rk4_integrate_z_adaptive(q1, isat, rcp, mu_ratios_, beta_, delta_, t3_, p3_, gamma,
       grav/Rd_, dz, ftol_, (int)method, dTdz);
+#endif
     // reset mols
     qv = 1.;
     for (int n = NHYDRO; n < NHYDRO + 2*NVAPOR; ++n) qv -= q1[n];
-    mols = q1[IPR]/(q1[IDN]*Thermodynamics::Rgas)/qv;
+    mols = q1[IPR]/(q1[IDN]*Rgas)/qv;
     // change molar mixing ratio to molar concentration
     for (int n = 1; n <= NVAPOR; ++n) q1[n] *= mols;
     // set vapor

@@ -26,7 +26,7 @@
 
 // molecules
 enum {iH2O = 1, iNH3 = 2};
-Real grav, P0, T0, Z0, Tmin, xHe, xCH4;
+Real grav, P0, T0, Tmin, xHe, xCH4;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -44,13 +44,12 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 {
   Real dq[1+NVAPOR], rh;
-  Real p1bar = 1.E5;
 
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
         user_out_var(0,k,j,i) = pthermo->GetTemp(phydro->w.at(k,j,i));
-        user_out_var(1,k,j,i) = PotentialTemp(phydro->w.at(k,j,i), p1bar, pthermo);
+        user_out_var(1,k,j,i) = PotentialTemp(phydro->w.at(k,j,i), P0, pthermo);
         // theta_v
         user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->RovRd(phydro->w.at(k,j,i));
         // mse
@@ -65,7 +64,6 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
 {
   P0 = pin->GetReal("hydro", "reference_pressure");
   T0 = pin->GetReal("problem", "T0");
-  Z0 = pin->GetOrAddReal("problem", "Z0", 0.);
   Tmin = pin->GetReal("problem", "Tmin");
   grav = - pin->GetReal("hydro", "grav_acc1");
 
@@ -117,39 +115,24 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
 
-  // 1. construct a 1D pseudo-moist adiabat at (T0,P0,Z0)
+  // 1. construct a 1D pseudo-moist adiabat at (T0,P0)
   Real gamma = pin->GetReal("hydro", "gamma");
   Real Rd = pthermo->GetRd();
   Real cp = gamma/(gamma - 1.)*Rd;
 
   Real x1min = pmy_mesh->mesh_size.x1min;
   Real x1max = pmy_mesh->mesh_size.x1max;
-  Real x1rat = pmy_mesh->mesh_size.x1rat;
+  Real H0 = phydro->scale_height;
 
   // estimate surface temperature and pressure
   // coordinate range needs to be adjusted for hydrostatic model
-  Real Ts = T0 - grav/cp*(x1min - Z0);
-  Real Ps = P0*pow(Ts/T0, cp/Rd);
-  while (HYDROSTATIC) {
-    if ((Z0 - pmy_mesh->mesh_size.x1min)/phydro->scale_height < log(Ps/P0))
-      break;
-    else
-      x1min = Z0 + 1.2*(x1min - Z0);
-    Ts = T0 - grav/cp*(x1min - Z0);
-    Ps = P0*pow(Ts/T0, cp/Rd);
-  }
-
-  Real dz, **w1, *z1, *p1, *t1;
-  if (x1rat != 1.0) {
-    dz = (x1max - x1min)*(x1rat - 1.)/(pow(x1rat, pmy_mesh->mesh_size.nx1) - 1.);
-    dz = std::min(dz, dz*pow(x1rat, pmy_mesh->mesh_size.nx1))/2.;
-  } else {
-    dz = (x1max - x1min)/pmy_mesh->mesh_size.nx1/2.;
-  }
-  int nx1 = (int)((x1max - x1min)/dz);
+  Real Ps = P0*exp(-x1min/H0);
+  Real Ts = T0*pow(Ps/P0,Rd/cp);
+  Real dlnp, **w1, *z1, *t1;
+  dlnp = (x1max - x1min)/pmy_mesh->mesh_size.nx1/(2.*H0);
+  int nx1 = (int)((x1max - x1min)/(H0*dlnp));
   NewCArray(w1, nx1, NHYDRO+2*NVAPOR);
   z1 = new Real [nx1];
-  p1 = new Real [nx1];
   t1 = new Real [nx1];
 
   int max_iter = 200, iter = 0;
@@ -160,12 +143,12 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
   z1[0] = x1min;
   for (int i = 1; i < nx1; ++i)
-    z1[i] = z1[i-1] + dz;
+    z1[i] = z1[i-1] + H0*dlnp;
 
-  Real t0, p0;
-  std::cout << "- Request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
+  Real t0;
+  std::cout << "- Request T = " << T0 << " at P = " << P0 << std::endl;
   while (iter++ < max_iter) {
-    pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo);
+    pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, -dlnp, nx1, Adiabat::pseudo);
 
     // 1.2 replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
     int ii = 0;
@@ -173,68 +156,55 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
       if (pthermo->GetTemp(w1[ii]) < Tmin) break;
     Real Tv = w1[ii][IPR]/(w1[ii][IDN]*Rd);
     for (int i = ii; i < nx1; ++i) {
-      w1[i][IPR] = w1[ii][IPR]*exp(-grav*(z1[i] - z1[ii])/(Rd*Tv));
       w1[i][IDN] = w1[i][IPR]/(Rd*Tv);
       for (int n = 1; n <= NVAPOR; ++n)
         w1[i][n] = w1[ii][n];
     }
 
-    // 1.3 find TP at z = Z0
+    // 1.3 find T at p = p0
     for (int i = 0; i < nx1; ++i) {
-      p1[i] = w1[i][IPR];
       t1[i] = pthermo->GetTemp(w1[i]);
     }
-    p0 = interp1(Z0, p1, z1, nx1);
-    t0 = interp1(Z0, t1, z1, nx1);
+    t0 = interp1(0, t1, z1, nx1);
 
     Ts += T0 - t0;
-    Ps *= P0/p0;
-    if ((fabs(T0 - t0) < 0.01) && (fabs(P0/p0 - 1.) < 1.E-4)) break;
-    std::cout << "- Iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
+    std::cout << "- Iteration #" << iter << ": " << "T = " << t0  << std::endl;
+    if (fabs(T0 - t0) < 0.01) break;
   }
 
   if (iter > max_iter) {
     std::stringstream msg;
     msg << "### FATAL ERROR in problem generator"
         << std::endl << "maximum iteration reached."
-        << std::endl << "T0 = " << t0
-        << std::endl << "P0 = " << p0;
+        << std::endl << "T0 = " << t0;
     ATHENA_ERROR(msg);
   }
 
   // change to log quantity
-  if (HYDROSTATIC) {
-    for (int i = 0; i < nx1; ++i) {
-      for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
+  for (int i = 0; i < nx1; ++i)
+    for (int n = 0; n < NHYDRO+2*NVAPOR; ++n) {
+      if (n == IVX || n == IVY || n == IVZ)
+        w1[i][n] = 0.;
+      else
         w1[i][n] = log(w1[i][n]);
-      p1[i] = log(p1[i]);
     }
-  }
 
   // setup initial condition
-  // Z = Z0 - H0*log(P/P0)
-  // log(P) = log(P0) + (Z0-Z)/H0
+  // Z = -H0*log(P/P0)
+  // log(P) = log(P0) - Z/H0
   for (int i = is; i <= ie; ++i) {
     Real buf[NHYDRO+2*NVAPOR];
-    // set gas concentration
-    
-    if (HYDROSTATIC) {
-      Real lnp = log(P0) + (Z0 - pcoord->x1v(i))/phydro->scale_height;
-      interpn(buf, &lnp, *w1, p1, &nx1, 1, NHYDRO+2*NVAPOR);
-      for (int n = 0; n < NHYDRO; ++n)
-        for (int k = ks; k <= ke; ++k)
-          for (int j = js; j <= je; ++j)
+    // set gas concentration and velocity
+    interpn(buf, &pcoord->x1v(i), *w1, z1, &nx1, 1, NHYDRO+2*NVAPOR);
+    for (int n = 0; n < NHYDRO; ++n)
+      for (int k = ks; k <= ke; ++k)
+        for (int j = js; j <= je; ++j) {
+          if (n == IVX || n == IVY || n == IVZ)
+            phydro->w(n,k,j,i) = 0.;
+          else
             phydro->w(n,k,j,i) = exp(buf[n]);
-    } else {
-      interpn(buf, &pcoord->x1v(i), *w1, z1, &nx1, 1, NHYDRO+2*NVAPOR);
-      for (int n = 0; n < NHYDRO; ++n)
-        for (int k = ks; k <= ke; ++k)
-          for (int j = js; j <= je; ++j)
-            phydro->w(n,k,j,i) = exp(buf[n]);
-    }
+        }
 
-    // set velocities
-    buf[IVX] = buf[IVY] = buf[IVZ] = 0.;
   }
 
   // Apply boundary condition
@@ -306,6 +276,5 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   FreeCArray(w1);
   FreeCArray(par);
   delete[] z1;
-  delete[] p1;
   delete[] t1;
 }

@@ -53,7 +53,7 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
 
 	// update atmosphere based on par
   update_atm_profiles(pmb, plevel.data(), TpSample, XpSample, nsample, 
-      ix, Tstd_, Tlen_, Xstd_, Xlen_);
+      ix, Tstd_, Tlen_, Xstd_, Xlen_, chi_);
 
   // calculate radiation for updated profiles
 	prad->CalculateRadiances(phydro->w, 0., ks, je, is, ie+1);

@@ -21,8 +21,7 @@
 
 void update_atm_profiles(MeshBlock *pmb,
     Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample, 
-		std::vector<int> const& ix,
-		Real Tstd, Real Tlen, Real Xstd, Real Xlen)
+		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
 {
   ATHENA_LOG("update_atm_profiles");
   Thermodynamics *pthermo = pmb->pthermo;
@@ -33,11 +32,12 @@ void update_atm_profiles(MeshBlock *pmb,
 
   int nlayer = ie - is + 1;
   Real *zlev = new Real [nsample];
+  Real P0 = phydro->reference_pressure;
+  Real H0 = phydro->scale_height;
 
   std::cout << "* Sample levels: ";
   for (int i = 0; i < nsample; ++i) {
-    zlev[i] = phydro->reference_height 
-			- phydro->scale_height*log(PrSample[i]/phydro->reference_pressure);
+    zlev[i] = -H0*log(PrSample[i]/P0);
     std::cout << zlev[i] << " ";
   }
   std::cout << std::endl;
@@ -50,9 +50,9 @@ void update_atm_profiles(MeshBlock *pmb,
 
   // calculate perturbed T profile
   for (int i = is; i <= ie; ++i)
-    stdAll[i-is] = Tstd;
+    stdAll[i-is] = Tstd*pow(exp(pcoord->x1v(i)/H0), chi);
   for (int i = 0; i < nsample; ++i)
-    stdSample[i] = Tstd;
+    stdSample[i] = Tstd*pow(exp(zlev[i]/H0), chi);
 
   gp_predict(SquaredExponential, Tp, &pcoord->x1v(is), stdAll, nlayer,
     TpSample, zlev, stdSample, nsample, Tlen);
@@ -66,9 +66,9 @@ void update_atm_profiles(MeshBlock *pmb,
 
   // calculate perturbed X profile
   for (int i = is; i <= ie; ++i)
-    stdAll[i-is] = Xstd;
+    stdAll[i-is] = Xstd*pow(exp(pcoord->x1v(i)/H0), chi);
   for (int i = 0; i < nsample; ++i)
-    stdSample[i] = Xstd;
+    stdSample[i] = Xstd*pow(exp(zlev[i]/H0), chi);
     
   gp_predict(SquaredExponential, Xp, &pcoord->x1v(is), stdAll, nlayer,
     XpSample, zlev, stdSample, nsample, Xlen);

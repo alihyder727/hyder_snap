@@ -21,17 +21,18 @@ Real RadioObservation::LogPriorProbability(Real const *TpSample, Real const *XpS
   Hydro *phydro = pmy_invt_->pmy_block->phydro;
   Real *zlev = new Real [nsample];
   Real *stdSample = new Real [nsample];
+  Real P0 = phydro->reference_pressure;
+  Real H0 = phydro->scale_height;
 
   for (int i = 0; i < nsample; ++i)
-    zlev[i] = phydro->reference_height - 
-			phydro->scale_height*log(plevel[i]/phydro->reference_pressure);
+    zlev[i] = -H0*log(plevel[i]/P0);
 
   for (int i = 0; i < nsample; ++i)
-    stdSample[i] = Tstd_;
+    stdSample[i] = Tstd_*pow(exp(zlev[i]/H0), chi_);
   Real lnp1 = gp_lnprior(SquaredExponential, TpSample, zlev, stdSample, nsample, Tlen_);
 
   for (int i = 0; i < nsample; ++i)
-    stdSample[i] = Xstd_;
+    stdSample[i] = Xstd_*pow(exp(zlev[i]/H0), chi_);
   Real lnp2 = gp_lnprior(SquaredExponential, XpSample, zlev, stdSample, nsample, Xlen_);
 
   std::cout << "- Log prior probability: ";

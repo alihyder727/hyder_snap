@@ -57,7 +57,6 @@ class Hydro {
 
   // hydrostatic option variables
   Real scale_height;
-  Real reference_height;
   Real reference_pressure;
 
   // storage for SMR/AMR
