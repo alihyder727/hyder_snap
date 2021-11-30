@@ -110,6 +110,7 @@ void update_gamma(Real& gamma, Real const q[]) {
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
+  static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
   ATHENA_LOG("harp_radio_js");
   std::stringstream msg;
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
