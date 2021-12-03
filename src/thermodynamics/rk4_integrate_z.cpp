@@ -4,7 +4,7 @@
 
 void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
-  Real g_ov_Rd, Real dz, int method, Real user_dTdz)
+  Real g_ov_Rd, Real dz, int method, Real adTdz)
 {
   Real step[] = {0.5, 0.5, 1.};
   Real temp = q[IDN];
@@ -47,7 +47,7 @@ void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
       chi[rk] = dlnTdlnP(q, isat, rcp, beta0, delta0, t3, gamma);
     else  // isothermal
       chi[rk] = 0.;
-    dTdz[rk] = - chi[rk]*g_ov_Rd/R_ov_Rd + user_dTdz;
+    dTdz[rk] = - chi[rk]*g_ov_Rd/R_ov_Rd + adTdz;
     chi[rk] = - R_ov_Rd/g_ov_Rd*dTdz[rk];
     
     // integrate over dz
@@ -80,7 +80,7 @@ void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
 
 void rk4_integrate_z_adaptive(Real q[], int isat[], Real rcp[], Real const eps[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
-  Real g_ov_Rd, Real dz, Real ftol, int method, Real user_dTdz)
+  Real g_ov_Rd, Real dz, Real ftol, int method, Real adTdz)
 {
   Real q1[NHYDRO+2*NVAPOR], q2[NHYDRO+2*NVAPOR];
   int  isat1[1+NVAPOR], isat2[1+NVAPOR];
@@ -96,13 +96,13 @@ void rk4_integrate_z_adaptive(Real q[], int isat[], Real rcp[], Real const eps[]
 
   // trail step
   rk4_integrate_z(q1, isat1, rcp, eps, beta, delta, t3, p3, gamma,
-                  g_ov_Rd, dz, method, user_dTdz);
+                  g_ov_Rd, dz, method, adTdz);
 
   // refined step
   rk4_integrate_z(q2, isat2, rcp, eps, beta, delta, t3, p3, gamma,
-                  g_ov_Rd, dz/2., method, user_dTdz);
+                  g_ov_Rd, dz/2., method, adTdz);
   rk4_integrate_z(q2, isat2, rcp, eps, beta, delta, t3, p3, gamma,
-                  g_ov_Rd, dz/2., method, user_dTdz);
+                  g_ov_Rd, dz/2., method, adTdz);
 
   // abort if dz is less than 0.001 m
   //std::cout << dz << " ";
@@ -112,9 +112,9 @@ void rk4_integrate_z_adaptive(Real q[], int isat[], Real rcp[], Real const eps[]
 
   if (fabs(q2[IDN] - q1[IDN]) > ftol) {
     rk4_integrate_z_adaptive(q, isat, rcp, eps, beta, delta, t3, p3, gamma,
-                             g_ov_Rd, dz/2., ftol, method, user_dTdz);
+                             g_ov_Rd, dz/2., ftol, method, adTdz);
     rk4_integrate_z_adaptive(q, isat, rcp, eps, beta, delta, t3, p3, gamma,
-                             g_ov_Rd, dz/2., ftol, method, user_dTdz);
+                             g_ov_Rd, dz/2., ftol, method, adTdz);
   } else {
     for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
       q[n] = q2[n];

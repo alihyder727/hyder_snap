@@ -4,7 +4,7 @@
 
 void rk4_integrate_lnp(Real q[], int isat[], Real const rcp[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
-  Real dlnp, int method, Real user_dlnTdlnP)
+  Real dlnp, int method, Real rdlnTdlnP)
 {
   Real step[] = {0.5, 0.5, 1.};
   Real temp = q[IDN];
@@ -43,7 +43,7 @@ void rk4_integrate_lnp(Real q[], int isat[], Real const rcp[],
       chi[rk] = dlnTdlnP(q, isat, rcp, beta0, delta0, t3, gamma);
     else // isothermal
       chi[rk] = 0.;
-    chi[rk] += user_dlnTdlnP;
+    chi[rk] *= rdlnTdlnP;
     
     // integrate over dlnp
     if (rk < 3)
@@ -66,7 +66,7 @@ void rk4_integrate_lnp(Real q[], int isat[], Real const rcp[],
 
 void rk4_integrate_lnp_adaptive(Real q[], int isat[], Real const rcp[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma, Real dlnp, Real ftol,
-  int method, Real user_dlnTdlnP)
+  int method, Real rdlnTdlnP)
 {
   Real q1[NHYDRO+2*NVAPOR], q2[NHYDRO+2*NVAPOR];
   int  isat1[1+NVAPOR], isat2[1+NVAPOR];
@@ -81,15 +81,15 @@ void rk4_integrate_lnp_adaptive(Real q[], int isat[], Real const rcp[],
   }
 
   // trail step
-  rk4_integrate_lnp(q1, isat1, rcp, beta, delta, t3, p3, gamma, dlnp, method, user_dlnTdlnP);
+  rk4_integrate_lnp(q1, isat1, rcp, beta, delta, t3, p3, gamma, dlnp, method, rdlnTdlnP);
 
   // refined step
-  rk4_integrate_lnp(q2, isat2, rcp, beta, delta, t3, p3, gamma, dlnp/2., method, user_dlnTdlnP);
-  rk4_integrate_lnp(q2, isat2, rcp, beta, delta, t3, p3, gamma, dlnp/2., method, user_dlnTdlnP);
+  rk4_integrate_lnp(q2, isat2, rcp, beta, delta, t3, p3, gamma, dlnp/2., method, rdlnTdlnP);
+  rk4_integrate_lnp(q2, isat2, rcp, beta, delta, t3, p3, gamma, dlnp/2., method, rdlnTdlnP);
 
   if (fabs(q2[IDN] - q1[IDN]) > ftol) {
-    rk4_integrate_lnp_adaptive(q, isat, rcp, beta, delta, t3, p3, gamma, dlnp/2., ftol/2., method, user_dlnTdlnP);
-    rk4_integrate_lnp_adaptive(q, isat, rcp, beta, delta, t3, p3, gamma, dlnp/2., ftol/2., method, user_dlnTdlnP);
+    rk4_integrate_lnp_adaptive(q, isat, rcp, beta, delta, t3, p3, gamma, dlnp/2., ftol/2., method, rdlnTdlnP);
+    rk4_integrate_lnp_adaptive(q, isat, rcp, beta, delta, t3, p3, gamma, dlnp/2., ftol/2., method, rdlnTdlnP);
   } else {
     for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
       q[n] = q2[n];

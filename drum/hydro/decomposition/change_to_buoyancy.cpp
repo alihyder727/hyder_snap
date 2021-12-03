@@ -54,7 +54,7 @@ void Decomposition::ChangeToBuoyancy(AthenaArray<Real> &w, int kl, int ku, int j
           w1[0][n] = w(n,k,j,ie);
 
         // adiabatic extrapolation for half a grid
-        pthermo->ConstructAtmosphere(w1, T1, P1, grav, dz/2., 2, Adiabat::reversible);
+        pthermo->ConstructAtmosphere(w1, T1, P1, grav, dz/2., 2, Adiabat::reversible, 0.);
         psf_(k,j,ie+1) = w1[1][IPR];
       }
   }
@@ -176,7 +176,7 @@ void Decomposition::RestoreFromBuoyancy(AthenaArray<Real> &w,
   Real dz = pco->dx1f(is);
   for (int n = 0; n < NHYDRO; ++n)
     w1[0][n] = w(n,k,j,is);
-  pthermo->ConstructAtmosphere(w1, T1, P1, grav, -dz, 2, Adiabat::reversible);
+  pthermo->ConstructAtmosphere(w1, T1, P1, grav, -dz, 2, Adiabat::reversible, 0.);
 
   mdpdz = (w1[1][IPR] - w1[0][IPR])/dz;
   if (pmb->pbval->block_bcs[inner_x1] == BoundaryFlag::reflect) {
@@ -199,7 +199,7 @@ void Decomposition::RestoreFromBuoyancy(AthenaArray<Real> &w,
   dz = pco->dx1f(ie);
   for (int n = 0; n < NHYDRO; ++n)
     w1[0][n] = w(n,k,j,ie);
-  pthermo->ConstructAtmosphere(w1, T1, P1, grav, dz, 2, Adiabat::reversible);
+  pthermo->ConstructAtmosphere(w1, T1, P1, grav, dz, 2, Adiabat::reversible, 0.);
 
   mdpdz = (w1[0][IPR] - w1[1][IPR])/dz;
   if (pmb->pbval->block_bcs[outer_x1] == BoundaryFlag::reflect) {

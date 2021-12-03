@@ -95,7 +95,7 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   }
 }
 
-/* If you want to use real gas cp
+// If you want to use real gas cp
 void update_gamma(Real& gamma, Real const q[]) {
   Real T = q[IDN], cp_h2, cp_he, cp_ch4;
   if (T < 300.)
@@ -107,7 +107,7 @@ void update_gamma(Real& gamma, Real const q[]) {
 
   Real cp_real = (1. - xHe - xCH4)*cp_h2 + xHe*cp_he + xCH4*cp_ch4;
   gamma = cp_real/(cp_real - Thermodynamics::Rgas);
-}*/
+}
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {

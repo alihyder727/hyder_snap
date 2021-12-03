@@ -141,7 +141,7 @@ public:
    * @param method choose from [reversible, pseudo, dry, isothermal]
    */
   void ConstructAtmosphere(Real **w, Real Ts, Real Ps,
-    Real grav, Real dz, int len, Adiabat method, Real dTdz = 0.) const;
+    Real grav, Real dzORdlnp, int len, Adiabat method, Real userp) const;
 
   // conversion functions
   //! Change mass mixing ratio to molar mixing ratio

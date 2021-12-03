@@ -90,20 +90,20 @@ Real VaporCloudEquilibrium(Real const q[], int iv, int ic,
 
 void rk4_integrate_z(Real q[], int isat[], Real rcp[], Real const eps[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
-  Real g_ov_Rd, Real dz, int method, Real user_dTdz = 0.);
+  Real g_ov_Rd, Real dz, int method, Real adTdz = 0.);
 
 void rk4_integrate_z_adaptive(
   Real q[], int isat[], Real rcp[], Real const eps[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
-  Real g_ov_Rd, Real dz, Real ftol, int method, Real user_dTdz = 0.);
+  Real g_ov_Rd, Real dz, Real ftol, int method, Real adTdz = 0.);
 
 void rk4_integrate_lnp(Real q[], int isat[], Real const rcp[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
-  Real dlnp, int method, Real user_dlnTdlnP = 0.);
+  Real dlnp, int method, Real rdlnTdlnP = 1.);
 
 void rk4_integrate_lnp_adaptive(Real q[], int isat[], Real const rcp[],
   Real const beta[], Real const delta[], Real const t3[], Real const p3[], Real gamma,
-  Real dlnp, Real ftol, int method, Real user_dlnTdlnP = 0.);
+  Real dlnp, Real ftol, int method, Real rdlnTdlnP = 1.);
 
 bool read_idealized_parameters(std::string fname, Real &pmin, Real &pmax, AthenaArray<Real> &dTdz, 
   Real* &pmin_q, Real* &pmax_q, AthenaArray<Real>* &dqdz, std::vector<int> &mindex);
