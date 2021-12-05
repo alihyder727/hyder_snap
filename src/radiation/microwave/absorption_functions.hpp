@@ -43,8 +43,8 @@ double absorption_coefficient_H2O_Karpowicz(double freq, double P_idl, double T,
 double absorption_coefficient_cloud(double freq, double P, double T, double rho_NH3_H2O,
   double rho_H2O, double rho_NH4SH, double rho_NH3, double cfliq, double cfwice, double cfaice);
 
-double absorption_coefficient_freefree_Reference(double freq, double P, double T);
-
-double absorption_coefficient_freefree_Chengli(double freq, double P, double T);
+double attenuation_freefree_Reference(double freq_GHz, double P_bar, double T);
+double attenuation_freefree_Chengli(double freq_GHz, double P_bar, double T);
+double attenuation_appleton_hartree_nomag(double freq_GHz, double P_bar, double T, double ne);
 
 #endif

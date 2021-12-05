@@ -34,21 +34,21 @@ MwrAbsorberH2S::MwrAbsorberH2S(RadiationBand *pband, Real xHe, Real *xH2S, Real 
   }
 }
 
-Real MwrAbsorberH2S::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real MwrAbsorberH2S::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
 {
   // adapted by cli (Cheng Li), Aug 30
-  Real P = prim[IPR]/1.E5;
-  Real T = prim[IDN];
+  Real P = q[IPR]/1.E5;
+  Real T = q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= prim[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
   Real XHe = xHe_*xdry;
   Real XH2, XH2S;
 
   if (method_ == 1) {
-    XH2S = prim[imol_];
+    XH2S = q[imol_];
     XH2 = xdry - XHe;
   } else {  // method_ == 2
-    XH2S = interp1(prim[IPR], ref_xh2s_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
+    XH2S = interp1(q[IPR], ref_xh2s_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
     XH2 = xdry - XHe - XH2S;
   }
 

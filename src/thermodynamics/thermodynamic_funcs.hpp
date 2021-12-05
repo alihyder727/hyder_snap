@@ -111,6 +111,8 @@ Real MoistEntropy(AthenaArray<Real> const& w, Thermodynamics *pthermo, Particles
 #endif*/
 }
 
+Real saha_ionization_electron_density(Real T, Real num, Real ion_ev);
+
 
 #endif /* end of include guard THERMODYNAMICS_FUNCS_HPP */
 

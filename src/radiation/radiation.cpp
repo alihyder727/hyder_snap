@@ -12,6 +12,11 @@
 #include "../math/core.h"
 #include "radiation.hpp"
 
+Real const Radiation::hPlanck = 6.63E-34;
+Real const Radiation::hPlanck_cgs = 6.63E-27;
+Real const Radiation::c = 3.E8;
+Real const Radiation::c_cgs = 3.E10;
+
 Radiation::Radiation(MeshBlock *pmb):
   pmy_block(pmb), pband(NULL), dynamic_(false), beam_(-1.),
   cooldown(0.), current(0.), nrin_(1), nrout_(1), dist_(1.), planet(NULL)

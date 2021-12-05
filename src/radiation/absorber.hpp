@@ -71,7 +71,10 @@ public:
 
   virtual void SaveCoefficient(std::string fname) const {}
   virtual void LoadCoefficient(std::string fname) {}
-  virtual Real AbsorptionCoefficient(Real wave, Real const prim[]) const { return 0.; }
+  virtual Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const {
+    return 0.; 
+  }
+  virtual Real AbsorptionCoefficient(Real wave, Real const prim[]) { return 0.;}
   virtual Real SingleScatteringAlbedo(Real wave, Real const prim[]) const { return 0.; }
   virtual void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const {}
 
@@ -86,7 +89,7 @@ protected:
 public:
   RosselandMean() : Absorber("") {}
   virtual ~RosselandMean() {}
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const prim[]) const;
 };*/
 
 

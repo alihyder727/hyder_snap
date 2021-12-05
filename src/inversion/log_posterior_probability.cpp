@@ -25,13 +25,12 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
   int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
   int nsample = ndim/ix.size();
 
-  Real *TpSample = new Real [nsample];
-  Real *XpSample = new Real [ndim];
-	std::fill(TpSample, TpSample + nsample, 0.);
-	std::fill(XpSample, XpSample + ndim, 0.);
+  Real *TpSample = new Real [nsample+2];
+  Real *XpSample = new Real [ndim+2];
+	std::fill(TpSample, TpSample + nsample + 2, 0.);
+	std::fill(XpSample, XpSample + ndim + 2, 0.);
 
-  // 0..nsample-1 : sample temperature
-  // nsample.. : sample composition
+  // sample temperature, sample composition #1, sample composition #2, ...
   std::cout << "- Parameters: ";
 	for (int i = 0; i < ndim; ++i)
 		std::cout << par[i] << " ";
@@ -39,31 +38,36 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
 
 	int ic = 0;
 	if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
-		for (int i = 0; i < nsample; ++i)
+    TpSample[0] = 0.;
+		for (int i = 1; i <= nsample; ++i)
 			TpSample[i] = par[i];
+    TpSample[nsample+1] = 0.;
 		ic = 1;
 	}
 	for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
 		if (*m != 0) {
-			for (int i = 0; i < nsample; ++i)
+      XpSample[0] = 0.;
+			for (int i = 1; i <= nsample; ++i)
 				XpSample[i] = par[ic*nsample+i];
+      XpSample[nsample+1] = 0.;
 			ic++;
 		}
   }
 
-	// update atmosphere based on par
-  update_atm_profiles(pmb, plevel.data(), TpSample, XpSample, nsample, 
+	// update atmosphere based on TpSample and XpSample
+  update_atm_profiles(pmb, plevel.data(), TpSample, XpSample, nsample+2,
       ix, Tstd_, Tlen_, Xstd_, Xlen_, chi_);
 
-  // calculate radiation for updated profiles
+  // calculate radiation for updated profiles located at j = je
 	prad->CalculateRadiances(phydro->w, 0., ks, je, is, ie+1);
 
 	// prior probability
-	Real lnprior = LogPriorProbability(TpSample, XpSample, nsample);
+	Real lnprior = LogPriorProbability(TpSample, XpSample, nsample+2);
 
   // posterior probability
   Eigen::VectorXd misfit(nvalue);
 
+  // calculate model result for profile at j = je
   calculate_fit_target(pmb, val, nvalue, je, fit_differential_);
   for (int m = 0; m < nvalue; ++m)
     misfit(m) = val[m] - target(m);

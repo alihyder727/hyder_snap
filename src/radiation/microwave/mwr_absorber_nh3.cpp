@@ -15,7 +15,7 @@ MwrAbsorberNH3::MwrAbsorberNH3(RadiationBand *pband, int imol, Real xHe, Real xH
   if ((xHe < 0.) || (xH2O < 0.) || (xHe + xH2O > 1.)) {
     msg << "### FATAL ERROR in MwrAbsorberNH3::MwrAbsorberNH3."
         << std::endl << "Value error in molar mixing ratios";
-    throw std::runtime_error(msg.str().c_str());
+    ATHENA_ERROR(msg);
   }
 }
 
@@ -28,7 +28,7 @@ MwrAbsorberNH3::MwrAbsorberNH3(RadiationBand *pband, int imol, Real xHe, Real *x
     if ((xH2O[i] < 0.) || (xH2O[i] > 1.)) {
       msg << "### FATAL ERROR in MwrAbsorberNH3::MwrAbsorberNH3."
           << std::endl << "Value error in molar mixing ratios";
-      throw std::runtime_error(msg.str().c_str());
+      ATHENA_ERROR(msg);
     }
     ref_xh2o_.push_back(xH2O[i]);
     ref_pres_.push_back(pres[i]);
@@ -43,37 +43,37 @@ MwrAbsorberNH3::MwrAbsorberNH3(RadiationBand *pband, std::vector<int> imols, Rea
   if (imols_.size() != 2) {
     msg << "### FATAL ERROR in MwrAbsorberNH3::MwrAbsorberNH3."
         << std::endl << "Number of dependent molecules is not 2";
-    throw std::runtime_error(msg.str().c_str());
+    ATHENA_ERROR(msg);
   }
 
   if ((xHe < 0.) || (xHe > 1.)) {
     msg << "### FATAL ERROR in MwrAbsorberNH3::MwrAbsorberNH3."
         << std::endl << "Value error in molar mixing ratios";
-    throw std::runtime_error(msg.str().c_str());
+    ATHENA_ERROR(msg);
   }
 }
 
-Real MwrAbsorberNH3::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real MwrAbsorberNH3::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
 {
-  Real P = prim[IPR]/1.E5; // pa -> bar
-  Real P_idl = prim[IPR]/1.E5; // pa -> bar
-  Real T = prim[IDN];
+  Real P = q[IPR]/1.E5; // pa -> bar
+  Real P_idl = q[IPR]/1.E5; // pa -> bar
+  Real T = q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= prim[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
   Real XHe = xHe_*xdry;
   Real XH2, XNH3, XH2O;
 
   if (method_ == 1) {
-    XNH3 = prim[imol_];
+    XNH3 = q[imol_];
     XH2O = xH2O_*xdry;
     XH2 = xdry - XHe - XH2O;
   } else if (method_ == 2) {
-    XNH3 = prim[imol_];
-    XH2O = interp1(prim[IPR], ref_xh2o_.data(), ref_pres_.data(), ref_pres_.size())*xdry;
+    XNH3 = q[imol_];
+    XH2O = interp1(q[IPR], ref_xh2o_.data(), ref_pres_.data(), ref_pres_.size())*xdry;
     XH2 = xdry - XHe - XH2O;
   } else {  // method_ == 3
-    XNH3 = prim[imols_[0]];
-    XH2O = prim[imols_[1]];
+    XNH3 = q[imols_[0]];
+    XH2O = q[imols_[1]];
     XH2 = xdry - XHe;
   }
 

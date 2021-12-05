@@ -108,7 +108,7 @@ void update_atm_profiles(MeshBlock *pmb,
 		}
   }
 
-  // save convectively adjusted profile to model 3
+  // save convectively adjusted profile to model 3 (j = je)
 	for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(j1,i));
 		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)

@@ -11,21 +11,21 @@ MwrAbsorberH2O::MwrAbsorberH2O(RadiationBand *pband, int imol, Real xHe):
   std::stringstream msg;
 
   if ((xHe_ < 0.) || (xHe_ > 1.)) {
-    msg << "### FATAL ERROR in MwrAbsorberPH3::MwrAbsorberPH3."
+    msg << "### FATAL ERROR in MwrAbsorberPH3::MwrAbsorberH2O."
         << std::endl << "Value error in molar mixing ratios";
-    throw std::runtime_error(msg.str().c_str());
+    ATHENA_ERROR(msg);
   }
 }
 
-Real MwrAbsorberH2O::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real MwrAbsorberH2O::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
 {
-  Real P = prim[IPR]/1.E5; // pa -> bar
-  Real T = prim[IDN];
+  Real P = q[IPR]/1.E5; // pa -> bar
+  Real T = q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= prim[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
   Real XHe = xHe_*xdry;
   Real XH2 = xdry - XHe;
-  Real XH2O = prim[imol_];
+  Real XH2O = q[imol_];
 
   Real abs;
 

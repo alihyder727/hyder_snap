@@ -19,14 +19,18 @@
 #include "../math/linalg.h"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
 #include "../thermodynamics/molecules.hpp"
+#include "../thermodynamics/vapors/sodium_vapors.hpp"
 #include "../radiation/radiation.hpp"
 #include "../radiation/microwave/mwr_absorbers.hpp"
 #include "../inversion/inversion.hpp"
 #include "../inversion/radio_observation.hpp"
+#include "../scalars/scalars.hpp"
 
 // molecules
 enum {iH2O = 1, iNH3 = 2};
-Real grav, P0, T0, Tmin, xHe, xCH4, rdlnTdlnP;
+enum {ion = 0, iNa = 1, iKCl = 2};
+Real xHe, xCH4, xH2S, xNa, xKCl, metallicity;
+Real grav, P0, T0, Tmin, rdlnTdlnP;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -67,11 +71,11 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   T0 = pin->GetReal("problem", "T0");
   Tmin = pin->GetReal("problem", "Tmin");
   rdlnTdlnP = pin->GetOrAddReal("problem", "rdlnTdlnP", 1.);
-
-  std::string planet = pin->GetOrAddString("job", "planet", "");
-  Real latitude = pin->GetOrAddReal("job", "latitude", 0.);
-  if (planet != "") // update gravity at specific latitude
-    grav = GetGravity(planet.c_str(), latitude);
+  xH2S = pin->GetReal("problem", "xH2S");
+  metallicity = pin->GetOrAddReal("problem", "metallicity", 0.);
+  xNa = pin->GetReal("problem", "xNa");
+  xNa *= pow(10., metallicity);
+  //xKCl = pin->GetOrAddReal("problem", "xKCl");
 }
 
 void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
@@ -88,6 +92,8 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
     pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
   } else if (name == "mw_H2O") {
     pabs->AddAbsorber(MwrAbsorberH2O(this, iH2O, xHe));
+  } else if (name == "mw_electron") {
+    pabs->AddAbsorber(MwrAbsorberElectron(this, ion));
   } else {
     msg << "### FATAL ERROR in RadiationBand::AddAbsorber"
         << std::endl << "unknow absorber: '" << name <<"' ";
@@ -207,6 +213,17 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
             phydro->w(n,k,j,i) = exp(buf[n]);
         }
 
+    // set chemical tracer, electron and Na
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j) {
+        Real temp = pthermo->GetTemp(phydro->w.at(k,j,i));
+        Real pH2S = xH2S*phydro->w(IPR,k,j,i);
+        Real pNa = xNa*phydro->w(IPR,k,j,i);
+        Real svp = sat_vapor_p_Na_H2S_Visscher(temp, pH2S);
+        pNa = std::min(svp, pNa);
+        pscalars->s(iNa,k,j,i) = pNa/(Thermodynamics::kBoltz*temp);
+        pscalars->s(ion,k,j,i) = saha_ionization_electron_density(temp, pscalars->s(iNa,k,j,i), 5.14);
+      }
   }
 
   // Apply boundary condition

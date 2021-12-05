@@ -13,6 +13,7 @@
 RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   pmy_invt_(pinvt)
 {
+  std::stringstream msg;
   ATHENA_LOG("RadioObservation");
   std::string obsfile = pin->GetOrAddString("inversion", "obsfile", "none");
 
@@ -41,6 +42,18 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
 	// Pressure sample
 	plevel = Vectorize<Real>(pin->GetString("inversion", "PrSample").c_str());
   std::cout << "- number of inversion variables: " << plevel.size()*ix.size() << std::endl;
+  
+  // add boundaries
+  Real pmax = pin->GetReal("inversion", "Pmax");
+  Real pmin = pin->GetReal("inversion", "Pmin");
+  if (pmax < plevel.front() || pmin > plevel.back()) {
+    msg << "### FATAL ERROR in RadioObservation::RadioObservation" << std::endl
+        << "Pmax must be greater than the largest value of PrSample" << std::endl
+        << "Pmin must be lesser than the smallest value of PrSample";
+    ATHENA_ERROR(msg);
+  }
+  plevel.insert(plevel.begin(), pmax);
+  plevel.push_back(pmin);
 
 	for (std::vector<Real>::iterator m = plevel.begin(); m != plevel.end(); ++m)
 		(*m) *= 1.E5;	// bar -> pa

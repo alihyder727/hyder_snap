@@ -36,6 +36,8 @@ class Thermodynamics {
 public:
   // members
   static Real const Rgas;
+  static Real const kBoltz;
+  static Real const kBoltz_cgs;
   MeshBlock *pmy_block; /**< pointer to MeshBlock */
 
   // member functions
@@ -308,6 +310,13 @@ public:
     return 1./(gamma - 1.)*Rd_*qsig;
   }
 
+  template<typename T>
+  Real GetMeanMolecularWeight(T w) const {
+    Real feps = 1.;
+    for (int n = 1; n <= NVAPOR; ++n)
+      feps += w[n]*(mu_ratios_[n] - 1.);
+    return Rgas/Rd_*feps;
+  }
 
   /*! Saturation surplus for vapors can be both positive and negative
    * positive value represents supersaturation \n

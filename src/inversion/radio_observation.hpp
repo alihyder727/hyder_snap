@@ -26,7 +26,7 @@ public:
   // functions
   RadioObservation(Inversion *pinvt, ParameterInput *pin);
   void ReadObservationFile(char const *fname);
-	Real LogPriorProbability(Real const *TpSample, Real const *Xample, int nsample) const;
+	Real LogPriorProbability(Real const *TpSample, Real const *XpSample, int nsample) const;
 	Real LogPosteriorProbability(Real const *par, Real *val, int ndim, int nvalue) const;
 
 private:

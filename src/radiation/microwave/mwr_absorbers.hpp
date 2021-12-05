@@ -29,7 +29,7 @@ public:
     * @param fequal mixing ratio equilibrium hydrogen
     */
   MwrAbsorberCIA(RadiationBand *pband, Real xHe, Real xCH4, Real fequal = 0.);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 private:
   Real xHe_, xCH4_, fequal_;
 };
@@ -76,7 +76,7 @@ public:
     return *this;
   }
 
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 private:
   std::string model_name_;
   int method_;
@@ -108,7 +108,7 @@ public:
     return *this;
   }
 
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 private:
   std::string model_name_;
   int method_;
@@ -141,7 +141,7 @@ public:
     return *this;
   }
 
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 private:
   std::string model_name_;
   Real xHe_;
@@ -163,31 +163,35 @@ public:
     */
   MwrAbsorberH2S(RadiationBand *pband, Real xHe, Real *xH2S, Real *pres, int np);
 
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 private:
   int method_;
   Real xHe_;
   std::vector<Real> ref_xh2s_, ref_pres_;
 };
 
-class MwrAbsorberFreeFree: public Absorber {
+class MwrAbsorberElectron: public Absorber {
 public:
-  MwrAbsorberFreeFree(RadiationBand *pband):
-    Absorber(pband, "mw_freefree", IDN) {}
+  MwrAbsorberElectron(RadiationBand *pband, int ion = 0):
+    Absorber(pband, "mw_electron", ion) {}
 
-  MwrAbsorberFreeFree& SetModelChengLi() {
+  MwrAbsorberElectron& SetModelAppletonHartree() {
+    model_name_ = "AppletonHartree"; 
+    return *this;
+  }
+
+  MwrAbsorberElectron& SetModelChengLi() {
     model_name_ = "ChengLi"; 
     return *this;
   }
-  MwrAbsorberFreeFree& SetModelReference() {
+  MwrAbsorberElectron& SetModelReference() {
     model_name_ = "Reference";
     return *this;
   }
 
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 private:
   std::string model_name_;
-  int method_;
 };
 
 #endif

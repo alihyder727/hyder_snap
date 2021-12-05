@@ -13,6 +13,7 @@
 #include "../coordinates/coordinates.hpp"
 #include "../hydro/hydro.hpp"
 #include "../particles/particles.hpp"
+#include "../scalars/scalars.hpp"
 #include "../utils/utils.hpp" // Vectorize, ReadTabular, ReplaceChar
 
 RadiationBand::RadiationBand(Radiation *prad):
@@ -217,6 +218,7 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
   Thermodynamics *pthermo = pmy_rad->pmy_block->pthermo;
   Coordinates *pcoord = pmy_rad->pmy_block->pcoord;
   Hydro *phydro = pmy_rad->pmy_block->phydro;
+  PassiveScalars *pscalars = pmy_rad->pmy_block->pscalars;
   Real *mypmom = new Real[1+npmom];
 
   int num_clouds = 0.;
@@ -226,9 +228,12 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
     ppart = ppart->next;
   }
   Real *q = new Real [NHYDRO + num_clouds];
+  Real c[1];
+  Real s[NSCALARS];
 
   while (a != NULL) {
     for (int i = il; i <= iu; ++i) {
+      for (int n = 0; n < NSCALARS; ++n) s[n] = pscalars->s(n,k,j,i);
       pthermo->PrimitiveToChemical(q, w.at(k,j,i));
       // molar concentration to molar mixing ratio
       // \todo TODO: do we need it?
@@ -249,7 +254,7 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
       tem_[i] = q[IDN];
       //std::cout << i << " " << tem_[i] << std::endl;
       for (int m = 0; m < nspec; ++m) {
-        Real kcoeff = a->AbsorptionCoefficient(spec[m].wav, q);  // 1/m
+        Real kcoeff = a->Attenuation(spec[m].wav, q, c, s);  // 1/m
         Real dssalb = a->SingleScatteringAlbedo(spec[m].wav, q)*kcoeff;
         // tau 
         tau_[i][m] += kcoeff;

@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-import fnmatch
+import fnmatch, sys
 import os, re
 import subprocess
 
@@ -41,21 +41,22 @@ def CleanSoftlinks(directory):
 # write patch file
 def WritePatchFile(fname, patches):
   CleanSoftlinks('src')
-  files = []
   if os.path.isfile(fname):
     os.remove(fname)
-  for patch in patches[::-1]:
+  for patch in patches:
     replacement, addition = PatchStructure(patch)
-    with open(fname, 'w+') as file:
-      file.write('# Replacement files:\n')
+    with open(fname, 'a') as file:
+      file.write('# Replacement files from package %s:\n' % patch)
       for f in replacement:
-        if f not in files:
-          file.write('%s/%s -> src/%s\n' % (patch, f, f))
-          files.append(f)
-      file.write('\n# Additional files:\n')
+        file.write('%s/%s -> src/%s\n' % (patch, f, f))
+      file.write('\n# Additional files from package %s:\n' % patch)
       for f in addition:
-        if f not in files:
-          file.write('%s/%s\n' % (patch, f))
-          files.append(f)
+        file.write('%s/%s\n' % (patch, f))
+      file.write('\n')
 
-WritePatchFile('patch_files', ['drum'])
+nargs = len(sys.argv)
+argv = ['drum']
+if nargs > 1:
+    argv.extend(sys.argv[1:])
+WritePatchFile('patch_files', argv)
+print('Patch rules written to "patch_files" using package(s): %s.' % ', '.join(argv))

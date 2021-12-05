@@ -75,6 +75,12 @@ protected:
 
 class Radiation {
 public:
+  // constants
+  static Real const hPlanck;
+  static Real const hPlanck_cgs;
+  static Real const c;
+  static Real const c_cgs;
+
   // data
   MeshBlock *pmy_block;
   RadiationBand *pband;
