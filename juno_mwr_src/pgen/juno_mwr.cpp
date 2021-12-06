@@ -31,6 +31,7 @@ enum {iH2O = 1, iNH3 = 2};
 enum {ion = 0, iNa = 1, iKCl = 2};
 Real xHe, xCH4, xH2S, xNa, xKCl, metallicity;
 Real grav, P0, T0, Tmin, rdlnTdlnP;
+Real karpowicz_scale;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -73,6 +74,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   rdlnTdlnP = pin->GetOrAddReal("problem", "rdlnTdlnP", 1.);
   xH2S = pin->GetReal("problem", "xH2S");
   metallicity = pin->GetOrAddReal("problem", "metallicity", 0.);
+  karpowicz_scale = pin->GetOrAddReal("problem", "karpowicz_scale", 0.);
   xNa = pin->GetReal("problem", "xNa");
   xNa *= pow(10., metallicity);
   //xKCl = pin->GetOrAddReal("problem", "xKCl");
@@ -91,7 +93,7 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
     //pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelBellottiSwitch());
     pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
   } else if (name == "mw_H2O") {
-    pabs->AddAbsorber(MwrAbsorberH2O(this, iH2O, xHe));
+    pabs->AddAbsorber(MwrAbsorberH2O(this, iH2O, xHe, karpowicz_scale));
   } else if (name == "mw_electron") {
     pabs->AddAbsorber(MwrAbsorberElectron(this, ion));
   } else {

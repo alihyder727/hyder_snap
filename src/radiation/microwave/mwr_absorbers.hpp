@@ -122,7 +122,7 @@ public:
     * @param xHe molar mixing ratio of He
     * @param imol index of H2O molecule
     */
-  MwrAbsorberH2O(RadiationBand *pband, int imol, Real xHe);
+  MwrAbsorberH2O(RadiationBand *pband, int imol, Real xHe, Real scale = 0.);
 
   MwrAbsorberH2O& SetModeldeBoer() {
     model_name_ = "deBoer"; 
@@ -144,7 +144,7 @@ public:
   Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 private:
   std::string model_name_;
-  Real xHe_;
+  Real xHe_, scale_;
 };
 
 class MwrAbsorberH2S: public Absorber {

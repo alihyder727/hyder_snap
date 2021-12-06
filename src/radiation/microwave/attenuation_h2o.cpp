@@ -23,18 +23,23 @@ static double const kBoltz_mks   = 1.3806504e-23;      // J/K
 static double invcm_from_dB_per_km = 2.3059e-6;    // dB/km to cm^-1
 // end
 
-double absorption_coefficient_H2O_Karpowicz(double freq, double P_idl, double T,
-       double XH2, double XHe, double XH2O)
+double attenuation_H2O_Karpowicz(double freq, double P_idl, double T,
+       double XH2, double XHe, double XH2O, double scale)
 {
-   //double const C_H2O = 4.36510480961e-7; // (Mbar*GHz)^-2 (km)^-1
-   double const C_H2O = 3.1e-7; // (Mbar*GHz)^-2 (km)^-1 (latest update: Nov 2012)
+   double const C_H2Ob = 4.36510480961e-7; // (Mbar*GHz)^-2 (km)^-1
+   double const C_H2Oa = 3.1e-7; // (Mbar*GHz)^-2 (km)^-1 (latest update: Nov 2012)
+   double C_H2O = C_H2Oa*(1. - scale) + C_H2Ob*scale;
 
-   //double const Cprime_H2O = 2.10003048186e-26; 
-   double const Cprime_H2O = 0; // (latest update: Nov 2012)
+   double const Cprime_H2Ob = 2.10003048186e-26; 
+   double const Cprime_H2Oa = 0; // (latest update: Nov 2012)
+   double Cprime_H2O = Cprime_H2Oa*(1. - scale) + Cprime_H2Ob*scale;
+
    double const C_H2 = 5.07722009423e-11; // (Mbar*GHz)^-2 (km)^-1
    double const C_He = 1.03562010226e-10; // (Mbar*GHz)^-2 (km)^-1
-   //double const x_ctm = 13.3619799812;
-   double const x_ctm = 12;  // (latest update: Nov 2012)
+   double const x_ctmb = 13.3619799812;
+   double const x_ctma = 12;  // (latest update: Nov 2012)
+   double x_ctm = x_ctma*(1. - scale) + x_ctmb*scale;
+
    double const n_ctm = 6.76418487001;
    double const xprime_ctm = 0.0435525417274;
 
@@ -159,7 +164,7 @@ double absorption_coefficient_H2O_Karpowicz(double freq, double P_idl, double T,
    return abs_tot;
 }
 
-double absorption_coefficient_H2O_Goodman(double freq, double P, double T, double XH2,
+double attenuation_H2O_Goodman(double freq, double P, double T, double XH2,
        double XHe, double XH2O)
 {
    double const PH2O = atm_from_bar(P * XH2O);
@@ -179,7 +184,7 @@ double absorption_coefficient_H2O_Goodman(double freq, double P, double T, doubl
    return DTAUA;
 }
 
-double absorption_coefficient_H2O_Waters(double freq, double P, double T, double XH2,
+double attenuation_H2O_Waters(double freq, double P, double T, double XH2,
        double XHe, double XH2O)
 {
    double const P_atm = atm_from_bar(P);
@@ -200,7 +205,7 @@ double absorption_coefficient_H2O_Waters(double freq, double P, double T, double
 }
 
 
-double absorption_coefficient_H2O_deBoer(double freq, double P, double T, double XH2,
+double attenuation_H2O_deBoer(double freq, double P, double T, double XH2,
        double XHe, double XH2O)
 {
    static double const fi[10] = { 22.23515,183.31012,323.0,325.1538,

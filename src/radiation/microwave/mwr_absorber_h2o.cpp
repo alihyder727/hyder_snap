@@ -5,8 +5,8 @@
 #include "mwr_absorbers.hpp"
 #include "absorption_functions.hpp"
 
-MwrAbsorberH2O::MwrAbsorberH2O(RadiationBand *pband, int imol, Real xHe):
-    Absorber(pband, "mw_H2O", imol), xHe_(xHe)
+MwrAbsorberH2O::MwrAbsorberH2O(RadiationBand *pband, int imol, Real xHe, Real scale):
+    Absorber(pband, "mw_H2O", imol), xHe_(xHe), scale_(scale)
 {
   std::stringstream msg;
 
@@ -30,13 +30,13 @@ Real MwrAbsorberH2O::Attenuation(Real wave, Real const q[], Real const c[], Real
   Real abs;
 
   if (model_name_ == "deBoer")
-    abs = absorption_coefficient_H2O_deBoer(wave, P, T, XH2, XHe, XH2O);
+    abs = attenuation_H2O_deBoer(wave, P, T, XH2, XHe, XH2O);
   else if (model_name_ == "Waters")
-    abs = absorption_coefficient_H2O_Waters(wave, P, T, XH2, XHe, XH2O);
+    abs = attenuation_H2O_Waters(wave, P, T, XH2, XHe, XH2O);
   else if (model_name_ == "Goodman")
-    abs = absorption_coefficient_H2O_Goodman(wave, P, T, XH2, XHe, XH2O);
+    abs = attenuation_H2O_Goodman(wave, P, T, XH2, XHe, XH2O);
   else // Karpowicz
-    abs = absorption_coefficient_H2O_Karpowicz(wave, P, T, XH2, XHe, XH2O);
+    abs = attenuation_H2O_Karpowicz(wave, P, T, XH2, XHe, XH2O, scale_);
 
   return 100.*abs;  // 1/cm -> 1/m
 }
