@@ -4,19 +4,15 @@
 double absorption_coefficient_CIA(double freq, double P, double T, double XH2, double XHe,
        double XCH4, double mix);
 
-double absorption_coefficient_NH3_Hanley(double freq, double P, double P_idl, double T,
-       double XH2, double XHe, double XNH3, double XH2O = 0);
-
-double absorption_coefficient_NH3_Devaraj(double freq, double P, double P_idl, double T,
+double attenuation_NH3_Hanley(double freq, double P, double P_idl, double T,
+       double XH2, double XHe, double XNH3, double XH2O = 0, double power = 0.);
+double attenuation_NH3_Devaraj(double freq, double P, double P_idl, double T,
        double XH2, double XHe, double XNH3,double XH2O = 0, int version = 0);
-
-double absorption_coefficient_NH3_Bellotti(double freq, double P, double P_idl, double T,
+double attenuation_NH3_Bellotti(double freq, double P, double P_idl, double T,
        double XH2, double xHe, double XNH3, double XH2O = 0);
-
-double absorption_coefficient_NH3_Bellotti_switch(double freq, double P, double P_idl, double T,
+double attenuation_NH3_Bellotti_switch(double freq, double P, double P_idl, double T,
        double XH2, double xHe, double XNH3, double XH2O = 0);
-
-double absorption_coefficient_NH3_radtran(double freq, double P, double T, double XH2,
+double attenuation_NH3_radtran(double freq, double P, double T, double XH2,
        double XHe, double XNH3);
 
 double absorption_coefficient_PH3_radtran(double freq, double P, double T, double XH2, double XHe,

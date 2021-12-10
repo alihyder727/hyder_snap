@@ -53,8 +53,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
         // theta_v
         user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->RovRd(phydro->w.at(k,j,i));
         // mse
-        user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w, grav*pcoord->x1v(i),
-          pthermo, ppart, k, j, i);
+        user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w.at(k,j,i), grav*pcoord->x1v(i), pthermo);
         for (int n = 1; n <= NVAPOR; ++n)
           user_out_var(3+n,k,j,i) = RelativeHumidity(phydro->w.at(k,j,i), n, pthermo);
       }
@@ -221,18 +220,28 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   Real Tlen = pin->GetReal("inversion", "Tlen")*1.E3; // km -> m
   Real Xstd = pin->GetReal("inversion", "Xstd")*1.E-3;  // g/kg -> kg/kg
   Real Xlen = pin->GetReal("inversion", "Xlen")*1.E3; // km -> m
+  Real pmax = pin->GetReal("inversion", "Pmax");
+  Real pmin = pin->GetReal("inversion", "Pmin");
   PrSample = Vectorize<Real>(pin->GetString("inversion", "PrSample").c_str());
   TpSample = Vectorize<Real>(pin->GetString("problem", "Tp").c_str());
   XpSample = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
+  int nsample = PrSample.size();
+
+  // add inversion boundary
+  PrSample.insert(PrSample.begin(), pmax);
+  PrSample.push_back(pmin);
+  TpSample.insert(TpSample.begin(), 0.);
+  TpSample.push_back(0.);
+  XpSample.insert(XpSample.begin(), 0.);
+  XpSample.push_back(0.);
 
   // update reference model
-  int nsample = PrSample.size();
-  for (int i = 0; i < nsample; ++i) {
+  for (int i = 0; i < nsample+2; ++i) {
     PrSample[i] *= 1.E5;  // bar -> pa
     XpSample[i] *= 1.E-3; // g/kg -> kg/kg
   }
   update_atm_profiles(this, PrSample.data(), TpSample.data(), XpSample.data(),
-      nsample, ix, Tstd, Tlen, Xstd, Xlen);
+      nsample+2, ix, Tstd, Tlen, Xstd, Xlen);
 
   // copy revised profile to baseline position
   for (int n = 0; n < NHYDRO; ++n)

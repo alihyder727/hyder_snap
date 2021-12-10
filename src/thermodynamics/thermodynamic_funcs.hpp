@@ -21,12 +21,12 @@ Real PotentialTemp(T w, Real p0, Thermodynamics *pthermo) {
 }
 
 //! Moist static energy
-Real MoistStaticEnergy(AthenaArray<Real> const& w, Real gz, 
-  Thermodynamics *pthermo, Particles *ppart, int k, int j, int i) {
-  Real temp = pthermo->GetTemp(w.at(k,j,i));
-  Real IE = w(IDN,k,j,i)*pthermo->GetMeanCp(w.at(k,j,i))*temp;
-  Real rho = w(IDN,k,j,i);
-  if (ppart != nullptr) {
+template<typename T>
+Real MoistStaticEnergy(T w, Real gz, Thermodynamics *pthermo) {
+  Real temp = pthermo->GetTemp(w);
+  Real IE = w[IDN]*pthermo->GetMeanCp(w)*temp;
+  Real rho = w[IDN];
+  /*if (ppart != nullptr) {
     for (int n = 0; n < NVAPOR; ++n) {
       for (int t = 0; t < ppart->u.GetDim4(); ++t) {
         rho += ppart->u(t,k,j,i);
@@ -35,7 +35,7 @@ Real MoistStaticEnergy(AthenaArray<Real> const& w, Real gz,
       }
       ppart = ppart->next;
     }
-  }
+  }*/
   return IE/rho + gz;
 }
 
@@ -48,9 +48,9 @@ Real RelativeHumidity(T w, int iv, Thermodynamics *pthermo) {
 }
 
 //! Equivalent potential temperature
-Real MoistEntropy(AthenaArray<Real> const& w, Thermodynamics *pthermo, Particles *ppart,
+/*Real MoistEntropy(AthenaArray<Real> const& w, Thermodynamics *pthermo, Particles *ppart,
   int k, int j, int i) {
-/*#if (NVAPOR > 0)
+#if (NVAPOR > 0)
   Real gamma = pthermo->pmy_block->peos->GetGamma();
   Real tem[1] = {pthermo->GetTemp(prim)};
   update_gamma(gamma, tem);
@@ -108,8 +108,8 @@ Real MoistEntropy(AthenaArray<Real> const& w, Thermodynamics *pthermo, Particles
   return temp*pow(p0/pd, chi)*exp(lv_ov_cpt)*rh;
 #else
   return PotentialTemp(prim, p0, pthermo);
-#endif*/
-}
+#endif
+}*/
 
 Real saha_ionization_electron_density(Real T, Real num, Real ion_ev);
 

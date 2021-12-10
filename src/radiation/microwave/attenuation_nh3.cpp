@@ -22,7 +22,7 @@ inline double atm_from_bar(double P) { return 0.9869232667160128 * P; }
 static double const pi = 3.14159265358979;
 // end
 
-double absorption_coefficient_NH3_Bellotti_switch(double freq, double P, double P_idl,
+double attenuation_NH3_Bellotti_switch(double freq, double P, double P_idl,
        double T, double XH2, double XHe, double XNH3, double XH2O)
 //  sum the contributions of all lines, first the Inversion transitions,
 //  then the Rotational transitions
@@ -190,7 +190,7 @@ double absorption_coefficient_NH3_Bellotti_switch(double freq, double P, double 
    return alpha_final;
 }
 
-double absorption_coefficient_NH3_Bellotti(double freq, double P, double P_idl, double T,
+double attenuation_NH3_Bellotti(double freq, double P, double P_idl, double T,
        double XH2, double XHe, double XNH3, double XH2O)
 //  sum the contributions of all lines, first the Inversion transitions,
 //  then the Rotational transitions
@@ -328,7 +328,7 @@ double absorption_coefficient_NH3_Bellotti(double freq, double P, double P_idl, 
 }
 
 
-double absorption_coefficient_NH3_Devaraj(double freq, double P, double P_idl, double T,
+double attenuation_NH3_Devaraj(double freq, double P, double P_idl, double T,
        double XH2, double XHe, double XNH3, double XH2O, int version)
    //  sum the contributions of all lines, first the Inversion transitions,
    //  then the Rotational transitions
@@ -502,8 +502,8 @@ double absorption_coefficient_NH3_Devaraj(double freq, double P, double P_idl, d
 }
 
 
-double absorption_coefficient_NH3_Hanley(double freq, double P, double P_idl, double T,
-       double XH2, double XHe, double XNH3, double XH2O)
+double attenuation_NH3_Hanley(double freq, double P, double P_idl, double T,
+       double XH2, double XHe, double XNH3, double XH2O, double power)
 {
    // KLUDGE to compare to Hanley, fig19!!!
    //P=P_idl;
@@ -656,11 +656,13 @@ double absorption_coefficient_NH3_Hanley(double freq, double P, double P_idl, do
    else if (P>P_top)
       dtau *= ((P-P_top)*scale_bot + (P_bot-P)) / (P_bot-P_top);
    #endif
+
+   if (T > 750.) dtau *= pow(750./T, power);
    
    return dtau; // in cm^-1
 }
 
-// helper function for absorption_coefficient_NH3_radtran() -- array ordering
+// helper function for attenuation_NH3_radtran() -- array ordering
 inline int Index_NH3(int I, int J)
 {
    int INDX = J;
@@ -673,7 +675,7 @@ inline int Index_NH3(int I, int J)
    return INDX;
 }
 
-// helper function for absorption_coefficient_NH3_radtran() -- computes Ben-Reuven lineshape
+// helper function for attenuation_NH3_radtran() -- computes Ben-Reuven lineshape
 inline double shape(double NU0, double GAMMA, double NU, double DELTA, double ZETA) 
 {
    double const NUSQ = SQUARE(NU);
@@ -686,7 +688,7 @@ inline double shape(double NU0, double GAMMA, double NU, double DELTA, double ZE
         (T+GSQ-ZSQ))/((NUSQ-T-GSQ+ZSQ)*(NUSQ-T-GSQ+ZSQ) + 4.0*NUSQ*GSQ));
 }
 
-double absorption_coefficient_NH3_radtran(double freq, double P, double T, double XH2,
+double attenuation_NH3_radtran(double freq, double P, double T, double XH2,
        double XHe, double XNH3)
 {
    /*

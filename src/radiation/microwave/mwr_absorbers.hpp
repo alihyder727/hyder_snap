@@ -53,7 +53,7 @@ public:
     * @param imols an array of length 2, stores the index of NH3 and H2O
     * @param xHe molar mixing ratio of He
     */
-  MwrAbsorberNH3(RadiationBand *pband, std::vector<int> imols, Real xHe);
+  MwrAbsorberNH3(RadiationBand *pband, std::vector<int> imols, Real xHe, Real power = 0.);
 
   MwrAbsorberNH3& SetModelHanley() { 
     model_name_ = "Hanley09";
@@ -82,6 +82,7 @@ private:
   int method_;
   Real xHe_, xH2O_;
   std::vector<Real> ref_xh2o_, ref_pres_;
+  Real power_;
 };
 
 class MwrAbsorberPH3: public Absorber {
