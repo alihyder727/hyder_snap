@@ -30,7 +30,7 @@
 //! \fn  void PassiveScalars::CalculateFluxes
 //  \brief Calculate passive scalar fluxes using reconstruction + weighted upwinding rule
 
-void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, AthenaArray<Real> &bcc, const int order) {
+void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, const int order) {
   MeshBlock *pmb = pmy_block;
 
   // design decision: do not pass Hydro::flux (for mass flux) via function parameters,
