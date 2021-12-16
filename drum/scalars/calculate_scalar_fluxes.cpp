@@ -17,6 +17,7 @@
 #include "../coordinates/coordinates.hpp"
 #include "../eos/eos.hpp"   // reapply floors to face-centered reconstructed states
 #include "../hydro/hydro.hpp"
+#include "../thermodynamics/thermodynamics.hpp"
 #include "../reconstruct/reconstruction.hpp"
 #include "scalars.hpp"
 
@@ -74,6 +75,8 @@ void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, const int order) {
         pmb->precon->DonorCellX1(k, j, is-1, ie+1, r, rl_, rr_);
       } else if (order == 2) {
         pmb->precon->PiecewiseLinearX1(k, j, is-1, ie+1, r, rl_, rr_);
+      } else if (order == 5) {
+        pmb->precon->Weno5X1(k, j, is-1, ie+1, r, rl_, rr_);
       } else {
         pmb->precon->PiecewiseParabolicX1(k, j, is-1, ie+1, r, rl_, rr_);
         for (int n=0; n<NSCALARS; ++n) {
@@ -84,7 +87,8 @@ void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, const int order) {
           }
         }
       }
-
+      // mass flux (rho x u) -> number density flux (n x u), ghz
+      // r comes from the reconstruction above
       ComputeUpwindFlux(k, j, is, ie+1, rl_, rr_, mass_flux, x1flux);
 
       if (order == 4) {
@@ -162,6 +166,8 @@ void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, const int order) {
         pmb->precon->DonorCellX2(k, js-1, il, iu, r, rl_, rr_);
       } else if (order == 2) {
         pmb->precon->PiecewiseLinearX2(k, js-1, il, iu, r, rl_, rr_);
+      } else if (order == 5) {
+        pmb->precon->Weno5X2(k, js-1, il, iu, r, rl_, rr_);
       } else {
         pmb->precon->PiecewiseParabolicX2(k, js-1, il, iu, r, rl_, rr_);
         for (int n=0; n<NSCALARS; ++n) {
@@ -178,6 +184,8 @@ void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, const int order) {
           pmb->precon->DonorCellX2(k, j, il, iu, r, rlb_, rr_);
         } else if (order == 2) {
           pmb->precon->PiecewiseLinearX2(k, j, il, iu, r, rlb_, rr_);
+        } else if (order == 5) {
+          pmb->precon->Weno5X2(k, j, il, iu, r, rlb_, rr_);
         } else {
           pmb->precon->PiecewiseParabolicX2(k, j, il, iu, r, rlb_, rr_);
           for (int n=0; n<NSCALARS; ++n) {
@@ -263,6 +271,8 @@ void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, const int order) {
         pmb->precon->DonorCellX3(ks-1, j, il, iu, r, rl_, rr_);
       } else if (order == 2) {
         pmb->precon->PiecewiseLinearX3(ks-1, j, il, iu, r, rl_, rr_);
+      } else if (order == 5) {
+        pmb->precon->Weno5X3(ks-1, j, il, iu, r, rl_, rr_);
       } else {
         pmb->precon->PiecewiseParabolicX3(ks-1, j, il, iu, r, rl_, rr_);
         for (int n=0; n<NSCALARS; ++n) {
@@ -279,6 +289,8 @@ void PassiveScalars::CalculateFluxes(AthenaArray<Real> &r, const int order) {
           pmb->precon->DonorCellX3(k, j, il, iu, r, rlb_, rr_);
         } else if (order == 2) {
           pmb->precon->PiecewiseLinearX3(k, j, il, iu, r, rlb_, rr_);
+        } else if (order == 5) {
+          pmb->precon->Weno5X3(k, j, il, iu, r, rlb_, rr_);
         } else {
           pmb->precon->PiecewiseParabolicX3(k, j, il, iu, r, rlb_, rr_);
           for (int n=0; n<NSCALARS; ++n) {
@@ -362,16 +374,24 @@ void PassiveScalars::ComputeUpwindFlux(const int k, const int j, const int il,
                                        AthenaArray<Real> &rl, AthenaArray<Real> &rr, // 2D
                                        AthenaArray<Real> &mass_flx,  // 3D
                                        AthenaArray<Real> &flx_out) { // 4D
+  // change here ghz
+  MeshBlock *pmb = pmy_block;
   const int nu = NSCALARS - 1;
-
+  const Real NA = Thermodynamics::Rgas/Thermodynamics::kBoltz;
   for (int n=0; n<=nu; n++) {
 #pragma omp simd
     for (int i=il; i<=iu; i++) {
+      // load/reconstruct mean molecular weight
+      // pthermo->Theta(phydro->w.at(k,j,i), P0);
+      Real Ml = 0.5*(pmb->pthermo->GetMeanMolecularWeight(pmb->phydro->w.at(k,j,i-1))+
+                pmb->pthermo->GetMeanMolecularWeight(pmb->phydro->w.at(k,j,i)));
+      Real Mr = 0.5*(pmb->pthermo->GetMeanMolecularWeight(pmb->phydro->w.at(k,j,i))+
+                pmb->pthermo->GetMeanMolecularWeight(pmb->phydro->w.at(k,j,i+1)));
       Real fluid_flx = mass_flx(k,j,i);
       if (fluid_flx >= 0.0)
-        flx_out(n,k,j,i) = fluid_flx*rl_(n,i);
+        flx_out(n,k,j,i) = fluid_flx*rl_(n,i)*NA/Ml;
       else
-        flx_out(n,k,j,i) = fluid_flx*rr_(n,i);
+        flx_out(n,k,j,i) = fluid_flx*rr_(n,i)*NA/Mr;
     }
   }
   return;
