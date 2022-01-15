@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------------
- * Athena++/Atmosphere Example Program
+ * SNAP Example Program
  *
  * Contributer:
  * Cheng Li, University of Michigan
@@ -24,6 +24,7 @@
 #include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
+#include "../thermodynamics/thermodynamic_funcs.hpp"
 
 
 // @sect3{Preamble}
@@ -46,8 +47,8 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
-        user_out_var(0,k,j,i) = pthermo->Temp(phydro->w.at(k,j,i));
-        user_out_var(1,k,j,i) = pthermo->Theta(phydro->w.at(k,j,i), p0);
+        user_out_var(0,k,j,i) = pthermo->GetTemp(phydro->w.at(k,j,i));
+        user_out_var(1,k,j,i) = PotentialTemp(phydro->w.at(k,j,i), p0, pthermo);
       }
 }
 
