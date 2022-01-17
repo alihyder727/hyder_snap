@@ -16,6 +16,8 @@
 #include "particle_buffer.hpp"
 #include "particles.hpp"
 
+// This subroutine will remove inactive particles (id < 0) and move particles to
+// appropriate buffers if they moved out of the current domain
 void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_particle->pmy_block;
@@ -33,6 +35,7 @@ void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
   std::vector<MaterialPoint>::iterator qj = mp.end();
 
   while (qi < qj) {
+    // if particle is inactive, swap the current one with the last one
     while (qi->id < 0) {
       *qi = *(qj-1);
       qj--;
@@ -91,6 +94,7 @@ void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
     }
   }
 
+  // particles beyond qi are inactive particles. Remove them from the list
   mp.resize(qi - mp.begin());
   //std::cout << std::endl;
 }

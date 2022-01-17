@@ -16,14 +16,19 @@
 #include "../globals.hpp"
 #include "particles.hpp"
 
+// AggregateDensity executes after AttachParticle and before chemistry
+// mp stores all active particles (inactive particles are removed in DetachParticle)
+// u stores the aggregated particle density and will be populated based on mp
 void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_block;
 
+  // initialize cell aggregated particle density u and particle linked list pcell_
   u.ZeroClear();
   std::fill(pcell_.data(), pcell_.data() + pcell_.GetSize(), nullptr);
   int i, j, k;
 
+  // loop over particles
   for (std::vector<MaterialPoint>::iterator q = mp.begin(); q != mp.end(); ++q) {
     k = locate(xface_.data(), q->x3, dims_[0]+1);
     j = locate(xface_.data()+dims_[0]+1, q->x2, dims_[1]+1);
@@ -56,6 +61,7 @@ void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint
     }
   }
 
-  // make a copy
+  // copy u to u1_ such that u1_ represents the aggregated particle density before
+  // chemistry for the next step
   u1_ = u;
 }

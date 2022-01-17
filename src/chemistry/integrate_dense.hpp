@@ -99,7 +99,7 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         }*/
 
         // 9. Apply solution
-        pchem->ApplySolutionLimit(c1, c0, sol, cvt);
+        //pchem->ApplySolutionLimit(c1, c0, sol, cvt);
 
         // 10. Adjust pressure
         c1[IPR] = cd*Thermodynamics::Rgas*c1[IDN];

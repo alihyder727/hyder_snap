@@ -8,6 +8,7 @@
  */
 
 // C/C++ header
+#include <cstring>
 #include <sstream>
 #include <stdexcept>
 // MPI headers
@@ -27,7 +28,7 @@ AngularMomentum::AngularMomentum(MeshBlock *pmb) : Diagnostics(pmb, "am")
   long_name = "mass,moment of inertia relative to a thin spherical shell,mean angular velocity";
   units = "kg,1,1/s";
   data.NewAthenaArray(3,1,1,1);
-  if (COORDINATE_SYSTEM != "spherical_polar") {
+  if (strcmp(COORDINATE_SYSTEM, "spherical_polar") != 0) {
     std::stringstream msg; 
     msg << "### FATAL ERROR in AngularMomentum::AngularMomentum" << std::endl
         << "Diagnostics 'am' can only be used in spherical_polar geometry."

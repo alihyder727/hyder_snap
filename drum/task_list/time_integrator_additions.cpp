@@ -90,6 +90,8 @@ TaskStatus TimeIntegratorTaskList::IntegrateParticles(MeshBlock *pmb, int stage)
   //! \todo check if it works for vl2 integrator
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
+    // default subroutine only sest particle velocity
+    // user defined particles can interact with hydro fields (two-way)
     ppart->ExchangeHydro(ppart->mp, pmb->phydro->du, pmb->phydro->w, pmb->pmy_mesh->dt);
 
     // copy initial state

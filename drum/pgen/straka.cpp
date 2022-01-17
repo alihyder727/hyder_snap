@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------------
- * Athena++/Atmosphere Example Program
+ * SNAP Example Program
  *
  * Contributer: Cheng Li, University of Michigan, 2021
  * Contact: chengcli@umich.edu

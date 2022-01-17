@@ -21,6 +21,7 @@ public:
   Particles *prev, *next;
   ParticleBuffer *ppb;
   AthenaArray<Real> u;
+  //! particle storage. mp1 is for multi-stage integration
   std::vector<MaterialPoint> mp, mp1;
 
 // functions
@@ -56,7 +57,7 @@ public:
     return density_floor_;
   }
 
-  int GetNextId() {
+  /*int GetNextId() {
     int id;
     if (available_ids_.size() > 0) {
       id = available_ids_.back();
@@ -66,14 +67,21 @@ public:
       id = std::stoi(std::to_string(Globals::my_rank)+std::to_string(id));
     }
     return id;
-  }
+  }*/
 
   Particles* FindParticle(std::string name);
   void Initialize();
   void AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> &mp);
+  //! create or destroy particles after chemistry
   void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c);
+
+  //! restart functions
   size_t RestartDataSizeInBytes();
+
+  //! restart functions
   size_t DumpRestartData(char *pdst);
+
+  //! restart functions
   size_t LoadRestartData(char *psrt);
 
   virtual void ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
@@ -87,12 +95,12 @@ protected:
   std::vector<Real> xcenter_;
   std::vector<int> dims_;
   std::vector<std::string> cnames_;
-  std::vector<int> available_ids_;
+  //std::vector<int> available_ids_;
   //! heat capacity
   std::vector<Real> cc_;
   //! mean molecular weight
   std::vector<Real> mu_;
-  //! copy of c before doing chemistry
+  //! copy of u before doing chemistry
   AthenaArray<Real> u1_;
   //! linked list of particles in cell
   AthenaArray<MaterialPoint*> pcell_;

@@ -29,12 +29,14 @@ void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> 
   Real g2 = pmb->phydro->hsrc.GetG2();
   Real g3 = pmb->phydro->hsrc.GetG3();
 
+  // loop over particles
   for (std::vector<MaterialPoint>::iterator q = mp.begin(); q != mp.end(); ++q) {
     loc[0] = q->x3;
     loc[1] = q->x2;
     loc[2] = q->x1;
 
     int f = pm->f2 + pm->f3;
+    // interpolate Eulerian velocity to particle velocity
     interpn(&q->v1, loc+2-f, v1.data(), xcenter_.data()+2-f, dims_.data()+2-f, 1+f);
     if (pm->f2)
       interpn(&q->v2, loc+2-f, v2.data(), xcenter_.data()+2-f, dims_.data()+2-f, 1+f);
