@@ -27,7 +27,7 @@ public:
   RadioObservation(Inversion *pinvt, ParameterInput *pin);
   void ReadObservationFile(char const *fname);
 	Real LogPriorProbability(Real const *TpSample, Real const *XpSample, int nsample) const;
-	Real LogPosteriorProbability(Real const *par, Real *val, int ndim, int nvalue) const;
+	Real LogPosteriorProbability(Real const *par, Real *val, int ndim, int nvalue, int kwalker) const;
 
 private:
   Inversion *pmy_invt_;
@@ -35,11 +35,11 @@ private:
   bool fit_differential_;
 };
 
-void update_atm_profiles(MeshBlock *pmb,
+void update_atm_profiles(MeshBlock *pmb, int k,
     Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample,
 		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi = 1.);
 
 void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
-    int jcol, bool differential = false);
+    int k, int j, bool differential = false);
 
 #endif

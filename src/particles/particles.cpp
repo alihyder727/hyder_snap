@@ -14,6 +14,7 @@
 // Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../debugger/debugger.hpp"
 #include "particles.hpp"
 #include "particle_buffer.hpp"
 
@@ -21,6 +22,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb), myname("HEAD"), prev(nullptr), next(nullptr),
   seeds_per_cell_(1), nmax_per_cell_(1), density_floor_(0)
 {
+  pmb->pdebug->Enter("Particles");
   ppb = new ParticleBuffer(this);
 
   char particle_names[1024], *p;
@@ -46,12 +48,18 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
     }
     p = std::strtok(NULL, " ,");
   }
+  pmb->pdebug->Leave();
 }
 
 // constructor, initializes data structure and parameters
 Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int nct):
   pmy_block(pmb), myname(name), prev(nullptr), next(nullptr)
 {
+  std::stringstream msg;
+  pmb->pdebug->Enter("Particles");
+  msg << "- " << name << " particle categories = " << nct << std::endl;
+  pmb->pdebug->WriteMessage(msg.str());
+  msg.str("");
   ppb = new ParticleBuffer(this);
   int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
 
@@ -87,7 +95,6 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
     5*seeds_per_cell_);
   density_floor_ = pin->GetOrAddReal("particles", name + ".dfloor", 1.E-10);
 
-  std::stringstream msg;
   if (nmax_per_cell_ < seeds_per_cell_) {
     msg << "### FATAL ERROR in Particles::Particles"
         << "Maximum particles per cell: " << nmax_per_cell_
@@ -95,6 +102,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
         << "seed particles per cell: " << seeds_per_cell_ << std::endl;
     ATHENA_ERROR(msg);
   }
+  pmb->pdebug->Leave();
 }
 
 // destructor

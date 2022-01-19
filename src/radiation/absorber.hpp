@@ -10,6 +10,9 @@
 
 // Athena++ headers
 #include "../athena.hpp"
+#include "../debugger/debugger.hpp"
+#include "../mesh/mesh.hpp"
+#include "radiation.hpp"
 
 /**@file
  * @brief This file contains declaration of Absorber
@@ -38,20 +41,30 @@ public:
     pmy_band(pband), myname("NULL"), prev(NULL), next(NULL), imol_(-1), mixr_(0) {}
 
   Absorber(RadiationBand *pband, std::string name, int imol, Real mixr = 1.): 
-    pmy_band(pband), myname(name), prev(NULL), next(NULL), imol_(imol), mixr_(mixr) {
-    std::cout << "- Initializing ABSORBER " << name 
-              << " with molar mixing RATIO " << mixr
-              << " and ID " << imol << std::endl;
+    pmy_band(pband), myname(name), prev(NULL), next(NULL), imol_(imol), mixr_(mixr)
+  {
+    Debugger *pdebug = pband->pmy_rad->pmy_block->pdebug;
+    pdebug->Enter("Absorber " + name);
+    std::stringstream msg;
+    msg << "- molar mixing ratio = " << mixr
+        << " and id = " << imol << std::endl;
+    pdebug->WriteMessage(msg.str());
+    pdebug->Leave();
   }
 
   Absorber(RadiationBand *pband, std::string name, std::vector<int> imols, Real mixr = 1): 
-    pmy_band(pband), myname(name), prev(NULL), next(NULL), imols_(imols), mixr_(mixr) {
-    std::cout << "- Initializing ABSORBER " << name 
-              << " with molar mixing RATIO " << mixr
-              << " and dependent ID ";
+    pmy_band(pband), myname(name), prev(NULL), next(NULL), imols_(imols), mixr_(mixr)
+  {
+    Debugger *pdebug = pband->pmy_rad->pmy_block->pdebug;
+    pdebug->Enter("Absorber " + name);
+    std::stringstream msg;
+    msg << "- molar mixing ratio = " << mixr
+        << " and dependent id = ";
     for (int i = 0; i < imols.size(); ++i)
-      std::cout << imols_[i] << " ";
-    std::cout << std::endl;
+      msg << imols_[i] << " ";
+    msg << std::endl;
+    pdebug->WriteMessage(msg.str());
+    pdebug->Leave();
   }
 
   virtual ~Absorber() {

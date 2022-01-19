@@ -7,6 +7,7 @@
 #include "diagnostics.hpp"
 #include "../mesh/mesh.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../debugger/debugger.hpp"
 #include "../globals.hpp"
 
 Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
@@ -14,6 +15,7 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
   prev(nullptr), next(nullptr), 
   ncycle(0), pmy_block_(pmb)
 {
+  pmb->pdebug->Enter("Diagnostics");
   std::stringstream msg;
   char cstr[80];
   std::string varnames = pin->GetOrAddString("problem", "diagnostics", "");
@@ -21,9 +23,9 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
   char *p = std::strtok(cstr, " ,");
   while (p != NULL) {
     std::string name(p);
-    if (name == "div")  // 1.
+    if (name == "div")  { // 1.
       AddDiagnostics(Divergence(pmb));
-    else if (name == "curl")  // 2.
+    } else if (name == "curl")  // 2.
       AddDiagnostics(Curl(pmb));
     else if (name == "mean")  // 3.
       AddDiagnostics(HydroMean(pmb));
@@ -48,21 +50,26 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
     else {
       msg << "### FATAL ERROR in function Diagnostics::Diagnostics"
           << std::endl << "Diagnostic variable " << name << " not defined";
-			ATHENA_ERROR(msg);
+      ATHENA_ERROR(msg);
     }
+    msg << "- add diagnostics " + name << std::endl;
     p = std::strtok(NULL, " ,");
   }
 
   if (NGHOST < 2) {
     msg << "### FATAL ERROR in function Diagnostics::Diagnostics"
         << std::endl << "Most diagnostic variables require at least 2 ghost cells";
-		ATHENA_ERROR(msg);
+    ATHENA_ERROR(msg);
   }
+  pmb->pdebug->WriteMessage(msg.str());
+  pmb->pdebug->Leave();
 }
 
 Diagnostics::Diagnostics(MeshBlock *pmb, std::string name):
   myname(name), prev(nullptr), next(nullptr), ncycle(0), pmy_block_(pmb)
 {
+  pmb->pdebug->Enter("Diagnostics");
+  std::stringstream msg;
   ncells1_ = pmb->block_size.nx1 + 2*(NGHOST);
   ncells2_ = 1; 
   ncells3_ = 1;
@@ -85,6 +92,7 @@ Diagnostics::Diagnostics(MeshBlock *pmb, std::string name):
   vol_.NewAthenaArray(ncells1_);
   brank_.resize(Globals::nranks);
   color_.resize(Globals::nranks);
+  pmb->pdebug->Leave();
 }
 
 Diagnostics::~Diagnostics() {
@@ -104,37 +112,37 @@ Diagnostics* Diagnostics::operator[](std::string name)
 }
 
 void Diagnostics::SetColor(CoordinateDirection dir) {
-	MeshBlock *pmb = pmy_block_;
-	NeighborBlock bblock, tblock;
-	pmb->FindNeighbors(dir, bblock, tblock);
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock bblock, tblock;
+  pmb->FindNeighbors(dir, bblock, tblock);
 
   if (dir == X1DIR) {
     if (pmb->block_size.x1min <= pmb->pmy_mesh->mesh_size.x1min) {
-			bblock.snb.gid = -1;
-			bblock.snb.rank = -1;
+      bblock.snb.gid = -1;
+      bblock.snb.rank = -1;
     } 
-		if (pmb->block_size.x1max >= pmb->pmy_mesh->mesh_size.x1max) {
-			tblock.snb.gid = -1;
-			tblock.snb.rank = -1;
-		}
+    if (pmb->block_size.x1max >= pmb->pmy_mesh->mesh_size.x1max) {
+      tblock.snb.gid = -1;
+      tblock.snb.rank = -1;
+    }
   } else if (dir == X2DIR) {
     if (pmb->block_size.x2min <= pmb->pmy_mesh->mesh_size.x2min) {
-			bblock.snb.gid = -1;
-			bblock.snb.rank = -1;
-		}
+      bblock.snb.gid = -1;
+      bblock.snb.rank = -1;
+    }
     if (pmb->block_size.x2max >= pmb->pmy_mesh->mesh_size.x2max) {
-			tblock.snb.gid = -1;
-			tblock.snb.rank = -1;
-		}
+      tblock.snb.gid = -1;
+      tblock.snb.rank = -1;
+    }
   } else { // X3DIR
     if (pmb->block_size.x3min <= pmb->pmy_mesh->mesh_size.x3min) {
-			bblock.snb.gid = -1;
-			bblock.snb.rank = -1;
-		}
+      bblock.snb.gid = -1;
+      bblock.snb.rank = -1;
+    }
     if (pmb->block_size.x3max >= pmb->pmy_mesh->mesh_size.x3max) {
-			tblock.snb.gid = -1;
-			tblock.snb.rank = -1;
-		}
+      tblock.snb.gid = -1;
+      tblock.snb.rank = -1;
+    }
   }
 
 #ifdef MPI_PARALLEL

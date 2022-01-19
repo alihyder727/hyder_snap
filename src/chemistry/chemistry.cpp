@@ -11,6 +11,7 @@
 
 // Athena++ headers
 #include "../hydro/hydro.hpp"
+#include "../debugger/debugger.hpp"
 #include "chemistry.hpp"
 #include "kessler94.hpp"
 #include "integrate_dense.hpp"
@@ -18,7 +19,8 @@
 Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin) :
   pmy_block(pmb), pkessler94_(nullptr)
 {
-  ATHENA_LOG("Chemistry");
+  //ATHENA_LOG("Chemistry");
+  pmb->pdebug->Enter("Chemistry");
   char chem_names[1024], *p;
   std::string str = pin->GetOrAddString("chemistry", "chemistry", "");
   std::strcpy(chem_names, str.c_str());
@@ -32,6 +34,9 @@ Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin) :
     else name = p;
     if (std::strncmp(p, "kessler94", 9) == 0) {
       AddToChemistry(pkessler94_, pin, name);
+      msg << "- use chemistry kessler94" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
+      msg.str("");
     } else {
       msg << "### FATAL ERROR in function Particles::Particles"
           << std::endl << "Particles '" << p << "' "
@@ -40,6 +45,7 @@ Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin) :
     }
     p = std::strtok(NULL, " ,");
   }
+  pmb->pdebug->Leave();
 }
 
 Chemistry::~Chemistry()

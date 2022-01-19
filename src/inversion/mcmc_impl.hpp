@@ -22,12 +22,12 @@ void mcmc_init(
 
   // make sure that the start points are valid
   for (int k = 0; k < nwalker; ++k) {
-    recs->lnp[0][k] = pobj->LogPosteriorProbability(par[k], recs->val[0][k], ndim, nval);
+    recs->lnp[0][k] = pobj->LogPosteriorProbability(par[k], recs->val[0][k], ndim, nval, k);
 
     int niter = 0;
     while (std::isnan(recs->lnp[0][k]) && (niter++ < 10)) {  // if point (k) is invalid
       mcmc_stretch_move(par[k], par, k, nwalker, ndim, opts);
-      recs->lnp[0][k] = pobj->LogPosteriorProbability(par[k], recs->val[0][k], ndim, nval);
+      recs->lnp[0][k] = pobj->LogPosteriorProbability(par[k], recs->val[0][k], ndim, nval, k);
     }
 
     if (niter >= 10) {
@@ -73,7 +73,7 @@ void mcmc_advance(
     double zz = mcmc_stretch_move(par, recs->par[cur-1], k, nwalker, ndim, opts);
     //mcmc_walk_move(par_all + k*np, par, np, k, nwalker, zz + k, opts);
 
-    recs->lnp[cur][k] = pobj->LogPosteriorProbability(par, recs->val[cur][k], ndim, nval);
+    recs->lnp[cur][k] = pobj->LogPosteriorProbability(par, recs->val[cur][k], ndim, nval, k);
 
     double lnp0 = recs->lnp[cur-1][k],
            lnp1 = recs->lnp[cur][k],

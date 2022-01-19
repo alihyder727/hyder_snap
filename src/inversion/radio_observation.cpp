@@ -7,22 +7,25 @@
 // Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "../utils/utils.hpp"
+#include "../debugger/debugger.hpp"
+#include "inversion.hpp"
 //#include "../math/core.h"
 #include "radio_observation.hpp"
 
 RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   pmy_invt_(pinvt)
 {
+  //ATHENA_LOG("RadioObservation");
   std::stringstream msg;
-  ATHENA_LOG("RadioObservation");
+  Debugger *pdebug = pinvt->pmy_block->pdebug;
+  pdebug->Enter("RadioObservation");
   std::string obsfile = pin->GetOrAddString("inversion", "obsfile", "none");
 
   if (obsfile != "none") {
     ReadObservationFile(obsfile.c_str());
-    std::cout << "- target: ";
-    std::cout << target.transpose() << std::endl;
-    std::cout << "- inverse covariance matrix" << std::endl;
-    std::cout << icov << std::endl;
+    msg << "- target: " << target.transpose() << std::endl
+        << "- inverse covariance matrix" << std::endl
+        << icov << std::endl;
   }
 
   // T correlation 
@@ -39,9 +42,11 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   // composition id
   ix = Vectorize<int>(pin->GetString("inversion", "Variables").c_str());
 
-	// Pressure sample
-	plevel = Vectorize<Real>(pin->GetString("inversion", "PrSample").c_str());
-  std::cout << "- number of inversion variables: " << plevel.size()*ix.size() << std::endl;
+  // Pressure sample
+  plevel = Vectorize<Real>(pin->GetString("inversion", "PrSample").c_str());
+  msg << "- number of inversion variables: " << plevel.size()*ix.size() << std::endl;
+  pdebug->WriteMessage(msg.str());
+  msg.str("");
   
   // add boundaries
   Real pmax = pin->GetReal("inversion", "Pmax");
@@ -55,11 +60,17 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   plevel.insert(plevel.begin(), pmax);
   plevel.push_back(pmin);
 
-	for (std::vector<Real>::iterator m = plevel.begin(); m != plevel.end(); ++m)
-		(*m) *= 1.E5;	// bar -> pa
+  for (std::vector<Real>::iterator m = plevel.begin(); m != plevel.end(); ++m)
+    (*m) *= 1.E5; // bar -> pa
 
   // fit differential
   fit_differential_ = pin->GetOrAddBoolean("inversion", "differential", false);
+  if (fit_differential_) {
+    msg << "- fit differential" << std::endl;
+    pdebug->WriteMessage(msg.str());
+    msg.str("");
+  }
+  pdebug->Leave();
 }
 
 #define MAX_LINE 512

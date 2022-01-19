@@ -20,15 +20,18 @@
 #include "../../coordinates/coordinates.hpp"
 #include "../../mesh/mesh.hpp"
 #include "../../parameter_input.hpp"
+#include "../../debugger/debugger.hpp"
 #include "../hydro.hpp"
 #include "hydro_srcterms.hpp"
 
 // HydroSourceTerms constructor
 
 HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
-  ATHENA_LOG("HydroSourceTerms");
+  phyd->pmy_block->pdebug->Enter("HydroSouceTerms");
+  //ATHENA_LOG("HydroSourceTerms");
   pmy_hydro_ = phyd;
   hydro_sourceterms_defined = false;
+  std::stringstream msg;
 
   // read point mass or constant acceleration parameters from input block
 
@@ -41,7 +44,6 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
             && phyd->pmy_block->block_size.nx3==1)) {
       hydro_sourceterms_defined = true;
     } else {
-      std::stringstream msg;
       msg << "### FATAL ERROR in HydroSourceTerms constructor" << std::endl
           << "The point mass gravity works only in spherical polar coordinates"
           << "or in 2D cylindrical coordinates." << std::endl
@@ -51,13 +53,22 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
   }
   g1_ = pin->GetOrAddReal("hydro","grav_acc1",0.0);
   if (g1_ > 0.) ATHENA_WARN("grav_acc1 is positive.");
-  if (g1_ != 0.0) hydro_sourceterms_defined = true;
+  if (g1_ != 0.0) {
+    hydro_sourceterms_defined = true;
+    msg << "- g1 = " << g1_ << std::endl;
+  }
 
   g2_ = pin->GetOrAddReal("hydro","grav_acc2",0.0);
-  if (g2_ != 0.0) hydro_sourceterms_defined = true;
+  if (g2_ != 0.0) {
+    hydro_sourceterms_defined = true;
+    msg << "- g2 = " << g1_ << std::endl;
+  }
 
   g3_ = pin->GetOrAddReal("hydro","grav_acc3",0.0);
-  if (g3_ != 0.0) hydro_sourceterms_defined = true;
+  if (g3_ != 0.0) {
+    hydro_sourceterms_defined = true;
+    msg << "- g3 = " << g1_ << std::endl;
+  }
 
   // coriolis acceleration
   /*omega1_ = pin->GetOrAddReal("hydro","coriolis_acc1",0.0);
@@ -72,19 +83,19 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
   omegax_ = pin->GetOrAddReal("hydro","OmegaX",0.0);
   if (omegax_ != 0.0) {
     hydro_sourceterms_defined = true;
-    std::cout << "- Rotation in X-direction: " << omegax_ << std::endl;
+    msg << "- Rotation in X-direction: " << omegax_ << std::endl;
   }
 
   omegay_ = pin->GetOrAddReal("hydro","OmegaY",0.0);
   if (omegay_ != 0.0) {
     hydro_sourceterms_defined = true;
-    std::cout << "- Rotation in Y-direction: " << omegay_ << std::endl;
+    msg << "- Rotation in Y-direction: " << omegay_ << std::endl;
   }
 
   omegaz_ = pin->GetOrAddReal("hydro","OmegaZ",0.0);
   if (omegaz_ != 0.0) {
     hydro_sourceterms_defined = true;
-    std::cout << "- Rotation in Z-direction: " << omegaz_ << std::endl;
+    msg << "- Rotation in Z-direction: " << omegaz_ << std::endl;
   }
 
   // read shearing box parameters from input block
@@ -97,6 +108,8 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
 
   UserSourceTerm = phyd->pmy_block->pmy_mesh->UserSourceTerm_;
   if (UserSourceTerm != nullptr) hydro_sourceterms_defined = true;
+  phyd->pmy_block->pdebug->WriteMessage(msg.str());
+  phyd->pmy_block->pdebug->Leave();
 }
 
 //----------------------------------------------------------------------------------------

@@ -19,9 +19,28 @@
 #include "../hydro/hydro.hpp"
 #include "../utils/utils.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
+#include "../math/root.h"
 #include "gaussian_process.hpp"
 
-void update_atm_profiles(MeshBlock *pmb,
+struct SolverData {
+  Thermodynamics *pthermo;
+  Real **w2;
+  Real dlnp;
+};
+
+Real solve_thetav(Real rdlnTdlnP, void *aux) {
+  // grav parameter is not used in hydrostatic formulation, set to zero
+  SolverData *pdata = static_cast<SolverData*>(aux);
+  Real **w2 = pdata->w2;
+  Thermodynamics *pthermo = pdata->pthermo;
+  pthermo->ConstructAtmosphere(w2, pthermo->GetTemp(w2[0]), w2[0][IPR], 0., pdata->dlnp, 2, Adiabat::dry, rdlnTdlnP);
+  Real p0 = 1.E5;
+  Real thetav0 = PotentialTemp(w2[0], p0, pthermo)*pthermo->RovRd(w2[0]);
+  Real thetav1 = PotentialTemp(w2[1], p0, pthermo)*pthermo->RovRd(w2[1]);
+  return thetav1 - thetav0;
+}
+
+void update_atm_profiles(MeshBlock *pmb, int k,
     Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample, 
 		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
 {
@@ -29,8 +48,7 @@ void update_atm_profiles(MeshBlock *pmb,
   Thermodynamics *pthermo = pmb->pthermo;
   Coordinates *pcoord = pmb->pcoord;
   Hydro *phydro = pmb->phydro;
-  int is = pmb->is, js = pmb->js, ks = pmb->ks;
-  int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
+  int is = pmb->is, js = pmb->js, ie = pmb->ie, je = pmb->je;
 
   int nlayer = ie - is + 1;
   Real *zlev = new Real [nsample];
@@ -79,7 +97,7 @@ void update_atm_profiles(MeshBlock *pmb,
   for (int n = 0; n < NHYDRO; ++n)
     for (int j = js+1; j <= je; ++j)
       for (int i = is; i <= ie; ++i)
-        phydro->w(n,j,i) = phydro->w(n,js,i);
+        phydro->w(n,k,j,i) = phydro->w(n,k,js,i);
 	int j1 = js+1, j2 = js+2;
   Real Rd = pthermo->GetRd();
 
@@ -89,26 +107,26 @@ void update_atm_profiles(MeshBlock *pmb,
 		for (int i = is; i <= ie; ++i) {
       if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
         continue;
-			Real temp = pthermo->GetTemp(phydro->w.at(j1,i));
+			Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
 			if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
-			phydro->w(IDN,j1,i) = phydro->w(IPR,j1,i)/(Rd*(temp + Tp[i-is])*
-					pthermo->RovRd(phydro->w.at(j1,i)));
+			phydro->w(IDN,k,j1,i) = phydro->w(IPR,k,j1,i)/(Rd*(temp + Tp[i-is])*
+					pthermo->RovRd(phydro->w.at(k,j1,i)));
 		}
 	}
 
   // save perturbed X profile to model 2
   std::cout << "* Update composition" << std::endl;
   for (int i = is; i <= ie; ++i) {
-    Real temp = pthermo->GetTemp(phydro->w.at(j2,i));
+    Real temp = pthermo->GetTemp(phydro->w.at(k,j2,i));
     if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
       continue;
 		int ic = 0;
 		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
 			if (*m != 0) {
-				phydro->w(*m,j2,i) += Xp[ic*nsample + i-is];
-				phydro->w(*m,j2,i) = std::max(phydro->w(*m,j2,i), 0.);
-				phydro->w(IDN,j2,i) = phydro->w(IPR,j2,i)/
-					(Rd*temp*pthermo->RovRd(phydro->w.at(j2,i)));
+				phydro->w(*m,k,j2,i) += Xp[ic*nsample + i-is];
+				phydro->w(*m,k,j2,i) = std::max(phydro->w(*m,k,j2,i), 0.);
+				phydro->w(IDN,k,j2,i) = phydro->w(IPR,k,j2,i)/
+					(Rd*temp*pthermo->RovRd(phydro->w.at(k,j2,i)));
 				ic++;
 			}
 		}
@@ -122,28 +140,41 @@ void update_atm_profiles(MeshBlock *pmb,
 	for (int i = is+1; i <= ie; ++i) {
     if (pcoord->x1v(i) < zlev[0]) continue;
     // copy unadjusted temperature and composition profile to je
-    Real temp = pthermo->GetTemp(phydro->w.at(j1,i));
+    Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
 		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
-			if (*m != 0) phydro->w(*m,je,i) = phydro->w(*m,j2,i);
-    phydro->w(IDN,je,i) = phydro->w(IPR,je,i)/
-      (Rd*temp*pthermo->RovRd(phydro->w.at(je,i)));
+			if (*m != 0) phydro->w(*m,k,je,i) = phydro->w(*m,k,j2,i);
+    phydro->w(IDN,k,je,i) = phydro->w(IPR,k,je,i)/
+      (Rd*temp*pthermo->RovRd(phydro->w.at(k,je,i)));
 
-    // adiabatic move
+    // constant virtual potential temperature move
     for (int n = 0; n < NHYDRO; ++n)
-      w2[0][n] = phydro->w(n,je,i-1);
-    temp = pthermo->GetTemp(w2[0]);
-    Real pres = w2[0][IPR];
-    Real dlnp = log(phydro->w(IPR,je,i)/pres);
-    // grav parameter is not used in hydrostatic formulation, set to zero
-    pthermo->ConstructAtmosphere(w2, temp, pres, 0., dlnp, 2, Adiabat::pseudo, 1.);
-  
+      w2[0][n] = phydro->w(n,k,je,i-1);
+
+    SolverData solver_data;
+    solver_data.w2 = w2;
+    solver_data.pthermo = pthermo;
+    solver_data.dlnp = log(phydro->w(IPR,k,je,i)/phydro->w(IPR,k,je,i-1));
+
+    Real rdlnTdlnP;
+    //std::cout << solve_thetav(1., &solver_data) << std::endl;
+    int err = root(0.5, 2., 1.E-4, &rdlnTdlnP, solve_thetav, &solver_data);
+    if (err) {
+      std::stringstream msg;
+      msg << "### Root doesn't converge" << std::endl
+          << solve_thetav(1., &solver_data) << " " << solve_thetav(2., &solver_data);
+      ATHENA_ERROR(msg);
+    }
+
+    pthermo->ConstructAtmosphere(w2, pthermo->GetTemp(w2[0]), w2[0][IPR], 0., solver_data.dlnp, 
+        2, Adiabat::dry, rdlnTdlnP);
+
     // stability
-    phydro->w(IDN,je,i) = std::min(w2[1][IDN], phydro->w(IDN,je,i));
+    phydro->w(IDN,k,je,i) = std::min(w2[1][IDN], phydro->w(IDN,k,je,i));
 
     // saturation
-    pthermo->SaturationSurplus(dw, phydro->w.at(je,i), VariableType::prim);
+    pthermo->SaturationSurplus(dw, phydro->w.at(k,je,i), VariableType::prim);
     for (int n = 1; n <= NVAPOR; ++n)
-      if (dw[n] > 0.) phydro->w(n,je,i) -= dw[n];
+      if (dw[n] > 0.) phydro->w(n,k,je,i) -= dw[n];
 	}
   FreeCArray(w2);
 

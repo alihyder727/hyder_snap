@@ -4,6 +4,7 @@
 
 // Athena++ headers
 #include "../hydro.hpp"
+#include "../../debugger/debugger.hpp"
 #include "../../mesh/mesh.hpp"
 #include "../../utils/utils.hpp"
 #include "../../globals.hpp"
@@ -21,6 +22,7 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, int n3max, int n2max):
     first_block(true), last_block(true), periodic_boundary(false),
     pole_at_bot(false), pole_at_top(false)
 {
+  phydro->pmy_block->pdebug->Enter("ImplicitSolver");
   MeshBlock *pmb = phydro->pmy_block;
   int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
 
@@ -49,6 +51,7 @@ ImplicitSolver::ImplicitSolver(Hydro *phydro, int n3max, int n2max):
   p3_(ivy,ivx) = 1.;
   p3_(ivz,ivy) = 1.;
   p3_(ien,ien) = 1.;
+  phydro->pmy_block->pdebug->Leave();
 }
 
 ImplicitSolver::~ImplicitSolver() {
