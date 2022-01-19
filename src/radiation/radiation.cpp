@@ -10,6 +10,7 @@
 #include "../mesh/mesh.hpp"
 #include "../utils/utils.hpp"
 #include "../math/core.h"
+#include "../debugger/debugger.hpp"
 #include "radiation.hpp"
 
 Real const Radiation::hPlanck = 6.63E-34;
@@ -27,7 +28,8 @@ Radiation::Radiation(MeshBlock *pmb):
 
 Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
 {
-  ATHENA_LOG("Radiation");
+  pmb->pdebug->Enter("Radiation");
+  //ATHENA_LOG("Radiation");
   pmy_block = pmb;
   pband = NULL;
   RadiationBand *plast = pband;
@@ -89,6 +91,7 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
   current = 0.;
 
   planet = new CelestrialBody(pin);
+  pmb->pdebug->Leave();
 }
 
 Radiation::~Radiation()

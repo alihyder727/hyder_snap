@@ -8,6 +8,7 @@
 // Athena++ headers
 #include "../parameter_input.hpp"
 #include "../mesh/mesh.hpp"
+#include "../debugger/debugger.hpp"
 #include "inversion.hpp"
 #include "radio_observation.hpp"
 #include "mcmc_impl.hpp"
@@ -15,8 +16,9 @@
 Inversion::Inversion(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb), pradio(nullptr)
 {
+  //ATHENA_LOG("Inversion");
+  pmb->pdebug->Enter("Inversion");
   std::stringstream msg;
-  ATHENA_LOG("Inversion");
   task = pin->GetOrAddString("inversion", "task", "none");
   mcmc_initialized_ = false;
 
@@ -32,12 +34,14 @@ Inversion::Inversion(MeshBlock *pmb, ParameterInput *pin):
   if (task != "none") {
     if (task == "radio") {
       pradio = new RadioObservation(this, pin);
+      pmb->pdebug->WriteMessage(msg.str());
     } else {
       msg << "### FATAL ERROR in function Inversion::Inversion"
           << std::endl << "Unrecognized inversion task.";
       ATHENA_ERROR(msg);
     }
   }
+  pmb->pdebug->Leave();
 }
 
 Inversion::~Inversion()

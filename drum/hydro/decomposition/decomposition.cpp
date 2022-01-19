@@ -6,12 +6,14 @@
 // Athena++ headers
 #include "../../mesh/mesh.hpp"
 #include "../../globals.hpp"
-#include "decomposition.hpp"
+#include "../../debugger/debugger.hpp"
 #include "../../thermodynamics/thermodynamics.hpp"
+#include "decomposition.hpp"
 
 Decomposition::Decomposition(Hydro *phydro):
   pmy_hydro(phydro), has_top_neighbor(false), has_bot_neighbor(false)
 {
+  phydro->pmy_block->pdebug->Enter("Decomposition");
   MeshBlock *pmb = phydro->pmy_block;
   int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
   // allocate hydrostatic and nonhydrostatic pressure
@@ -30,6 +32,7 @@ Decomposition::Decomposition(Hydro *phydro):
 
   // allocate polytropic index and pseudo entropy
   entropy_.NewAthenaArray(2, nc3, nc2);
+  phydro->pmy_block->pdebug->Leave();
 }
 
 Decomposition::~Decomposition()

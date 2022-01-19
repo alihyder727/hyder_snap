@@ -12,6 +12,7 @@ Debugger::Debugger(MeshBlock *pmb):
   pmy_block(pmb), prev(nullptr), next(nullptr), fname_("HEAD")
 {
   data_.NewAthenaArray(2*NHYDRO, pmb->ncells3, pmb->ncells2, pmb->ncells1);
+  idstack_next_.push_back("1.");
 }
 
 Debugger::~Debugger()
@@ -199,4 +200,47 @@ void Debugger::DumpTracking(std::string name, int c1, int c2, int c3, char const
 
   if (prev != nullptr) 
     prev->DumpTracking(name, c1, c2, c3, "a");
+}
+
+void Debugger::Enter(std::string name) {
+  sections_.push_back(name);
+  std::string id = idstack_next_.back();
+  int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
+  if (Globals::my_rank == 0) {
+    //for (int n = 0; n < level; ++n) std::cout << '\t';
+    std::cout << id << " Initializing " << name << " ..." << std::endl;
+  }
+  idstack_next_.push_back(id + "1.");
+}
+
+void Debugger::Leave() {
+  std::stringstream msg;
+  if (sections_.size() == 0) {
+    msg << "### FATAL ERROR in Debugger::Leave"
+        << std::endl << "Caller stack is empty.";
+    ATHENA_ERROR(msg);
+  }
+
+  std::string name = sections_.back();
+  sections_.pop_back();
+  idstack_next_.pop_back();
+  increment_id(idstack_next_.back());
+  /*int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
+  if (Globals::my_rank == 0) {
+    //for (int n = 0; n < level; ++n) std::cout << '\t';
+    std::cout << ">> Leaving " << name << "." << std::endl << std::endl;
+  }*/
+}
+
+void Debugger::WriteMessage(std::string str) const {
+	if (Globals::my_rank == 0) std::cout << str;
+}
+
+void increment_id(std::string &str) {
+  int len = str.size();
+  int x, i = len-1;
+  while ((i > 0) && (str[i-1] != '.')) i--;
+  x = std::stoi(str.substr(i, len-i-1));
+  x += 1;
+  str = str.substr(0, i) + std::to_string(x) + '.';
 }

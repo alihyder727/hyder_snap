@@ -7,6 +7,7 @@
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../task_list/task_manager.hpp"
+#include "../debugger/debugger.hpp"
 #include "physics.hpp"
 
 using namespace PhysicsPackageNames;
@@ -14,7 +15,8 @@ using namespace PhysicsPackageNames;
 Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb)
 {
-  ATHENA_LOG("Physics");
+  //ATHENA_LOG("Physics");
+  pmb->pdebug->Enter("Physics");
   std::stringstream msg;
   char package_names[1024], *p;
   std::string str = pin->GetOrAddString("physics", "packages", "");
@@ -26,7 +28,9 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
   PhysicsPackage pkg;
   while (p != NULL) {
     if (std::strcmp(p, "fix_bot_temperature") == 0) {
-      std::cout << "- use physcis fix_bot_temperature" << std::endl;
+      msg << "- use physcis fix_bot_temperature" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
+      msg.str("");
       pkg.id = FIX_BOT_TEMPERATURE;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -38,7 +42,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
       tem_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1);
     } else if (std::strcmp(p, "fix_bot_velocity") == 0) {
-      std::cout << "- use physcis fix_bot_velocity" << std::endl;
+      msg << "- use physcis fix_bot_velocity" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
       pkg.id = FIX_BOT_VELOCITY;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -50,7 +55,9 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
       vel_bot_.InitWithShallowSlice(hydro_bot_, 3, IVX, 3);
     } else if (std::strcmp(p, "fix_bot_composition") == 0) {
-      std::cout << "- use physcis fix_bot_composition" << std::endl;
+      msg << "- use physcis fix_bot_composition" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
+      msg.str("");
       pkg.id = FIX_BOT_COMPOSITION;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -62,7 +69,9 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
       com_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1+NVAPOR);
     } else if (std::strcmp(p, "top_sponge_layer") == 0) {
-      std::cout << "- use physcis top_sponge_layer" << std::endl;
+      msg << "- use physcis top_sponge_layer" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
+      msg.str("");
       pkg.id = TOP_SPONGE_LAYER;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -72,7 +81,9 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       tau_top_ = pin->GetReal("physics", "top_sponge_layer.tau");
       width_top_ = pin->GetReal("physics", "top_sponge_layer.width");
     } else if (std::strcmp(p, "bot_sponge_layer") == 0) {
-      std::cout << "- use physcis bot_sponge_layer" << std::endl;
+      msg << "- use physcis bot_sponge_layer" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
+      msg.str("");
       pkg.id = BOT_SPONGE_LAYER;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -82,7 +93,9 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       tau_bot_ = pin->GetReal("physics", "bot_sponge_layer.tau");
       width_bot_ = pin->GetReal("physics", "bot_sponge_layer.width");
     } else if (std::strcmp(p, "top_cooling") == 0) {
-      std::cout << "- use physcis top_cooling" << std::endl;
+      msg << "- use physcis top_cooling" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
+      msg.str("");
       pkg.id = TOP_COOLING;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -91,7 +104,9 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
 
       dTdt_ = pin->GetReal("physics", "top_cooling.rate")/86400.; // K/day to K/s
     } else if (std::strcmp(p, "bot_heating") == 0) {
-      std::cout << "- use physcis bot_heating" << std::endl;
+      msg << "- use physcis bot_heating" << std::endl;
+      pmb->pdebug->WriteMessage(msg.str());
+      msg.str("");
       pkg.id = BOT_HEATING;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -108,6 +123,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
     packages_.push_back(pkg);
     p = std::strtok(NULL, " ,");
   }
+  pmb->pdebug->Leave();
 }
 
 void Physics::Initialize(AthenaArray<Real> const& w)

@@ -120,7 +120,8 @@ void update_gamma(Real& gamma, Real const q[]) {
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
   static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
-  ATHENA_LOG("harp_radio_js");
+  //ATHENA_LOG("harp_radio_js");
+  pdebug->Enter("ProblemGenerator:juno_mwr");
   std::stringstream msg;
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
@@ -260,7 +261,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     PrSample[i] *= 1.E5;  // bar -> pa
     XpSample[i] *= 1.E-3; // g/kg -> kg/kg
   }
-  update_atm_profiles(this, PrSample.data(), TpSample.data(), XpSample.data(),
+  update_atm_profiles(this, ks, PrSample.data(), TpSample.data(), XpSample.data(),
       nsample+2, ix, Tstd, Tlen, Xstd, Xlen);
 
   // copy revised profile to baseline position
@@ -308,4 +309,5 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   FreeCArray(par);
   delete[] z1;
   delete[] t1;
+  pdebug->Leave();
 }

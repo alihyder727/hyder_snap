@@ -14,6 +14,7 @@
 #include "../hydro/hydro.hpp"
 #include "../particles/particles.hpp"
 #include "../scalars/scalars.hpp"
+#include "../debugger/debugger.hpp"
 #include "../utils/utils.hpp" // Vectorize, ReadTabular, ReplaceChar
 
 RadiationBand::RadiationBand(Radiation *prad):
@@ -26,7 +27,8 @@ RadiationBand::RadiationBand(Radiation *prad):
 
 RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *pin)
 {
-  ATHENA_LOG("RadiationBand");
+  prad->pmy_block->pdebug->Enter("RadiationBand " + name);
+  //ATHENA_LOG("RadiationBand");
   std::stringstream msg;
 
   myname = name;
@@ -134,9 +136,10 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   init_disort(pin);
 #endif
 
-  std::cout << "- Finish setting spectral BAND " << name
-            << " with RANGE " << spec[0].wav << " - " << spec[nspec-1].wav
-            << " and LENGTH " << nspec << std::endl;
+  msg << "- spectral range = " << spec[0].wav << " - " << spec[nspec-1].wav
+      << " and length = " << nspec << std::endl;
+  prad->pmy_block->pdebug->WriteMessage(msg.str());
+  prad->pmy_block->pdebug->Leave();
 }
 
 RadiationBand::~RadiationBand()

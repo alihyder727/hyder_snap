@@ -106,6 +106,9 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   // in the Hydro constructor
 
   // mesh-related objects
+  // debug
+  pdebug = new Debugger(this);
+
   // Boundary
   pbval  = new BoundaryValues(this, input_bcs, pin);
 
@@ -193,7 +196,6 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   }
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
-  pdebug = new Debugger(this);
   pinvt = new Inversion(this, pin);
 
   // Create user mesh data
@@ -253,6 +255,8 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   }
 
   // (re-)create mesh-related objects in MeshBlock
+  // debug
+  pdebug = new Debugger(this);
 
   // Boundary
   pbval = new BoundaryValues(this, input_bcs, pin);
@@ -324,7 +328,6 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   }
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
-  pdebug = new Debugger(this);
   pinvt = new Inversion(this, pin);
 
   InitUserMeshBlockData(pin);

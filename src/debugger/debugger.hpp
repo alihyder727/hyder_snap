@@ -24,12 +24,20 @@ public:
   void Track3D(std::string name, TestFunc_t test, AthenaArray<Real>& var, int n);
   void Track1D(std::string name, TestFunc_t test, AthenaArray<Real>& var, int n, int k, int j);
   void DumpTracking(std::string name, int c1, int c2, int c3, char const* mode);
+  //void Enter(char const *name);
+  void Enter(std::string name);
+  void Leave();
+  void WriteMessage(std::string str) const;
 
 protected:
   std::string fname_;
   AthenaArray<Real> data_;
   std::vector<std::string> vnames_;
+  std::vector<std::string> sections_;
+  std::vector<std::string> idstack_next_;
 };
+
+void increment_id(std::string &str);
 
 // test functions
 int IsPositive(Real v);
