@@ -24,6 +24,7 @@
 #include "../thermodynamics/thermodynamic_funcs.hpp"
 #include "../physics/physics.hpp"
 #include "../math/interpolation.h"
+#include "../debugger/debugger.hpp"
 #include "../math/core.h"
 
 // global parameters
@@ -53,8 +54,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
         // theta_v
         user_out_var(2,k,j,i) = user_out_var(1,k,j,i)*pthermo->RovRd(phydro->w.at(k,j,i));
         // mse
-        user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w, grav*pcoord->x1v(i),
-          pthermo, ppart, k, j, i);
+        user_out_var(3,k,j,i) = MoistStaticEnergy(phydro->w.at(k,j,i), grav*pcoord->x1v(i), pthermo);
         for (int n = 1; n <= NVAPOR; ++n)
           user_out_var(3+n,k,j,i) = RelativeHumidity(phydro->w.at(k,j,i), n, pthermo);
       }
@@ -99,7 +99,8 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
-  ATHENA_LOG("convection");
+  //ATHENA_LOG("convection");
+  pdebug->Enter("convection");
   std::stringstream msg;
   Real gamma = pin->GetReal("hydro", "gamma");
 
@@ -137,9 +138,9 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     z1[i] = z1[i-1] + dz;
 
   Real t0, p0;
-  std::cout << "- Request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
+  msg << "- Request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
   while (iter++ < max_iter) {
-    pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo);
+    pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo, 0.);
 
     // 1.2 replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
     int ii = 0;
@@ -164,7 +165,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     Ts += T0 - t0;
     Ps *= P0/p0;
     if ((fabs(T0 - t0) < 0.01) && (fabs(P0/p0 - 1.) < 1.E-4)) break;
-    std::cout << "- Iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
+    msg << "- Iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
   }
 
   if (iter > max_iter) {
@@ -174,6 +175,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         << std::endl << "P0 = " << p0;
     ATHENA_ERROR(msg);
   }
+  pdebug->WriteMessage(msg.str());
+  msg.str("");
 
   // setup initial condition
   srand(Globals::my_rank + time(0));
@@ -218,4 +221,5 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   delete[] z1;
   delete[] p1;
   delete[] t1;
+  pdebug->Leave();
 }

@@ -17,15 +17,20 @@
 #include "../hydro/hydro.hpp"
 #include "../hydro/srcterms/hydro_srcterms.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../debugger/debugger.hpp"
 #include "particles.hpp"
 
 SimpleCloudParticles::SimpleCloudParticles(
   MeshBlock *pmb, ParameterInput *pin, std::string name):
   Particles(pmb, pin, name, 2)
 {
-  ATHENA_LOG("SimpleCloudParticles");
-  std::cout << "- First category is " << name + " cloud" << std::endl;
-  std::cout << "- Second category is " << name + " precipitation" << std::endl;
+  //ATHENA_LOG("SimpleCloudParticles");
+  pmb->pdebug->Enter("SimpleCloudParticles");
+  std::stringstream msg;
+  msg << "- first category is " << name + " cloud" << std::endl
+      << "- second category is " << name + " precipitation" << std::endl;
+  pmb->pdebug->WriteMessage(msg.str());
+  msg.str("");
   cnames_.resize(2);
   cnames_[0] = "cloud";
   cnames_[1] = "rain";
@@ -38,6 +43,7 @@ SimpleCloudParticles::SimpleCloudParticles(
 
   cc_.push_back(cc);
   cc_.push_back(cc);
+  pmb->pdebug->Leave();
 }
 
 void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,

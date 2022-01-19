@@ -8,6 +8,7 @@
 #include "../utils/utils.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../particles/particles.hpp"
+#include "../debugger/debugger.hpp"
 #include "chemistry.hpp"
 #include "chemistry_base.hpp"
 #include "chemistry_solver.hpp"
@@ -24,10 +25,12 @@ public:
   Kessler94(Chemistry *pchem, ParameterInput *pin, std::string name) :
     ChemistryBase<Kessler94>(pchem, pin)
   {
-    ATHENA_LOG("Chemistry<Kessler94> for " + name);
+    //ATHENA_LOG("Chemistry<Kessler94> for " + name);
+    pchem->pmy_block->pdebug->Enter("Chemistry<Kessler94>");
     myname = name;
     particle_name = pin->GetString("chemistry", name + ".link_particle");
-    std::cout << "- particle " << particle_name << " linked to " << name << " chemistry" << std::endl;
+    std::stringstream msg;
+    msg << "- particle " << particle_name << " linked to " << name << " chemistry" << std::endl;
 
     coeffs_["condensation"] = pin->GetReal("chemistry", name + ".condensation");
     coeffs_["autoconversion"] = pin->GetReal("chemistry", name + ".autoconversion");
@@ -39,7 +42,9 @@ public:
     index_[1] = pin->GetInteger("chemistry", name + ".link_vapor");
     index_[2] = NHYDRO;
     index_[3] = NHYDRO + 1;
-    std::cout << "- vapor #" << index_[1] << " linked to " << name << " chemistry" << std::endl;
+    msg << "- vapor #" << index_[1] << " linked to " << name << " chemistry" << std::endl;
+    pchem->pmy_block->pdebug->WriteMessage(msg.str());
+    msg.str("");
 
     deltaU_.resize(NHYDRO + 2);
     std::fill(deltaU_.begin(), deltaU_.end(), 0.);
@@ -49,6 +54,7 @@ public:
     Real cfloor_ = 1.;
     for (int n = 0; n < part->u.GetDim4(); ++n)
       cfloor_ = std::min(cfloor_, part->GetDensityFloor()/part->GetMolecularWeight(n));
+    pchem->pmy_block->pdebug->Leave();
   }
 
   template<typename T>
