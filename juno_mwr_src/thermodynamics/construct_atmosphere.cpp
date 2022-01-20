@@ -72,10 +72,11 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
     // RK4 integration 
     Real rdlnTdlnP, adTdz;
 #if HYDROSTATIC
-    rdlnTdlnP = 1.;
+    //rdlnTdlnP = 1.;
     // cli: apply radiative layer correction, see README: Dec 3, 2021
-    if (q1[IPR] > 1500.E5 && q1[IPR] < 9000.E5)
-      rdlnTdlnP = userp;
+    //if (q1[IPR] > 1500.E5 && q1[IPR] < 9000.E5)
+    //  rdlnTdlnP = userp;
+    rdlnTdlnP = userp;
     rk4_integrate_lnp_adaptive(q1, isat, rcp, beta_, delta_, t3_, p3_, gamma,
       dzORdlnp, ftol_, (int)method, rdlnTdlnP);
 #else

@@ -146,7 +146,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     phydro->w(IDN,k,je,i) = phydro->w(IPR,k,je,i)/
       (Rd*temp*pthermo->RovRd(phydro->w.at(k,je,i)));
 
-    // constant virtual potential temperature move
+    /* constant virtual potential temperature move
     for (int n = 0; n < NHYDRO; ++n)
       w2[0][n] = phydro->w(n,k,je,i-1);
 
@@ -174,7 +174,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     // saturation
     pthermo->SaturationSurplus(dw, phydro->w.at(k,je,i), VariableType::prim);
     for (int n = 1; n <= NVAPOR; ++n)
-      if (dw[n] > 0.) phydro->w(n,k,je,i) -= dw[n];
+      if (dw[n] > 0.) phydro->w(n,k,je,i) -= dw[n];*/
 	}
   FreeCArray(w2);
 

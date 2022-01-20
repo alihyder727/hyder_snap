@@ -44,7 +44,7 @@ def create_inputs(tmpfile, args):
     inpfile = re.sub('\[plevel\]', ' '.join(plevel), inpfile)
     inpfile = re.sub('\[pmin\]', args['pmin'], inpfile)
     inpfile = re.sub('\[pmax\]', args['pmax'], inpfile)
-    inpfile = re.sub('\[nwalker\]', args['nwalker'], inpfile)
+    #inpfile = re.sub('\[nwalker\]', args['nwalker'], inpfile)
     inpfile = re.sub('\[nlim\]', args['nlim'], inpfile)
     inpfile = re.sub('\[variables\]', ' '.join(var), inpfile)
     inpfile = re.sub('\[nodes\]', str(4*int(args['nodes'])), inpfile)

@@ -82,10 +82,10 @@ parser.add_argument('--nlim',
     default = '0',
     help = 'number of MCMC steps'
     )
-parser.add_argument('--nwalker',
-    default = '0',
-    help = 'number of mcmc walkers'
-    )
+#parser.add_argument('--nwalker',
+#    default = '1',
+#    help = 'number of mcmc walkers'
+#    )
 parser.add_argument('--obs',
     default = 'none',
     help = 'observation file'
