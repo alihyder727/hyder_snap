@@ -22,7 +22,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb), myname("HEAD"), prev(nullptr), next(nullptr),
   seeds_per_cell_(1), nmax_per_cell_(1), density_floor_(0)
 {
-  pmb->pdebug->Enter("Particles");
+  pmb->pdebug->Enter("Particle List");
   ppb = new ParticleBuffer(this);
 
   char particle_names[1024], *p;
@@ -56,7 +56,7 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int 
   pmy_block(pmb), myname(name), prev(nullptr), next(nullptr)
 {
   std::stringstream msg;
-  pmb->pdebug->Enter("Particles");
+  pmb->pdebug->Enter("Basic Particles");
   msg << "- " << name << " particle categories = " << nct << std::endl;
   pmb->pdebug->WriteMessage(msg.str());
   msg.str("");

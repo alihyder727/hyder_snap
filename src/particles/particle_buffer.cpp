@@ -1,7 +1,7 @@
 // C/C++ headers
 #include <sstream>
 //#include <cstddef>
-#include <functional>
+#include <functional> // hash
 #include <iostream>
 
 // Athena++ classes headers

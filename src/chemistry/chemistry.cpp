@@ -34,9 +34,6 @@ Chemistry::Chemistry(MeshBlock *pmb, ParameterInput *pin) :
     else name = p;
     if (std::strncmp(p, "kessler94", 9) == 0) {
       AddToChemistry(pkessler94_, pin, name);
-      msg << "- use chemistry kessler94" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
-      msg.str("");
     } else {
       msg << "### FATAL ERROR in function Particles::Particles"
           << std::endl << "Particles '" << p << "' "

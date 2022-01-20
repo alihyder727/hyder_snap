@@ -15,7 +15,7 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
   prev(nullptr), next(nullptr), 
   ncycle(0), pmy_block_(pmb)
 {
-  pmb->pdebug->Enter("Diagnostics");
+  pmb->pdebug->Enter("Diagnostics List");
   std::stringstream msg;
   char cstr[80];
   std::string varnames = pin->GetOrAddString("problem", "diagnostics", "");
@@ -52,7 +52,7 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
           << std::endl << "Diagnostic variable " << name << " not defined";
       ATHENA_ERROR(msg);
     }
-    msg << "- add diagnostics " + name << std::endl;
+    //msg << "- add diagnostics " + name << std::endl;
     p = std::strtok(NULL, " ,");
   }
 
@@ -61,14 +61,14 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
         << std::endl << "Most diagnostic variables require at least 2 ghost cells";
     ATHENA_ERROR(msg);
   }
-  pmb->pdebug->WriteMessage(msg.str());
+  //pmb->pdebug->WriteMessage(msg.str());
   pmb->pdebug->Leave();
 }
 
 Diagnostics::Diagnostics(MeshBlock *pmb, std::string name):
   myname(name), prev(nullptr), next(nullptr), ncycle(0), pmy_block_(pmb)
 {
-  pmb->pdebug->Enter("Diagnostics");
+  pmb->pdebug->Enter("Diagnostics " + name);
   std::stringstream msg;
   ncells1_ = pmb->block_size.nx1 + 2*(NGHOST);
   ncells2_ = 1; 

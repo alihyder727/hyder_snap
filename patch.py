@@ -30,7 +30,8 @@ def PatchStructure(patch):
 
 # remove all softlinks
 def CleanSoftlinks(directory):
-  os.system('find -L %s -xtype l -delete' % directory)
+  #os.system('find -L %s -type l -delete' % directory)
+  os.system('find %s -type l -delete' % directory)
   files = SourceFiles('src', '*.?pp.old')
   for f in files:
     if not os.path.isfile(f[:-4]):

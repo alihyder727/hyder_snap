@@ -225,15 +225,15 @@ void Debugger::Leave() {
   sections_.pop_back();
   idstack_next_.pop_back();
   increment_id(idstack_next_.back());
-  /*int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
+  //int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
   if (Globals::my_rank == 0) {
     //for (int n = 0; n < level; ++n) std::cout << '\t';
-    std::cout << ">> Leaving " << name << "." << std::endl << std::endl;
-  }*/
+    std::cout << name << " done." << std::endl << std::endl;
+  }
 }
 
 void Debugger::WriteMessage(std::string str) const {
-	if (Globals::my_rank == 0) std::cout << str;
+  if (Globals::my_rank == 0) std::cout << str;
 }
 
 void increment_id(std::string &str) {
