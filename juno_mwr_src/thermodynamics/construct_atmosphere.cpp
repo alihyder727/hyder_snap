@@ -69,20 +69,17 @@ void Thermodynamics::ConstructAtmosphere(Real **w, Real Ts, Real Ps,
     w[0][NHYDRO+n] = q1[NHYDRO+n]*mols*mu_ratios_[1+NVAPOR+n]*mu_d;
 
   for (int i = 1; i < len; ++i) {
-    // RK4 integration 
-    Real rdlnTdlnP, adTdz;
 #if HYDROSTATIC
-    //rdlnTdlnP = 1.;
     // cli: apply radiative layer correction, see README: Dec 3, 2021
     //if (q1[IPR] > 1500.E5 && q1[IPR] < 9000.E5)
-    //  rdlnTdlnP = userp;
-    rdlnTdlnP = userp;
+    // in hydrostatic model userp = d(lnT)/d(lnP) / d(lnTad)/d(lnP)
     rk4_integrate_lnp_adaptive(q1, isat, rcp, beta_, delta_, t3_, p3_, gamma,
-      dzORdlnp, ftol_, (int)method, rdlnTdlnP);
+      dzORdlnp, ftol_, (int)method, userp);
 #else
-    adTdz = userp;
+    // in nonhydrostatic model, userp = dT/dz - dTad/dz
+    //adTdz = userp;
     rk4_integrate_z_adaptive(q1, isat, rcp, mu_ratios_, beta_, delta_, t3_, p3_, gamma,
-      grav/Rd_, dzORdlnp, ftol_, (int)method, adTdz);
+      grav/Rd_, dzORdlnp, ftol_, (int)method, userp);
 #endif
     // reset mols
     qv = 1.;

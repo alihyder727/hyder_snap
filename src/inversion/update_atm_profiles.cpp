@@ -20,6 +20,7 @@
 #include "../utils/utils.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
 #include "../math/root.h"
+#include "../debugger/debugger.hpp"
 #include "gaussian_process.hpp"
 
 struct SolverData {
@@ -44,7 +45,9 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample, 
 		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
 {
-  ATHENA_LOG("update_atm_profiles");
+  //ATHENA_LOG("update_atm_profiles");
+  std::stringstream msg;
+  msg << "- updating atmospheric profiles ..." << std::endl;
   Thermodynamics *pthermo = pmb->pthermo;
   Coordinates *pcoord = pmb->pcoord;
   Hydro *phydro = pmb->phydro;
@@ -55,12 +58,12 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   Real P0 = phydro->reference_pressure;
   Real H0 = phydro->scale_height;
 
-  std::cout << "* Sample levels: ";
+  msg << "- sample levels: ";
   for (int i = 0; i < nsample; ++i) {
     zlev[i] = -H0*log(PrSample[i]/P0);
-    std::cout << zlev[i] << " ";
+    msg << zlev[i] << " ";
   }
-  std::cout << std::endl;
+  msg << std::endl;
 
   // calculate the covariance matrix of T
   Real *stdAll = new Real [nlayer];
@@ -103,7 +106,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
 
   // save perturbed T profile to model 1
 	if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
-		std::cout << "* Update temperature" << std::endl;
+		msg << "- update temperature" << std::endl;
 		for (int i = is; i <= ie; ++i) {
       if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
         continue;
@@ -115,7 +118,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
 	}
 
   // save perturbed X profile to model 2
-  std::cout << "* Update composition" << std::endl;
+  msg << "- update composition" << std::endl;
   for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(k,j2,i));
     if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
@@ -135,7 +138,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   // save convectively adjusted profile to model 3 (j = je)
   Real **w2, dw[1+NVAPOR];
   NewCArray(w2, 2, NHYDRO+2*NVAPOR);
-  std::cout << "* Convective adjustment" << std::endl;
+  msg << "- doing convective adjustment" << std::endl;
   // save convectively adjusted profile to model 3 (j = je)
 	for (int i = is+1; i <= ie; ++i) {
     if (pcoord->x1v(i) < zlev[0]) continue;
@@ -146,7 +149,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     phydro->w(IDN,k,je,i) = phydro->w(IPR,k,je,i)/
       (Rd*temp*pthermo->RovRd(phydro->w.at(k,je,i)));
 
-    /* constant virtual potential temperature move
+    // constant virtual potential temperature move
     for (int n = 0; n < NHYDRO; ++n)
       w2[0][n] = phydro->w(n,k,je,i-1);
 
@@ -155,15 +158,16 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     solver_data.pthermo = pthermo;
     solver_data.dlnp = log(phydro->w(IPR,k,je,i)/phydro->w(IPR,k,je,i-1));
 
-    Real rdlnTdlnP;
-    //std::cout << solve_thetav(1., &solver_data) << std::endl;
+    Real rdlnTdlnP = 1.;
+    // TODO (cli) finish convective adjustment
+    /*std::cout << solve_thetav(1., &solver_data) << std::endl;
     int err = root(0.5, 2., 1.E-4, &rdlnTdlnP, solve_thetav, &solver_data);
     if (err) {
-      std::stringstream msg;
       msg << "### Root doesn't converge" << std::endl
           << solve_thetav(1., &solver_data) << " " << solve_thetav(2., &solver_data);
       ATHENA_ERROR(msg);
     }
+    //msg << "- rdlnTdlnP = " << rdlnTdlnP << std::endl;*/
 
     pthermo->ConstructAtmosphere(w2, pthermo->GetTemp(w2[0]), w2[0][IPR], 0., solver_data.dlnp, 
         2, Adiabat::dry, rdlnTdlnP);
@@ -174,10 +178,11 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     // saturation
     pthermo->SaturationSurplus(dw, phydro->w.at(k,je,i), VariableType::prim);
     for (int n = 1; n <= NVAPOR; ++n)
-      if (dw[n] > 0.) phydro->w(n,k,je,i) -= dw[n];*/
+      if (dw[n] > 0.) phydro->w(n,k,je,i) -= dw[n];
 	}
-  FreeCArray(w2);
+  pmb->pdebug->WriteMessage(msg.str());
 
+  FreeCArray(w2);
   delete[] zlev;
   delete[] stdAll;
   delete[] stdSample;
