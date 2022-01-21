@@ -240,7 +240,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     PrSample[i] *= 1.E5;  // bar -> pa
     XpSample[i] *= 1.E-3; // g/kg -> kg/kg
   }
-  update_atm_profiles(this, PrSample.data(), TpSample.data(), XpSample.data(),
+  update_atm_profiles(this, ks, PrSample.data(), TpSample.data(), XpSample.data(),
       nsample+2, ix, Tstd, Tlen, Xstd, Xlen);
 
   // copy revised profile to baseline position
