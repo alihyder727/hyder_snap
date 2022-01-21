@@ -120,8 +120,7 @@ void update_gamma(Real& gamma, Real const q[]) {
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
   static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
-  //ATHENA_LOG("harp_radio_js");
-  pdebug->Enter("ProblemGenerator:juno_mwr");
+  pdebug->Enter("ProblemGenerator: juno_mwr");
   std::stringstream msg;
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
@@ -157,7 +156,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     z1[i] = z1[i-1] + H0*dlnp;
 
   Real t0;
-  std::cout << "- Request T = " << T0 << " at P = " << P0 << std::endl;
+  if (Globals::my_rank == 0)
+    std::cout << "- request T = " << T0 << " at P = " << P0 << std::endl;
   while (iter++ < max_iter) {
     pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, -dlnp, nx1, Adiabat::pseudo, rdlnTdlnP);
 
@@ -179,7 +179,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     t0 = interp1(0, t1, z1, nx1);
 
     Ts += T0 - t0;
-    std::cout << "- Iteration #" << iter << ": " << "T = " << t0  << std::endl;
+    if (Globals::my_rank == 0)
+      std::cout << "- iteration #" << iter << ": " << "T = " << t0 << std::endl;
     if (fabs(T0 - t0) < 0.01) break;
   }
 
