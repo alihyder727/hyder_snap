@@ -114,7 +114,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
   //ATHENA_LOG("harp_radio_js");
   pdebug->Enter("ProblemGenerator: harp_radio_js");
-  std::stringstream msg;
+  std::stringstream &msg = pdebug->msg;
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
 
@@ -178,7 +178,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
 
   if (iter > max_iter) {
-    std::stringstream msg;
     msg << "### FATAL ERROR in problem generator"
         << std::endl << "maximum iteration reached."
         << std::endl << "T0 = " << t0;
@@ -257,10 +256,16 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   // Initialize objective function
   RadioObservation *pradio = pinvt->pradio;
-  int nwalker = pin->GetInteger("inversion", "nwalker");
+  //int nwalker = pin->GetInteger("inversion", "nwalker");
+  int nwalker = pmy_mesh->mesh_size.nx3;
   int ndim = pradio->ix.size()*nsample; 
   int nwave = prad->GetNumBands();
   int nvalue = nwave*3;
+  if (nwalker < 2*ndim) {
+    msg << "### FATAL ERROR in problem generator"
+        << "nwalker (nx3) must be at least " << 2*ndim;
+    ATHENA_ERROR(msg);
+  }
 
   // parameter array and output value array
   Real **par;
@@ -287,6 +292,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   pinvt->Initialize(par, nwalker, ndim, nvalue);
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
+  pdebug->Leave();
 
   FreeCArray(w1);
   FreeCArray(par);

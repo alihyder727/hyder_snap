@@ -8,11 +8,13 @@
 
 // C/C++ header
 #include <iostream>
+#include <sstream>
 
 // Athena++ header
 #include "../mesh/mesh.hpp"
 #include "../hydro/hydro.hpp"
 #include "../radiation/radiation.hpp"
+#include "../debugger/debugger.hpp"
 #include "inversion.hpp"
 #include "radio_observation.hpp"
 
@@ -24,6 +26,10 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
   int is = pmb->is, js = pmb->js, ks = pmb->ks;
   int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
   int nsample = ndim/ix.size();
+  std::stringstream &msg = pmb->pdebug->msg;
+
+  pmb->pdebug->Call("LogPosteriorProbability");
+  msg << "- I am walker " << kw  << std::endl;
 
   Real *TpSample = new Real [nsample+2];
   Real *XpSample = new Real [ndim+2];
@@ -31,10 +37,10 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
   std::fill(XpSample, XpSample + ndim + 2, 0.);
 
   // sample temperature, sample composition #1, sample composition #2, ...
-  std::cout << "- Parameters: ";
+  msg << "- parameters: ";
   for (int i = 0; i < ndim; ++i)
-    std::cout << par[i] << " ";
-  std::cout << std::endl;
+    msg << par[i] << " ";
+  msg << std::endl;
 
   int ic = 0;
   if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
@@ -77,8 +83,8 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
   }
 
   // posterior probability
-  std::cout << "- Log posterir probability: ";
-  std::cout << lnpost << std::endl;
+  msg << "- log posterir probability: " << lnpost << std::endl;
+  pmb->pdebug->Leave();
 
   delete[] TpSample;
   delete[] XpSample;

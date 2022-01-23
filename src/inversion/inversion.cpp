@@ -16,7 +16,6 @@
 Inversion::Inversion(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb), pradio(nullptr)
 {
-  //ATHENA_LOG("Inversion");
   pmb->pdebug->Enter("Inversion");
   std::stringstream msg;
   task = pin->GetOrAddString("inversion", "task", "none");
@@ -52,6 +51,7 @@ Inversion::~Inversion()
 
 void Inversion::Initialize(Real **pos, int nwalker, int ndim, int nvalue) {
   if (task == "radio") {
+    pmy_block->pdebug->WriteMessage("- initialize walkers\n");
     mcmc_alloc(&recs_, pmy_block->pmy_mesh->nlim+1, nwalker, ndim, nvalue);
     mcmc_init(pradio, pos, &opts_, &recs_);
     mcmc_initialized_ = true;

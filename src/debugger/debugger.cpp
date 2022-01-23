@@ -5,7 +5,6 @@
 
 // Athena++
 #include "debugger.hpp"
-#include "../globals.hpp"
 #include "../coordinates/coordinates.hpp"
 
 Debugger::Debugger(MeshBlock *pmb):
@@ -35,7 +34,7 @@ Debugger* Debugger::StartTracking(std::string name)
 
 void Debugger::Track3D(std::string name, TestFunc_t test, AthenaArray<Real>& var, int n)
 {
-  std::stringstream msg;
+  std::stringstream ss;
   bool pass = true;
   MeshBlock *pmb = pmy_block;
 
@@ -54,10 +53,10 @@ void Debugger::Track3D(std::string name, TestFunc_t test, AthenaArray<Real>& var
   vnames_.push_back(name);
 
   if (vnames_.size() >= 2*NHYDRO) {
-    msg << "### FATAL ERROR in function [Debugger::Track3D]"
-        << std::endl << "Maximum number (" 
-        << 2*NHYDRO << ") of trakcers reached." << std::endl;
-    ATHENA_ERROR(msg);
+    ss << "### FATAL ERROR in function [Debugger::Track3D]"
+       << std::endl << "Maximum number (" 
+       << 2*NHYDRO << ") of trakcers reached." << std::endl;
+    ATHENA_ERROR(ss);
   }
 
   for (int k = ks; k <= ke; ++k)
@@ -76,19 +75,19 @@ void Debugger::Track3D(std::string name, TestFunc_t test, AthenaArray<Real>& var
 
   if (!pass) {
     DumpTracking(name, c1, c2, c3, "w");
-    msg << "### FATAL ERROR in function [Debugger::Track3D]"
+    ss << "### FATAL ERROR in function [Debugger::Track3D]"
         << std::endl << "Invalid \033[0;32m" << name << "\033[0m at "
         << "(k=" << c3 << ", " << "j=" << c2 << ", " << "i=" << c1 << ") "
         << "on rank \033[0;32m" << Globals::my_rank << "\033[0m called from function \033[0;32m"
         << fname_ << "\033[0m" << std::endl;
-    ATHENA_ERROR(msg);
+    ATHENA_ERROR(ss);
   }
 }
 
 void Debugger::Track1D(std::string name, TestFunc_t test, AthenaArray<Real>& var, 
   int n, int k, int j)
 {
-  std::stringstream msg;
+  std::stringstream ss;
   bool pass = true;
   MeshBlock *pmb = pmy_block;
 
@@ -101,10 +100,10 @@ void Debugger::Track1D(std::string name, TestFunc_t test, AthenaArray<Real>& var
   int m = std::find(vnames_.begin(), vnames_.end(), name) - vnames_.begin();
 
   if (m >= 2*NHYDRO) {
-    msg << "### FATAL ERROR in function [Debugger::Track1D]"
+    ss << "### FATAL ERROR in function [Debugger::Track1D]"
         << std::endl << "Maximum number (" 
         << 2*NHYDRO << ") of trakcers reached." << std::endl;
-    ATHENA_ERROR(msg);
+    ATHENA_ERROR(ss);
   }
 
   for (int i = is; i <= ie; ++i) {
@@ -120,12 +119,12 @@ void Debugger::Track1D(std::string name, TestFunc_t test, AthenaArray<Real>& var
 
   if (!pass) {
     DumpTracking(name, c1, c2, c3, "w");
-    msg << "### FATAL ERROR in function [Debugger::Track1D]"
+    ss << "### FATAL ERROR in function [Debugger::Track1D]"
         << std::endl << "Invalid \033[0;32m" << name << "\033[0m at "
         << "(k=" << c3 << ", " << "j=" << c2 << ", " << "i=" << c1 << ") "
         << "on rank \033[0;32m" << Globals::my_rank << "\033[0m called from function \033[0;32m"
         << fname_ << "\033[0m" << std::endl;
-    ATHENA_ERROR(msg);
+    ATHENA_ERROR(ss);
   }
 }
 
@@ -159,12 +158,12 @@ void Debugger::DumpTracking(std::string name, int c1, int c2, int c3, char const
     out.append(".txt");
     
     FILE *pfile;
-    std::stringstream msg;
+    std::stringstream ss;
     if ((pfile = std::fopen(out.c_str(), mode)) == nullptr) {
-      msg << "### FATAL ERROR in function [Debugger::DumpTracking]"
+      ss << "### FATAL ERROR in function [Debugger::DumpTracking]"
           << std::endl << "Output file '" << out << "' could not be opened"
           << std::endl;
-      ATHENA_ERROR(msg);
+      ATHENA_ERROR(ss);
     }
 
     // file header
@@ -202,23 +201,24 @@ void Debugger::DumpTracking(std::string name, int c1, int c2, int c3, char const
     prev->DumpTracking(name, c1, c2, c3, "a");
 }
 
-void Debugger::Enter(std::string name) {
+void Debugger::Enter(std::string name, std::string heil) {
   sections_.push_back(name);
   std::string id = idstack_next_.back();
   int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
   if (Globals::my_rank == 0) {
     //for (int n = 0; n < level; ++n) std::cout << '\t';
-    std::cout << id << " Initializing " << name << " ..." << std::endl;
+    std::cout << msg.str() << id << " " << heil << " " << name << " ..." << std::endl;
   }
   idstack_next_.push_back(id + "1.");
+  msg.str("");
 }
 
 void Debugger::Leave() {
-  std::stringstream msg;
+  std::stringstream ss;
   if (sections_.size() == 0) {
-    msg << "### FATAL ERROR in Debugger::Leave"
-        << std::endl << "Caller stack is empty.";
-    ATHENA_ERROR(msg);
+    ss << "### FATAL ERROR in Debugger::Leave"
+       << std::endl << "Caller stack is empty.";
+    ATHENA_ERROR(ss);
   }
 
   std::string name = sections_.back();
@@ -228,12 +228,14 @@ void Debugger::Leave() {
   //int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
   if (Globals::my_rank == 0) {
     //for (int n = 0; n < level; ++n) std::cout << '\t';
-    std::cout << name << " done." << std::endl;
+    std::cout << msg.str() << name << " done." << std::endl;
   }
+  msg.str("");
 }
 
-void Debugger::WriteMessage(std::string str) const {
+Debugger* Debugger::WriteMessage(std::string str) const {
   if (Globals::my_rank == 0) std::cout << str;
+  return const_cast<Debugger*>(this);
 }
 
 void increment_id(std::string &str) {

@@ -15,23 +15,26 @@
 #include "../mesh/mesh.hpp"
 #include "../radiation/radiation.hpp"
 #include "../utils/utils.hpp"
+#include "../debugger/debugger.hpp"
 #include "../math/linalg.h"
 
 void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
     int k, int j, bool differential)
 {
-  ATHENA_LOG("calculate_fit_target");
-  std::stringstream msg;
+  //ATHENA_LOG("calculate_fit_target");
+  std::stringstream &msg = pmb->pdebug->msg;
   std::vector<Direction> out_dir = pmb->prad->GetOutgoingRays();
   int nangle = 0;
-  std::cout << "* Model id: " << j - pmb->js << std::endl;
-  std::cout << "* Emission angles used: ";
+
+  pmb->pdebug->Call("calculate_fit_target");
+  msg << "- model " << j - pmb->js << std::endl;
+  msg << "- emission angles used: ";
   for (int i = 0; i < out_dir.size(); ++i)
     if (out_dir[i].mu >= cos(45./180.*M_PI)) {
-      std::cout << acos(out_dir[i].mu)/M_PI*180 << " ";
+      msg << acos(out_dir[i].mu)/M_PI*180 << " ";
       nangle++;
     }
-  std::cout << std::endl;
+  msg << std::endl;
 
   Real **B, *b;
   NewCArray(B, nangle, 3);
@@ -72,12 +75,12 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
     ATHENA_ERROR(msg);
   }
 
-  std::cout << "* Foward model results: ";
+  msg << "- foward model results: ";
   for (int i = 0; i < nvalue; ++i)
-    std::cout << std::setprecision(5) << val[i] << " ";
-  std::cout << std::endl;
+    msg << std::setprecision(5) << val[i] << " ";
+  msg << std::endl;
 
   FreeCArray(B);
   delete[] b;
+  pmb->pdebug->Leave();
 }
-

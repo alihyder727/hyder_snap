@@ -46,8 +46,8 @@ void update_atm_profiles(MeshBlock *pmb, int k,
 		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
 {
   //ATHENA_LOG("update_atm_profiles");
-  std::stringstream msg;
-  msg << "- updating atmospheric profiles ..." << std::endl;
+  std::stringstream &msg = pmb->pdebug->msg;
+  pmb->pdebug->Call("update_atm_profiles");
   Thermodynamics *pthermo = pmb->pthermo;
   Coordinates *pcoord = pmb->pcoord;
   Hydro *phydro = pmb->phydro;
@@ -180,7 +180,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     for (int n = 1; n <= NVAPOR; ++n)
       if (dw[n] > 0.) phydro->w(n,k,je,i) -= dw[n];
 	}
-  pmb->pdebug->WriteMessage(msg.str());
+  pmb->pdebug->Leave();
 
   FreeCArray(w2);
   delete[] zlev;
