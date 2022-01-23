@@ -160,14 +160,14 @@ void update_atm_profiles(MeshBlock *pmb, int k,
 
     Real rdlnTdlnP = 1.;
     // TODO (cli) finish convective adjustment
-    /*std::cout << solve_thetav(1., &solver_data) << std::endl;
+    //std::cout << solve_thetav(1., &solver_data) << std::endl;
     int err = root(0.5, 2., 1.E-4, &rdlnTdlnP, solve_thetav, &solver_data);
     if (err) {
       msg << "### Root doesn't converge" << std::endl
           << solve_thetav(1., &solver_data) << " " << solve_thetav(2., &solver_data);
       ATHENA_ERROR(msg);
     }
-    //msg << "- rdlnTdlnP = " << rdlnTdlnP << std::endl;*/
+    //msg << "- rdlnTdlnP = " << rdlnTdlnP << std::endl;
 
     pthermo->ConstructAtmosphere(w2, pthermo->GetTemp(w2[0]), w2[0][IPR], 0., solver_data.dlnp, 
         2, Adiabat::dry, rdlnTdlnP);
