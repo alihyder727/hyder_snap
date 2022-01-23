@@ -22,7 +22,6 @@ public:
   // functions
   Inversion(MeshBlock *pmb, ParameterInput *pin);
   ~Inversion();
-  void Initialize(Real **pos, int nwalker, int ndim, int nvalue);
 
   // MCMC functions
   void MakeMCMCOutputs(std::string fname);

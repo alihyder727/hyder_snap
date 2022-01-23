@@ -14,12 +14,11 @@
 #include "mcmc_impl.hpp"
 
 Inversion::Inversion(MeshBlock *pmb, ParameterInput *pin):
-  pmy_block(pmb), pradio(nullptr)
+  pmy_block(pmb), pradio(nullptr), mcmc_initialized_(false)
 {
   pmb->pdebug->Enter("Inversion");
-  std::stringstream msg;
+  std::stringstream &msg = pmb->pdebug->msg;
   task = pin->GetOrAddString("inversion", "task", "none");
-  mcmc_initialized_ = false;
 
   opts_.a = pin->GetOrAddReal("inversion", "stretch", 2.);
   opts_.p = pin->GetOrAddInteger("inversion", "walk", 4);
@@ -31,9 +30,11 @@ Inversion::Inversion(MeshBlock *pmb, ParameterInput *pin):
   strcpy(opts_.logfile, pin->GetOrAddString("inversion", "logfile", "inversion.log").c_str());
 
   if (task != "none") {
+    msg << "- number of MCMC steps = " << pmb->pmy_mesh->nlim << std::endl;
     if (task == "radio") {
       pradio = new RadioObservation(this, pin);
-      pmb->pdebug->WriteMessage(msg.str());
+      mcmc_alloc(&recs_, pmb->pmy_mesh->nlim+1, pradio->nwalker_, pradio->ndim_, pradio->nvalue_);
+      mcmc_initialized_ = true;
     } else {
       msg << "### FATAL ERROR in function Inversion::Inversion"
           << std::endl << "Unrecognized inversion task.";
@@ -49,17 +50,12 @@ Inversion::~Inversion()
   if (mcmc_initialized_) mcmc_free(&recs_);
 }
 
-void Inversion::Initialize(Real **pos, int nwalker, int ndim, int nvalue) {
-  if (task == "radio") {
-    pmy_block->pdebug->WriteMessage("- initialize walkers\n");
-    mcmc_alloc(&recs_, pmy_block->pmy_mesh->nlim+1, nwalker, ndim, nvalue);
-    mcmc_init(pradio, pos, &opts_, &recs_);
-    mcmc_initialized_ = true;
-  }
-}
-
 void Inversion::MakeMCMCOutputs(std::string fname)
 {
+  // initialize model
+  if (recs_.cur == 0)
+    mcmc_init(pradio, pradio->init_pos_, &opts_, &recs_);
+
   std::stringstream msg;
   if (!mcmc_initialized_) {
     msg << "### FATAL ERROR in function Inversion::MakeMCMCOutputs"
@@ -71,6 +67,10 @@ void Inversion::MakeMCMCOutputs(std::string fname)
 
 void Inversion::MCMCStep()
 {
+  // initialize model
+  if (recs_.cur == 0)
+    mcmc_init(pradio, pradio->init_pos_, &opts_, &recs_);
+
   std::stringstream msg;
   if (!mcmc_initialized_) {
     msg << "### FATAL ERROR in function Inversion::MCMCStep"

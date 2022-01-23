@@ -28,27 +28,29 @@ void FITSOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 {
   // create filename: "file_basename"+"."+"file_id"+"."+XXXXX+".fits",
   // where XXXXX = 5-digit file_number
-  std::string fname = "!";  // clobber
-  char number[6];
-  int err;
-  sprintf(number,"%05d",output_params.file_number);
+  if (output_params.file_number > 0) {
+    std::string fname = "!";  // clobber
+    char number[6];
+    int err;
+    sprintf(number,"%05d",output_params.file_number);
 
-  fname.append(output_params.file_basename);
-  fname.append(".");
-  fname.append(output_params.file_id);
-  fname.append(".");
-  fname.append(number);
-  fname.append(".fits");
+    fname.append(output_params.file_basename);
+    fname.append(".");
+    fname.append(output_params.file_id);
+    fname.append(".");
+    fname.append(number);
+    fname.append(".fits");
 
-  MeshBlock *pmb = pm->pblock;
+    MeshBlock *pmb = pm->pblock;
 
-  while (pmb != NULL) {   // loop over MeshBLocks
-    Inversion *pinvt = pmb->pinvt;
-    if (pinvt->task == "radio") {
-      pinvt->MakeMCMCOutputs(fname);
-      pinvt->ResetChain();
+    while (pmb != NULL) {   // loop over MeshBLocks
+      Inversion *pinvt = pmb->pinvt;
+      if (pinvt->task == "radio") {
+        pinvt->MakeMCMCOutputs(fname);
+        pinvt->ResetChain();
+      }
+      pmb = pmb->next;
     }
-    pmb = pmb->next;
   }
 
   // increment counters

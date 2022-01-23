@@ -12,12 +12,14 @@
 // Athena++ header
 #include "../mesh/mesh.hpp"
 #include "../hydro/hydro.hpp"
+#include "../debugger/debugger.hpp"
 #include "inversion.hpp"
 #include "radio_observation.hpp"
 #include "gaussian_process.hpp"
 
 Real RadioObservation::LogPriorProbability(Real const *TpSample, Real const *XpSample, int nsample) const
 {
+  std::stringstream &msg = pmy_invt_->pmy_block->pdebug->msg;
   Hydro *phydro = pmy_invt_->pmy_block->phydro;
   Real *zlev = new Real [nsample];
   Real *stdSample = new Real [nsample];
@@ -35,8 +37,7 @@ Real RadioObservation::LogPriorProbability(Real const *TpSample, Real const *XpS
     stdSample[i] = Xstd_*pow(exp(zlev[i]/H0), chi_);
   Real lnp2 = gp_lnprior(SquaredExponential, XpSample, zlev, stdSample, nsample, Xlen_);
 
-  std::cout << "- Log prior probability: ";
-  std::cout << lnp1 + lnp2 << std::endl;
+  msg << "- Log prior probability = " << lnp1 + lnp2 << std::endl;
 
   delete[] zlev;
   delete[] stdSample;

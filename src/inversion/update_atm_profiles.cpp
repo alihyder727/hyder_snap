@@ -45,7 +45,6 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample, 
 		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
 {
-  //ATHENA_LOG("update_atm_profiles");
   std::stringstream &msg = pmb->pdebug->msg;
   pmb->pdebug->Call("update_atm_profiles");
   Thermodynamics *pthermo = pmb->pthermo;
@@ -69,7 +68,16 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   Real *stdAll = new Real [nlayer];
   Real *stdSample = new Real [nsample];
   Real *Tp = new Real [nlayer];
-  Real *Xp = new Real [nlayer];
+  Real **Xp;
+  NewCArray(Xp, ix.size(), nlayer);
+
+  // copy baseline js -> js+1 .. je
+  for (int n = 0; n < NHYDRO; ++n)
+    for (int j = js+1; j <= je; ++j)
+      for (int i = is; i <= ie; ++i)
+        phydro->w(n,k,j,i) = phydro->w(n,k,js,i);
+	int j1 = js+1, j2 = js+2;
+  Real Rd = pthermo->GetRd();
 
   // calculate perturbed T profile
   for (int i = is; i <= ie; ++i)
@@ -80,34 +88,11 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   gp_predict(SquaredExponential, Tp, &pcoord->x1v(is), stdAll, nlayer,
     TpSample, zlev, stdSample, nsample, Tlen);
 
-  // fix boundary condition
-  int ib = 0, it = nlayer - 1;
-  while ((Tp[ib+1] < Tp[ib]) && (ib < nlayer)) ib++;
-  for (int i = 0; i < ib; ++i) Tp[i] = Tp[ib]; 
-  while ((Tp[it-1] > Tp[it]) && (it >= 0)) it--;
-  for (int i = it+1; i < nlayer; ++i) Tp[i] = Tp[it]; 
-
-  // calculate perturbed X profile
-  for (int i = is; i <= ie; ++i)
-    stdAll[i-is] = Xstd*pow(exp(pcoord->x1v(i)/H0), chi);
-  for (int i = 0; i < nsample; ++i)
-    stdSample[i] = Xstd*pow(exp(zlev[i]/H0), chi);
-    
-  gp_predict(SquaredExponential, Xp, &pcoord->x1v(is), stdAll, nlayer,
-    XpSample, zlev, stdSample, nsample, Xlen);
-
-  // copy baseline js -> js+1 .. je
-  for (int n = 0; n < NHYDRO; ++n)
-    for (int j = js+1; j <= je; ++j)
-      for (int i = is; i <= ie; ++i)
-        phydro->w(n,k,j,i) = phydro->w(n,k,js,i);
-	int j1 = js+1, j2 = js+2;
-  Real Rd = pthermo->GetRd();
-
   // save perturbed T profile to model 1
 	if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
 		msg << "- update temperature" << std::endl;
 		for (int i = is; i <= ie; ++i) {
+      // do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
       if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
         continue;
 			Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
@@ -117,16 +102,37 @@ void update_atm_profiles(MeshBlock *pmb, int k,
 		}
 	}
 
+  // calculate perturbed X profile
+  for (int i = is; i <= ie; ++i)
+    stdAll[i-is] = Xstd*pow(exp(pcoord->x1v(i)/H0), chi);
+  for (int i = 0; i < nsample; ++i)
+    stdSample[i] = Xstd*pow(exp(zlev[i]/H0), chi);
+
+  //std::cout << "XpSample = ";
+  //for (int n = 0; n < nsample; ++n)
+  //  std::cout << XpSample[n] << " ";
+  //std::cout << std::endl;
+    
+  int ic = 0;
+  for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
+    if (*m != 0) {
+      gp_predict(SquaredExponential, Xp[ic], &pcoord->x1v(is), stdAll, nlayer,
+        XpSample + ic*nsample, zlev, stdSample, nsample, Xlen);
+    }
+    ic++;
+  }
+
   // save perturbed X profile to model 2
   msg << "- update composition" << std::endl;
   for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(k,j2,i));
+    // do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
     if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
       continue;
-		int ic = 0;
+		ic = 0;
 		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
 			if (*m != 0) {
-				phydro->w(*m,k,j2,i) += Xp[ic*nsample + i-is];
+				phydro->w(*m,k,j2,i) += Xp[ic][i-is];
 				phydro->w(*m,k,j2,i) = std::max(phydro->w(*m,k,j2,i), 0.);
 				phydro->w(IDN,k,j2,i) = phydro->w(IPR,k,j2,i)/
 					(Rd*temp*pthermo->RovRd(phydro->w.at(k,j2,i)));
@@ -164,7 +170,10 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     int err = root(0.5, 2., 1.E-4, &rdlnTdlnP, solve_thetav, &solver_data);
     if (err) {
       msg << "### Root doesn't converge" << std::endl
-          << solve_thetav(1., &solver_data) << " " << solve_thetav(2., &solver_data);
+          << solve_thetav(0.5, &solver_data) << " " << solve_thetav(2., &solver_data);
+      //for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
+      //  msg << "(" << phydro->w(n,k,js,i-1) << "," << phydro->w(n,k,j1,i-1) << "," << phydro->w(n,k,j2,i-1) << ") ";
+      //msg << std::endl;
       ATHENA_ERROR(msg);
     }
     //msg << "- rdlnTdlnP = " << rdlnTdlnP << std::endl;
@@ -187,5 +196,5 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   delete[] stdAll;
   delete[] stdSample;
   delete[] Tp;
-  delete[] Xp;
+  FreeCArray(Xp);
 }

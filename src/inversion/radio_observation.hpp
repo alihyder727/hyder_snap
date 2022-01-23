@@ -15,6 +15,7 @@ class ParameterInput;
 class Inversion;
 
 class RadioObservation {
+  friend class Inversion;
 public:
   // data
   Eigen::VectorXd target;
@@ -25,11 +26,14 @@ public:
 
   // functions
   RadioObservation(Inversion *pinvt, ParameterInput *pin);
+  ~RadioObservation();
   void ReadObservationFile(char const *fname);
 	Real LogPriorProbability(Real const *TpSample, Real const *XpSample, int nsample) const;
 	Real LogPosteriorProbability(Real const *par, Real *val, int ndim, int nvalue, int kwalker) const;
 
 private:
+  Real **init_pos_;
+  int nwalker_, ndim_, nvalue_;
   Inversion *pmy_invt_;
   Real Tstd_, Tlen_, Xstd_, Xlen_, chi_;
   bool fit_differential_;

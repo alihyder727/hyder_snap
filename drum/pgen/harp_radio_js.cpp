@@ -249,53 +249,16 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   // copy revised profile to baseline position
   for (int n = 0; n < NHYDRO; ++n)
     for (int i = is; i <= ie; ++i)
-      phydro->w(n,js,i) = phydro->w(n,je,i);
+      phydro->w(n,ks,js,i) = phydro->w(n,ks,je,i);
 
   // Calculate baseline radiation
+  msg << "- running initial RT model 0" << std::endl;
   prad->CalculateRadiances(phydro->w, 0., ks, js, is, ie+1);
 
-  // Initialize objective function
-  RadioObservation *pradio = pinvt->pradio;
-  //int nwalker = pin->GetInteger("inversion", "nwalker");
-  int nwalker = pmy_mesh->mesh_size.nx3;
-  int ndim = pradio->ix.size()*nsample; 
-  int nwave = prad->GetNumBands();
-  int nvalue = nwave*3;
-  if (nwalker < 2*ndim) {
-    msg << "### FATAL ERROR in problem generator"
-        << "nwalker (nx3) must be at least " << 2*ndim;
-    ATHENA_ERROR(msg);
-  }
-
-  // parameter array and output value array
-  Real **par;
-  NewCArray(par, nwalker, ndim); 
-
-  // initialize random positions
-  srand(time(NULL) + Globals::my_rank);
-
-  for (int n = 0; n < nwalker; ++n) {
-    int ic = 0;
-    if (std::find(pradio->ix.begin(), pradio->ix.end(), 0) != pradio->ix.end()) {
-      for (int i = 0; i < nsample; ++i)
-        par[n][i] = (1.*rand()/RAND_MAX - 0.5)*Tstd;
-      ic = 1;
-    }
-
-    for (std::vector<int>::iterator m = pradio->ix.begin(); m != pradio->ix.end(); ++m)
-      if (*m != 0) {
-        for (int i = 0; i < nsample; ++i)
-          par[n][ic*nsample + i] = (1.*rand()/RAND_MAX - 0.5)*Xstd;
-        ic++;
-      }
-  }
-
-  pinvt->Initialize(par, nwalker, ndim, nvalue);
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
   pdebug->Leave();
 
   FreeCArray(w1);
-  FreeCArray(par);
   delete[] z1;
   delete[] t1;
 }
