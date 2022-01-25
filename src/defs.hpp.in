@@ -36,6 +36,9 @@
 // use hydrostatic coordinate default=0 (false)
 #define HYDROSTATIC @HYDROSTATIC@
 
+// use real gas cp
+#define @REAL_GAS_CP@
+
 // use general EOS framework default=0 (false).
 #define GENERAL_EOS @GENERAL_EOS@
 
