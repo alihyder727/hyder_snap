@@ -83,7 +83,7 @@ parser.add_argument('--nlim',
     help = 'number of MCMC steps'
     )
 parser.add_argument('--nwalker',
-    default = '10',
+    default = '1',
     help = 'number of mcmc walkers'
     )
 parser.add_argument('--obs',

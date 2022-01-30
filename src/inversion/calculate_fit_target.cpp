@@ -59,7 +59,7 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
 
     if (differential) {
       for (int n = 0; n < nangle; ++n)
-        b[n] = pband->btoa(n,pmb->ks,pmb->js);
+        b[n] = pband->btoa(n,k,pmb->js);
       leastsq(B, b, nangle, 3);
       for (int n = 0; n < 3; ++n)
         val[i*3+n] -= b[n];

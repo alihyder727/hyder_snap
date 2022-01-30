@@ -260,19 +260,26 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   for (int i = 0; i < nsample; ++i)
     XpSample[i] *= 1.E-3; // g/kg -> kg/kg
 
-  // Revise atmospheric profiles and store them in position (ks,je).
-  update_atm_profiles(this, ks, pinvt->pradio->plevel.data(), TpSample.data(), XpSample.data(),
-      nsample, ix, Tstd, Tlen, Xstd, Xlen);
+  // Revise atmospheric profiles and store them in position (k,je).
+  for (int k = ks; k <= ke; ++k)
+    update_atm_profiles(this, k, pinvt->pradio->plevel.data(), TpSample.data(),
+      XpSample.data(), nsample, ix, Tstd, Tlen, Xstd, Xlen);
 
-  // Copy revised profile to baseline position (ks,je) -> (ks,js).
+  // Swap the revised profile and baseline profile (k,je) <-> (k,js).
   for (int n = 0; n < NHYDRO; ++n)
-    for (int i = is; i <= ie; ++i)
-      phydro->w(n,ks,js,i) = phydro->w(n,ks,je,i);
+    for (int k = ks; k <= ke; ++k)
+      for (int i = is; i <= ie; ++i) {
+        Real tmp = phydro->w(n,k,js,i);
+        phydro->w(n,k,js,i) = phydro->w(n,k,je,i);
+        phydro->w(n,k,je,i) = tmp;
+      }
 
-  // Calculate microwave radiation at (ks,js) at time t = 0
-  // This value maintains for all future time steps (t > 0,ks,js)
-  msg << "- running initial RT model 0" << std::endl;
-  prad->CalculateRadiances(phydro->w, 0., ks, js, is, ie+1);
+  // Calculate microwave radiation at time t = 0
+  // These values maintain for all future time steps (t > 0,k,js)
+  msg << "- running initial RT for all models" << std::endl;
+  for (int k = ks; k <= ke; ++k)
+    for (int j = js; j <= je; ++j)
+      prad->CalculateRadiances(phydro->w, 0., k, j, is, ie+1);
 
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
   // Leave debug stack and print out all debug info.

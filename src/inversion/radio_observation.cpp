@@ -76,11 +76,11 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   srand(time(NULL) + Globals::my_rank);
   nwalker_ = pinvt->pmy_block->pmy_mesh->mesh_size.nx3;
   msg << "- number of walkers = " << nwalker_ << std::endl;
-  if (nwalker_ < 2*ndim_) {
+  /*if (nwalker_ < 2*ndim_) {
     msg << "### FATAL ERROR in RadioObservation::RadioObservation"
         << "nwalker (nx3) must be at least " << 2*ndim_;
     ATHENA_ERROR(msg);
-  }
+  }*/
 
   NewCArray(init_pos_, nwalker_, ndim_);
   for (int n = 0; n < nwalker_; ++n) {

@@ -35,9 +35,8 @@ Real solve_thetav(Real rdlnTdlnP, void *aux) {
   Real **w2 = pdata->w2;
   Thermodynamics *pthermo = pdata->pthermo;
   pthermo->ConstructAtmosphere(w2, pthermo->GetTemp(w2[0]), w2[0][IPR], 0., pdata->dlnp, 2, Adiabat::dry, rdlnTdlnP);
-  Real p0 = 1.E5;
-  Real thetav0 = PotentialTemp(w2[0], p0, pthermo)*pthermo->RovRd(w2[0]);
-  Real thetav1 = PotentialTemp(w2[1], p0, pthermo)*pthermo->RovRd(w2[1]);
+  Real thetav0 = PotentialTemp(w2[0], w2[0][IPR], pthermo)*pthermo->RovRd(w2[0]);
+  Real thetav1 = PotentialTemp(w2[1], w2[0][IPR], pthermo)*pthermo->RovRd(w2[1]);
   return thetav1 - thetav0;
 }
 
@@ -69,7 +68,11 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   Real *stdSample = new Real [nsample];
   Real *Tp = new Real [nlayer];
   Real **Xp;
-  NewCArray(Xp, ix.size(), nlayer);
+  // if temperature is in the inversion variable
+  if (std::find(ix.begin(), ix.end(), 0) != ix.end())
+    NewCArray(Xp, ix.size() - 1, nlayer);
+  else
+    NewCArray(Xp, ix.size(), nlayer);
 
   // copy baseline js -> js+1 .. je
   for (int n = 0; n < NHYDRO; ++n)
@@ -118,8 +121,8 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     if (*m != 0) {
       gp_predict(SquaredExponential, Xp[ic], &pcoord->x1v(is), stdAll, nlayer,
         XpSample + ic*nsample, zlev, stdSample, nsample, Xlen);
+      ic++;
     }
-    ic++;
   }
 
   // save perturbed X profile to model 2
@@ -130,7 +133,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
       continue;
 		ic = 0;
-		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
+		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
 			if (*m != 0) {
 				phydro->w(*m,k,j2,i) += Xp[ic][i-is];
 				phydro->w(*m,k,j2,i) = std::max(phydro->w(*m,k,j2,i), 0.);
@@ -138,7 +141,6 @@ void update_atm_profiles(MeshBlock *pmb, int k,
 					(Rd*temp*pthermo->RovRd(phydro->w.at(k,j2,i)));
 				ic++;
 			}
-		}
   }
 
   // save convectively adjusted profile to model 3 (j = je)
@@ -165,7 +167,6 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     solver_data.dlnp = log(phydro->w(IPR,k,je,i)/phydro->w(IPR,k,je,i-1));
 
     Real rdlnTdlnP = 1.;
-    // TODO (cli) finish convective adjustment
     //std::cout << solve_thetav(1., &solver_data) << std::endl;
     int err = root(0.5, 2., 1.E-4, &rdlnTdlnP, solve_thetav, &solver_data);
     if (err) {
@@ -178,8 +179,8 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     }
     //msg << "- rdlnTdlnP = " << rdlnTdlnP << std::endl;
 
-    pthermo->ConstructAtmosphere(w2, pthermo->GetTemp(w2[0]), w2[0][IPR], 0., solver_data.dlnp, 
-        2, Adiabat::dry, rdlnTdlnP);
+    pthermo->ConstructAtmosphere(w2, pthermo->GetTemp(w2[0]), w2[0][IPR], 0.,
+      solver_data.dlnp, 2, Adiabat::dry, rdlnTdlnP);
 
     // stability
     phydro->w(IDN,k,je,i) = std::min(w2[1][IDN], phydro->w(IDN,k,je,i));

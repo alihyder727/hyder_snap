@@ -25,6 +25,9 @@ def create_inputs(tmpfile, args):
         NH3p = args['nh3'].split(' ')
     assert(len(NH3p) == np)
 
+  # adjust minimum number of walkers
+    #args['nwalker'] = str(max(int(args['nwalker']), 2*np))
+
     var = [x for x in args['var']]
 
     name = tmpfile.split('.')[0]
