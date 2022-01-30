@@ -5,6 +5,7 @@ from glob import glob
 from datetime import datetime
 from subprocess import check_call
 from numpy import sort
+from main2mcmc import main_to_mcmc
 
 def CombineTimeseries(case, field, stamps, path = './', remove = False):
   print('Concatenating output field %s ...' % field)
@@ -34,6 +35,10 @@ def CombineFields(case, fields, output, path = './'):
       name = line.split()[2]
 
       print('Combining output fields: ', fid, 'to', name)
+      if output != 'None':
+        ncout = '%s-%s-%s.nc' % (case, output, name)
+      else:
+        ncout = '%s-%s.nc' % (case, name)
 
       if len(fid) > 1:  # combining
         fname1 = path + '/%s.out%d.nc' % (case, fid[0])
@@ -41,16 +46,9 @@ def CombineFields(case, fields, output, path = './'):
           fname2 = path + '/%s.out%d.nc' % (case, i)
           check_call('ncks -A %s %s' % (fname2, fname1), shell = True)
           os.remove(fname2)
-        if (output != 'None'):
-          shutil.move(fname1, '%s-%s-%s.nc' % (case, output, name))
-        else:
-          shutil.move(fname1, '%s-%s.nc' % (case, name))
       else: # renaming
         fname1 = path + '/%s.out%d.nc' % (case, fid[0])
-        if (output != 'None'):
-          shutil.move(fname1, '%s-%s-%s.nc' % (case, output, name))
-        else:
-          shutil.move(fname1, '%s-%s.nc' % (case, name))
+      shutil.move(fname1,  ncout)
 
 def ParseOutputFields(path):
   files = glob(path + '/*.out*.[0-9][0-9][0-9][0-9][0-9].nc')
@@ -74,14 +72,16 @@ def CombineFITS(case, output, path = './', remove = False):
   print('Combining FITS output ...' )
   files = glob(path + '/%s.out?.[0-9][0-9][0-9][0-9][0-9].fits' % case)
   if (len(files) == 0):
-    return
+    return None
   if output != 'None':
-    check_call('./fitsmerge -o %s-%s.fits -i %s/%s.out?.?????.fits' % (case, output, path, case), shell = True)
+    fitsout = '%s-%s.fits' % (case, output)
   else:
-    check_call('./fitsmerge -o %s.fits -i %s/%s.out?.?????.fits' % (case, path, case), shell = True)
+    fitsout = '%s.fits' % case
+  check_call('./fitsmerge -o %s -i %s/%s.out?.?????.fits' % (fitsout, path, case), shell = True)
   if (remove):
     for f in files:
       os.remove(f)
+  return fitsout
 
 if __name__ == '__main__':
   now = datetime.now()
@@ -110,8 +110,10 @@ if __name__ == '__main__':
   print('##########################')
   for case in cases:
     print('Working on case %s...' % case)
+    fitsout = CombineFITS(case, args['output'], path = args['dir'], remove = not args['no_remove'])
     for field in fields:
       CombineTimeseries(case, field, stamps, remove = not args['no_remove'], path = args['dir'])
     CombineFields(case, fields, args['output'], path = args['dir'])
-    CombineFITS(case, args['output'], path = args['dir'], remove = not args['no_remove'])
+    if fitsout:
+      main_to_mcmc(fitsout[:-5])
   print('Done.\n')

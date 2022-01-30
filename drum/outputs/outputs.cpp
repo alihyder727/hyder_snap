@@ -777,7 +777,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   if (output_params.variable.compare("rad") == 0 ||
       output_params.variable.compare("radtau") == 0) {
     RadiationBand *p = prad->pband;
-    while (p != NULL) {
+    while (p != nullptr) {
       // tau
       pod = new OutputData;
       pod->type = "SCALARS";
@@ -795,7 +795,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   if (output_params.variable.compare("rad") == 0 ||
       output_params.variable.compare("radflux") == 0) {
     RadiationBand *p = prad->pband;
-    while (p != NULL) {
+    while (p != nullptr) {
       // flux up and down
       pod = new OutputData;
       pod->type = "SCALARS";
@@ -825,7 +825,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   if (output_params.variable.compare("rad") == 0 ||
       output_params.variable.compare("radtoa") == 0) {
     RadiationBand *p = prad->pband;
-    while (p != NULL) {
+    while (p != nullptr) {
       // toa
       pod = new OutputData;
       pod->type = "SCALARS";
