@@ -19,8 +19,8 @@ Real const Radiation::c = 3.E8;
 Real const Radiation::c_cgs = 3.E10;
 
 Radiation::Radiation(MeshBlock *pmb):
-  pmy_block(pmb), pband(NULL), dynamic_(false), beam_(-1.),
-  cooldown(0.), current(0.), nrin_(1), nrout_(1), dist_(1.), planet(NULL)
+  pmy_block(pmb), pband(nullptr), dynamic_(false), beam_(-1.),
+  cooldown(0.), current(0.), nrin_(1), nrout_(1), dist_(1.), planet(nullptr)
 {
   rin_ = new Direction [1];
   rout_ = new Direction [1];
@@ -31,7 +31,7 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
   pmb->pdebug->Enter("Radiation");
   //ATHENA_LOG("Radiation");
   pmy_block = pmb;
-  pband = NULL;
+  pband = nullptr;
   RadiationBand *plast = pband;
 
   // incoming radiation direction (mu,phi) in degree
@@ -73,13 +73,13 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
       break;
     }
     RadiationBand* p = new RadiationBand(this, name, pin);
-    if (plast == NULL) {
+    if (plast == nullptr) {
       plast = p;
       pband = p;
     } else {
       plast->next = p;
       plast->next->prev = plast;
-      plast->next->next = NULL;
+      plast->next->next = nullptr;
       plast = plast->next;
     }
     b++;
@@ -96,10 +96,10 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
 
 Radiation::~Radiation()
 {
-  if (pband != NULL) {
-    while (pband->prev != NULL) // should not be true
+  if (pband != nullptr) {
+    while (pband->prev != nullptr) // should not be true
       delete pband->prev;
-    while (pband->next != NULL)
+    while (pband->next != nullptr)
       delete pband->next;
     delete pband;
   }
@@ -113,7 +113,7 @@ RadiationBand* Radiation::GetBand(int n) {
   std::stringstream msg;
   RadiationBand* p = pband;
   int b = 0;
-  while (p != NULL) {
+  while (p != nullptr) {
     if (b++ == n) break;
     p = p->next;
   }
@@ -123,7 +123,7 @@ RadiationBand* Radiation::GetBand(int n) {
 int Radiation::GetNumBands() {
   int n = 0;
   RadiationBand* p = pband;
-  while (p != NULL) {
+  while (p != nullptr) {
     p = p->next;
     n++;
   }
@@ -150,14 +150,14 @@ void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
   Coordinates *pcoord = pmy_block->pcoord;
 
   RadiationBand *p = pband;
-  if (pband == NULL) return;
+  if (pband == nullptr) return;
 
   if (dynamic_) {
     planet->ParentZenithAngle(&rin_->mu, &rin_->phi, time, pcoord->x2v(j), pcoord->x3v(k));
     dist_ = planet->ParentDistanceInAu(time);
   }
 
-  while (p != NULL) {
+  while (p != nullptr) {
     // iu ~= ie + 1
     p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
     p->RadtranFlux(*rin_, dist_, k, j, il, iu);
@@ -171,14 +171,14 @@ void Radiation::CalculateRadiances(AthenaArray<Real> const& w, Real time,
   Coordinates *pcoord = pmy_block->pcoord;
 
   RadiationBand *p = pband;
-  if (pband == NULL) return;
+  if (pband == nullptr) return;
 
   if (dynamic_) {
     planet->ParentZenithAngle(&rin_->mu, &rin_->phi, time, pcoord->x2v(j), pcoord->x3v(k));
     dist_ = planet->ParentDistanceInAu(time);
   }
 
-  while (p != NULL) {
+  while (p != nullptr) {
     // iu ~= ie + 1
     p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
     p->RadtranRadiance(*rin_, rout_, nrout_, dist_, k, j, il, iu);
@@ -190,13 +190,13 @@ void Radiation::AddRadiativeFluxes(AthenaArray<Real>& x1flux,
   int k, int j, int il, int iu)
 {
   RadiationBand *p = pband;
-  if (pband == NULL) return;
+  if (pband == nullptr) return;
 
   MeshBlock *pmb = pmy_block;
 
   // x1-flux divergence
   p = pband;
-  while (p != NULL) {
+  while (p != nullptr) {
 #pragma omp simd
     for (int i = il; i <= iu; ++i)
       x1flux(IEN,k,j,i) += p->bflxup(k,j,i) - p->bflxdn(k,j,i);

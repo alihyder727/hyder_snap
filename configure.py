@@ -15,8 +15,6 @@
 #   --nghost=xxx      set NGHOST=xxx
 #   --nscalars=xxx    set NSCALARS=xxx
 #   -eos_table        enable EOS table
-#   --h2o=xxx         h2o vapor id
-#   --nh3=xxx         nh3 vapor id
 #   -b                enable magnetic fields
 #   -s                enable special relativity
 #   -g                enable general relativity
@@ -41,8 +39,16 @@
 #   --lib_path=path   use -Lpath when linking
 #   --lib=xxx         use -lxxx when linking
 
+#   -hydrostatic      use hydrostatic vertical coordinate z=-H0*log(p/p0)
+#   -cp_real          use real gas cp
 #   -netcdf           enable NETCDF output (requires the NETCDF library)
 #   -pnetcdf          enable parallel-NETCDF output (requires the PNETCDF library)
+#   --nvapor=xxx      number of vapors
+#   --npart_real=xxx  number of real particle properties
+#   --npart_int=xxx   number of integer particle properties
+#   --rt=xxx          select radiative transfer solver
+#   --h2o=xxx         h2o vapor id
+#   --nh3=xxx         nh3 vapor id
 #   --netcdf_path=path  path to PNETCDF libraries (requires the PNETCDF library)
 #   --pnetcdf_path=path path to PNETCDF libraries (requires the PNETCDF library)
 # ----------------------------------------------------------------------------------------
@@ -296,6 +302,11 @@ parser.add_argument('--x1rat',
                     default='1.0',
                     help='x1 grid size ratio')
 
+# -cp_real argument
+parser.add_argument('-cp_real',
+                    action='store_true',
+                    default=False,
+                    help='enable real gas cp if defined (update_gamma is overridden)')
 # -netcdf argument
 parser.add_argument('-netcdf',
                     action='store_true',
@@ -604,6 +615,12 @@ if args['hydrostatic']:
     definitions['HYDROSTATIC'] = '1'
 else:
     definitions['HYDROSTATIC'] = '0'
+
+# -cp_real argument
+if args['cp_real']:
+    definitions['REAL_GAS_CP'] = 'REAL_GAS_CP'
+else:
+    definitions['REAL_GAS_CP'] = 'IDEAL_GAS_CP'
 
 # --cxx=[name] argument
 if args['cxx'] == 'g++':
@@ -1036,7 +1053,8 @@ print('  OpenMP parallelism:         ' + ('ON' if args['omp'] else 'OFF'))
 print('  FFT:                        ' + ('ON' if args['fft'] else 'OFF'))
 print('  HDF5 output:                ' + ('ON' if args['hdf5'] else 'OFF'))
 if args['hdf5']:
-    print('  HDF5 precision:             ' + ('double' if args['h5double'] else 'single'))
+    print('  HDF5 precision:         ' + ('double' if args['h5double'] else 'single'))
+print('  Real gas heat capacity:     ' + ('YES' if args['cp_real'] else 'NO'))
 print('  NETCDF output:              ' + ('ON' if args['netcdf'] else 'OFF'))
 print('  PNETCDF output:             ' + ('ON' if args['pnetcdf'] else 'OFF'))
 print('  Compiler:                   ' + args['cxx'])

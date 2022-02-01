@@ -1,10 +1,23 @@
+/* -------------------------------------------------------------------------------------
+ * SNAP Example Program
+ *
+ * Contributer:
+ * Cheng Li, University of Michigan
+ *
+ * Year: 2022
+ * Contact: chengcli@umich.edu
+ * Reference: TBD
+ * -------------------------------------------------------------------------------------
+ */
+
+// @sect3{Include files}
+
 // C/C++ header
-#include <ctime>
-#include <iomanip>
 #include <iostream>
-#include <fstream>
 
 // Athena++ headers
+// These input files are the same as those in the @ref straka. No additional comments
+// are needed.
 #include "../athena.hpp"
 #include "../athena_arrays.hpp"
 #include "../parameter_input.hpp"
@@ -13,16 +26,21 @@
 #include "../field/field.hpp"
 #include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
+#include "../thermodynamics/thermodynamic_funcs.hpp"
+
+// Here we include more input files
+#include "../thermodynamics/molecules.hpp"
 #include "../globals.hpp"
 #include "../utils/utils.hpp"
 #include "../math/interpolation.h"
 #include "../math/linalg.h"
-#include "../thermodynamics/thermodynamic_funcs.hpp"
-#include "../thermodynamics/molecules.hpp"
+#include "../debugger/debugger.hpp"
 #include "../radiation/radiation.hpp"
 #include "../radiation/microwave/mwr_absorbers.hpp"
 #include "../inversion/inversion.hpp"
 #include "../inversion/radio_observation.hpp"
+
+// @sect3{Preamble}
 
 // molecules
 enum {iH2O = 1, iNH3 = 2};
@@ -83,7 +101,6 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   if (name == "mw_CIA") {
     pabs->AddAbsorber(MwrAbsorberCIA(this, xHe, xCH4));
   } else if (name == "mw_NH3") {
-    //pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelBellottiSwitch());
     pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
   } else if (name == "mw_H2O") {
     pabs->AddAbsorber(MwrAbsorberH2O(this, iH2O, xHe));
@@ -94,7 +111,7 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   }
 }
 
-/* If you want to use real gas cp
+#ifdef REAL_GAS_CP
 void update_gamma(Real& gamma, Real const q[]) {
   Real T = q[IDN], cp_h2, cp_he, cp_ch4;
   if (T < 300.)
@@ -106,17 +123,20 @@ void update_gamma(Real& gamma, Real const q[]) {
 
   Real cp_real = (1. - xHe - xCH4)*cp_h2 + xHe*cp_he + xCH4*cp_ch4;
   gamma = cp_real/(cp_real - Thermodynamics::Rgas);
-}*/
+}
+#endif
+
+// @sect3{Initial condition}
 
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
   static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
-  ATHENA_LOG("harp_radio_js");
-  std::stringstream msg;
+  pdebug->Enter("ProblemGenerator: harp_radio_js");
+  std::stringstream &msg = pdebug->msg;
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
 
-  // 1. construct a 1D pseudo-moist adiabat at (T0,P0)
+  // Construct a 1D pseudo-moist adiabat at (T0,P0)
   Real gamma = pin->GetReal("hydro", "gamma");
   Real Rd = pthermo->GetRd();
   Real cp = gamma/(gamma - 1.)*Rd;
@@ -147,11 +167,12 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     z1[i] = z1[i-1] + H0*dlnp;
 
   Real t0;
-  std::cout << "- Request T = " << T0 << " at P = " << P0 << std::endl;
+  if (Globals::my_rank == 0)
+    std::cout << "- request T = " << T0 << " at P = " << P0 << std::endl;
   while (iter++ < max_iter) {
     pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, -dlnp, nx1, Adiabat::pseudo, rdlnTdlnP);
 
-    // 1.2 replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
+    // Replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
     int ii = 0;
     for (; ii < nx1; ++ii)
       if (pthermo->GetTemp(w1[ii]) < Tmin) break;
@@ -162,26 +183,26 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         w1[i][n] = w1[ii][n];
     }
 
-    // 1.3 find T at p = p0
+    // Find T at p = p0
     for (int i = 0; i < nx1; ++i) {
       t1[i] = pthermo->GetTemp(w1[i]);
     }
     t0 = interp1(0, t1, z1, nx1);
 
     Ts += T0 - t0;
-    std::cout << "- Iteration #" << iter << ": " << "T = " << t0  << std::endl;
+    if (Globals::my_rank == 0)
+      std::cout << "- iteration #" << iter << ": " << "T = " << t0  << std::endl;
     if (fabs(T0 - t0) < 0.01) break;
   }
 
   if (iter > max_iter) {
-    std::stringstream msg;
     msg << "### FATAL ERROR in problem generator"
         << std::endl << "maximum iteration reached."
         << std::endl << "T0 = " << t0;
     ATHENA_ERROR(msg);
   }
 
-  // change to log quantity
+  // Change to log quantity
   for (int i = 0; i < nx1; ++i)
     for (int n = 0; n < NHYDRO+2*NVAPOR; ++n) {
       if (n == IVX || n == IVY || n == IVZ)
@@ -208,84 +229,64 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   }
 
-  // Apply boundary condition
+  // Microwave radiative transfer needs temperatures at cell interfaces, which are
+  // interpolated from cell centered hydrodynamic variables.
+  // Normally, the boundary conditions are taken care of internally.
+  // But, since we call radiative tranfer directly in pgen, we would need to update the
+  // boundary conditions manually. The following lines of code updates the boundary
+  // conditions.
   phydro->hbvar.SwapHydroQuantity(phydro->w, HydroBoundaryQuantity::prim);
   pbval->ApplyPhysicalBoundaries(0., 0.);
 
   // read profile updates from input
-  std::vector<Real> PrSample, TpSample, XpSample;
+  std::vector<Real> TpSample, XpSample;
   std::vector<int> ix = {0, iNH3};
 
   Real Tstd = pin->GetReal("inversion", "Tstd");
   Real Tlen = pin->GetReal("inversion", "Tlen")*1.E3; // km -> m
   Real Xstd = pin->GetReal("inversion", "Xstd")*1.E-3;  // g/kg -> kg/kg
   Real Xlen = pin->GetReal("inversion", "Xlen")*1.E3; // km -> m
-  Real pmax = pin->GetReal("inversion", "Pmax");
-  Real pmin = pin->GetReal("inversion", "Pmin");
-  PrSample = Vectorize<Real>(pin->GetString("inversion", "PrSample").c_str());
   TpSample = Vectorize<Real>(pin->GetString("problem", "Tp").c_str());
   XpSample = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
-  int nsample = PrSample.size();
+  int nsample = pinvt->pradio->plevel.size();
 
   // add inversion boundary
-  PrSample.insert(PrSample.begin(), pmax);
-  PrSample.push_back(pmin);
   TpSample.insert(TpSample.begin(), 0.);
   TpSample.push_back(0.);
   XpSample.insert(XpSample.begin(), 0.);
   XpSample.push_back(0.);
 
   // update reference model
-  for (int i = 0; i < nsample+2; ++i) {
-    PrSample[i] *= 1.E5;  // bar -> pa
+  for (int i = 0; i < nsample; ++i)
     XpSample[i] *= 1.E-3; // g/kg -> kg/kg
-  }
-  update_atm_profiles(this, PrSample.data(), TpSample.data(), XpSample.data(),
-      nsample+2, ix, Tstd, Tlen, Xstd, Xlen);
 
-  // copy revised profile to baseline position
+  // Revise atmospheric profiles and store them in position (k,je).
+  for (int k = ks; k <= ke; ++k)
+    update_atm_profiles(this, k, pinvt->pradio->plevel.data(), TpSample.data(),
+      XpSample.data(), nsample, ix, Tstd, Tlen, Xstd, Xlen);
+
+  // Swap the revised profile and baseline profile (k,je) <-> (k,js).
   for (int n = 0; n < NHYDRO; ++n)
-    for (int i = is; i <= ie; ++i)
-      phydro->w(n,js,i) = phydro->w(n,je,i);
-
-  // Calculate baseline radiation
-  prad->CalculateRadiances(phydro->w, 0., ks, js, is, ie+1);
-
-  // Initialize objective function
-  RadioObservation *pradio = pinvt->pradio;
-  int nwalker = pin->GetInteger("inversion", "nwalker");
-  int ndim = pradio->ix.size()*nsample; 
-  int nwave = prad->GetNumBands();
-  int nvalue = nwave*3;
-
-  // parameter array and output value array
-  Real **par;
-  NewCArray(par, nwalker, ndim); 
-
-  // initialize random positions
-  srand(time(NULL) + Globals::my_rank);
-
-  for (int n = 0; n < nwalker; ++n) {
-    int ic = 0;
-    if (std::find(pradio->ix.begin(), pradio->ix.end(), 0) != pradio->ix.end()) {
-      for (int i = 0; i < nsample; ++i)
-        par[n][i] = (1.*rand()/RAND_MAX - 0.5)*Tstd;
-      ic = 1;
-    }
-
-    for (std::vector<int>::iterator m = pradio->ix.begin(); m != pradio->ix.end(); ++m)
-      if (*m != 0) {
-        for (int i = 0; i < nsample; ++i)
-          par[n][ic*nsample + i] = (1.*rand()/RAND_MAX - 0.5)*Xstd;
-        ic++;
+    for (int k = ks; k <= ke; ++k)
+      for (int i = is; i <= ie; ++i) {
+        Real tmp = phydro->w(n,k,js,i);
+        phydro->w(n,k,js,i) = phydro->w(n,k,je,i);
+        phydro->w(n,k,je,i) = tmp;
       }
-  }
 
-  pinvt->Initialize(par, nwalker, ndim, nvalue);
+  // Calculate microwave radiation at time t = 0
+  // These values maintain for all future time steps (t > 0,k,js)
+  msg << "- running initial RT for all models" << std::endl;
+  for (int k = ks; k <= ke; ++k)
+    for (int j = js; j <= je; ++j)
+      prad->CalculateRadiances(phydro->w, 0., k, j, is, ie+1);
+
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
+  // Leave debug stack and print out all debug info.
+  pdebug->Leave();
 
+  // Clean up temporary memory
   FreeCArray(w1);
-  FreeCArray(par);
   delete[] z1;
   delete[] t1;
 }

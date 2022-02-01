@@ -3,3 +3,5 @@ netCDF4
 numpy
 matplotlib
 scipy
+astropy
+tqdm

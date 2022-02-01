@@ -19,7 +19,7 @@
 
 RadiationBand::RadiationBand(Radiation *prad):
   myname(""), npmom(0), nspec(1),
-  pmy_rad(prad), prev(NULL), next(NULL), pabs(NULL)
+  pmy_rad(prad), prev(nullptr), next(nullptr), pabs(nullptr)
 {
   spec = new Spectrum [1];
   tem_ = new Real [1];
@@ -32,8 +32,8 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   std::stringstream msg;
 
   myname = name;
-  prev = NULL;
-  next = NULL;
+  prev = nullptr;
+  next = nullptr;
   pmy_rad = prad;
 
   // number of Legendre moments
@@ -122,7 +122,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
     AddAbsorber(aname[i], afile, pin);
   }
 
-  if (pabs->next != NULL) {
+  if (pabs->next != nullptr) {
     pabs = pabs->next;
     delete pabs->prev;  // remove first one
   }
@@ -144,12 +144,12 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
 
 RadiationBand::~RadiationBand()
 {
-  if (prev != NULL) prev->next = next;
-  if (next != NULL) next->prev = prev;
-  if (pabs != NULL) {
-    while (pabs->prev != NULL)  // should not be true
+  if (prev != nullptr) prev->next = next;
+  if (next != nullptr) next->prev = prev;
+  if (pabs != nullptr) {
+    while (pabs->prev != nullptr)  // should not be true
       delete pabs->prev;
-    while (pabs->next != NULL)
+    while (pabs->next != nullptr)
       delete pabs->next;
     delete pabs;
   }
@@ -171,16 +171,16 @@ RadiationBand::~RadiationBand()
 
 void RadiationBand::AddAbsorber(Absorber *pab) {
   // detach the current one
-  if (pab->prev != NULL) {
-    pab->prev->next = NULL;
-    pab->prev = NULL;
+  if (pab->prev != nullptr) {
+    pab->prev->next = nullptr;
+    pab->prev = nullptr;
   }
   
-  if (pabs == NULL) { // new absorber
+  if (pabs == nullptr) { // new absorber
     pabs = pab;
   } else {  // attach to tail
     Absorber *p = pabs;
-    while (p->next != NULL) p = p->next;
+    while (p->next != nullptr) p = p->next;
     p->next = pab;
     p->next->prev = p;
   }
@@ -234,7 +234,7 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
   Real c[1];
   Real s[NSCALARS];
 
-  while (a != NULL) {
+  while (a != nullptr) {
     for (int i = il; i <= iu; ++i) {
       for (int n = 0; n < NSCALARS; ++n) s[n] = pscalars->s(n,k,j,i);
       pthermo->PrimitiveToChemical(q, w.at(k,j,i));

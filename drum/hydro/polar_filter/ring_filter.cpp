@@ -13,21 +13,25 @@
 // Athena++ headers
 #include "../../mesh/mesh.hpp"
 #include "../../globals.hpp"
+#include "../../debugger/debugger.hpp"
 #include "ring_filter.hpp"
 
 RingFilter::RingFilter(Hydro *phydro):
   pmy_hydro(phydro), my_rank(0)
 {
+  phydro->pmy_block->pdebug->Enter("RingFilter");
   std::stringstream msg;
   MeshBlock *pmb = phydro->pmy_block;
   Mesh *pm = pmb->pmy_mesh;
   int nc1 = pmb->block_size.nx1, nc3 = pmb->block_size.nx3;
   int nx3 = pm->mesh_size.nx3;
 
-  if (ceil(log2(nx3)) != floor(log2(nx3))) {
-    msg << "### FATAL ERROR in RingFilter::RingFilter" << std::endl
-        << "Number of longitudinal cells must be a power of 2";
-    ATHENA_ERROR(msg);
+  if (strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
+    if (ceil(log2(nx3)) != floor(log2(nx3))) {
+      msg << "### FATAL ERROR in RingFilter::RingFilter" << std::endl
+          << "Number of longitudinal cells must be a power of 2";
+      ATHENA_ERROR(msg);
+    }
   }
 
   nlevel = int(log2(nx3/8));
@@ -37,6 +41,7 @@ RingFilter::RingFilter(Hydro *phydro):
   buffer_recv_ = new Real [NHYDRO*nc1*nlevel*nx3];
 
   hydro_mean.NewAthenaArray(NHYDRO,nx3,nlevel,nc1);
+  phydro->pmy_block->pdebug->Leave();
 }
 
 RingFilter::~RingFilter()

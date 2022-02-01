@@ -1,6 +1,7 @@
 from ..athena.athena_read import athinput
 from numpy import logspace, log10, zeros
 from netCDF4 import Dataset
+from .utils import get_rt_bands, get_ray_out
 import re, subprocess
 
 def create_inputs(tmpfile, args):
@@ -23,6 +24,9 @@ def create_inputs(tmpfile, args):
     else:
         NH3p = args['nh3'].split(' ')
     assert(len(NH3p) == np)
+
+  # adjust minimum number of walkers
+    #args['nwalker'] = str(max(int(args['nwalker']), 2*np))
 
     var = [x for x in args['var']]
 
@@ -73,6 +77,9 @@ def run_forward(exefile, inpfile):
         stderr = subprocess.PIPE)
     while True:
         output = process.stdout.readline()
+        #err = process.stderr.readline()
+        #if (err != ''):
+        #  raise Exception(err.decode('UTF-8'))
         if output == b'' and process.poll() is not None:
             break
         if output:
@@ -91,34 +98,10 @@ def run_forward(exefile, inpfile):
     return inp['job']['problem_id']
 
 def write_observation(inpfile, datafile):
-#inpfile = 'vla_ideal_js.inp'
-    inp = athinput(inpfile)
-
-# count number of bands
-    num_bands = 0
-    for key in inp['radiation'].keys():
-        if re.match('b[0-9]+$', key):
-            num_bands += 1
-
-# read frequency
-    freq = []
-    for i in range(num_bands):
-        freq.append(float(inp['radiation']['b%d' % (i+1)].split()[0]))
-
-# count out direction
-    outdir = inp['radiation']['outdir'].split(' ')
-    num_dirs = len(outdir)
-    amu, aphi = [], []
-    for i in range(num_dirs):
-        m = re.search('\((.*),(.*)\)', outdir[i])
-        if m.group(1) != '':
-            amu.append(float(m.group(1)))
-        else:
-            amu.append(0.)
-        if m.group(2) != '':
-            aphi.append(float(m.group(2)))
-        else:
-            aphi.append(0.)
+    freq = get_rt_bands(inpfile)[:,0]
+    num_bands = len(freq)
+    amu, aphi = get_ray_out(inpfile)
+    num_dirs = len(amu)
 
 # read radiation toa
 #datafile = 'vla_ideal_js-main.nc'

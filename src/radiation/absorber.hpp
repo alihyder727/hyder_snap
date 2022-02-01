@@ -38,10 +38,10 @@ public:
   
   // functions
   Absorber(RadiationBand *pband):
-    pmy_band(pband), myname("NULL"), prev(NULL), next(NULL), imol_(-1), mixr_(0) {}
+    pmy_band(pband), myname("NULL"), prev(nullptr), next(nullptr), imol_(-1), mixr_(0) {}
 
   Absorber(RadiationBand *pband, std::string name, int imol, Real mixr = 1.): 
-    pmy_band(pband), myname(name), prev(NULL), next(NULL), imol_(imol), mixr_(mixr)
+    pmy_band(pband), myname(name), prev(nullptr), next(nullptr), imol_(imol), mixr_(mixr)
   {
     Debugger *pdebug = pband->pmy_rad->pmy_block->pdebug;
     pdebug->Enter("Absorber " + name);
@@ -53,7 +53,7 @@ public:
   }
 
   Absorber(RadiationBand *pband, std::string name, std::vector<int> imols, Real mixr = 1): 
-    pmy_band(pband), myname(name), prev(NULL), next(NULL), imols_(imols), mixr_(mixr)
+    pmy_band(pband), myname(name), prev(nullptr), next(nullptr), imols_(imols), mixr_(mixr)
   {
     Debugger *pdebug = pband->pmy_rad->pmy_block->pdebug;
     pdebug->Enter("Absorber " + name);
@@ -68,17 +68,17 @@ public:
   }
 
   virtual ~Absorber() {
-    if (prev != NULL) prev->next = next;
-    if (next != NULL) next->prev = prev;
+    if (prev != nullptr) prev->next = next;
+    if (next != nullptr) next->prev = prev;
   }
 
   template<typename Ab> Absorber* AddAbsorber(Ab const& a) {
     Ab* pa = new Ab(a);
     Absorber *p = this;
-    while (p->next != NULL) p = p->next;
+    while (p->next != nullptr) p = p->next;
     p->next = pa;
     p->next->prev = p;
-    p->next->next = NULL;
+    p->next->next = nullptr;
     return p->next;
   }
 

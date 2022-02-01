@@ -6,6 +6,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <iostream>
 
 // Athena++ headers
 #include "../defs.hpp"
@@ -41,7 +42,12 @@ int main(int argc, char **argv) {
 
   std::vector<std::string> infiles;
 
-  while ((c = getopt (argc, argv, "i:o:")) != -1) {
+  // getopt on Mac OX is based on BSD not on GNU
+  // BSD getopt does not permute arguments and will stop at the first non-option
+  // argument
+  // GNU getopt shuffles arguments and put all non-option argument at the end
+  // in order to work for both systems, use "-o" first, then "-i"
+  while ((c = getopt(argc, argv, "i:o:")) != -1) {
     switch (c) {
       case 'i':
         infiles.push_back(optarg);
