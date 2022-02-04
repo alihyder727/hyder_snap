@@ -28,7 +28,7 @@ def create_inputs(tmpfile, args):
   # adjust minimum number of walkers
     #args['nwalker'] = str(max(int(args['nwalker']), 2*np))
 
-    var = [x for x in args['var']]
+    var = [x for x in args['var'].split()]
 
     name = tmpfile.split('.')[0]
     if args['output'] != '':
