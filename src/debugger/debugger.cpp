@@ -1,4 +1,5 @@
 // C/C++ headers
+#include <iomanip>
 #include <cstring>
 #include <sstream>
 #include <algorithm>
@@ -241,7 +242,8 @@ void Debugger::CheckConservation(std::string name, AthenaArray<Real> const& var,
     int is, int ie, int js, int je, int ks, int ke) {
   int nvar = var.GetDim4();
 
-  msg << cgreen << ">> Total " << name << "  = (";
+  //msg << cgreen << ">> Total " << name << "  = (";
+  msg << "\t>> Total " << name << "  = (";
   for (int n = 0; n < nvar; ++n) {
     Real sum = 0.;
     for (int k = ks; k <= ke; ++k)
@@ -249,9 +251,10 @@ void Debugger::CheckConservation(std::string name, AthenaArray<Real> const& var,
         for (int i = is; i <= ie; ++i) {
           sum += var(n,k,j,i);
         }
-    msg << sum << ", ";
+    msg << std::setprecision(12) << sum << ", ";
   }
-  msg << ")" << cend << std::endl;
+  //msg << ")" << cend << std::endl;
+  msg << ")" << std::endl;
 }
 
 void Debugger::CheckParticleConservation(std::vector<std::string> const& cnames,
@@ -265,8 +268,10 @@ void Debugger::CheckParticleConservation(std::vector<std::string> const& cnames,
     sum[q->type] += q->rho;
     num[q->type] += 1;
   }
+  //for (int i = 0; i < cnames.size(); ++i)
+  //  msg << cgreen << ">> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << cend << std::endl;
   for (int i = 0; i < cnames.size(); ++i)
-    msg << cgreen << ">> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << cend << std::endl;
+    msg << "\t>> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << std::endl;
   delete[] sum;
   delete[] num;
 }

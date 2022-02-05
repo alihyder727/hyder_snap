@@ -69,7 +69,10 @@ void HydroSourceTerms::ConstantAcceleration(const Real dt,const AthenaArray<Real
       }
     }
   }
-  pmb->pdebug->Leave();
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("cons", cons, pmb->is, pmb->ie, pmb->js, pmb->je, pmb->ks, pmb->ke);
+#endif
 
+  pmb->pdebug->Leave();
   return;
 }

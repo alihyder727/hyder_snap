@@ -60,7 +60,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 }
 
 void Forcing(MeshBlock *pmb, Real const time, Real const dt,
-    AthenaArray<Real> const &w, AthenaArray<Real> const &bcc, AthenaArray<Real> &u)
+    AthenaArray<Real> const &w, AthenaArray<Real> const &bcc, AthenaArray<Real> &du)
 {
   pmb->pdebug->Call("Convection Forcing");
   int is = pmb->is, js = pmb->js, ks = pmb->ks;
@@ -75,10 +75,14 @@ void Forcing(MeshBlock *pmb, Real const time, Real const dt,
           Real dist = sqrt(x2*x2 + x3*x3);
 
           Real fcor = -omega*sqr(dist/radius);
-          u(IM2,k,j,i) += dt*fcor*w(IDN,k,j,i)*w(IM3,k,j,i);
-          u(IM3,k,j,i) -= dt*fcor*w(IDN,k,j,i)*w(IM2,k,j,i);
+          du(IM2,k,j,i) += dt*fcor*w(IDN,k,j,i)*w(IM3,k,j,i);
+          du(IM3,k,j,i) -= dt*fcor*w(IDN,k,j,i)*w(IM2,k,j,i);
         }
       }
+
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("du", du, is, ie, js, je, ks, ke);
+#endif
   pmb->pdebug->Leave();
 }
 

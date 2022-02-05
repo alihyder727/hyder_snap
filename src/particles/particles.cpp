@@ -147,6 +147,7 @@ void Particles::Initialize()
 
 void Particles::TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt)
 {
+  pmy_block->pdebug->Call("Particles::TimeIntegrate-" + myname);
   if (std::strcmp(COORDINATE_SYSTEM, "cartesian") == 0) {
     for (std::vector<MaterialPoint>::iterator it = mp.begin(); it != mp.end(); ++it) {
       it->x1 += it->v1*dt;
@@ -160,11 +161,13 @@ void Particles::TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt
       it->x3 += it->v3*dt/(it->x1*sin(it->x2));
     }
   }
+  pmy_block->pdebug->Leave();
 }
 
 void Particles::WeightedAverage(std::vector<MaterialPoint> &mp_out,
   std::vector<MaterialPoint> const& mp_in, Real ave_wghts[])
 {
+  pmy_block->pdebug->Call("Particles::WeightedAverage-" + myname);
   size_t psize = mp_out.size();
   for (size_t i = 0; i < psize; ++i) {
     mp_out[i].x1 = ave_wghts[0]*mp_out[i].x1 + ave_wghts[1]*mp_in[i].x1;
@@ -175,6 +178,7 @@ void Particles::WeightedAverage(std::vector<MaterialPoint> &mp_out,
     mp_out[i].v2 = ave_wghts[0]*mp_out[i].v2 + ave_wghts[1]*mp_in[i].v2;
     mp_out[i].v3 = ave_wghts[0]*mp_out[i].v3 + ave_wghts[1]*mp_in[i].v3;
   }
+  pmy_block->pdebug->Leave();
 }
 
 size_t Particles::RestartDataSizeInBytes()

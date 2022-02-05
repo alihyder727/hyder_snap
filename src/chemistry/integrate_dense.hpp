@@ -42,6 +42,8 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         Jac.setZero();
 
         // 2. from mass density to molar density
+        // ignore the kinetic energy of condensates
+        Real ux = uh(IVX,k,j,i), uy = uh(IVY,k,j,i), uz = uh(IVZ,k,j,i);
         pthermo->ConservedToChemical(c0, uh.at(k,j,i));
         Real cd = c0[IPR]/(Thermodynamics::Rgas*c0[IDN]);
         for (int n = 1; n <= NVAPOR; ++n) cd -= c0[n];
@@ -108,6 +110,10 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
 
         // 11. from molar density to mass density
         pthermo->ChemicalToConserved(uh.at(k,j,i), c1);
+        // reset kinetic energy
+        uh(IVX,k,j,i) = ux;
+        uh(IVY,k,j,i) = uy;
+        uh(IVZ,k,j,i) = uz;
         for (int n = 0; n < up.GetDim4(); ++n)
           up(n,k,j,i) = c1[NHYDRO+n]*ppart->GetMolecularWeight(n);
       }

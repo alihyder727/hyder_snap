@@ -81,13 +81,16 @@ void TaskList::DoTaskListOneStage(Mesh *pmesh, int stage) {
   for (int i=0; i<nmb; ++i) {
     // clear debug stack
     Debugger *pdbg = pmb_array[i]->pdebug;
-    while (pdbg->prev != nullptr)
-      delete pdbg->prev;
-    while (pdbg->next != nullptr)
-      delete pdbg->next;
-    delete pdbg;
-    // new debugger
-    pmb_array[i]->pdebug = new Debugger(pmb_array[i]);
+    if (stage == 1) {
+      // clean up previous debugger
+      while (pdbg->prev != nullptr)
+        delete pdbg->prev;
+      while (pdbg->next != nullptr)
+        delete pdbg->next;
+      delete pdbg;
+      // new debugger
+      pmb_array[i]->pdebug = new Debugger(pmb_array[i]);
+    }
     pmb_array[i]->pdebug->Enter("Stage " + std::to_string(stage));
 
     pmb_array[i]->tasks.Reset(ntasks);

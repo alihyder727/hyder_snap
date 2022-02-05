@@ -20,9 +20,11 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
                           AthenaArray<Real> &flx, const AthenaArray<Real> &dxw)
 {
   Debugger *pdbg = pmy_block->pdebug;
+#if (DEBUG_LEVEL > 2)
   char str[80];
   sprintf(str, "Hydro::RiemannSolver-X%d, (k=%d,j=%d)", ivx-IVX+1, k, j);
   pdbg->Call(str);
+#endif
   std::stringstream &msg = pdbg->msg;
 
   int ivy = IVX + ((ivx-IVX)+1)%3;
@@ -118,5 +120,7 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
       flx(IEN,k,j,i) = ubar*wri[IDN]*hr;
     }
   }
+#if (DEBUG_LEVEL > 2)
   pdbg->Leave();
+#endif
 }
