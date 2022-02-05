@@ -27,11 +27,12 @@
 // HydroSourceTerms constructor
 
 HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
-  phyd->pmy_block->pdebug->Enter("HydroSouceTerms");
+  Debugger *pdbg =  phyd->pmy_block->pdebug;
+  pdbg->Enter("HydroSouceTerms");
   //ATHENA_LOG("HydroSourceTerms");
   pmy_hydro_ = phyd;
   hydro_sourceterms_defined = false;
-  std::stringstream msg;
+  std::stringstream &msg = pdbg->msg;
 
   // read point mass or constant acceleration parameters from input block
 
@@ -71,14 +72,14 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
   }
 
   // coriolis acceleration
-  /*omega1_ = pin->GetOrAddReal("hydro","coriolis_acc1",0.0);
+  omega1_ = pin->GetOrAddReal("hydro","coriolis_acc1",0.0);
   if (omega1_ != 0.0) hydro_sourceterms_defined = true;
 
   omega2_ = pin->GetOrAddReal("hydro","coriolis_acc2",0.0);
   if (omega2_ != 0.0) hydro_sourceterms_defined = true;
 
   omega3_ = pin->GetOrAddReal("hydro","coriolis_acc3",0.0);
-  if (omega3_ != 0.0) hydro_sourceterms_defined = true;*/
+  if (omega3_ != 0.0) hydro_sourceterms_defined = true;
 
   omegax_ = pin->GetOrAddReal("hydro","OmegaX",0.0);
   if (omegax_ != 0.0) {
@@ -108,8 +109,7 @@ HydroSourceTerms::HydroSourceTerms(Hydro *phyd, ParameterInput *pin) {
 
   UserSourceTerm = phyd->pmy_block->pmy_mesh->UserSourceTerm_;
   if (UserSourceTerm != nullptr) hydro_sourceterms_defined = true;
-  phyd->pmy_block->pdebug->WriteMessage(msg.str());
-  phyd->pmy_block->pdebug->Leave();
+  pdbg->Leave();
 }
 
 //----------------------------------------------------------------------------------------

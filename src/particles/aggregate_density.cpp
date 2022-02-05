@@ -13,6 +13,7 @@
 #include "../mesh/mesh.hpp"
 #include "../math/interpolation.h" // locate
 #include "../coordinates/coordinates.hpp"
+#include "../debugger/debugger.hpp"
 #include "../globals.hpp"
 #include "particles.hpp"
 
@@ -22,6 +23,7 @@
 void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Particles::AggregateDensity-" + myname);
 
   // initialize cell aggregated particle density u and particle linked list pcell_
   u.ZeroClear();
@@ -35,9 +37,11 @@ void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint
     i = locate(xface_.data()+dims_[0]+dims_[1]+2, q->x1, dims_[2]+1);
 
     // it may happen that the last cell is [a, b] and x = b
-    //assert(k >= pmb->ks && k <= pmb->ke);
-    //assert(j >= pmb->js && j <= pmb->je);
-    //assert(i >= pmb->is && i <= pmb->ie);
+#if (DEBUG_LEVEL > 0)
+    assert(k >= pmb->ks && k <= pmb->ke);
+    assert(j >= pmb->js && j <= pmb->je);
+    assert(i >= pmb->is && i <= pmb->ie);
+#endif
 
     u(q->type,k,j,i) += q->rho;
 
@@ -61,7 +65,12 @@ void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint
     }
   }
 
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("u", u, pmb->is, pmb->ie, pmb->js, pmb->je, pmb->ks, pmb->ke);
+#endif
+
   // copy u to u1_ such that u1_ represents the aggregated particle density before
   // chemistry for the next step
   u1_ = u;
+  pmb->pdebug->Leave();
 }

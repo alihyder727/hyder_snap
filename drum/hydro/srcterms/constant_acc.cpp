@@ -14,6 +14,7 @@
 #include "../../athena_arrays.hpp"
 #include "../../coordinates/coordinates.hpp"
 #include "../../mesh/mesh.hpp"
+#include "../../debugger/debugger.hpp"
 #include "../hydro.hpp"
 #include "hydro_srcterms.hpp"
 
@@ -25,6 +26,7 @@ void HydroSourceTerms::ConstantAcceleration(const Real dt,const AthenaArray<Real
                                             const AthenaArray<Real> &prim,
                                             AthenaArray<Real> &cons) {
   MeshBlock *pmb = pmy_hydro_->pmy_block;
+  pmb->pdebug->Call("HydroSourceTerm::ConstantAcceleration");
 
   // acceleration in 1-direction
   if (g1_!=0.0 && std::strcmp(RIEMANN_SOLVER, "noflux") != 0) {
@@ -67,6 +69,7 @@ void HydroSourceTerms::ConstantAcceleration(const Real dt,const AthenaArray<Real
       }
     }
   }
+  pmb->pdebug->Leave();
 
   return;
 }

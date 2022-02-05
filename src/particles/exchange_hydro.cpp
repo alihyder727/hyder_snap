@@ -11,12 +11,15 @@
 #include "../math/interpolation.h" // locate
 #include "../hydro/hydro.hpp"
 #include "../hydro/srcterms/hydro_srcterms.hpp"
+#include "../debugger/debugger.hpp"
 #include "particles.hpp"
 
 void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> &du,
   AthenaArray<Real> const &w, Real dt)
 {
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Particles::ExchangeHydro-" + myname);
+
   Mesh *pm = pmb->pmy_mesh;
   AthenaArray<Real> v1, v2, v3;
   Real loc[3];
@@ -49,4 +52,5 @@ void Particles::ExchangeHydro(std::vector<MaterialPoint> &mp, AthenaArray<Real> 
     assert(!std::isnan(q->v2));
     assert(!std::isnan(q->v3));
   }
+  pmb->pdebug->Leave();
 }

@@ -4,7 +4,6 @@
 // C++ header
 #include <vector>
 #include <string>
-#include <sstream>
 #include <stdexcept>
 #include <iostream>
 
@@ -45,10 +44,9 @@ public:
   {
     Debugger *pdebug = pband->pmy_rad->pmy_block->pdebug;
     pdebug->Enter("Absorber " + name);
-    std::stringstream msg;
+    std::stringstream &msg = pdebug->msg;
     msg << "- molar mixing ratio = " << mixr
         << " and id = " << imol << std::endl;
-    pdebug->WriteMessage(msg.str());
     pdebug->Leave();
   }
 
@@ -57,13 +55,12 @@ public:
   {
     Debugger *pdebug = pband->pmy_rad->pmy_block->pdebug;
     pdebug->Enter("Absorber " + name);
-    std::stringstream msg;
+    std::stringstream &msg = pdebug->msg;
     msg << "- molar mixing ratio = " << mixr
         << " and dependent id = ";
     for (int i = 0; i < imols.size(); ++i)
       msg << imols_[i] << " ";
     msg << std::endl;
-    pdebug->WriteMessage(msg.str());
     pdebug->Leave();
   }
 

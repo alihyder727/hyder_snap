@@ -193,6 +193,7 @@ void Radiation::AddRadiativeFluxes(AthenaArray<Real>& x1flux,
   if (pband == nullptr) return;
 
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Radiation::AddRadiativeFluxes");
 
   // x1-flux divergence
   p = pband;
@@ -202,4 +203,5 @@ void Radiation::AddRadiativeFluxes(AthenaArray<Real>& x1flux,
       x1flux(IEN,k,j,i) += p->bflxup(k,j,i) - p->bflxdn(k,j,i);
     p = p->next;
   }
+  pmb->pdebug->Leave();
 }

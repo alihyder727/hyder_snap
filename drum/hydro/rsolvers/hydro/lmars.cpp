@@ -3,7 +3,6 @@
 
 // C/C++ headers
 #include <cstring>
-#include <sstream>
 
 // Athena++ headers
 #include "../../hydro.hpp"
@@ -13,13 +12,19 @@
 #include "../../../thermodynamics/thermodynamics.hpp"
 #include "../../../math/core.h" // sqr
 #include "../../../globals.hpp"
+#include "../../../debugger/debugger.hpp"
 
 void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu, 
                           int const ivx,
                           AthenaArray<Real> &wl, AthenaArray<Real> &wr,
                           AthenaArray<Real> &flx, const AthenaArray<Real> &dxw)
 {
-  std::stringstream msg;
+  Debugger *pdbg = pmy_block->pdebug;
+  char str[80];
+  sprintf(str, "Hydro::RiemannSolver-X%d, (k=%d,j=%d)", ivx-IVX+1, k, j);
+  pdbg->Call(str);
+  std::stringstream &msg = pdbg->msg;
+
   int ivy = IVX + ((ivx-IVX)+1)%3;
   int ivz = IVX + ((ivx-IVX)+2)%3;
 
@@ -51,7 +56,7 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
     }
     Real kappar = 1./(gamma - 1.)*fsig/feps;
 
-    #ifdef DEBUG
+#if (DEBUG_LEVEL > 0)
     if (wli[IPR] + wri[IPR] < 0.) {
       msg << "### FATAL ERROR in Riemann Solver LMARS"
           << std::endl << "Pressure is negative: " << wli[IPR] << "," << wri[IPR]
@@ -73,7 +78,7 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
           << k << "," << j << "," << i << ") in rank " << Globals::my_rank;
       ATHENA_ERROR(msg);
     }
-    #endif
+#endif
 
     // enthalpy
     hl = wli[IPR]/wli[IDN]*(kappal + 1.) 
@@ -113,4 +118,5 @@ void Hydro::RiemannSolver(int const k, int const j, int const il, int const iu,
       flx(IEN,k,j,i) = ubar*wri[IDN]*hr;
     }
   }
+  pdbg->Leave();
 }

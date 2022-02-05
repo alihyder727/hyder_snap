@@ -1,6 +1,5 @@
 // C/C++ headers
 #include <vector>
-#include <sstream>
 #include <stdexcept>
 #include <type_traits>
 
@@ -27,9 +26,9 @@ RadiationBand::RadiationBand(Radiation *prad):
 
 RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *pin)
 {
-  prad->pmy_block->pdebug->Enter("RadiationBand " + name);
-  //ATHENA_LOG("RadiationBand");
-  std::stringstream msg;
+  Debugger *pdbg = prad->pmy_block->pdebug;
+  pdbg->Enter("RadiationBand " + name);
+  std::stringstream &msg = pdbg->msg;
 
   myname = name;
   prev = nullptr;
@@ -138,8 +137,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
 
   msg << "- spectral range = " << spec[0].wav << " - " << spec[nspec-1].wav
       << " and length = " << nspec << std::endl;
-  prad->pmy_block->pdebug->WriteMessage(msg.str());
-  prad->pmy_block->pdebug->Leave();
+  pdbg->Leave();
 }
 
 RadiationBand::~RadiationBand()

@@ -88,6 +88,7 @@ void TaskList::DoTaskListOneStage(Mesh *pmesh, int stage) {
     delete pdbg;
     // new debugger
     pmb_array[i]->pdebug = new Debugger(pmb_array[i]);
+    pmb_array[i]->pdebug->Enter("Stage " + std::to_string(stage));
 
     pmb_array[i]->tasks.Reset(ntasks);
     StartupTaskList(pmb_array[i], stage);
@@ -102,6 +103,7 @@ void TaskList::DoTaskListOneStage(Mesh *pmesh, int stage) {
       if (DoAllAvailableTasks(pmb_array[i],stage,pmb_array[i]->tasks)
           == TaskListStatus::complete) {
         nmb_left--;
+        pmb_array[i]->pdebug->Leave();
       }
     }
   }

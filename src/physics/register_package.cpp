@@ -1,6 +1,3 @@
-// C/C++ headers
-#include <sstream>
-
 // Athena++ headers
 #include "../athena.hpp"
 #include "../parameter_input.hpp"
@@ -17,7 +14,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
 {
   //ATHENA_LOG("Physics");
   pmb->pdebug->Enter("Physics");
-  std::stringstream msg;
+  std::stringstream &msg = pmb->pdebug->msg;
   char package_names[1024], *p;
   std::string str = pin->GetOrAddString("physics", "packages", "");
   std::strcpy(package_names, str.c_str());
@@ -29,8 +26,6 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
   while (p != NULL) {
     if (std::strcmp(p, "fix_bot_temperature") == 0) {
       msg << "- use physcis fix_bot_temperature" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
-      msg.str("");
       pkg.id = FIX_BOT_TEMPERATURE;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -43,7 +38,6 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       tem_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1);
     } else if (std::strcmp(p, "fix_bot_velocity") == 0) {
       msg << "- use physcis fix_bot_velocity" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
       pkg.id = FIX_BOT_VELOCITY;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -56,8 +50,6 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       vel_bot_.InitWithShallowSlice(hydro_bot_, 3, IVX, 3);
     } else if (std::strcmp(p, "fix_bot_composition") == 0) {
       msg << "- use physcis fix_bot_composition" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
-      msg.str("");
       pkg.id = FIX_BOT_COMPOSITION;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -70,8 +62,6 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       com_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1+NVAPOR);
     } else if (std::strcmp(p, "top_sponge_layer") == 0) {
       msg << "- use physcis top_sponge_layer" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
-      msg.str("");
       pkg.id = TOP_SPONGE_LAYER;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -82,8 +72,6 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       width_top_ = pin->GetReal("physics", "top_sponge_layer.width");
     } else if (std::strcmp(p, "bot_sponge_layer") == 0) {
       msg << "- use physcis bot_sponge_layer" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
-      msg.str("");
       pkg.id = BOT_SPONGE_LAYER;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -94,8 +82,6 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       width_bot_ = pin->GetReal("physics", "bot_sponge_layer.width");
     } else if (std::strcmp(p, "top_cooling") == 0) {
       msg << "- use physcis top_cooling" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
-      msg.str("");
       pkg.id = TOP_COOLING;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
@@ -105,8 +91,6 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       dTdt_ = pin->GetReal("physics", "top_cooling.rate")/86400.; // K/day to K/s
     } else if (std::strcmp(p, "bot_heating") == 0) {
       msg << "- use physcis bot_heating" << std::endl;
-      pmb->pdebug->WriteMessage(msg.str());
-      msg.str("");
       pkg.id = BOT_HEATING;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;

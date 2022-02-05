@@ -5,7 +5,11 @@
 
 // Athena++
 #include "debugger.hpp"
+#include "../particles/material_point.hpp"
 #include "../coordinates/coordinates.hpp"
+
+std::string const Debugger::cgreen = "\033[0;32m";
+std::string const Debugger::cend = "\033[0m";
 
 Debugger::Debugger(MeshBlock *pmb):
   pmy_block(pmb), prev(nullptr), next(nullptr), fname_("HEAD")
@@ -233,10 +237,44 @@ void Debugger::Leave() {
   msg.str("");
 }
 
-Debugger* Debugger::WriteMessage(std::string str) const {
+void Debugger::CheckConservation(std::string name, AthenaArray<Real> const& var,
+    int is, int ie, int js, int je, int ks, int ke) {
+  int nvar = var.GetDim4();
+
+  msg << cgreen << ">> Total " << name << "  = (";
+  for (int n = 0; n < nvar; ++n) {
+    Real sum = 0.;
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i) {
+          sum += var(n,k,j,i);
+        }
+    msg << sum << ", ";
+  }
+  msg << ")" << cend << std::endl;
+}
+
+void Debugger::CheckParticleConservation(std::vector<std::string> const& cnames,
+    std::vector<MaterialPoint> const& mp)
+{
+  Real *sum = new Real [cnames.size()];
+  int *num = new int [cnames.size()];
+  std::fill(sum, sum + cnames.size(), 0.);
+  std::fill(num, num + cnames.size(), 0);
+  for (std::vector<MaterialPoint>::const_iterator q = mp.begin(); q != mp.end(); ++q) {
+    sum[q->type] += q->rho;
+    num[q->type] += 1;
+  }
+  for (int i = 0; i < cnames.size(); ++i)
+    msg << cgreen << ">> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << cend << std::endl;
+  delete[] sum;
+  delete[] num;
+}
+
+/*Debugger* Debugger::WriteMessage(std::string str) const {
   if (Globals::my_rank == 0) std::cout << str;
   return const_cast<Debugger*>(this);
-}
+}*/
 
 void increment_id(std::string &str) {
   int len = str.size();

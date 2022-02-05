@@ -10,6 +10,7 @@
 #include "../../math/eigen335/Eigen/Dense"
 
 // Athena++ headers
+#include "../../debugger/debugger.hpp"
 #include "../../mesh/mesh.hpp"
 #include "../../eos/eos.hpp"
 #include "../../thermodynamics/thermodynamics.hpp"
@@ -22,6 +23,8 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
   AthenaArray<Real> const& w, Real dt)
 { 
   MeshBlock *pmb = pmy_hydro->pmy_block;
+  pmb->pdebug->Call("ImplicitSolver::PartialCorrectin-X" + std::to_string(mydir_+1));
+
   Coordinates *pcoord = pmb->pcoord;
   Thermodynamics *pthermo = pmb->pthermo;
 
@@ -231,5 +234,10 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
         }
   }
 
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("du", du, is, ie, js, je, ks, ke);
+#endif
+
   delete [] gamma_m1;
+  pmb->pdebug->Leave();
 }

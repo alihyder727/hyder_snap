@@ -10,8 +10,9 @@
 #include "../../athena_arrays.hpp"
 #include "../../mesh/mesh.hpp"
 #include "../../coordinates/coordinates.hpp"
-#include "../hydro.hpp"
 #include "../../math/core.h"
+#include "../../debugger/debugger.hpp"
+#include "../hydro.hpp"
 
 //! \brief add source terms for constant coriolis acceleration in 
 //  axial direction to conserved variables
@@ -19,6 +20,7 @@ void HydroSourceTerms::Coriolis123(const Real dt,const AthenaArray<Real> *flx,
   const AthenaArray<Real> &prim, AthenaArray<Real> &cons)
 {
   MeshBlock *pmb = pmy_hydro_->pmy_block;
+  pmb->pdebug->Call("HydroSourceTerms::Coriolis123");
 
   if (omega1_ != 0.0 || omega2_ != 0.0 || omega3_ != 0.0) {
     for (int k=pmb->ks; k<=pmb->ke; ++k) {
@@ -36,6 +38,7 @@ void HydroSourceTerms::Coriolis123(const Real dt,const AthenaArray<Real> *flx,
     }}
   }
 
+  pmb->pdebug->Leave();
   return;
 }
 
@@ -45,6 +48,7 @@ void HydroSourceTerms::CoriolisXYZ(const Real dt,const AthenaArray<Real> *flx,
   const AthenaArray<Real> &prim, AthenaArray<Real> &cons)
 {
   MeshBlock *pmb = pmy_hydro_->pmy_block;
+  pmb->pdebug->Call("HydroSourceTerms::CoriolisXYZ");
 
   Real omega1, omega2, omega3, theta, phi;
 
@@ -86,6 +90,7 @@ void HydroSourceTerms::CoriolisXYZ(const Real dt,const AthenaArray<Real> *flx,
       }
     }
   }
+  pmb->pdebug->Leave();
 
   return;
 }

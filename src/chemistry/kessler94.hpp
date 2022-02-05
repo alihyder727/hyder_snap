@@ -25,11 +25,12 @@ public:
   Kessler94(Chemistry *pchem, ParameterInput *pin, std::string name) :
     ChemistryBase<Kessler94>(pchem, pin)
   {
-    //ATHENA_LOG("Chemistry<Kessler94> for " + name);
-    pchem->pmy_block->pdebug->Enter("Chemistry<Kessler94>");
+    Debugger *pdbg = pchem->pmy_block->pdebug;
+    pdbg->Enter("Chemistry<Kessler94>");
+    std::stringstream &msg = pdbg->msg;
+
     myname = name;
     particle_name = pin->GetString("chemistry", name + ".link_particle");
-    std::stringstream msg;
     msg << "- particle " << particle_name << " linked to " << name << " chemistry" << std::endl;
 
     coeffs_["condensation"] = pin->GetReal("chemistry", name + ".condensation");
@@ -43,8 +44,6 @@ public:
     index_[2] = NHYDRO;
     index_[3] = NHYDRO + 1;
     msg << "- vapor #" << index_[1] << " linked to " << name << " chemistry" << std::endl;
-    pchem->pmy_block->pdebug->WriteMessage(msg.str());
-    msg.str("");
 
     deltaU_.resize(NHYDRO + 2);
     std::fill(deltaU_.begin(), deltaU_.end(), 0.);
@@ -54,7 +53,7 @@ public:
     Real cfloor_ = 1.;
     for (int n = 0; n < part->u.GetDim4(); ++n)
       cfloor_ = std::min(cfloor_, part->GetDensityFloor()/part->GetMolecularWeight(n));
-    pchem->pmy_block->pdebug->Leave();
+    pdbg->Leave();
   }
 
   template<typename T>

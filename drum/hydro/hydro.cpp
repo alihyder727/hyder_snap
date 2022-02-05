@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-#include <sstream>
 
 // Athena++ headers
 #include "../athena.hpp"
@@ -59,8 +58,8 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
     hbvar(pmb, &u, &coarse_cons_, flux, HydroBoundaryQuantity::cons),
     hsrc(this, pin),
     hdif(this, pin) {
-  std::stringstream msg;
   pmb->pdebug->Enter("Hydro");
+  std::stringstream &msg = pmb->pdebug->msg;
   msg << "- number of hydro variables = " << NHYDRO << std::endl;
   int nc1 = pmb->ncells1, nc2 = pmb->ncells2, nc3 = pmb->ncells3;
   Mesh *pm = pmy_block->pmy_mesh;
@@ -185,8 +184,6 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   pimp = new ImplicitSolver(this, n3max, n2max);
   pfilter = new RingFilter(this);
 
-  pmb->pdebug->WriteMessage(msg.str());
-  msg.str("");
   pmb->pdebug->Leave();
 }
 

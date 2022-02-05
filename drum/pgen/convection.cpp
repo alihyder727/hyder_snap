@@ -8,7 +8,6 @@
 
 // C/C++ header
 #include <ctime>
-#include <sstream>
 
 // Athena++ headers
 #include "../athena.hpp"
@@ -63,6 +62,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 void Forcing(MeshBlock *pmb, Real const time, Real const dt,
     AthenaArray<Real> const &w, AthenaArray<Real> const &bcc, AthenaArray<Real> &u)
 {
+  pmb->pdebug->Call("Convection Forcing");
   int is = pmb->is, js = pmb->js, ks = pmb->ks;
   int ie = pmb->ie, je = pmb->je, ke = pmb->ke;
 
@@ -79,6 +79,7 @@ void Forcing(MeshBlock *pmb, Real const time, Real const dt,
           u(IM3,k,j,i) -= dt*fcor*w(IDN,k,j,i)*w(IM2,k,j,i);
         }
       }
+  pmb->pdebug->Leave();
 }
 
 void Mesh::InitUserMeshData(ParameterInput *pin)
@@ -101,7 +102,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
   //ATHENA_LOG("convection");
   pdebug->Enter("ProblemGenerator: convection");
-  std::stringstream msg;
+  std::stringstream &msg = pdebug->msg;
   Real gamma = pin->GetReal("hydro", "gamma");
 
   // construct a 1D pseudo-moist adiabat with given relative humidity
@@ -138,7 +139,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     z1[i] = z1[i-1] + dz;
 
   Real t0, p0;
-  msg << "- request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
+  std::cout << "- request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
   while (iter++ < max_iter) {
     pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo, 0.);
 
@@ -165,7 +166,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     Ts += T0 - t0;
     Ps *= P0/p0;
     if ((fabs(T0 - t0) < 0.01) && (fabs(P0/p0 - 1.) < 1.E-4)) break;
-    msg << "- iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
+    std::cout << "- iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
   }
 
   if (iter > max_iter) {
@@ -175,8 +176,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         << std::endl << "P0 = " << p0;
     ATHENA_ERROR(msg);
   }
-  pdebug->WriteMessage(msg.str());
-  msg.str("");
 
   // setup initial condition
   srand(Globals::my_rank + time(0));

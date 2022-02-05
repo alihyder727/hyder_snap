@@ -14,14 +14,17 @@
 
 // Athena++ headers
 #include "../coordinates/coordinates.hpp"
-#include "particles.hpp"
+#include "../debugger/debugger.hpp"
 #include "../globals.hpp"
+#include "particles.hpp"
 
 // Particulate executes after chemistry, which is applied to aggreated quantities u
 // It synchronized the particles in mp and the aggreated quantities after chemistry
 void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& u)
 {
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Particles::Particulate-" + myname);
+
   Coordinates *pco = pmb->pcoord;
   // particle buffer
   std::vector<MaterialPoint> mpb;
@@ -138,4 +141,10 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
   // transfer from particle buffer (mpb) to storage (mp);
   mp.reserve(mp.size() + mpb.size());
   mp.insert(mp.end(), mpb.begin(), mpb.end());
+
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckParticleConservation(cnames_, mp);
+#endif
+
+  pmb->pdebug->Leave();
 }

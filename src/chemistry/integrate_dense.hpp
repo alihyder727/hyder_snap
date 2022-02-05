@@ -1,9 +1,7 @@
-// C/C++ headers
-#include <sstream>
-
 // Athena++ header files
 #include "validate_chemistry.hpp"
 #include "chemistry_solver.hpp"
+#include "../debugger/debugger.hpp"
 
 template<typename T>
 void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &up,
@@ -13,8 +11,10 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
   //for (int n = 0; n < 4; ++n)
   //  std::cout << index_[n] << " ";
   //std::cout << std::endl;
-  std::stringstream msg;
   MeshBlock *pmb = pmy_chem->pmy_block;
+  pmb->pdebug->Call("Chemistry::IntegrateDense-" + myname);
+  std::stringstream &msg = pmb->pdebug->msg;
+
   Thermodynamics *pthermo = pmb->pthermo;
   EquationOfState *peos = pmb->peos;
   Particles *ppart = pmb->ppart->FindParticle(particle_name);
@@ -111,7 +111,14 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         for (int n = 0; n < up.GetDim4(); ++n)
           up(n,k,j,i) = c1[NHYDRO+n]*ppart->GetMolecularWeight(n);
       }
+
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("uh", uh, is, ie, js, je, ks, ke);
+  pmb->pdebug->CheckConservation("up", up, is, ie, js, je, ks, ke);
+#endif
+
   delete[] c0;
   delete[] c1;
   delete[] c2;
+  pmb->pdebug->Leave();
 }

@@ -26,11 +26,9 @@ SimpleCloudParticles::SimpleCloudParticles(
 {
   //ATHENA_LOG("SimpleCloudParticles");
   pmb->pdebug->Enter("SimpleCloudParticles");
-  std::stringstream msg;
+  std::stringstream &msg = pmb->pdebug->msg;
   msg << "- first category is " << name + " cloud" << std::endl
       << "- second category is " << name + " precipitation" << std::endl;
-  pmb->pdebug->WriteMessage(msg.str());
-  msg.str("");
   cnames_.resize(2);
   cnames_[0] = "cloud";
   cnames_[1] = "rain";
@@ -49,8 +47,10 @@ SimpleCloudParticles::SimpleCloudParticles(
 void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
   AthenaArray<Real> &du, AthenaArray<Real> const &w, Real dt)
 {
-  std::stringstream msg;
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("SimpleCloudParticles::ExchangeHydro-" + myname);
+  std::stringstream &msg = pmb->pdebug->msg;
+
   Mesh *pm = pmb->pmy_mesh;
   Coordinates *pcoord = pmb->pcoord;
   AthenaArray<Real> v1, v2, v3;
@@ -113,4 +113,9 @@ void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
     du(IM3,k,j,i) += src*g3;
     du(IEN,k,j,i) += src*(g1*q->v1 + g2*q->v2 + g3*q->v3);
   }
+
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("du", du, pmb->is, pmb->ie, pmb->js, pmb->je, pmb->ks, pmb->ke);
+#endif
+  pmb->pdebug->Leave();
 }
