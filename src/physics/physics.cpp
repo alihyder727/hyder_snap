@@ -12,7 +12,7 @@ Physics::~Physics() {
 }
 
 //! \todo THIS HAS BEEN CHANGED u -> du. CHECK other packages for updates
-void Physics::ApplyPhysicsPackages(AthenaArray<Real> &u,
+void Physics::ApplyPhysicsPackages(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
   std::stringstream msg;
@@ -20,7 +20,7 @@ void Physics::ApplyPhysicsPackages(AthenaArray<Real> &u,
   ptm->Reset();
 
   while (count < 100) {
-    TaskListStatus status = ptm->DoNextJob(u, w, time, dt, packages_);
+    TaskListStatus status = ptm->DoNextJob(du, w, time, dt, packages_);
     if (status == TaskListStatus::complete) break;
     count++;
   }

@@ -70,8 +70,10 @@ protected:
   Real tau_bot_;    /**< bottom sponge layer time scale [s] */
   Real width_bot_;  /**< bottom sponge layer width [m] */
 
-  Real dTdt_;       /**< cooling rate [K/s] */
-  Real hflux_;      /**< heating flux [W/m^2] */
+  // parameters for heating/cooling
+  Real dTdt_;       /**< heating rate [K/s] */
+  Real flux_top_;   /**< top heating flux [W/m^2] */
+  Real flux_bot_;   /**< bot heating flux [W/m^2] */
 };
 
 //! \brief task to do on a meshblock

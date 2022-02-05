@@ -12,7 +12,6 @@ using namespace PhysicsPackageNames;
 Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb)
 {
-  //ATHENA_LOG("Physics");
   pmb->pdebug->Enter("Physics");
   std::stringstream &msg = pmb->pdebug->msg;
   char package_names[1024], *p;
@@ -88,7 +87,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       pkg.Function = &Physics::TopCooling;
       ptm->AddPackage(pkg, "top_cooling");
 
-      dTdt_ = pin->GetReal("physics", "top_cooling.rate")/86400.; // K/day to K/s
+      //dTdt_ = pin->GetReal("physics", "top_cooling.rate")/86400.; // K/day to K/s
+      flux_top_ = pin->GetReal("physics", "top_cooling.flux");
     } else if (std::strcmp(p, "bot_heating") == 0) {
       msg << "- use physcis bot_heating" << std::endl;
       pkg.id = BOT_HEATING;
@@ -97,7 +97,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       pkg.Function = &Physics::BotHeating;
       ptm->AddPackage(pkg, "bot_heating");
 
-      hflux_ = pin->GetReal("physics", "bot_heating.flux");
+      flux_bot_ = pin->GetReal("physics", "bot_heating.flux");
     } else {
       msg << "### FATAL ERROR in function Physics::Physics"
           << std::endl << "Package '" << p << "' "

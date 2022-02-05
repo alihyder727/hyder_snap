@@ -2,16 +2,16 @@
 #include "../coordinates/coordinates.hpp"
 #include "../mesh/mesh.hpp"
 #include "../math/core.h"
-#include "physics.hpp"
+#include "../debugger/debugger.hpp"
 #include "../globals.hpp"
+#include "physics.hpp"
 
 TaskStatus Physics::TopSpongeLayer(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
-  //if (Globals::my_rank == 0)
-  //  std::cout  << "I'm at top sponge" << std::endl;
-
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Physics::TopSpongerLayer");
+
   Coordinates *pcoord = pmb->pcoord;
 
   int iu = pmb->ie;
@@ -32,16 +32,19 @@ TaskStatus Physics::TopSpongeLayer(AthenaArray<Real> &du,
       }
     }
 
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("du", du, pmb->is, pmb->ie, pmb->js, pmb->je, pmb->ks, pmb->ke);
+#endif
+  pmb->pdebug->Leave();
   return TaskStatus::success;
 }
 
 TaskStatus Physics::BotSpongeLayer(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
-  //if (Globals::my_rank == 0)
-  //  std::cout  << "I'm at bot sponge" << std::endl;
-
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Physics::BotSpongeLayer");
+
   Coordinates *pcoord = pmb->pcoord;
 
   int il = pmb->is;
@@ -63,6 +66,10 @@ TaskStatus Physics::BotSpongeLayer(AthenaArray<Real> &du,
       }
     }
 
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckConservation("du", du, pmb->is, pmb->ie, pmb->js, pmb->je, pmb->ks, pmb->ke);
+#endif
+  pmb->pdebug->Leave();
   return TaskStatus::success;
 }
 
