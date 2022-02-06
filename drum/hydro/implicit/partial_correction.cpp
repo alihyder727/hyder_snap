@@ -23,7 +23,7 @@ void ImplicitSolver::PartialCorrection(AthenaArray<Real>& du,
   AthenaArray<Real> const& w, Real dt)
 { 
   MeshBlock *pmb = pmy_hydro->pmy_block;
-  pmb->pdebug->Call("ImplicitSolver::PartialCorrectin-X" + std::to_string(mydir_+1));
+  pmb->pdebug->Call("ImplicitSolver::PartialCorrection-X" + std::to_string(mydir_+1));
 
   Coordinates *pcoord = pmb->pcoord;
   Thermodynamics *pthermo = pmb->pthermo;

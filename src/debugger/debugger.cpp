@@ -241,20 +241,32 @@ void Debugger::Leave() {
 void Debugger::CheckConservation(std::string name, AthenaArray<Real> const& var,
     int is, int ie, int js, int je, int ks, int ke) {
   int nvar = var.GetDim4();
+  Real *sum = new Real [nvar];
+  std::fill(sum, sum + nvar, 0.);
 
-  //msg << cgreen << ">> Total " << name << "  = (";
-  msg << "\t>> Total " << name << "  = (";
-  for (int n = 0; n < nvar; ++n) {
-    Real sum = 0.;
+  for (int n = 0; n < nvar; ++n)
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j)
-        for (int i = is; i <= ie; ++i) {
-          sum += var(n,k,j,i);
-        }
-    msg << std::setprecision(12) << sum << ", ";
+        for (int i = is; i <= ie; ++i)
+          sum[n] += var(n,k,j,i);
+
+#ifdef MPI_PARALLEL
+  if (Globals::my_rank == 0) {
+    MPI_Reduce(MPI_IN_PLACE, sum, nvar, MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Reduce(sum, sum, nvar, MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
   }
-  //msg << ")" << cend << std::endl;
-  msg << ")" << std::endl;
+#endif
+
+  if (Globals::my_rank == 0) {
+    //msg << cgreen << ">> Total " << name << "  = (";
+    msg << "\t>> Total " << name << "  = (";
+    for (int n = 0; n < nvar; ++n)
+      msg << std::setprecision(12) << sum[n] << ", ";
+    //msg << ")" << cend << std::endl;
+    msg << ")" << std::endl;
+  }
+  delete[] sum;
 }
 
 void Debugger::CheckParticleConservation(std::vector<std::string> const& cnames,
@@ -262,16 +274,32 @@ void Debugger::CheckParticleConservation(std::vector<std::string> const& cnames,
 {
   Real *sum = new Real [cnames.size()];
   int *num = new int [cnames.size()];
+
   std::fill(sum, sum + cnames.size(), 0.);
   std::fill(num, num + cnames.size(), 0);
+
   for (std::vector<MaterialPoint>::const_iterator q = mp.begin(); q != mp.end(); ++q) {
     sum[q->type] += q->rho;
     num[q->type] += 1;
   }
-  //for (int i = 0; i < cnames.size(); ++i)
-  //  msg << cgreen << ">> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << cend << std::endl;
-  for (int i = 0; i < cnames.size(); ++i)
-    msg << "\t>> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << std::endl;
+
+#ifdef MPI_PARALLEL
+  if (Globals::my_rank == 0) {
+    MPI_Reduce(MPI_IN_PLACE, sum, cnames.size(), MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(MPI_IN_PLACE, num, cnames.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Reduce(sum, sum, cnames.size(), MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(num, num, cnames.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  }
+#endif
+
+  if (Globals::my_rank == 0) {
+    //for (int i = 0; i < cnames.size(); ++i)
+    //  msg << cgreen << ">> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << cend << std::endl;
+    for (int i = 0; i < cnames.size(); ++i)
+      msg << "\t>> Total " << cnames[i] << " = " << sum[i] << ", num = " << num[i] << std::endl;
+  }
+
   delete[] sum;
   delete[] num;
 }
