@@ -49,6 +49,8 @@ void EquationOfState::ConservedToPrimitive(
   std::stringstream msg;
   Thermodynamics *pthermo = pmy_block_->pthermo;
 
+  pmy_block_->phydro->VaporConcentrationLimiter(cons);
+
   for (int k=kl; k<=ku; ++k) {
     for (int j=jl; j<=ju; ++j) {
 #pragma omp simd

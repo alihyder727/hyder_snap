@@ -99,7 +99,9 @@ class Hydro {
   void AddGravityFluxWithGflx();
   void CalculateGravityFlux(AthenaArray<Real> &phi_in);
 
+  // support functions
   void CheckHydro();
+  void VaporConcentrationLimiter(AthenaArray<Real> &u);
 
  private:
   AthenaArray<Real> dt1_, dt2_, dt3_;  // scratch arrays used in NewTimeStep
