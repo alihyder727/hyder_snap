@@ -24,6 +24,26 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
 
   int size = uh.GetDim4() + up.GetDim4();
 
+/*  Real total = 0.;
+  if (myname == "H2O")
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i)
+          total += uh(1,k,j,i) + up(0,k,j,i) + up(1,k,j,i);
+  else if (myname == "NH3")
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i)
+          total += uh(2,k,j,i) + up(0,k,j,i) + up(1,k,j,i);
+#ifdef MPI_PARALLEL
+  if (Globals::my_rank == 0) {
+    MPI_Reduce(MPI_IN_PLACE, &total, 1, MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Reduce(&total, &total, 1, MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+  }
+#endif
+  msg << "- total before = " << total << std::endl; */
+
   Real* c0 = new Real [size];
   Real* c1 = new Real [size];
   Real* c2 = new Real [size];
@@ -44,6 +64,12 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         // 2. from mass density to molar density
         // ignore the kinetic energy of condensates
         Real ux = uh(IVX,k,j,i), uy = uh(IVY,k,j,i), uz = uh(IVZ,k,j,i);
+        Real rho_total = 0.;
+        for (int n = 1; n <= NVAPOR; ++n)
+          rho_total += uh(n,k,j,i);
+        for (int n = 0; n < up.GetDim4(); ++n)
+          rho_total += up(n,k,j,i);
+
         pthermo->ConservedToChemical(c0, uh.at(k,j,i));
         Real cd = c0[IPR]/(Thermodynamics::Rgas*c0[IDN]);
         for (int n = 1; n <= NVAPOR; ++n) cd -= c0[n];
@@ -114,14 +140,44 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
         uh(IVX,k,j,i) = ux;
         uh(IVY,k,j,i) = uy;
         uh(IVZ,k,j,i) = uz;
+
+        for (int n = 1; n <= NVAPOR; ++n)
+          rho_total -= uh(n,k,j,i);
+        Real par_total = 0.;
         for (int n = 0; n < up.GetDim4(); ++n)
-          up(n,k,j,i) = c1[NHYDRO+n]*ppart->GetMolecularWeight(n);
+          par_total += c1[NHYDRO+n]*ppart->GetMolecularWeight(n);
+        if (par_total > 0.)
+          for (int n = 0; n < up.GetDim4(); ++n)
+            up(n,k,j,i) = c1[NHYDRO+n]*ppart->GetMolecularWeight(n)*rho_total/par_total;
+        else
+          for (int n = 0; n < up.GetDim4(); ++n)
+            up(n,k,j,i) = c1[NHYDRO+n]*ppart->GetMolecularWeight(n);
       }
 
 #if (DEBUG_LEVEL > 1)
   pmb->pdebug->CheckConservation("uh", uh, is, ie, js, je, ks, ke);
   pmb->pdebug->CheckConservation("up", up, is, ie, js, je, ks, ke);
 #endif
+
+/*  total = 0.;
+  if (myname == "H2O")
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i)
+          total += uh(1,k,j,i) + up(0,k,j,i) + up(1,k,j,i);
+  else if (myname == "NH3")
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+        for (int i = is; i <= ie; ++i)
+          total += uh(2,k,j,i) + up(0,k,j,i) + up(1,k,j,i);
+#ifdef MPI_PARALLEL
+  if (Globals::my_rank == 0) {
+    MPI_Reduce(MPI_IN_PLACE, &total, 1, MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Reduce(&total, &total, 1, MPI_ATHENA_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+  }
+#endif
+  msg << "- total after = " << total << std::endl;*/
 
   delete[] c0;
   delete[] c1;

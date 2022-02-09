@@ -14,6 +14,7 @@ class MeshBlock;
 class ParticleBuffer;
 
 class Particles {
+  friend class ParticleBuffer;
 public:
 // data
   MeshBlock* pmy_block;

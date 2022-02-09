@@ -49,25 +49,38 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
           // 2. if the number of particles (n0) is greater than the maximum allowed particles
           // per cell (nmax_per_cell_), mark particles for merging (destroy). Particle
           // densities have been sorted from low to high.
+          // particles to be removed (merged) are marked as inactive (id = -1)
+          // and zero density (rho = 0). nparts reflects the number of active particles
+          // in cell
           int n0 = nparts;
-          Real sum = 0.;
+          Real drho = 0., sum = 0.;
           pc = pcell_(t,k,j,i);
+          /* method 1
+          if (pc != nullptr) {
+            while (nparts > nmax_per_cell_ || pc->rho+drho < density_floor_) {
+              if (nparts == 1) break;
+              drho += (pc->rho+drho)/(nparts-1);
+              pc->id = -1;
+              pc->rho = 0;
+              pc = pc->next;
+              nparts--;
+            }
+          }*/
+
+          // method 2
           for (int n = 0; n < n0 - nmax_per_cell_; ++n) {
             sum += pc->rho;
-            //available_ids_.push_back(pc->id);
             pc->id = -1;
             pc->rho = 0;
             pc = pc->next;
             nparts--;
           }
-          // here, particles to be removed (merged) are marked as inactive (id = -1) 
-          // and zero density (rho = 0). nparts reflects the number of active particles 
-          // in cell. Distribute the total density of inactive particles to active particles.
+          drho = sum/nparts;
+
+          // Distribute the total density of inactive particles to active particles.
           pcell_(t,k,j,i) = pc;
-          //Real avg = sum/nmax_per_cell_;
-          Real avg = sum/nparts;
           while (pc != nullptr) {
-            pc->rho += avg;
+            pc->rho += drho;
             pc = pc->next;
           }
 
@@ -75,7 +88,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
           // density of existing particles
           if (delta_u > 0.) {
             // avg stores the mean density to be allocated to particles
-            avg = delta_u/seeds_per_cell_;
+            Real avg = delta_u/seeds_per_cell_;
             // num sotres the available number of particles to be added to cell
             int num = std::min(nmax_per_cell_ - nparts, seeds_per_cell_);
             // add new particles with density avg
@@ -139,8 +152,10 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
         }
 
   // transfer from particle buffer (mpb) to storage (mp);
-  mp.reserve(mp.size() + mpb.size());
-  mp.insert(mp.end(), mpb.begin(), mpb.end());
+  //mp.reserve(mp.size() + mpb.size());
+  //mp.insert(mp.end(), mpb.begin(), mpb.end());
+  for (std::vector<MaterialPoint>::iterator it = mpb.begin(); it != mpb.end(); ++it)
+    mp.push_back(*it);
 
 #if (DEBUG_LEVEL > 1)
   pmb->pdebug->CheckParticleConservation(cnames_, mp);

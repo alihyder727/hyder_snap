@@ -8,6 +8,7 @@
 #include "../mesh/mesh.hpp"
 #include "../globals.hpp"
 #include "../bvals/bvals.hpp"
+#include "../debugger/debugger.hpp"
 #include "material_point.hpp"
 #include "particle_buffer.hpp"
 #include "particles.hpp"
@@ -41,6 +42,7 @@ int ParticleBuffer::CreateMPITag(int lid, int tid) {
 
 void ParticleBuffer::SendParticle()
 {
+  Debugger *pdebug= pmy_particle->pmy_block->pdebug;
   for (int n = 0; n < pmy_particle->pmy_block->pbval->nneighbor; ++n) {
     NeighborBlock &nb = pmy_particle->pmy_block->pbval->neighbor[n];
 
@@ -55,6 +57,12 @@ void ParticleBuffer::SendParticle()
       int ssize = particle_send_[nb.bufid].size();
       MPI_Isend(particle_send_[nb.bufid].data(), ssize, MPI_PARTICLE,
                 nb.snb.rank, tag, MPI_COMM_WORLD, &req_particle_send_[nb.bufid]);
+#if DEBUG_LEVEL > 1
+      if (ssize > 0) {
+        std::cout << "- block " << Globals::my_rank << " send " << ssize << " "
+                 << pmy_particle->myname << std::endl;
+      }
+#endif
     }
 #endif
   }
@@ -63,6 +71,7 @@ void ParticleBuffer::SendParticle()
 void ParticleBuffer::RecvParticle()
 {
   int rsize, tag;
+  Debugger *pdebug= pmy_particle->pmy_block->pdebug;
 
   MeshBlock *pmb = pmy_particle->pmy_block;
 #ifdef MPI_PARALLEL
@@ -78,6 +87,12 @@ void ParticleBuffer::RecvParticle()
       particle_recv_[nb.bufid].resize(rsize);
       MPI_Irecv(particle_recv_[nb.bufid].data(), rsize, MPI_PARTICLE,
                 nb.snb.rank, tag, MPI_COMM_WORLD, &req_particle_recv_[nb.bufid]);
+#if DEBUG_LEVEL > 1
+      if (rsize > 0) {
+        std::cout << "- block " << Globals::my_rank << " receive " << rsize << " "
+                  << pmy_particle->myname << std::endl;
+      }
+#endif
     }
   }
 #endif

@@ -13,6 +13,8 @@
 // Athena++ headers
 #include "../mesh/mesh.hpp"
 #include "../bvals/bvals.hpp"
+#include "../debugger/debugger.hpp"
+#include "../globals.hpp"
 #include "particle_buffer.hpp"
 #include "particles.hpp"
 
@@ -21,6 +23,10 @@
 void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_particle->pmy_block;
+#if DEBUG_LEVEL > 1
+  pmb->pdebug->Call("ParticleBuffer::DetachParticle-" + pmy_particle->myname);
+  pmb->pdebug->CheckParticleConservation(pmy_particle->cnames_, mp);
+#endif
   Mesh *pm = pmb->pmy_mesh;
 
   Real x1min = pmb->block_size.x1min;
@@ -36,9 +42,10 @@ void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
 
   while (qi < qj) {
     // if particle is inactive, swap the current one with the last one
-    while (qi->id < 0) {
+    if (qi->id < 0) {
       *qi = *(qj-1);
       qj--;
+      continue;
     } // proceed to living particle
     // take care of reflective boundary condition
     if (pmb->pbval->block_bcs[inner_x1] == BoundaryFlag::reflect && qi->x1 < x1min) {
@@ -87,8 +94,10 @@ void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
     if (bid == -1) { // particle inside domain
       qi++;
     } else {  // particle moved out of the domain
-      //std::cout << qj->x2 << " ";
+      //std::cout << "particle (" << qi->id << "," << qi->x2 << ") move to " << bid << std::endl;;
+      //std::cout << "block range = (" << x1min << "," << x1max << ")" << std::endl;
       particle_send_[bid].push_back(*qi);
+      //pmb->pdebug->msg << *qi;
       *qi = *(qj-1);
       qj--;
     }
@@ -96,5 +105,8 @@ void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
 
   // particles beyond qi are inactive particles. Remove them from the list
   mp.resize(qi - mp.begin());
-  //std::cout << std::endl;
+#if DEBUG_LEVEL > 1
+  pmb->pdebug->CheckParticleConservation(pmy_particle->cnames_, mp);
+  pmb->pdebug->Leave();
+#endif
 }

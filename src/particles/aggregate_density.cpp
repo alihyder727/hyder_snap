@@ -23,7 +23,12 @@
 void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_block;
+  Coordinates *pcoord = pmb->pcoord;
   pmb->pdebug->Call("Particles::AggregateDensity-" + myname);
+
+#if (DEBUG_LEVEL > 1)
+  pmb->pdebug->CheckParticleConservation(cnames_, mp);
+#endif
 
   // initialize cell aggregated particle density u and particle linked list pcell_
   u.ZeroClear();
@@ -38,9 +43,17 @@ void Particles::AggregateDensity(AthenaArray<Real> &u, std::vector<MaterialPoint
 
     // it may happen that the last cell is [a, b] and x = b
 #if (DEBUG_LEVEL > 0)
-    assert(k >= pmb->ks && k <= pmb->ke);
-    assert(j >= pmb->js && j <= pmb->je);
-    assert(i >= pmb->is && i <= pmb->ie);
+    if (k < pmb->ks || k > pmb->ke ||
+        j < pmb->js || j > pmb->je ||
+        i < pmb->is || i > pmb->ie) {
+      std::cout << "loc = (" << q->x1 << "," << q->x2 << "," << q->x3 << ")" << std::endl;
+      std::cout << pcoord->x1f(i) << "," << pcoord->x1f(i+1) << std::endl;
+      std::cout << pcoord->x2f(j) << "," << pcoord->x2f(j+1) << std::endl;
+      std::cout << pcoord->x3f(k) << "," << pcoord->x3f(k+1) << std::endl;
+      assert(k >= pmb->ks && k <= pmb->ke);
+      assert(j >= pmb->js && j <= pmb->je);
+      assert(i >= pmb->is && i <= pmb->ie);
+    }
 #endif
 
     u(q->type,k,j,i) += q->rho;

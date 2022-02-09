@@ -78,6 +78,7 @@ std::ostream& operator<<(std::ostream &os, MaterialPoint const& pt)
   os << "other integer data: ";
   for (int i = 0; i < NREAL_PARTICLE_DATA; ++i)
     os << pt.ii[i] << " ";
+  os << std::endl;
 #endif
   return os;
 }
