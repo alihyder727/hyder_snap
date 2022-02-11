@@ -231,10 +231,12 @@ void Debugger::Leave() {
   idstack_next_.pop_back();
   increment_id(idstack_next_.back());
   //int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
+#if DEBUG_LEVEL > 0
   if (Globals::my_rank == 0) {
     //for (int n = 0; n < level; ++n) std::cout << '\t';
     std::cout << msg.str() << name << " done." << std::endl;
   }
+#endif
   msg.str("");
 }
 

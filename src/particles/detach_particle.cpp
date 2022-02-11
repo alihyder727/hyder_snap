@@ -23,7 +23,7 @@
 void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
 {
   MeshBlock *pmb = pmy_particle->pmy_block;
-#if DEBUG_LEVEL > 1
+#if DEBUG_LEVEL > 2
   pmb->pdebug->Call("ParticleBuffer::DetachParticle-" + pmy_particle->myname);
   pmb->pdebug->CheckParticleConservation(pmy_particle->cnames_, mp);
 #endif
@@ -105,7 +105,7 @@ void ParticleBuffer::DetachParticle(std::vector<MaterialPoint> &mp)
 
   // particles beyond qi are inactive particles. Remove them from the list
   mp.resize(qi - mp.begin());
-#if DEBUG_LEVEL > 1
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckParticleConservation(pmy_particle->cnames_, mp);
   pmb->pdebug->Leave();
 #endif

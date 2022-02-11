@@ -27,7 +27,7 @@ TaskStatus Physics::RelaxBotTemperature(AthenaArray<Real> &du,
       du(IEN,k,j,is) += dt/tau_Tbot_*(tem_bot_(k,j) - tem)*cv;
     }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("du", du, is, ie, js, je, ks, ke);
 #endif
   pmb->pdebug->Leave();

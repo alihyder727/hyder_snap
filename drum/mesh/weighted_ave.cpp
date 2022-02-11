@@ -135,7 +135,7 @@ void MeshBlock::WeightedAve(AthenaArray<Real> &u_out, AthenaArray<Real> &u_in1,
     }
   }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pdebug->CheckConservation("u_out", u_out, is, ie, js, je, ks, ke);
 #endif
 

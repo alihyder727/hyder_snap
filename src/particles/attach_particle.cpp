@@ -24,7 +24,7 @@ bool ParticleBuffer::AttachParticle(std::vector<MaterialPoint>& mp)
   int test;
 
   MeshBlock *pmb = pmy_particle->pmy_block;
-#if DEBUG_LEVEL > 1
+#if DEBUG_LEVEL > 2
   pmb->pdebug->Call("ParticleBuffer::AttachParticle-" + pmy_particle->myname);
 #endif
   std::stringstream &msg = pmb->pdebug->msg;
@@ -47,9 +47,11 @@ bool ParticleBuffer::AttachParticle(std::vector<MaterialPoint>& mp)
 
     if (particle_flag_[nb.bufid] == BoundaryStatus::arrived) {
       std::vector<MaterialPoint>::iterator it = particle_recv_[nb.bufid].begin();
+#if DEBUG_LEVEL > 3
       if (particle_recv_[nb.bufid].size() > 0)
         std::cout << "- block " << Globals::my_rank << " attach "
             << particle_recv_[nb.bufid].size() << std::endl;
+#endif
       for (; it != particle_recv_[nb.bufid].end(); ++it) {
         // 0:INNER_X1, 1:OUTER_X1
         if (pm->mesh_bcs[nb.ni.ox1+1>>1] == BoundaryFlag::periodic) {
@@ -83,7 +85,7 @@ bool ParticleBuffer::AttachParticle(std::vector<MaterialPoint>& mp)
 // it has an id but density and positions are uninitialized
 // I don't where it comes from and it will take time to debug
 // leave it for now (solved, linked list problem in detach particle)
-#if DEBUG_LEVEL > 0
+#if DEBUG_LEVEL > 3
           success = false;
           msg << "### FATAL ERROR in ParticleBuffer::AttachParticles. Particles " 
               << pmy_particle->myname
@@ -113,7 +115,7 @@ bool ParticleBuffer::AttachParticle(std::vector<MaterialPoint>& mp)
       particle_flag_[nb.bufid] = BoundaryStatus::completed; // completed
     }
   }
-#if DEBUG_LEVEL > 1
+#if DEBUG_LEVEL > 2
   pmb->pdebug->Leave();
 #endif
 

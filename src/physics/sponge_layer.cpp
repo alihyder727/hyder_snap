@@ -32,7 +32,7 @@ TaskStatus Physics::TopSpongeLayer(AthenaArray<Real> &du,
       }
     }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("du", du, pmb->is, pmb->ie, pmb->js, pmb->je, pmb->ks, pmb->ke);
 #endif
   pmb->pdebug->Leave();

@@ -14,6 +14,10 @@ typedef int (*TestFunc_t)(Real);
 
 class MaterialPoint;
 
+// DEBUG_LEVEL = 0 : no debug output
+//             = 1 : output important steps
+//             = 2 : output conservation check
+//             = 3 : output detailed particle transfer and bounds check
 class Debugger {
 public:
 // data

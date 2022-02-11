@@ -114,7 +114,7 @@ void SimpleCloudParticles::ExchangeHydro(std::vector<MaterialPoint> &mp,
     du(IEN,k,j,i) += src*(g1*q->v1 + g2*q->v2 + g3*q->v3);
   }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("du", du, pmb->is, pmb->ie, pmb->js, pmb->je, pmb->ks, pmb->ke);
 #endif
   pmb->pdebug->Leave();

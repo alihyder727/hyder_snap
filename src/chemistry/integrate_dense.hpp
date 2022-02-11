@@ -154,7 +154,7 @@ void ChemistryBase<T>::IntegrateDense(AthenaArray<Real> &uh, AthenaArray<Real> &
             up(n,k,j,i) = c1[NHYDRO+n]*ppart->GetMolecularWeight(n);
       }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("uh", uh, is, ie, js, je, ks, ke);
   pmb->pdebug->CheckConservation("up", up, is, ie, js, je, ks, ke);
 #endif

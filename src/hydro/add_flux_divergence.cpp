@@ -93,7 +93,7 @@ void Hydro::AddFluxDivergence(const Real wght, AthenaArray<Real> &u_out) {
     }
   }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("u_out", u_out, is, ie, js, je, ks, ke);
 #endif
 

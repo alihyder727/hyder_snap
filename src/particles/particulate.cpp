@@ -157,7 +157,7 @@ void Particles::Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> co
   for (std::vector<MaterialPoint>::iterator it = mpb.begin(); it != mpb.end(); ++it)
     mp.push_back(*it);
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckParticleConservation(cnames_, mp);
 #endif
 

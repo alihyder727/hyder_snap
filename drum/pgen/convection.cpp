@@ -80,7 +80,7 @@ void Forcing(MeshBlock *pmb, Real const time, Real const dt,
         }
       }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("du", du, is, ie, js, je, ks, ke);
 #endif
   pmb->pdebug->Leave();
@@ -143,7 +143,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     z1[i] = z1[i-1] + dz;
 
   Real t0, p0;
-  std::cout << "- request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
+  if (Globals::my_rank == 0)
+    std::cout << "- request T = " << T0 << " P = " << P0 << " at Z = " << Z0 << std::endl;
   while (iter++ < max_iter) {
     pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, dz, nx1, Adiabat::pseudo, 0.);
 
@@ -170,7 +171,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     Ts += T0 - t0;
     Ps *= P0/p0;
     if ((fabs(T0 - t0) < 0.01) && (fabs(P0/p0 - 1.) < 1.E-4)) break;
-    std::cout << "- iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
+    if (Globals::my_rank == 0)
+      std::cout << "- iteration #" << iter << ": " << "T = " << t0 << " P = " << p0 << std::endl;
   }
 
   if (iter > max_iter) {

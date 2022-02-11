@@ -57,7 +57,7 @@ void ParticleBuffer::SendParticle()
       int ssize = particle_send_[nb.bufid].size();
       MPI_Isend(particle_send_[nb.bufid].data(), ssize, MPI_PARTICLE,
                 nb.snb.rank, tag, MPI_COMM_WORLD, &req_particle_send_[nb.bufid]);
-#if DEBUG_LEVEL > 1
+#if DEBUG_LEVEL > 3
       if (ssize > 0) {
         std::cout << "- block " << Globals::my_rank << " send " << ssize << " "
                  << pmy_particle->myname << std::endl;
@@ -87,7 +87,7 @@ void ParticleBuffer::RecvParticle()
       particle_recv_[nb.bufid].resize(rsize);
       MPI_Irecv(particle_recv_[nb.bufid].data(), rsize, MPI_PARTICLE,
                 nb.snb.rank, tag, MPI_COMM_WORLD, &req_particle_recv_[nb.bufid]);
-#if DEBUG_LEVEL > 1
+#if DEBUG_LEVEL > 3
       if (rsize > 0) {
         std::cout << "- block " << Globals::my_rank << " receive " << rsize << " "
                   << pmy_particle->myname << std::endl;

@@ -25,7 +25,7 @@ TaskStatus Physics::TopCooling(AthenaArray<Real> &du,
         /pcoord->GetCellVolume(k,j,ie);
     }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("du", du, is, ie, js, je, ks, ke);
 #endif
   pmb->pdebug->Leave();
@@ -48,7 +48,7 @@ TaskStatus Physics::BotHeating(AthenaArray<Real> &du,
 				/pcoord->GetCellVolume(k,j,is);
     }
 
-#if (DEBUG_LEVEL > 1)
+#if DEBUG_LEVEL > 2
   pmb->pdebug->CheckConservation("du", du, is, ie, js, je, ks, ke);
 #endif
   pmb->pdebug->Leave();
