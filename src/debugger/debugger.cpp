@@ -210,10 +210,12 @@ void Debugger::Enter(std::string name, std::string heil) {
   sections_.push_back(name);
   std::string id = idstack_next_.back();
   int level = std::count(idstack_next_.back().begin(), idstack_next_.back().end(), '.') - 1;
+#if DEBUG_LEVEL > 0
   if (Globals::my_rank == 0) {
     //for (int n = 0; n < level; ++n) std::cout << '\t';
     std::cout << msg.str() << id << " " << heil << " " << name << " ..." << std::endl;
   }
+#endif
   idstack_next_.push_back(id + "1.");
   msg.str("");
 }

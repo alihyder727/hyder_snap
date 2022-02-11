@@ -80,7 +80,7 @@ void EquationOfState::ConservedToPrimitive(
         for (int n = 1; n <= NVAPOR; ++n)
           prim(n,k,j,i) = cons(n,k,j,i)*di;
 
-        #ifdef DEBUG_LEVEL > 3
+#if DEBUG_LEVEL > 3
         if (std::isnan(w_d) || (w_d < density_floor_)) {  // IDN may be NAN
           msg << "### FATAL ERROR in function ConservedToPrimitive"
               << std::endl << "Density reaches lowest value: " << w_d
@@ -95,7 +95,7 @@ void EquationOfState::ConservedToPrimitive(
           }
           ATHENA_ERROR(msg);
         }
-        #endif
+#endif
 
         //Real di = 1.0/u_d;
         w_vx = u_m1*di;
@@ -116,7 +116,7 @@ void EquationOfState::ConservedToPrimitive(
         u_e = (w_p > pressure_floor_) ?  u_e : ((pressure_floor_/gm1)*fsig/feps + KE);
         w_p = (w_p > pressure_floor_) ?  w_p : pressure_floor_;
 
-        #ifdef DEBUG_LEVEL > 3
+#if DEBUG_LEVEL > 3
         if (std::isnan(w_p) || (w_p < pressure_floor_)) {
           msg << "### FATAL ERROR in function ConservedToPrimitive"
               << std::endl << "Pressure reaches lowest value: " << w_p
@@ -125,7 +125,7 @@ void EquationOfState::ConservedToPrimitive(
               std::endl;
           ATHENA_ERROR(msg);
         }
-        #endif
+#endif
       }
     }
   }
