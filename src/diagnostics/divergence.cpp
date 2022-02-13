@@ -5,6 +5,8 @@
 Divergence::Divergence(MeshBlock *pmb) : Diagnostics(pmb, "div")
 {
   type = "SCALARS";
+  units = "1/s";
+  long_name = "divergence";
   data.NewAthenaArray(ncells3_,ncells2_,ncells1_);
   v1f1_.NewAthenaArray(ncells3_,ncells2_,ncells1_+1);
   if (pmb->block_size.nx2 > 1)

@@ -50,23 +50,23 @@ void EddyKineticEnergy::Finalize(AthenaArray<Real> const& w)
       }
     }
 
-#ifdef MPI_PARALLEL
+/*#ifdef MPI_PARALLEL
   MPI_Comm comm;
 
 	for (int d = 0; d < 3; ++d) {
 		if ((d == 1) && (!pmb->pmy_mesh->f2)) break;
 		if ((d == 2) && (!pmb->pmy_mesh->f3)) break;
 		SetColor(static_cast<CoordinateDirection>(d));
-		/*if (Globals::my_rank == 0) {
+		if (Globals::my_rank == 0) {
 			for (int i = 0; i < Globals::nranks; ++i)
 				std::cout << color_[i] << " ";
 			std::cout << std::endl;
-		}*/
+		}
 		MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
 		MPI_Allreduce(data_sum, dir_sum[d], 4*ncells1_, MPI_ATHENA_REAL, MPI_SUM, comm);
 		MPI_Comm_free(&comm);
 	}
-#endif
+#endif*/
 
   // calculate eddy and mean
 	data.ZeroClear();

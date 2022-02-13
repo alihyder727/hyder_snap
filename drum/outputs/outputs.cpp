@@ -744,7 +744,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod = new OutputData;
       pod->type = p->type;
       pod->grid = p->grid;
-      pod->name = p->myname;
+      pod->name = p->varname;
       pod->long_name = p->long_name;
       pod->units = p->units;
       p->Finalize(phyd->w);

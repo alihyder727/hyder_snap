@@ -14,7 +14,7 @@ class Diagnostics {
 public:
   // data
   std::string myname, type, grid;
-  std::string long_name, units;
+  std::string varname, long_name, units;
   Diagnostics *prev, *next;
   AthenaArray<Real> data;
   int ncycle;
@@ -23,8 +23,8 @@ public:
   Diagnostics(MeshBlock *pmb, ParameterInput *pin);
   Diagnostics(MeshBlock *pmb, std::string name);
   virtual ~Diagnostics();
+
   Diagnostics* operator[](std::string name);
-  void SetColor(CoordinateDirection dir);
 
   template<typename Dg> Diagnostics* AddDiagnostics(Dg const& d) {
     Dg *pd = new Dg(d);
@@ -38,15 +38,22 @@ public:
 
   virtual void Progress(AthenaArray<Real> const& w) {}
   virtual void Finalize(AthenaArray<Real> const& w) {}
+
 protected:
   MeshBlock *pmy_block_;
   int ncells1_, ncells2_, ncells3_;
-  std::vector<int> brank_; /**< rank of the bottom block */
-  std::vector<int> color_; /**< MPI color of each rank */
 
-  // geometric arrays
-  AthenaArray<Real> x1area_, x2area_, x2area_p1_, x3area_, x3area_p1_, vol_;
+  //! MPI color of each rank
+  std::vector<int> color_;
+  //! rank of the bottom block 
+  std::vector<int> brank_;
+
+  //! scratch geometric arrays
+  AthenaArray<Real> x1area_, x2area_, x2area_p1_, x3area_, x3area_p1_, vol_, total_vol_;
   AthenaArray<Real> x1edge_, x1edge_p1_, x2edge_, x2edge_p1_, x3edge_, x3edge_p1_;
+
+  void setColor_(int *color, CoordinateDirection dir);
+  void gatherAllData23_(AthenaArray<Real> &total_vol, AthenaArray<Real> &total_data);
 };
 
 // register all diagnostics
@@ -167,6 +174,18 @@ public:
   EddyKineticEnergy(MeshBlock *pmb);
   virtual ~EddyKineticEnergy() {}
   void Finalize(AthenaArray<Real> const& w);
+};
+
+// 13. horizontal averaged tendency
+class Tendency: public Diagnostics {
+public:
+  Tendency(MeshBlock *pmb);
+  virtual ~Tendency() {}
+  void Finalize(AthenaArray<Real> const& w);
+
+protected:
+  Real last_time_;
+  AthenaArray<Real> wh_, up_;
 };
 
 #endif

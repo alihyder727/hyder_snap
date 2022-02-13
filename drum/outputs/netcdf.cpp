@@ -202,7 +202,36 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     pdata = pfirst_data_;
     while (pdata != nullptr) {
       std::string name, attr;
-      std::vector<std::string> longnames, units;
+      std::vector<std::string> varnames, longnames, units;
+
+      // vectorize name
+      if (pdata->name.find(',') != std::string::npos) {
+        varnames = Vectorize<std::string>(pdata->name.c_str(), ",");
+        std::stringstream msg; 
+        if (varnames.size() != pdata->data.GetDim4()) {
+          msg << "### FATAL ERROR in PnetcdfOutput::WriteOutputFile"
+              << std::endl << "Size of var_names: " << varnames.size()
+              << " does not equal number of fields: " << pdata->data.GetDim4()
+              << std::endl;
+          ATHENA_ERROR(msg);
+        }
+      } else {
+        for (int n = 0; n < pdata->data.GetDim4(); ++n) {
+          size_t pos = pdata->name.find('?');
+          if (pdata->data.GetDim4() == 1) { // SCALARS
+            if (pos < pdata->name.length()) {  // find '?'
+              varnames.push_back(pdata->name.substr(0, pos) + pdata->name.substr(pos + 1));
+            } else
+              varnames.push_back(pdata->name);
+          } else {  // VECTORS
+            char c[16]; sprintf(c, "%d", n + 1);
+            if (pos < pdata->name.length()) {  // find '?'
+              varnames.push_back(pdata->name.substr(0, pos) + c + pdata->name.substr(pos + 1));
+            } else
+              varnames.push_back(pdata->name + c);
+          }
+        }
+      }
 
       // vectorize long_name
       if (pdata->long_name.find(',') != std::string::npos) {
@@ -236,20 +265,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       else
         nvar = pdata->data.GetDim4();
       for (int n = 0; n < nvar; ++n) {
-        if (nvar == 1) { // SCALARS
-          size_t pos = pdata->name.find('?');
-          if (pos < pdata->name.length()) {  // find '?'
-            name = pdata->name.substr(0, pos) + pdata->name.substr(pos + 1);
-          } else
-            name = pdata->name;
-        } else {  // VECTORS
-          char c[16]; sprintf(c, "%d", n + 1);
-          size_t pos = pdata->name.find('?');
-          if (pos < pdata->name.length()) {  // find '?'
-            name = pdata->name.substr(0, pos) + c + pdata->name.substr(pos + 1);
-          } else
-            name = pdata->name + c;
-        }
+        name = varnames[n];
         if (pdata->grid == "CCF")
           nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis1, ivar);
         else if ((pdata->grid == "CFC") && (ncells2 > 1))

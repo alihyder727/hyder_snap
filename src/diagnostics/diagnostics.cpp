@@ -11,15 +11,15 @@
 #include "../globals.hpp"
 
 Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
-  myname("HEAD"), type(""), grid(""), long_name(""), units(""),
-  prev(nullptr), next(nullptr), 
+  myname("HEAD"), type(""), grid(""), varname("HEAD"), long_name(""), units(""),
+  prev(nullptr), next(nullptr),
   ncycle(0), pmy_block_(pmb)
 {
   pmb->pdebug->Enter("Diagnostics List");
   std::stringstream msg;
   char cstr[80];
-  std::string varnames = pin->GetOrAddString("problem", "diagnostics", "");
-  std::strcpy(cstr, varnames.c_str());
+  std::string diag_names = pin->GetOrAddString("problem", "diagnostics", "");
+  std::strcpy(cstr, diag_names.c_str());
   char *p = std::strtok(cstr, " ,");
   while (p != NULL) {
     std::string name(p);
@@ -47,6 +47,8 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
       AddDiagnostics(AngularMomentum(pmb));
     else if (name == "eke") // 12.
       AddDiagnostics(EddyKineticEnergy(pmb));
+    else if (name == "tendency") // 13.
+      AddDiagnostics(Tendency(pmb));
     else {
       msg << "### FATAL ERROR in function Diagnostics::Diagnostics"
           << std::endl << "Diagnostic variable " << name << " not defined";
@@ -61,14 +63,15 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
         << std::endl << "Most diagnostic variables require at least 2 ghost cells";
     ATHENA_ERROR(msg);
   }
+
   //pmb->pdebug->WriteMessage(msg.str());
   pmb->pdebug->Leave();
 }
 
 Diagnostics::Diagnostics(MeshBlock *pmb, std::string name):
-  myname(name), prev(nullptr), next(nullptr), ncycle(0), pmy_block_(pmb)
+  myname(name), varname(name), prev(nullptr), next(nullptr), ncycle(0), pmy_block_(pmb)
 {
-  pmb->pdebug->Enter("Diagnostics " + name);
+  pmb->pdebug->Enter("Diagnostics-" + name);
   std::stringstream msg;
   ncells1_ = pmb->block_size.nx1 + 2*(NGHOST);
   ncells2_ = 1; 
@@ -90,8 +93,15 @@ Diagnostics::Diagnostics(MeshBlock *pmb, std::string name):
   x3area_p1_.NewAthenaArray(ncells1_);
 
   vol_.NewAthenaArray(ncells1_);
+  total_vol_.NewAthenaArray(ncells1_);
   brank_.resize(Globals::nranks);
   color_.resize(Globals::nranks);
+
+  for (int i = 0; i < Globals::nranks; ++i) {
+    brank_[i] = -1;
+    color_[i] = -1;
+  }
+
   pmb->pdebug->Leave();
 }
 
@@ -111,7 +121,7 @@ Diagnostics* Diagnostics::operator[](std::string name)
   return p;
 }
 
-void Diagnostics::SetColor(CoordinateDirection dir) {
+void Diagnostics::setColor_(int *color, CoordinateDirection dir) {
   MeshBlock *pmb = pmy_block_;
   NeighborBlock bblock, tblock;
   pmb->FindNeighbors(dir, bblock, tblock);
@@ -153,9 +163,40 @@ void Diagnostics::SetColor(CoordinateDirection dir) {
 
   int c = 0;
   for (int i = 0; i < Globals::nranks; ++i) {
-    if (brank_[i] == -1)
-      color_[i] = c++;
-    else
-      color_[i] = color_[brank_[i]];
+    //color[i] = brank_[i] == -1 ? color[i] : color[brank_[i]];
+    if (brank_[i] == -1) {
+      if (color[i] == -1)
+        color[i] = c++;
+    } else
+      color[i] = color[brank_[i]];
   }
+}
+
+void Diagnostics::gatherAllData23_(AthenaArray<Real> &total_vol, AthenaArray<Real> &total_data)
+{
+  MeshBlock *pmb = pmy_block_;
+
+  // calculate total volume
+  total_vol.ZeroClear();
+  for (int k = pmb->ks; k <= pmb->ke; ++k)
+    for (int j = pmb->js; j <= pmb->je; ++j) {
+      pmb->pcoord->CellVolume(k,j,pmb->is,pmb->ie,vol_);
+      for (int i = pmb->is; i <= pmb->ie; ++i)
+        total_vol(i) += vol_(i);
+    }
+
+  // sum over all ranks
+#ifdef MPI_PARALLEL
+  MPI_Comm comm;
+  std::fill(color_.data(), color_.data() + Globals::nranks, -1);
+  setColor_(color_.data(), X2DIR);
+  setColor_(color_.data(), X3DIR);
+  MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
+  //int size;
+  //MPI_Comm_size(comm, &size);
+  //std::cout << size << std::endl;
+  MPI_Allreduce(MPI_IN_PLACE, total_vol.data(), total_vol.GetSize(), MPI_ATHENA_REAL, MPI_SUM, comm);
+  MPI_Allreduce(MPI_IN_PLACE, total_data.data(), total_data.GetSize(), MPI_ATHENA_REAL, MPI_SUM, comm);
+  MPI_Comm_free(&comm);
+#endif
 }
