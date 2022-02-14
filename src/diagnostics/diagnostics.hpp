@@ -31,7 +31,7 @@ public:
     Diagnostics *p = this;
     while (p->next != nullptr) p = p->next;
     p->next = pd;
-    p->next->prev= p;
+    p->next->prev = p;
     p->next->next = nullptr;
     return p->next;
   }
@@ -42,6 +42,9 @@ public:
 protected:
   MeshBlock *pmy_block_;
   int ncells1_, ncells2_, ncells3_;
+
+  //! mean and eddy component
+  AthenaArray<Real> mean_, eddy_;
 
   //! MPI color of each rank
   std::vector<int> color_;
@@ -95,7 +98,7 @@ protected:
 class TemperatureAnomaly: public Diagnostics {
 public:
   TemperatureAnomaly(MeshBlock *pmb);
-  virtual ~TemperatureAnomaly();
+  virtual ~TemperatureAnomaly() {}
   void Finalize(AthenaArray<Real> const& w);
 };
 
@@ -103,7 +106,7 @@ public:
 class PressureAnomaly: public Diagnostics {
 public:
   PressureAnomaly(MeshBlock *pmb);
-  virtual ~PressureAnomaly();
+  virtual ~PressureAnomaly() {}
   void Finalize(AthenaArray<Real> const& w);
 };
 
@@ -115,15 +118,13 @@ public:
   void Progress(AthenaArray<Real> const& w);
   void Finalize(AthenaArray<Real> const& w);
 
-protected:
-  AthenaArray<Real> eddy_, mean_;
 };
 
-// 7. total flux
-class TotalFlux: public Diagnostics {
+// 7. hydro flux
+class HydroFlux: public Diagnostics {
 public:
-  TotalFlux(MeshBlock *pmb);
-  virtual ~TotalFlux();
+  HydroFlux(MeshBlock *pmb);
+  virtual ~HydroFlux() {}
   void Progress(AthenaArray<Real> const& w);
   void Finalize(AthenaArray<Real> const& w);
 };
@@ -143,11 +144,11 @@ protected:
 class Buoyancy: public Diagnostics {
 public:
   Buoyancy(MeshBlock *pmb);
-  virtual ~Buoyancy();
+  virtual ~Buoyancy() {}
   void Finalize(AthenaArray<Real> const& w);
 
 protected:
-  AthenaArray<Real> wl_, wr_;
+  AthenaArray<Real> pf_;
   Real grav_;
 };
 

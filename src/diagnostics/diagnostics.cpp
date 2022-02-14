@@ -35,8 +35,8 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
       AddDiagnostics(PressureAnomaly(pmb));
     else if (name == "eddyflux") // 6.
       AddDiagnostics(EddyFlux(pmb));
-    else if (name == "flux") // 7.
-      AddDiagnostics(TotalFlux(pmb));
+    else if (name == "hydroflux") // 7.
+      AddDiagnostics(HydroFlux(pmb));
     else if (name == "div_h") // 8.
       AddDiagnostics(HorizontalDivergence(pmb));
     else if (name == "b") // 9.

@@ -6,6 +6,24 @@
 HydroMean::HydroMean(MeshBlock *pmb):Diagnostics(pmb, "mean")
 {
   type = "VECTORS";
+  varname = "rho_bar,";
+  long_name = "mean density,";
+  units = "kg/m^3,";
+
+  for (int n = 1; n <= NVAPOR; ++n) {
+    varname += "q" + std::to_string(n) + "_bar,";
+    units += "kg/kg,";
+    long_name += "mean vapor,";
+  }
+  for (int n = 0; n < 3; ++n) {
+    units += "m/s,";
+    varname += "vel" + std::to_string(n+1) + "_bar,";
+    long_name += "mean velocity,";
+  }
+  units += "K";
+  varname += "T_bar";
+  long_name += "mean temperature";
+
   data.NewAthenaArray(NHYDRO,ncells3_,ncells2_,ncells1_);
 }
 
