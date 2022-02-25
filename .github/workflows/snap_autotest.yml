@@ -13,12 +13,24 @@ jobs:
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: patch code
         run : |
-          cd ${{ github.workspace }}
+          # cd ${{ github.workspace }}
           ./patch.py
       - name: configure problem
         run: |
           ./configure.py $(head ./inputs/hydro/athinput.straka | grep configure | cut -d ' ' -f3-)
-      - name: clean up
+      - name: clean up libraries
         run: |
           make clean
+      - name: compile code
+        run: |
+          make -j4
+      - name: run simulation
+        run: |
+          ./bin/straka.ex -i ./inputs/hydro/athinput.straka
+      - name: combile outputs
+        run: |
+          ./combine.py -o auotest
+      - name: compare result
+        run: |
+          ./examples/2d.straka/compare.py straka-autotest-main.nc examples/2d.straka/straka-default-main.nc
       - run: echo "🍏 This job's status is ${{ job.status }}."
