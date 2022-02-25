@@ -1,17 +1,21 @@
 name: SNAP code autotest
 on: [push]
 jobs:
-  Name-of-the-Job:
-    runs-on: [self-hosted, linux, X64]
+  2d-straka:
+    runs-on: [self-hosted, linux]
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by ${{runner.runs_on} !"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
+      - name: patch code
         run: |
-          ls ${{ github.workspace }}
+          cd ${{ github.workspace }}
+          ./configure.py $(head ./inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-)
+      - name: clean up
+        run: |
+          make clean
       - run: echo "🍏 This job's status is ${{ job.status }}."
