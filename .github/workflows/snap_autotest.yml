@@ -5,16 +5,19 @@ jobs:
     runs-on: [self-hosted, linux]
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by ${{runner.runs_on}}"
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by ${{runner.name}}"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: patch code
-        run: |
+        run : |
           cd ${{ github.workspace }}
-          ./configure.py $(head ./inputs/hydro/athinput.straka | grep configure | cut -d' ' -f3-)
+          ./patch.py
+      - name: configure problem
+        run: |
+          ./configure.py $(head ./inputs/hydro/athinput.straka | grep configure | cut -d ' ' -f3-)
       - name: clean up
         run: |
           make clean
