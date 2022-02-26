@@ -68,7 +68,7 @@ jobs:
       - run: echo "robert case (parallel, vertical decomposition) is a ${{ job.status }}."
   robert-3d:
     runs-on: [self-hosted, linux]
-    needs: robert-3d
+    needs: robert-2d
     steps:
       - name: run simulation
         run: mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert3d.inp
