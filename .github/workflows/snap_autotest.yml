@@ -43,7 +43,7 @@ jobs:
       - name: combile outputs
         run: ./combine.py -o test
       - name: compare result
-        run: ./examples/2d.shallow_water/test.py shallow_water-test-main.nc examples/2d.shallow_water/output.nc
+        run: ./examples/2d.shallow_water/test.py sw-test-main.nc examples/2d.shallow_water/output.nc
       - name: finalize
         run: rm -f combine_rules
       - run: echo "shallow water model is a ${{ job.status }}."
@@ -63,4 +63,6 @@ jobs:
         run: ./combine.py -o test
       - name: compare result
         run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output.nc
+      - name: finalize
+        run: rm -f combine_rules
       - run: echo "🍏 This job's status is ${{ job.status }}."
