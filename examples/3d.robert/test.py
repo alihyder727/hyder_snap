@@ -7,14 +7,14 @@ case1 = sys.argv[1]
 case2 = sys.argv[2]
 
 data1 = Dataset(case1, 'r')
-theta1 = data1['theta'][2,0,:,:]
+theta1 = data1['theta'][-1,:,:,:]
 
 data2 = Dataset(case2, 'r')
-theta2 = data2['theta'][2,0,:,:]
+theta2 = data2['theta'][-1,:,:,:]
 
 diff = sqrt(sum((theta2 - theta1)*(theta2 - theta1)))
 
 if diff < 1.E-6:
-  print('### 2D robert test passed. ###')
+  print('### 3D robert test passed. ###')
 else:
-  raise ValueError('ERROR: 2D robert test failed. L2-norm is %.2g' % diff)
+  raise ValueError('ERROR: 3D robert test failed. L2-norm is %.2g' % diff)

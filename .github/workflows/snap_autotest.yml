@@ -14,7 +14,7 @@ jobs:
       - name: patch code
         run : ./patch.py
       - name: configure problem
-        run: ./configure.py $(head ./inputs/hydro/athinput.straka | grep configure | cut -d ' ' -f3-)
+        run: ./configure.py $(head ./examples/2d.straka/straka.inp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
         run: make clean
       - name: compile code
@@ -25,21 +25,38 @@ jobs:
         run: ./combine.py -o test
       - name: compare result
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
-      - run: echo "🍏 This job's status is ${{ job.status }}."
-  straka-3d:
+      - run: echo "straka model is ${{ job.status }}."
+  shallow-water:
     runs-on: [self-hosted, linux]
     needs: straka-2d
     steps:
       - name: configure problem
-        run: ./configure.py $(head ./inputs/hydro/athinput.robert | grep configure | cut -d ' ' -f3-)
+        run: ./configure.py $(head ./examples/2d.shallow_water/shallow_water.inp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
         run: make clean
       - name: compile code
         run: make -j4
       - name: run simulation
-        run: mpiexec -n 4 ./bin/robert.ex -i ./examples/
+        run: mpiexec -n 16 ./bin/shallow_water.ex -i ./examples/2d.shallow_water/shallow_water.inp
       - name: combile outputs
         run: ./combine.py -o test
       - name: compare result
-        run: ./examples/2d.straka/compare.py robert-test-main.nc examples/2d.robert/robert-default-main.nc
+        run: ./examples/2d.shallow_water/test.py shallow_water-test-main.nc examples/2d.shallow_water/output.nc
+      - run: echo "shallow water model is ${{ job.status }}."
+  robert-3d:
+    runs-on: [self-hosted, linux]
+    needs: straka-2d
+    steps:
+      - name: configure problem
+        run: ./configure.py $(head ./examples/3d.robert/robert.inp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: run simulation
+        run: mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert.inp
+      - name: combile outputs
+        run: ./combine.py -o test
+      - name: compare result
+        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output.nc
       - run: echo "🍏 This job's status is ${{ job.status }}."
