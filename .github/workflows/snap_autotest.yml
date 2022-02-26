@@ -25,7 +25,9 @@ jobs:
         run: ./combine.py -o test
       - name: compare result
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
-      - run: echo "straka model is ${{ job.status }}."
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "straka model is a ${{ job.status }}."
   shallow-water:
     runs-on: [self-hosted, linux]
     needs: straka-2d
@@ -42,7 +44,9 @@ jobs:
         run: ./combine.py -o test
       - name: compare result
         run: ./examples/2d.shallow_water/test.py shallow_water-test-main.nc examples/2d.shallow_water/output.nc
-      - run: echo "shallow water model is ${{ job.status }}."
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "shallow water model is a ${{ job.status }}."
   robert-3d:
     runs-on: [self-hosted, linux]
     needs: shallow-water
