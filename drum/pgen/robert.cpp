@@ -72,7 +72,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   Real cp = gamma/(gamma - 1.)*Rd;
 
   Real xc = pin->GetReal("problem", "xc");
-  Real yc = pin->GetOrAddReal("problem", "yc", 0.);
+  Real yc = pin->GetReal("problem", "yc");
   Real zc = pin->GetReal("problem", "zc");
   Real s = pin->GetReal("problem", "s");
   Real a = pin->GetReal("problem", "a");

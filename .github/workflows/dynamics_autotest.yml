@@ -1,0 +1,81 @@
+name: dynamics autotest
+on: [push]
+jobs:
+  straka-2d:
+    runs-on: [self-hosted, linux]
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by ${{runner.name}}"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workspace, ${{ github.workspace }}, is now ready to test your code on the runner."
+      - name: patch code
+        run : ./patch.py
+      - name: configure problem
+        run: ./configure.py $(head ./examples/2d.straka/straka.inp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: run simulation
+        run: ./bin/straka.ex -i ./examples/2d.straka/straka.inp
+      - name: combile outputs
+        run: ./combine.py -o test
+      - name: compare result
+        run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "straka case (single core) is a ${{ job.status }}"
+  shallow-water:
+    runs-on: [self-hosted, linux]
+    needs: straka-2d
+    steps:
+      - name: configure problem
+        run: ./configure.py $(head ./examples/2d.shallow_water/shallow_water.inp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: run simulation
+        run: mpiexec -n 16 ./bin/shallow_water.ex -i ./examples/2d.shallow_water/shallow_water.inp
+      - name: combile outputs
+        run: ./combine.py -o test
+      - name: compare result
+        run: ./examples/2d.shallow_water/test.py sw-test-main.nc examples/2d.shallow_water/output.nc
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "shallow water case (parallel) is a ${{ job.status }}."
+  robert-2d:
+    runs-on: [self-hosted, linux]
+    needs: shallow-water
+    steps:
+      - name: configure problem
+        run: ./configure.py $(head ./examples/3d.robert/robert2d.inp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: run simulation
+        run: mpiexec -n 8 ./bin/robert.ex -i ./examples/3d.robert/robert2d.inp
+      - name: combile outputs
+        run: ./combine.py -o test
+      - name: compare result
+        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output-2d.nc
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "robert case (parallel, vertical decomposition) is a ${{ job.status }}."
+  robert-3d:
+    runs-on: [self-hosted, linux]
+    needs: robert-2d
+    steps:
+      - name: run simulation
+        run: mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert3d.inp
+      - name: combile outputs
+        run: ./combine.py -o test
+      - name: compare result
+        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output-3d.nc
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "robert case (parallel, vertical decomposition, 3d) is a ${{ job.status }}."
