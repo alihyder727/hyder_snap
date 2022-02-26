@@ -45,7 +45,7 @@ jobs:
       - run: echo "shallow water model is ${{ job.status }}."
   robert-3d:
     runs-on: [self-hosted, linux]
-    needs: straka-2d
+    needs: shallow-water
     steps:
       - name: configure problem
         run: ./configure.py $(head ./examples/3d.robert/robert.inp | grep configure | cut -d ' ' -f3-)
