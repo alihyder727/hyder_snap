@@ -29,28 +29,28 @@ integrator = rk3          # integration method
 ncycle_out = 10          # output frequency
 
 <mesh>
-nx1        = 300          # Number of zones in X1-direction
+nx1        = 150          # Number of zones in X1-direction
 x1min      = 0.           # minimum value of X1
 x1max      = 1.5E3        # maximum value of X1
 ix1_bc     = reflecting   # inner-X1 boundary flag
 ox1_bc     = reflecting   # outer-X1 boundary flag
 
-nx2        = 200          # Number of zones in X2-direction
+nx2        = 100          # Number of zones in X2-direction
 x2min      = 0.           # minimum value of X2
 x2max      = 1.E3         # maximum value of X2
 ix2_bc     = reflecting   # inner-X2 boundary flag
 ox2_bc     = reflecting   # outer-X2 boundary flag
 
-nx3        = 200          # Number of zones in X3-direction
+nx3        = 100          # Number of zones in X3-direction
 x3min      = 0.           # minimum value of X3
 x3max      = 1.E3         # maximum value of X3
-ix3_bc     = periodic     # inner-X3 boundary flag
-ox3_bc     = periodic     # outer-X3 boundary flag
+ix3_bc     = reflecting   # inner-X3 boundary flag
+ox3_bc     = reflecting   # outer-X3 boundary flag
 
 <meshblock>
-nx1        = 150
-nx2        = 50
-nx3        = 50
+nx1        = 75
+nx2        = 25
+nx3        = 25
 
 <hydro>
 grav_acc1   = -9.8
@@ -62,6 +62,7 @@ Rd          = 287.
 <problem>
 dT    = 0.5
 xc    = 500.
+yc    = 500.
 zc    = 260.
 s     = 100.
 a     = 50.

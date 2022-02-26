@@ -27,7 +27,7 @@ jobs:
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
       - name: finalize
         run: rm -f combine_rules
-      - run: echo "straka model is a ${{ job.status }}."
+      - run: echo "straka case (single core) is a ${{ job.status }}"
   shallow-water:
     runs-on: [self-hosted, linux]
     needs: straka-2d
@@ -46,23 +46,23 @@ jobs:
         run: ./examples/2d.shallow_water/test.py sw-test-main.nc examples/2d.shallow_water/output.nc
       - name: finalize
         run: rm -f combine_rules
-      - run: echo "shallow water model is a ${{ job.status }}."
-  robert-3d:
+      - run: echo "shallow water case (parallel) is a ${{ job.status }}."
+  robert-2d:
     runs-on: [self-hosted, linux]
     needs: shallow-water
     steps:
       - name: configure problem
-        run: ./configure.py $(head ./examples/3d.robert/robert.inp | grep configure | cut -d ' ' -f3-)
+        run: ./configure.py $(head ./examples/3d.robert/robert2d.inp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
         run: make clean
       - name: compile code
         run: make -j4
       - name: run simulation
-        run: mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert.inp
+        run: mpiexec -n 8 ./bin/robert.ex -i ./examples/3d.robert/robert2d.inp
       - name: combile outputs
         run: ./combine.py -o test
       - name: compare result
-        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output.nc
+        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output-2d.nc
       - name: finalize
         run: rm -f combine_rules
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - run: echo "robert case (parallel, vertical decomposition) is a ${{ job.status }}."

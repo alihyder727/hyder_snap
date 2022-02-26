@@ -15,6 +15,6 @@ theta2 = data2['theta'][-1,:,:,:]
 diff = sqrt(sum((theta2 - theta1)*(theta2 - theta1)))
 
 if diff < 1.E-6:
-  print('### 3D robert test passed. ###')
+  print('### robert test passed. ###')
 else:
-  raise ValueError('ERROR: 3D robert test failed. L2-norm is %.2g' % diff)
+  raise ValueError('ERROR: robert test failed. L2-norm is %.2g' % diff)
