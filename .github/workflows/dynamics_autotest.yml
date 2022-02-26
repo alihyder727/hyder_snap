@@ -1,4 +1,4 @@
-name: SNAP code autotest
+name: dynamics autotest
 on: [push]
 jobs:
   straka-2d:
