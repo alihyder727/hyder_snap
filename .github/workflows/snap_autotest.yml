@@ -66,3 +66,16 @@ jobs:
       - name: finalize
         run: rm -f combine_rules
       - run: echo "robert case (parallel, vertical decomposition) is a ${{ job.status }}."
+  robert-3d:
+    runs-on: [self-hosted, linux]
+    needs: robert-3d
+    steps:
+      - name: run simulation
+        run: mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert3d.inp
+      - name: combile outputs
+        run: ./combine.py -o test
+      - name: compare result
+        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output-3d.nc
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "robert case (parallel, vertical decomposition, 3d) is a ${{ job.status }}."
