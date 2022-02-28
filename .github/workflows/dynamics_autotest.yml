@@ -76,7 +76,7 @@ jobs:
       - run: echo "polar vortex text case is a ${{ job.status }}."
   robert-2d:
     runs-on: [self-hosted, linux]
-    needs: polar-vortex
+    needs: straka-2d
     steps:
       - name: patch code
         run : ./patch.py
