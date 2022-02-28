@@ -32,6 +32,8 @@ jobs:
     runs-on: [self-hosted, linux]
     needs: straka-2d
     steps:
+      - name: patch code
+        run : ./patch.py
       - name: configure problem
         run: ./configure.py $(head ./examples/2d.shallow_water/shallow_water.inp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -47,10 +49,35 @@ jobs:
       - name: finalize
         run: rm -f combine_rules
       - run: echo "shallow water case (parallel) is a ${{ job.status }}."
-  robert-2d:
+  polar-vortex: 
     runs-on: [self-hosted, linux]
     needs: shallow-water
     steps:
+      - name: patch code
+        run : ./patch.py
+      - name: configure problem
+        run: ./configure.py $(head ./examples/2d.polar_vortex/fig_g_intruder.inp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: make case folder
+        run: mkdir data
+      - name: run simulation
+        run: mpiexec -n 16 ./bin/polar_vortex.ex -i ./examples/2d.polar_vortex/fig_g_intruder.inp
+      - name: combile outputs
+        run: ./combine.py -d data -o test
+      - name: compare result
+        run: ./examples/2d.polar_vortex/test.py data/intruder-test-main.nc examples/2d.polar_vortex/output.nc
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "polar vortex text case is a ${{ job.status }}."
+  robert-2d:
+    runs-on: [self-hosted, linux]
+    needs: polar-vortex
+    steps:
+      - name: patch code
+        run : ./patch.py
       - name: configure problem
         run: ./configure.py $(head ./examples/3d.robert/robert2d.inp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -70,6 +97,8 @@ jobs:
     runs-on: [self-hosted, linux]
     needs: robert-2d
     steps:
+      - name: patch code
+        run : ./patch.py
       - name: run simulation
         run: mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert3d.inp
       - name: combile outputs

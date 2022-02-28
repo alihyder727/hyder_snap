@@ -16,7 +16,7 @@ def CombineTimeseries(case, field, stamps, path = './', remove = False):
 
   if len(stamps) > 1:
     #check_call('ncrcat -h %s -o %s' % (fname, target), shell = True)
-    check_call('ncrcat -h %s.%s.?????.nc -o %s' % (case, field, target), shell = True)
+    check_call('ncrcat -h %s/%s.%s.?????.nc -o %s/%s' % (path, case, field, path, target), shell = True)
     if remove: 
       for f in fname.split():
         os.remove(f)
@@ -36,9 +36,9 @@ def CombineFields(case, fields, output, path = './'):
 
       print('Combining output fields: ', fid, 'to', name)
       if output != 'None':
-        ncout = '%s-%s-%s.nc' % (case, output, name)
+        ncout = '%s/%s-%s-%s.nc' % (path, case, output, name)
       else:
-        ncout = '%s-%s.nc' % (case, name)
+        ncout = '%s/%s-%s.nc' % (path, case, name)
 
       if len(fid) > 1:  # combining
         fname1 = path + '/%s.out%d.nc' % (case, fid[0])
