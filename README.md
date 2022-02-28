@@ -4,6 +4,8 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 <!--[![Build Status](https://travis-ci.com/luminoctum/athena19-dev.svg?token=AfxC7sH2UkyrrtpsBrob&branch=dev)](https://travis-ci.com/luminoctum/athena19-dev) -->
 ![Dynamics Build Status](https://github.com/luminoctum/athena19-dev/actions/workflows/dynamics_autotest.yml/badge.svg)
+![Radiation Build Status](https://github.com/luminoctum/athena19-dev/actions/workflows/radiation_autotest.yml/badge.svg)
+![Chemistry Build Status](https://github.com/luminoctum/athena19-dev/actions/workflows/chemistry_autotest.yml/badge.svg)
 
 <!--[![Public GitHub  issues](https://img.shields.io/github/issues/PrincetonUniversity/athena-public-version.svg)](https://github.com/PrincetonUniversity/athena-public-version/issues)
 [![Public GitHub pull requests](https://img.shields.io/github/issues-pr/PrincetonUniversity/athena-public-version.svg)](https://github.com/PrincetonUniversity/athena-public-version/pulls) -->

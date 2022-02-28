@@ -63,6 +63,8 @@ jobs:
         run: make -j4
       - name: make case folder
         run: mkdir data
+      - name: link auxiliary file
+        run: ln -s ./examples/2d.polar_vortex/intruder_85.txt ./
       - name: run simulation
         run: mpiexec -n 16 ./bin/polar_vortex.ex -i ./examples/2d.polar_vortex/fig_g_intruder.inp
       - name: combile outputs
