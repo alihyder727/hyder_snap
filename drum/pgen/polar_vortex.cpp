@@ -3,12 +3,12 @@
 //  \brief jupiter polar vortex model
 
 // C++ headers
-#include <boost/math/special_functions/gamma.hpp>
 #include <sstream>
 #include <cmath>
 #include <stdexcept>
 #include <vector>
 #include <random> 
+#include <boost/math/special_functions/gamma.hpp>
 
 // Athena++ headers
 #include "../athena.hpp"

@@ -1,28 +1,28 @@
 <comment>
 problem   = One layer shallow water model at the pole
 reference = 
-configure = --prob=polar_vortex --eos=shallow_water --nghost=3 -mpi -pnetcdf --pnetcdf_path=/home/chengcli/opt --include=../
+configure = --prob=polar_vortex --eos=shallow_water --nghost=3 -mpi -pnetcdf --pnetcdf_path=/home/chengcli/opt --include=src/tools/
 
 <job>
 problem_id = data/intruder # problem ID: basename of output filenames
 
 <output0>
 file_type  = hst          # History data dump
-dt         = 10.E5         # time increment between outputs
+dt         = 1.E6         # time increment between outputs
 
 <output1>
 file_type  = rst          # restart dump
-dt         = 5.E4
+dt         = 5.E6
 
 <output2>
 file_type  = pnetcdf      # netcdf data dump
 variable   = prim         # variables to be output
-dt         = 5.E4         # time increment between outputs
+dt         = 1.E6         # time increment between outputs
 
 <output3>
 file_type  = pnetcdf      # netcdf data dump
 variable   = uov          # variables to be output
-dt         = 5.E4         # time increment between outputs
+dt         = 1.E6         # time increment between outputs
 
 <time>
 cfl_number = 0.8          # The Courant, Friedrichs, & Lewy (CFL) Number
@@ -30,16 +30,15 @@ nlim       = -1           # cycle limit
 tlim       = 1.72E7         # time limit
 xorder     = 5            # horizontal reconstruction order
 integrator = rk3          # integration method
-#integrator = vl2         # integration method
 
 <mesh>
-nx1        = 512          # Number of zones in X1-direction (longitude)
+nx1        = 256          # Number of zones in X1-direction (longitude)
 x1min      = -3.5E7       # minimum value of X1
 x1max      = 3.5E7        # maximum value of X1, 120 degree
 ix1_bc     = periodic     # inner-X1 boundary flag
 ox1_bc     = periodic     # inner-X1 boundary flag
 
-nx2        = 512          # Number of zones in X2-direction (latitude)
+nx2        = 256          # Number of zones in X2-direction (latitude)
 x2min      = -3.5E7       # minimum value of X2
 x2max      = 3.5E7        # maximum value of X2, 70 degree
 ix2_bc     = periodic     # inner-X2 boundary flag
