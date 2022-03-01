@@ -60,7 +60,7 @@ struct OutputParameters {
 
 struct OutputData {
   std::string type;        // one of (SCALARS,VECTORS) used for vtk outputs
-  std::string grid;        // (CCC,CCF,CFC,...)
+  std::string grid;        // (CCC,CCF,CFC,RCC,...)
   std::string name;
   std::string long_name;
   std::string units;

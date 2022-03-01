@@ -19,6 +19,7 @@
 #include "../hydro/hydro.hpp"
 #include "../coordinates/coordinates.hpp"
 #include "../utils/utils.hpp"
+#include "../radiation/radiation.hpp"
 #include "outputs.hpp"
 
 // Only proceed if NETCDF output enabled
@@ -105,9 +106,10 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     int nfaces1 = ncells1; if (ncells1 > 1) nfaces1++;
     int nfaces2 = ncells2; if (ncells2 > 1) nfaces2++;
     int nfaces3 = ncells3; if (ncells3 > 1) nfaces3++;
+    int nrays = pmb->prad->GetOutgoingRays().size();
 
     // 2. define coordinate
-    int idt, idx1, idx2, idx3, idx1f, idx2f, idx3f;
+    int idt, idx1, idx2, idx3, idx1f, idx2f, idx3f, iray;
     // time
     nc_def_dim(ifile, "time", NC_UNLIMITED, &idt);
 
@@ -122,9 +124,12 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     nc_def_dim(ifile, "x3", ncells3, &idx3);
     if (ncells3 > 1)
       nc_def_dim(ifile, "x3f", nfaces3, &idx3f);
+    
+    if (nrays > 0)
+      nc_def_dim(ifile, "ray", nrays, &iray);
 
     // 3. define variables
-    int ivt, ivx1, ivx2, ivx3, ivx1f, ivx2f, ivx3f;
+    int ivt, ivx1, ivx2, ivx3, ivx1f, ivx2f, ivx3f, imu, iphi;
     int loc[4] = {(int)pmb->loc.lx1, (int)pmb->loc.lx2, (int)pmb->loc.lx3, pmb->loc.level};
     int pos[4];
 
@@ -162,6 +167,15 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     nc_put_att_text(ifile, ivx3, "axis", 1, "X");
     nc_put_att_text(ifile, ivx3, "units", 1, "m");
 
+    if (nrays > 0) {
+      nc_def_var(ifile, "mu_out", NC_FLOAT, 1, &iray, &imu);
+      nc_put_att_text(ifile, imu, "units", 1, "1");
+      nc_put_att_text(ifile, imu, "long_name", 18, "cosine polar angle");
+      nc_def_var(ifile, "phi_out", NC_FLOAT, 1, &iray, &iphi);
+      nc_put_att_text(ifile, iphi, "units", 3, "rad");
+      nc_put_att_text(ifile, iphi, "long_name", 15, "azimuthal angle");
+    }
+
     pos[0] = 1; pos[1] = pmb->pmy_mesh->mesh_size.nx3;
     pos[2] = ncells3*loc[2] + 1; pos[3] = ncells3*(loc[2] + 1);
     nc_put_att_int(ifile, ivx3, "domain_decomposition", NC_INT, 4, pos);
@@ -183,19 +197,20 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     // count total variables (vector variables are expanded into flat scalars)
     int total_vars = 0;
     while (pdata != nullptr) {
-      if (pdata->grid == "-CC")
-        total_vars += pdata->data.GetDim3();
+      if (pdata->grid == "--C" || pdata->grid == "--F")
+        total_vars += pdata->data.GetDim2();
+      else if (pdata->grid == "---")
+        total_vars += pdata->data.GetDim1();
       else
         total_vars += pdata->data.GetDim4();
       pdata = pdata->pnext;
     }
 
-    int iax1[2]  = {idt, idx1};
     int iaxis[4]  = {idt, idx1 , idx2 , idx3};
     int iaxis1[4] = {idt, idx1f, idx2 , idx3};
     int iaxis2[4] = {idt, idx1, idx2f, idx3};
     int iaxis3[4] = {idt, idx1, idx2, idx3f};
-    int iaxis4[4] = {idt, idx2, idx3};
+    int iaxisr[4] = {idt, iray,  idx2, idx3};
     int *var_ids = new int [total_vars];
     int *ivar = var_ids;
 
@@ -204,21 +219,29 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       std::string name, attr;
       std::vector<std::string> varnames, longnames, units;
 
+      int nvar;
+      if (pdata->grid == "--C" || pdata->grid == "--F")
+        nvar = pdata->data.GetDim2();
+      else if (pdata->grid == "---")
+        nvar = pdata->data.GetDim1();
+      else
+        nvar = pdata->data.GetDim4();
+
       // vectorize name
       if (pdata->name.find(',') != std::string::npos) {
         varnames = Vectorize<std::string>(pdata->name.c_str(), ",");
         std::stringstream msg; 
-        if (varnames.size() != pdata->data.GetDim4()) {
+        if (varnames.size() != nvar) {
           msg << "### FATAL ERROR in PnetcdfOutput::WriteOutputFile"
               << std::endl << "Size of var_names: " << varnames.size()
-              << " does not equal number of fields: " << pdata->data.GetDim4()
+              << " does not equal number of fields: " << nvar
               << std::endl;
           ATHENA_ERROR(msg);
         }
       } else {
-        for (int n = 0; n < pdata->data.GetDim4(); ++n) {
+        for (int n = 0; n < nvar; ++n) {
           size_t pos = pdata->name.find('?');
-          if (pdata->data.GetDim4() == 1) { // SCALARS
+          if (nvar == 1) { // SCALARS
             if (pos < pdata->name.length()) {  // find '?'
               varnames.push_back(pdata->name.substr(0, pos) + pdata->name.substr(pos + 1));
             } else
@@ -259,23 +282,22 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
         }
       }
 
-      int nvar;
-      if (pdata->grid == "-CC") // FIXME: Fix this in radiation output
-        nvar = pdata->data.GetDim3();
-      else
-        nvar = pdata->data.GetDim4();
       for (int n = 0; n < nvar; ++n) {
         name = varnames[n];
-        if (pdata->grid == "CCF")
+        if (pdata->grid == "RCC")  // radiation rays
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxisr, ivar);
+        else if (pdata->grid == "CCF")
           nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis1, ivar);
         else if ((pdata->grid == "CFC") && (ncells2 > 1))
           nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis2, ivar);
         else if ((pdata->grid == "FCC") && (ncells3 > 1))
           nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis3, ivar);
         else if (pdata->grid == "--C")
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 2, iax1, ivar);
-        else if (pdata->grid == "-CC")
-          nc_def_var(ifile, name.c_str(), NC_FLOAT, 3, iaxis4, ivar);
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 2, iaxis, ivar);
+        else if (pdata->grid == "--F")
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 2, iaxis1, ivar);
+        else if (pdata->grid == "---")
+          nc_def_var(ifile, name.c_str(), NC_FLOAT, 1, iaxis, ivar);
         else
           nc_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis, ivar);
 
@@ -311,8 +333,9 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     size_t count1[4] = {1, (size_t)nfaces1, (size_t)ncells2, (size_t)ncells3};
     size_t count2[4] = {1, (size_t)ncells1, (size_t)nfaces2, (size_t)ncells3};
     size_t count3[4] = {1, (size_t)ncells1, (size_t)ncells2, (size_t)nfaces3};
-    size_t count4[3] = {1, (size_t)ncells2, (size_t)ncells3};
-    size_t count_ax1[2] = {1, (size_t)ncells1};
+    size_t countr[4] = {1, (size_t)nrays, (size_t)ncells2, (size_t)ncells3};
+    //size_t count_ax1[2] = {1, (size_t)ncells1};
+    //size_t count_ax1f[2] = {1, (size_t)nfaces1};
 
     float time = (float)pm->time;
     nc_put_vara_float(ifile, ivt, start, count, &time);
@@ -347,15 +370,39 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       nc_put_var_float(ifile, ivx3f, data);
     }
 
+    if (nrays > 0) {
+      std::vector<Direction> ray = pmb->prad->GetOutgoingRays();
+
+      for (int n = 0; n < ray.size(); ++n)
+        data[n] = (float)(ray[n].mu);
+      nc_put_var_float(ifile, imu, data);
+
+      for (int n = 0; n < ray.size(); ++n)
+        data[n] = (float)(ray[n].phi);
+      nc_put_var_float(ifile, iphi, data);
+    }
+
     ivar = var_ids;
     pdata = pfirst_data_;
     while (pdata != nullptr) {
       int nvar;
-      if (pdata->grid == "-CC")
-        nvar = pdata->data.GetDim3();
+      if (pdata->grid == "--C" || pdata->grid == "--F")
+        nvar = pdata->data.GetDim2();
+      else if (pdata->grid == "---")
+        nvar = pdata->data.GetDim1();
       else
         nvar = pdata->data.GetDim4();
-      if (pdata->grid == "CCF") {
+
+      if (pdata->grid == "RCC") { // radiation rays
+        for (int n = 0; n < nvar; n++) {
+          float *it = data;
+          for (int m = 0; m < nrays; ++m)
+            for (int j = out_js; j <= out_je; ++j)
+              for (int k = out_ks; k <= out_ke; ++k)
+                *it++ = (float)pdata->data(n,m,k,j);
+          nc_put_vara_float(ifile, *ivar++, start, countr, data);
+        }
+      } else if (pdata->grid == "CCF") {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
           for (int i = out_is; i <= out_ie+1; ++i)
@@ -387,15 +434,20 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
           float *it = data;
           for (int i = out_is; i <= out_ie; ++i)
             *it++ = (float)pdata->data(n,i);
-          nc_put_vara_float(ifile, *ivar++, start, count_ax1, data);
+          nc_put_vara_float(ifile, *ivar++, start, count, data);
         }
-      } else if (pdata->grid == "-CC") {
+      } else if (pdata->grid == "--F") {
         for (int n = 0; n < nvar; n++) {
           float *it = data;
-          for (int j = out_js; j <= out_je; ++j)
-            for (int k = out_ks; k <= out_ke; ++k)
-              *it++ = (float)pdata->data(n,k,j);
-          nc_put_vara_float(ifile, *ivar++, start, count4, data);
+          for (int i = out_is; i <= out_ie+1; ++i)
+            *it++ = (float)pdata->data(n,i);
+          nc_put_vara_float(ifile, *ivar++, start, count1, data);
+        }
+      } else if (pdata->grid == "---") {
+        for (int n = 0; n < nvar; n++) {
+          float *it = data;
+          *it++ = (float)pdata->data(n);
+          nc_put_vara_float(ifile, *ivar++, start, count, data);
         }
       } else {
         for (int n = 0; n < nvar; n++) {

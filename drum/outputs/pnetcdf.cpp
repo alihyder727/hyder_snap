@@ -194,13 +194,14 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   OutputData *pdata = pfirst_data_;
 
   // count total variables (vector variables are expanded into flat scalars)
+  // TODO : nvars is incorrect with other grids like --C, --F
+  //! \bug this file may not work for radiation, consult \ref netcdf.cpp
   int nvars = 0;
   while (pdata != nullptr) {
     nvars += pdata->data.GetDim4();
     pdata = pdata->pnext;
   }
 
-  int iax1[2]  = {idt, idx1};
   int iaxis[4]  = {idt, idx1, idx2, idx3};
   int iaxis1[4] = {idt, idx1f, idx2, idx3};
   int iaxis2[4] = {idt, idx1, idx2f, idx3};
@@ -353,7 +354,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     out_js=pmb->js; out_je=pmb->je;
     out_ks=pmb->ks; out_ke=pmb->ke;
     
-    // FIXME: include_ghost zones probably doesn't work with grids other than CCC
+    // FIXME : include_ghost zones probably doesn't work with grids other than CCC
     if (output_params.include_ghost_zones) {
       out_is -= NGHOST; out_ie += NGHOST;
       if (out_js != out_je) {out_js -= NGHOST; out_je += NGHOST;}

@@ -829,8 +829,9 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       // toa
       pod = new OutputData;
       pod->type = "SCALARS";
-      pod->grid = "-CC";
+      pod->grid = "RCC";
       pod->name = p->myname+"toa";
+      pod->long_name = "top-of-atmosphere radiance";
       pod->data.InitWithShallowSlice(p->btoa,3,0,p->btoa.GetDim3());
       AppendOutputDataNode(pod);
       num_vars_ += p->btoa.GetDim3();

@@ -1,5 +1,5 @@
 from ..athena.athena_read import athinput
-from numpy import logspace, log10, zeros
+from numpy import logspace, log10, zeros, arccos, array
 from netCDF4 import Dataset
 from .utils import get_rt_bands, get_ray_out
 import re, subprocess
@@ -100,65 +100,29 @@ def run_forward(exefile, inpfile):
 def write_observation(inpfile, datafile):
     freq = get_rt_bands(inpfile)[:,0]
     num_bands = len(freq)
-    amu, aphi = get_ray_out(inpfile)
-    num_dirs = len(amu)
 
 # read radiation toa
-#datafile = 'vla_ideal_js-main.nc'
     data = Dataset(datafile, 'r')
-    tb = zeros((4, num_bands, num_dirs))
+    amu = arccos(data['mu_out'][:])
+    num_dirs = len(amu)
+    tb = []
     for i in range(num_bands):
-        for j in range(num_dirs):
-            tb[0,i,j] = data['b%dtoa%d' % (i+1,j+1)][0,0,0]
-            tb[1,i,j] = data['b%dtoa%d' % (i+1,j+1)][0,1,0]
-            tb[2,i,j] = data['b%dtoa%d' % (i+1,j+1)][0,2,0]
-            tb[3,i,j] = data['b%dtoa%d' % (i+1,j+1)][0,3,0]
+        tb.append(data['b%dtoa' % (i+1,)][0,:,:,0])
+    tb = array(tb)
 
 # write to file
     outfile = '.'.join(inpfile.split('.')[:-1]) + '.out'
     with open(outfile, 'w') as file:
-        file.write('# Brightness temperatures of input model %s - model 0\n' % inpfile)
-        file.write('%12s' % '# Freq (GHz)')
-        for i in range(num_dirs):
-            file.write('%10.1f' % amu[i])
-        file.write('\n')
-        for i in range(num_bands):
-            file.write('%12.1f' % freq[i])
-            for j in range(num_dirs):
-                file.write('%10.2f' % tb[0,i,j])
+        for k in range(tb.shape[2]):
+            file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))
+            file.write('%12s' % '# Freq (GHz)')
+            for i in range(num_dirs):
+                file.write('%10.1f' % amu[i])
             file.write('\n')
-
-        file.write('# Brightness temperatures of input model %s - model 1\n' % inpfile)
-        file.write('%12s' % '# Freq (GHz)')
-        for i in range(num_dirs):
-            file.write('%10.1f' % amu[i])
-        file.write('\n')
-        for i in range(num_bands):
-            file.write('%12.1f' % freq[i])
-            for j in range(num_dirs):
-                file.write('%10.2f' % tb[1,i,j])
-            file.write('\n')
-
-        file.write('# Brightness temperatures of input model %s - model 2\n' % inpfile)
-        file.write('%12s' % '# Freq (GHz)')
-        for i in range(num_dirs):
-            file.write('%10.1f' % amu[i])
-        file.write('\n')
-        for i in range(num_bands):
-            file.write('%12.1f' % freq[i])
-            for j in range(num_dirs):
-                file.write('%10.2f' % tb[2,i,j])
-            file.write('\n')
-
-        file.write('# Brightness temperatures of input model %s - model 3\n' % inpfile)
-        file.write('%12s' % '# Freq (GHz)')
-        for i in range(num_dirs):
-            file.write('%10.1f' % amu[i])
-        file.write('\n')
-        for i in range(num_bands):
-            file.write('%12.1f' % freq[i])
-            for j in range(num_dirs):
-                file.write('%10.2f' % tb[3,i,j])
-            file.write('\n')
+            for i in range(num_bands):
+                file.write('%12.1f' % freq[i])
+                for j in range(num_dirs):
+                    file.write('%10.2f' % tb[i,j,k])
+                file.write('\n')
     print('Brightness temperatures written to %s' % outfile)
     return outfile
