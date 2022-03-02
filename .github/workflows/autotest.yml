@@ -140,6 +140,5 @@ jobs:
       - name: compare result
         run: diff juno_mwr.out ./examples/1d.juno_mwr/juno_mwr.out
       - name: finalize
-        run: rm -f combine_rules
-        run: rm -f run_mwr.py
+        run: rm -f combine_rules run_mwr.py
       - run: echo "juno_mwr case (single core) is a ${{ job.status }}"
