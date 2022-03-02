@@ -163,7 +163,7 @@ jobs:
       - name: copy run script
         run: cp ./examples/1d.saturn_vla/run_radio.py ./
       - name: run simulation
-        run: ./run_mwr.py -i ./examples/1d.saturn_vla/vla_saturn.tmp --exe ./bin/harp_radio_js.ex -o test
+        run: ./run_radio.py -i ./examples/1d.saturn_vla/vla_saturn.tmp --exe ./bin/harp_radio_js.ex -o test
       - name: compare result
         run: diff -I ^# vla_saturn-test.out ./examples/1d.saturn_val/vla_saturn.out
       - name: finalize
