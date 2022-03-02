@@ -165,7 +165,7 @@ jobs:
       - name: run simulation
         run: ./run_radio.py -i ./examples/1d.saturn_vla/vla_saturn.tmp --exe ./bin/harp_radio_js.ex -o test
       - name: compare result
-        run: diff -I ^# vla_saturn-test.out ./examples/1d.saturn_val/vla_saturn.out
+        run: diff -I ^# vla_saturn-test.out ./examples/1d.saturn_vla/vla_saturn.out
       - name: finalize
         run: rm -f combine_rules run_radio.py vla_saturn-test*
       - run: echo "saturn_vla case is a ${{ job.status }}"
