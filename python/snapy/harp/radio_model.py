@@ -30,7 +30,8 @@ def create_inputs(tmpfile, args):
 
     var = [x for x in args['var'].split()]
 
-    name = tmpfile.split('.')[0]
+    print(tmpfile)
+    name = tmpfile.split('/')[-1].split('.')[0]
     if args['output'] != '':
         name += '-' + args['output']
 
