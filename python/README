@@ -29,4 +29,4 @@ https://pypi.org/manage/account/token/
 # How to distribute a package
 python3 -m build --sdist
 python3 -m build --wheel
-twine upload dist/*0.0.4*
+twine upload dist/*0.0.6*
