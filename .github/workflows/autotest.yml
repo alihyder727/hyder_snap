@@ -131,6 +131,7 @@ jobs:
         run: make -j4
       - name: link python library
         run: ln -s python/snapy ./
+      - name: copy run script
         run: cp ./examples/1d.juno_mwr/run_mwr.py .
       - name: run simulation
         run: ./run_mwr.py -i ./examples/1d.juno_mwr/juno_mwr.tmp --exe ./bin/harp_radio_js.ex
