@@ -13,7 +13,7 @@ if __name__ == '__main__':
     inpfile = create_inputs(args['input'], args)
 
 # run hard foward
-    pid = run_forward('harp_radio_js.ex', inpfile)
+    pid = run_forward(args['exe'], inpfile)
 
 # write results
     if os.path.exists(pid + '-mcmc.nc'):

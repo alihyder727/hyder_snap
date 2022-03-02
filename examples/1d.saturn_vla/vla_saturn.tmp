@@ -1,6 +1,6 @@
 <comment>
 problem   = radio observation simulator and inversion package
-configure = --task=InversionTaskList --prob=harp_radio_js --rt=lambert --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf --netcdf_path=/opt/homebrew -fits
+configure = --task=InversionTaskList --prob=harp_radio_js --rt=lambert --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf -fits --fits_path=/home/chengcli/opt 
 
 <job>
 problem_id  = [problem_id]    # problem ID: basename of output filenames

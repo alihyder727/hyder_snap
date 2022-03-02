@@ -1,5 +1,5 @@
 from ..athena.athena_read import athinput
-from numpy import logspace, log10, zeros, arccos, array
+from numpy import logspace, log10, zeros, arccos, array, pi
 from netCDF4 import Dataset
 from .utils import get_rt_bands, get_ray_out
 import re, subprocess
@@ -104,7 +104,7 @@ def write_observation(inpfile, datafile):
 
 # read radiation toa
     data = Dataset(datafile, 'r')
-    amu = arccos(data['mu_out'][:])
+    amu = arccos(data['mu_out'][:])/pi*180.
     num_dirs = len(amu)
     tb = []
     for i in range(num_bands):
@@ -118,10 +118,10 @@ def write_observation(inpfile, datafile):
             file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))
             file.write('%12s' % '# Freq (GHz)')
             for i in range(num_dirs):
-                file.write('%10.1f' % amu[i])
+                file.write('%10.2f' % amu[i])
             file.write('\n')
             for i in range(num_bands):
-                file.write('%12.1f' % freq[i])
+                file.write('%12.2f' % freq[i])
                 for j in range(num_dirs):
                     file.write('%10.2f' % tb[i,j,k])
                 file.write('\n')
