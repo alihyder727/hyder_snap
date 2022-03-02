@@ -15,7 +15,7 @@ parser.add_argument('-o', '--output',
     help = 'output id'
     )
 parser.add_argument('--exe',
-    default = (glob.glob('*.ex') + glob.glob.('./'))[0],
+    default = (glob.glob('*.ex') + glob.glob('./'))[0],
     help = 'executable file'
     )
 parser.add_argument('--qNH3',
