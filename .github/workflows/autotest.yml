@@ -9,8 +9,6 @@ jobs:
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v3
-        with:
-          path: './dynamics/'
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workspace, ${{ github.workspace }}, is now ready to test your code on the runner."
       - name: patch code
@@ -112,3 +110,26 @@ jobs:
       - name: finalize
         run: rm -f combine_rules
       - run: echo "robert case (parallel, vertical decomposition, 3d) is a ${{ job.status }}."
+# radiation tests
+  jupiter_juno: 
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: patch code
+        run : ./patch.py
+      - name: configure problem
+        run: ./configure.py $(head ./examples/1d.juno_mwr/juno_mwr.tmp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: link python library
+        run: ln -s python/snapy ./
+      - name: run simulation
+        run: ./examples/1d.juno_mwr/run_mwr.py -i ./examples/1d.juno_mwr/juno_mwr.tmp --exe ./bin/harp_radio_js.ex
+      - name: combile outputs
+        run: ./combine.py -o test
+      - name: compare result
+        run: diff juno_mwr.out ./examples/1d.juno_mwr/juno_mwr.out
+      - name: finalize
+        run: rm -f combine_rules
+      - run: echo "juno_mwr case (single core) is a ${{ job.status }}"

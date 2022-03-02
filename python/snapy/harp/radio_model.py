@@ -71,7 +71,7 @@ def create_inputs(tmpfile, args):
     return name + '.inp'
 
 def run_forward(exefile, inpfile):
-    script = ['./' + exefile, '-i', inpfile]
+    script = [exefile, '-i', inpfile]
     process = subprocess.Popen(script,
         stdout = subprocess.PIPE,
         stderr = subprocess.PIPE)

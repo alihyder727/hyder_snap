@@ -1,4 +1,4 @@
-import argparse
+import argparse, glob
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-d',
@@ -13,6 +13,10 @@ parser.add_argument('-i', '--input',
 parser.add_argument('-o', '--output',
     default = '',
     help = 'output id'
+    )
+parser.add_argument('--exe',
+    default = './' + glob.glob('*.ex')[0],
+    help = 'executable file'
     )
 parser.add_argument('--qNH3',
     default = '2.7',
