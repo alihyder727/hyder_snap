@@ -1,2 +1,3 @@
 numpy >= 1.13
 netCDF4 >= 1.5
+astropy >= 4.1
