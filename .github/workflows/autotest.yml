@@ -187,8 +187,6 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
-      - name: link python library
-        run: ln -s python/snapy ./
       - name: copy run script
         run: cp ./examples/1d.saturn_vla/run_radio.py ./
       - name: run simulation
