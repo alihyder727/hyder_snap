@@ -77,7 +77,8 @@ def CombineFITS(case, output, path = './', remove = False):
     fitsout = '%s-%s.fits' % (case, output)
   else:
     fitsout = '%s.fits' % case
-  check_call('./fitsmerge -o %s -i %s/%s.out?.?????.fits' % (fitsout, path, case), shell = True)
+  root = os.path.dirname(os.path.realpath(__file__))
+  check_call('%s/bin/fitsmerge -o %s -i %s/%s.out?.?????.fits' % (root, fitsout, path, case), shell = True)
   if (remove):
     for f in files:
       os.remove(f)

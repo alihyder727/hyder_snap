@@ -108,7 +108,7 @@ def write_observation(inpfile, datafile):
     num_dirs = len(amu)
     tb = []
     for i in range(num_bands):
-        tb.append(data['b%dtoa' % (i+1,)][0,:,:,0])
+        tb.append(data['b%dtoa' % (i+1,)][-1,:,:,0])
     tb = array(tb)
 
 # write to file

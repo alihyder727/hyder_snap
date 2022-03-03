@@ -34,6 +34,14 @@ def main_to_mcmc(fname):
   nstep, nwalker = msk.shape
 
   data['time'][:] = range(nstep)
+  data['time'].long_name = "steps"
+  data['time'].units = "1"
+  data['x2'][:] = range(len(data['x2'][:]))
+  data['x2'].long_name = "model"
+  data['x2'].units = "1"
+  data['x3'][:] = range(len(data['x3'][:]))
+  data['x3'].long_name = "walker"
+  data['x3'].units = "1"
 
   pid = []
   for j in range(nwalker):
