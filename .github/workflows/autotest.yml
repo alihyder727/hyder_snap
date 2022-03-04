@@ -157,7 +157,7 @@ jobs:
     needs: jupiter-juno
     steps:
       - name: patch code
-        run : ./patch.py
+        run : ./patch.py saturn_vla
       - name: configure problem
         run: ./configure.py $(head ./examples/1d.saturn_vla/vla_saturn.tmp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -180,7 +180,7 @@ jobs:
     needs: saturn-vla
     steps:
       - name: patch code
-        run : ./patch.py
+        run : ./patch.py saturn_vla
       - name: configure problem
         run: ./configure.py $(head ./examples/1d.saturn_vla/vla_saturn.tmp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -213,7 +213,7 @@ jobs:
     needs: saturn-vla-sampler
     steps:
       - name: patch code
-        run : ./patch.py
+        run : ./patch.py saturn_vla
       - name: configure problem
         run: ./configure.py $(head ./examples/1d.saturn_vla/vla_saturn.tmp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
