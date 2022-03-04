@@ -75,6 +75,7 @@ SRC_FILES := $(wildcard src/*.cpp) \
 	     $(wildcard src/debugger/*.cpp) \
 	     $(wildcard src/particles/*.cpp) \
 	     $(wildcard src/inversion/*.cpp) \
+	     $(wildcard src/planet_data/*.cpp) \
 	     $(MPIFFT_FILE)
 OBJ_DIR := obj/
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(notdir $(SRC_FILES:.cpp=.o)))

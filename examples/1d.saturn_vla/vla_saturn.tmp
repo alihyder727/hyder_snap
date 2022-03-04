@@ -1,6 +1,6 @@
 <comment>
 problem   = radio observation simulator and inversion package
-configure = --task=InversionTaskList --prob=harp_radio_js --rt=lambert --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf -fits --fits_path=/home/chengcli/opt 
+configure = --task=InversionTaskList --prob=saturn_vla --rt=lambert --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf -fits --fits_path=/home/chengcli/opt 
 
 <job>
 problem_id  = [problem_id]    # problem ID: basename of output filenames
@@ -113,6 +113,7 @@ Pmax        = [pmax]
 differential = [diff]
 
 <problem>
+use_lindal92 = [lindal92]
 T0          = 134.8
 Tmin        = 82.0
 xHe         = 0.135

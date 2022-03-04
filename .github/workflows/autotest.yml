@@ -188,7 +188,7 @@ jobs:
       - name: compile code
         run: make -j4
       - name: link python library
-        run: ln -s python/snapy ${{ github.workspace }}/examples/1d.saturn_vla/
+        run: ln -s ${{ github.workspace }}/python/snapy ./examples/1d.saturn_vla/
       #- name: copy run script
       #  run: cp ./examples/1d.saturn_vla/run_radio.py ./
       - name: run simulation

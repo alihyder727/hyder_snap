@@ -98,6 +98,11 @@ parser.add_argument('--lat',
     default = '0.',
     help = 'latitude'
     )
+parser.add_argument('--lindal92',
+    action = 'store_true',
+    default = False,
+    help = 'use lindal radio occultation profile'
+    )
 parser.add_argument('--rgradt',
     default = '1.',
     help = 'radiative temperature gradient'

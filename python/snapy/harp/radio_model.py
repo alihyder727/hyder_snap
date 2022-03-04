@@ -57,6 +57,10 @@ def create_inputs(tmpfile, args):
     inpfile = re.sub('\[NH3p\]', ' '.join(NH3p), inpfile)
     inpfile = re.sub('\[grav\]', '-' + args['grav'], inpfile)
     inpfile = re.sub('\[lat\]', args['lat'], inpfile)
+    if args['lindal92']:
+        inpfile = re.sub('\[lindal92\]', 'true', inpfile)
+    else:
+        inpfile = re.sub('\[lindal92\]', 'false', inpfile)
     inpfile = re.sub('\[rgradt\]', args['rgradt'], inpfile)
     inpfile = re.sub('\[metallicity\]', args['metallicity'], inpfile)
     inpfile = re.sub('\[karpowicz_scale\]', args['karpowicz_scale'], inpfile)
