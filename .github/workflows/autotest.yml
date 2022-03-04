@@ -169,7 +169,7 @@ jobs:
       - name: copy run script
         run: cp ./examples/1d.saturn_vla/run_radio.py ./
       - name: run simulation
-        run: ./run_radio.py -i ./examples/1d.saturn_vla/vla_saturn.tmp --exe ./bin/harp_radio_js.ex -o test
+        run: ./run_radio.py -i ./examples/1d.saturn_vla/vla_saturn.tmp --exe ./bin/saturn_vla.ex -o test
       - name: compare result
         run: diff -I ^# vla_saturn-test.out ./examples/1d.saturn_vla/vla_saturn.out
       - name: finalize
@@ -194,7 +194,7 @@ jobs:
       - name: run simulation
         run: >
           cd ./examples/1d.saturn_vla/ && 
-          ./run_radio.py -i vla_saturn.tmp --exe=../../bin/harp_radio_js.ex --nwalker=10 --nlim=10 -o test
+          ./run_radio.py -i vla_saturn.tmp --exe=../../bin/saturn_vla.ex --nwalker=10 --nlim=10 -o test
       - name: make mcmc plot
         run: >
           cd ./examples/1d.saturn_vla/ && 
@@ -225,7 +225,7 @@ jobs:
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd ./examples/1d.saturn_vla/ &&
-          ./run_radio.py -i vla_saturn.tmp --exe=../../bin/harp_radio_js.ex --plevel=50:0.6:6 --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
+          ./run_radio.py -i vla_saturn.tmp --exe=../../bin/saturn_vla.ex --plevel=50:0.6:6 --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
       - name: prepare synthetic differential(d) observation
         run: >
           cd ./examples/1d.saturn_vla/ &&
