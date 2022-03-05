@@ -9,6 +9,7 @@ on:
 jobs:
   straka-2d:
     runs-on: [self-hosted, linux]
+    needs: [jupiter-juno-sampler, saturn-vla-inverter]
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by ${{runner.name}}"
