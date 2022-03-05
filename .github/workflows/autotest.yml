@@ -134,7 +134,7 @@ jobs:
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workspace, ${{ github.workspace }}, is now ready to test your code on the runner."
       - name: patch code
-        run : ./patch.py
+        run : ./patch.py jupiter_juno
       - name: configure problem
         run: ./configure.py $(head ./examples/1d.jupiter_juno/juno_mwr.tmp | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -146,7 +146,7 @@ jobs:
       - name: copy run script
         run: cp ./examples/1d.jupiter_juno/run_mwr.py ./
       - name: run simulation
-        run: ./run_mwr.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/harp_radio_js.ex -o test
+        run: ./run_mwr.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
       - name: finalize

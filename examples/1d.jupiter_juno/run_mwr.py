@@ -15,4 +15,9 @@ if __name__ == '__main__':
     pid = run_forward(args['exe'], inpfile)
 
 # write results
-    outfile = write_observation(inpfile, pid + '-main.nc')
+    if os.path.exists(pid + '-mcmc.nc'):
+      outfile = write_observation(inpfile, pid + '-mcmc.nc')
+    elif os.path.exists(pid + '-main.nc'):
+      outfile = write_observation(inpfile, pid + '-main.nc')
+    else:
+      raise ValueError("neither main nor mcmc file exists. Abort.")
