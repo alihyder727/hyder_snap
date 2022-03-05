@@ -113,7 +113,7 @@ Pmax        = [pmax]
 differential = [diff]
 
 <problem>
-use_lindal92 = [lindal92]
+use_lindal92 = [M]
 T0          = 134.8
 Tmin        = 82.0
 xHe         = 0.135

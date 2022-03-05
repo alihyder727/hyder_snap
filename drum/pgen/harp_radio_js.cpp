@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------------
- * SNAP Example Program
+ * Saturn VLA Program
  *
  * Contributer:
  * Cheng Li, University of Michigan
@@ -276,7 +276,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   // Calculate microwave radiation at time t = 0
   // These values maintain for all future time steps (t > 0,k,js)
-  msg << "- running initial RT for all models" << std::endl;
+  if (Globals::my_rank == 0)
+    std::cout << "- running initial RT for all models" << std::endl;
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       prad->CalculateRadiances(phydro->w, 0., k, j, is, ie+1);

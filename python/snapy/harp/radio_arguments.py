@@ -6,6 +6,11 @@ parser.add_argument('-d',
     default = False,
     help = 'fit differential observation'
     )
+parser.add_argument('-M',
+    action = 'store_true',
+    default = False,
+    help = 'use measured temperature'
+    )
 parser.add_argument('-i', '--input',
     required = True,
     help = 'template input file (required)'
@@ -97,11 +102,6 @@ parser.add_argument('--obs',
 parser.add_argument('--lat',
     default = '0.',
     help = 'latitude'
-    )
-parser.add_argument('--lindal92',
-    action = 'store_true',
-    default = False,
-    help = 'use lindal radio occultation profile'
     )
 parser.add_argument('--rgradt',
     default = '1.',

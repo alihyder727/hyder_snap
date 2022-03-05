@@ -13,6 +13,7 @@ namespace Jupiter {
   extern double const fletcher16_cirs_glat[];
   extern double const fletcher16_cirs_pres[];
   extern double const fletcher16_cirs_temp[][120];
+  double get_temp_fletcher16_cirs(double glat, double pbar);
 }
 
 #endif

@@ -152,6 +152,32 @@ jobs:
       - name: finalize
         run: rm -f combine_rules run_mwr.py snapy juno_mwr-test*
       - run: echo "jupiter_juno case is a ${{ job.status }}"
+  jupiter-juno-sampler:
+    runs-on: [self-hosted, linux]
+    needs: jupiter-juno
+    env:
+      MYDIR: ./examples/1d.jupiter_juno
+      INPUT: juno_mwr.tmp
+    steps:
+      - name: patch code
+        run : ./patch.py jupiter_juno
+      - name: configure problem
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: link python library
+        run: ln -s ${{ github.workspace }}/python/snapy $MYDIR/
+      - name: link combine file
+        run: ln -s ${{ github.workspace }}/combine.py $MYDIR/
+      - name: run simulation
+        run: cd $MYDIR && ./run_mwr.py -i $INPUT --exe=../../bin/juno_mwr.ex --nwalker=10 --nlim=10 -o test
+      - name: make mcmc plot
+        run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-test
+      - name: make ammonia plot
+        run: cd $MYDIR && ./plot_ammonia.py -i juno_mwr-test
+      - run: echo "${{ job.container.id }} case is a ${{ job.status }}"
   saturn-vla: 
     runs-on: [self-hosted, linux]
     needs: jupiter-juno
@@ -225,7 +251,7 @@ jobs:
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd ./examples/1d.saturn_vla/ &&
-          ./run_radio.py -i vla_saturn.tmp --exe=../../bin/saturn_vla.ex --plevel=50:0.6:6 --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
+          ./run_radio.py -M -i vla_saturn.tmp --exe=../../bin/saturn_vla.ex --plevel=50:0.6:6 --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
       - name: prepare synthetic differential(d) observation
         run: >
           cd ./examples/1d.saturn_vla/ &&
@@ -233,7 +259,7 @@ jobs:
       - name: run nh3-inversion model at 8 pressure levels
         run: >
           cd ./examples/1d.saturn_vla/ &&
-          ./run_radio.py -d -i vla_saturn.tmp --exe=../../bin/saturn_vla.ex --plevel=50:0.6:8 --nlim=250 --nwalker=12 --obs=vla_saturn-n6.dobs -o n6p8
+          ./run_radio.py -M -d -i vla_saturn.tmp --exe=../../bin/saturn_vla.ex --plevel=50:0.6:8 --nlim=250 --nwalker=12 --obs=vla_saturn-n6.dobs -o n6p8
       - name: make mcmc plot
         run: >
           cd ./examples/1d.saturn_vla/ && 
@@ -242,8 +268,4 @@ jobs:
         run: >
           cd ./examples/1d.saturn_vla/ && 
           ./plot_ammonia.py -i vla_saturn-n6p8 --truth=vla_saturn-n6
-      #- name: finalize
-      #  run: >
-      #    cd ./examples/1d.saturn_vla/ && 
-      #    rm -f vla_saturn-n6p8*
       - run: echo "saturn-vla-inverter case is a ${{ job.status }}"
