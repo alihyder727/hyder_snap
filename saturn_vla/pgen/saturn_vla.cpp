@@ -28,7 +28,7 @@
 #include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
-#include "../planet_data/lindal_sat_inv.hpp"
+#include "../planet_data/sat_lindal92.hpp"
 
 // Here we include more input files
 #include "../thermodynamics/molecules.hpp"

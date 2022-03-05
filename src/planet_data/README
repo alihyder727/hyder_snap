@@ -1,0 +1,34 @@
+# lindal_sat_inv.dat
+## This profile comes from Lindal (1992)
+## Provided by Imke de Pater
+> ================= 12/10/2021
+ Hi Cheng,
+
+ I apparently used the TP profile from Lindal (1992), which is attached.
+ I’ll Email Leigh to see if he has anything better. But presumably this is good enough since we aren’t that sensitive above the clouds, I think.
+
+ Imke
+===========================
+
+
+# cirs2000.sav
+## cirs2000.pro reads in the cirs2000.dat file and converts it to cirs2000.txt
+> ================ 7/15/2016
+Hi Cheng,
+
+I too am having trouble understanding this figure, and I suspect that we don’t have the full information required to add back in the limb-darkened disc to these data.  Another option would be to use the disc-integrated Tb values from their Table 1 (the main paper), using the variability you see in Fig. S3 as the ‘delta’ on top of this mean. But looking again, Imke seems to suggest that the ‘baseline’ levels are from her Fig. 3A in the main paper, so I think what you’re doing is broadly correct.  Still this is not 100% satisfactory, and it’d be good to properly get Imke’s data.
+
+Second, instead of running retrievals using my profile as a prior, could you just run a quick forward model to see whether my profile at the NEB could produce the observed TEXES spectrum? I can provide more species to you, e.g. PH3. Because my NEB profile has the same deep ammonia abundance as the EZ profile, if the forward modeling result is similar to what we observed, the depletion of ammonia near 1 bar level would be significantly supported.
+
+The neb.txt file was corrupted for some reason, and only contained ~361 lines of output.  So I used the ez.txt file only.  The first thing to note is how cold your profile becomes in the upper atmosphere (the solid line is your TEM array, I presume TED is the dry adiabat (dotted line)?) compared to my nominal profile (dashed line).  That would significantly mess up any forward models I attempted with your profiles, as it’d make everything far too cold.  I also note that my deep atmosphere (which I’m never sensitive to, usually) diverges substantially from yours.  I’d be interested to know how this was calculated for p>1 bar to improve my models in future.
+
+So I took my retrieved atmosphere for the EZ, added your T(p) for p>1 bar, and added in your NH3 profile, and simply re-ran the forward model.  The attached multi-panel figure shows all eight of the TEXES channels.  The data is in black, my original best-fit is the solid black line, and the forward model with your T(p) and NH3 is the blue line.  As suspected from just a visual comparison of our profiles, there isn’t enough ammonia to reproduce the TEXES data (we need more absorption).  Hence I’m a little concerned about the ammonia profile you’re using for the EZ.
+
+However, the TEXES data have already been scaled downwards to match the better-calibrated (but lower resolution) Cassini/CIRS spectra.  As CIRS was the basis for the TEXES calibration, it’s my recommendation that we start there.  I did exactly the same procedure, using your p>1 bar temperatures and NH3.  On the CIRS plots, the red line is my best fit (more ammonia), the blue line is the forward model with your ammonia.  Again, there doesn’t appear to be enough absorption to reproduce the CIRS spectrum at the EZ.
+
+The issue almost certainly lies with your temperatures in the p<1 bar region.  My recommendation would be to use some average of the CIRS zonal mean temperature retrievals (these are far better constrained than TEXES due to better calibration).  I’ve attached an IDL *.sav file containing my zonal mean CIRS T(p) and NH3, as reported in my 2016 paper on TEXES.
+
+That’s enough for now, I hope this helps!
+
+Leigh
+==================
