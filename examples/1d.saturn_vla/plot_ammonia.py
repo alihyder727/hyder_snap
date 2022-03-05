@@ -71,7 +71,7 @@ if __name__ == '__main__':
   ax = axs[0,0]
   tb_avg = mean(tb, axis = 2)
   ax.plot(range(nstep), zeros(nstep), '0.7', linewidth = 2)
-  for i in range(6):
+  for i in range(nfreq):
     ax.plot(range(nstep), tb_avg[i], label = '%.1f GHz' % freq[i])
   ax.set_xlim([0, nstep-1])
   ax.set_ylabel("Tb' (K)", fontsize = 15)
@@ -86,15 +86,12 @@ if __name__ == '__main__':
   tb_std = std(tb, axis = (1,2))
   ld_avg = mean(ld, axis = (1,2))
   ld_std = std(ld, axis = (1,2))
-  print(ld0)
-  print(ld_truth, tb_truth)
-  print(ld_avg, tb_avg)
 #ax.plot([-10, 12], [-10, 12], '0.7', linewidth = 2)
 # true tb
   if args['truth'] != 'none':
-      for i in range(6):
+      for i in range(nfreq):
         ax.plot(ld_truth[i], tb_truth[i], '^', ms = 5, alpha = 0.5, color = 'k')
-  for i in range(6):
+  for i in range(nfreq):
     ax.errorbar(ld_avg[i], tb_avg[i], xerr = ld_std[i], yerr = tb_std[i])
   ax.xaxis.tick_top()
   ax.xaxis.set_label_position('top')
