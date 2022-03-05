@@ -2,6 +2,7 @@
 from snapy.harp.radio_model import create_inputs, run_forward, write_observation
 from snapy.planet_gravity import jupiter_gravity
 from snapy.harp.radio_arguments import *
+import os
 
 if __name__ == '__main__':
 # create model input file from template file
