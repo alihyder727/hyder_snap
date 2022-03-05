@@ -82,7 +82,7 @@ jobs:
       - run: echo "polar vortex text case is a ${{ job.status }}."
   robert-2d:
     runs-on: [self-hosted, linux]
-    needs: straka-2d
+    needs: saturn-vla-inverter
     steps:
       - name: patch code
         run : ./patch.py
@@ -150,7 +150,7 @@ jobs:
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
       - name: finalize
-        run: rm -f combine_rules run_mwr.py juno_mwr-test*
+        run: rm -f combine_rules run_mwr.py snapy juno_mwr-test*
       - run: echo "jupiter_juno case is a ${{ job.status }}"
   saturn-vla: 
     runs-on: [self-hosted, linux]
@@ -164,6 +164,8 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
+      - name: link python library
+        run: ln -s python/snapy ./
       - name: copy run script
         run: cp ./examples/1d.saturn_vla/run_radio.py ./
       - name: run simulation
@@ -171,7 +173,7 @@ jobs:
       - name: compare result
         run: diff -I ^# vla_saturn-test.out ./examples/1d.saturn_vla/vla_saturn.out
       - name: finalize
-        run: rm -f combine_rules run_radio.py vla_saturn-test*
+        run: rm -f combine_rules run_radio.py snapy vla_saturn-test*
       - run: echo "saturn-vla case is a ${{ job.status }}"
   saturn-vla-sampler:
     runs-on: [self-hosted, linux]
