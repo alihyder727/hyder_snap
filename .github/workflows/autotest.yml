@@ -19,7 +19,7 @@ jobs:
       - run: echo "🖥️ The workspace, ${{ github.workspace }}, is now ready to test your code on the runner."
   straka-2d:
     runs-on: [self-hosted, linux]
-    needs: [jupiter-juno-sampler, saturn-vla-inverter]
+    needs: dynamics-checkout
     steps:
       - name: patch code
         run : ./patch.py
@@ -36,96 +36,88 @@ jobs:
       - name: compare result
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
       - name: finalize
-        run: rm -f combine_rules
+        run: rm -f combine_rules straka-test*
       - run: echo "straka case (single core) is a ${{ job.status }}"
   shallow-water:
     runs-on: [self-hosted, linux]
     needs: straka-2d
+    env:
+      MYDIR: ./examples/2d.shallow_water
+      INPUT: shallow_water.inp
+      EXE: ../../bin/shallow_water.ex
     steps:
-      - name: patch code
-        run : ./patch.py
       - name: configure problem
-        run: ./configure.py $(head ./examples/2d.shallow_water/shallow_water.inp | grep configure | cut -d ' ' -f3-)
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
         run: make clean
       - name: compile code
         run: make -j4
       - name: run simulation
-        run: mpiexec -n 16 ./bin/shallow_water.ex -i ./examples/2d.shallow_water/shallow_water.inp
+        run: cd $MYDIR && mpiexec -n 16 $EXE -i $INPUT
       - name: combile outputs
-        run: ./combine.py -o test
+        run: cd $MYDIR && ../../combine.py -o test
       - name: compare result
-        run: ./examples/2d.shallow_water/test.py sw-test-main.nc examples/2d.shallow_water/output.nc
-      - name: finalize
-        run: rm -f combine_rules
-      - run: echo "shallow water case (parallel) is a ${{ job.status }}."
+        run: cd $MYDIR && ./test.py sw-test-main.nc output.nc
+      - run: echo "${{ github.job }} case (parallel) is a ${{ job.status }}."
   polar-vortex: 
     runs-on: [self-hosted, linux]
     needs: shallow-water
+    env:
+      MYDIR: ./examples/2d.polar_vortex
+      INPUT: fig_g_intruder.inp
+      EXE: ../../bin/polar_vortex.ex
     steps:
-      - name: patch code
-        run : ./patch.py
       - name: configure problem
-        run: ./configure.py $(head ./examples/2d.polar_vortex/fig_g_intruder.inp | grep configure | cut -d ' ' -f3-)
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
         run: make clean
       - name: compile code
         run: make -j4
       - name: make case folder
-        run: mkdir data
-      - name: link auxiliary file
-        run: ln -s ./examples/2d.polar_vortex/intruder_85.txt ./
+        run: mkdir -p $MYDIR/data
       - name: run simulation
-        run: mpiexec -n 16 ./bin/polar_vortex.ex -i ./examples/2d.polar_vortex/fig_g_intruder.inp
+        run: cd $MYDIR && mpiexec -n 16 $EXE -i $INPUT
       - name: combile outputs
-        run: ./combine.py -d data -o test
+        run: cd $MYDIR && ../../combine.py -d data -o test
       - name: compare result
-        run: ./examples/2d.polar_vortex/test.py data/intruder-test-main.nc examples/2d.polar_vortex/output.nc
-      - name: finalize
-        run: rm -f combine_rules
-      - run: echo "polar vortex text case is a ${{ job.status }}."
+        run: cd $MYDIR && ./test.py data/intruder-test-main.nc output.nc
+      - run: echo "${{ github.job }} case is a ${{ job.status }}."
   robert-2d:
     runs-on: [self-hosted, linux]
     needs: straka-2d
+    env:
+      MYDIR: ./examples/3d.robert
+      INPUT: robert2d.inp
+      EXE: ../../bin/robert.ex
     steps:
-      - name: patch code
-        run : ./patch.py
       - name: configure problem
-        run: ./configure.py $(head ./examples/3d.robert/robert2d.inp | grep configure | cut -d ' ' -f3-)
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
         run: make clean
       - name: compile code
         run: make -j4
       - name: run simulation
-        run: mpiexec -n 8 ./bin/robert.ex -i ./examples/3d.robert/robert2d.inp
+        run: cd $MYDIR && mpiexec -n 8 $EXE -i $INPUT
       - name: combile outputs
-        run: ./combine.py -o test
+        run: cd $MYDIR && ../../combine.py -o test
       - name: compare result
-        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output-2d.nc
-      - name: finalize
-        run: rm -f combine_rules
-      - run: echo "robert case (parallel, vertical decomposition) is a ${{ job.status }}."
+        run: cd $MYDIR && ./test.py robert-test-main.nc output-2d.nc
+      - run: echo "${{ github.job }} case (parallel, vertical decomposition) is a ${{ job.status }}."
   robert-3d:
     runs-on: [self-hosted, linux]
     needs: robert-2d
+    env:
+      MYDIR: ./examples/3d.robert
+      INPUT: robert3d.inp
+      EXE: ../../bin/robert.ex
     steps:
-      - name: patch code
-        run : ./patch.py
-      - name: configure problem
-        run: ./configure.py $(head ./examples/3d.robert/robert3d.inp | grep configure | cut -d ' ' -f3-)
-      - name: clean up libraries
-        run: make clean
-      - name: compile code
-        run: make -j4
       - name: run simulation
-        run: mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert3d.inp
+        run: cd $MYDIR && mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert3d.inp
       - name: combile outputs
-        run: ./combine.py -o test
+        run: cd $MYDIR && ../../combine.py -o test
       - name: compare result
-        run: ./examples/3d.robert/test.py robert-test-main.nc examples/3d.robert/output-3d.nc
-      - name: finalize
-        run: rm -f combine_rules
-      - run: echo "robert case (parallel, vertical decomposition, 3d) is a ${{ job.status }}."
+        run: cd $MYDIR && ./test.py robert-test-main.nc output-3d.nc
+      - run: echo "${{ github.job }} case (parallel, vertical decomposition, 3d) is a ${{ job.status }}."
 # radiation tests
   radiation-checkout:
     runs-on: [self-hosted, linux]
