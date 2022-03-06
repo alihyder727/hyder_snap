@@ -142,16 +142,14 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
-      - name: link python library
-        run: ln -s python/snapy ./
-      - name: copy run script
-        run: cp ./examples/1d.jupiter_juno/run_mwr.py ./
+      - name: link run script
+        run: ln -s ./run_scripts/run_radio.py ./
       - name: run simulation
-        run: ./run_mwr.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
+        run: ./run_radio.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
       - name: finalize
-        run: rm -f combine_rules run_mwr.py snapy juno_mwr-test*
+        run: rm -f combine_rules run_radio.py juno_mwr-test*
       - run: echo "jupiter_juno case is a ${{ job.status }}"
   jupiter-juno-sampler:
     runs-on: [self-hosted, linux]
@@ -168,12 +166,14 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
-      - name: link python library
-        run: ln -s ${{ github.workspace }}/python/snapy $MYDIR/
       - name: link combine file
         run: ln -s ${{ github.workspace }}/combine.py $MYDIR/
+      - name: link run script
+        run: ln -s ${{ github.workspace }}/run_scripts/run_radio.py $MYDIR/
+      - name: link plotting scripts
+        run: ln -s ${{ github.workspace }}/run_scripts/plot_*.py $MYDIR/
       - name: run simulation
-        run: cd $MYDIR && ./run_mwr.py -i $INPUT --exe=../../bin/juno_mwr.ex --nwalker=10 --nlim=10 -o test
+        run: cd $MYDIR && ./run_radio.py -i $INPUT --exe=../../bin/juno_mwr.ex --nwalker=10 --nlim=10 -o test
       - name: make mcmc plot
         run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-test
       - name: make ammonia plot
@@ -194,18 +194,20 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
+      - name: link run script
+        run: ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd $MYDIR &&
-          ./run_mwr.py -M -i $INPUT --exe=../../bin/juno_mwr.ex --plevel=50:0.5:6 --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
+          ./run_radio.py -M -i $INPUT --exe=../../bin/juno_mwr.ex --plevel=50:0.5:6 --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
       - name: prepare synthetic differential(d) observation
         run: >
           cd $MYDIR &&
-          ./prepare_mwr_synthetic.py -i juno_mwr-n6 -d
+          ./prepare_radio_synthetic.py -i juno_mwr-n6 -d
       - name: run nh3-inversion model at 8 pressure levels
         run: >
           cd $MYDIR &&
-          ./run_mwr.py -M -d -i $INPUT --exe=../../bin/juno_mwr.ex --plevel=50:0.5:8 --nlim=250 --nwalker=12 --obs=juno_mwr-n6.dobs -o n6p8
+          ./run_radio.py -M -d -i $INPUT --exe=../../bin/juno_mwr.ex --plevel=50:0.5:8 --nlim=250 --nwalker=12 --obs=juno_mwr-n6.dobs -o n6p8
       - name: make mcmc plot
         run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-n6p8
       - name: make ammonia plot

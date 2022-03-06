@@ -138,7 +138,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
         phydro->w(*m,k,j2,i) += Xp[ic][i-is];
         phydro->w(*m,k,j2,i) = std::max(phydro->w(*m,k,j2,i), 0.);
         if (phydro->w(*m,k,j2,i) > 1.) {
-          msg << "### FATAL ERROR in update_atm_profiles" << std::endl;
+          msg << "### FATAL ERROR in update_atm_profiles" << std::endl
               << "mixing ratio greater than 1 :" << std::endl
               << "species " << *m << " = " << phydro->w(*m,k,j2,i);
           ATHENA_ERROR(msg);
@@ -176,7 +176,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     //std::cout << solve_thetav(1., &solver_data) << std::endl;
     int err = root(0.5, 4., 1.E-4, &rdlnTdlnP, solve_thetav, &solver_data);
     if (err) {
-      msg << "### FATAL ERROR in update_atm_profiles" << std::endl;
+      msg << "### FATAL ERROR in update_atm_profiles" << std::endl
           << "root solver doesn't converge" << std::endl
           << solve_thetav(0.5, &solver_data) << " " << solve_thetav(4., &solver_data);
       //for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
