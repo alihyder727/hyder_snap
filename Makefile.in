@@ -145,5 +145,6 @@ clean :
 	rm -f $(DISORT_DIR)*.o
 	rm -f $(DISORT_DIR)disotest
 	rm -rf $(OBJ_DIR)*
-	rm -rf $(EXECUTABLE)
+	rm -f $(EXECUTABLE)
+	rm -f $(TOOLS)
 	rm -rf *.gcov

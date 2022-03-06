@@ -36,7 +36,7 @@ jobs:
       - name: compare result
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
       - name: finalize
-        run: rm -f combine_rules straka-test*
+        run: rm -f combine_rules straka-test* straka.hst
       - run: echo "straka case (single core) is a ${{ job.status }}"
   shallow-water:
     runs-on: [self-hosted, linux]
@@ -112,7 +112,7 @@ jobs:
       EXE: ../../bin/robert.ex
     steps:
       - name: run simulation
-        run: cd $MYDIR && mpiexec -n 32 ./bin/robert.ex -i ./examples/3d.robert/robert3d.inp
+        run: cd $MYDIR && mpiexec -n 32 $EXE -i $INPUT
       - name: combile outputs
         run: cd $MYDIR && ../../combine.py -o test
       - name: compare result
