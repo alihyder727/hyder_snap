@@ -249,6 +249,7 @@ jobs:
   saturn-vla-inverter:
     runs-on: [self-hosted, linux]
     needs: saturn-vla-sampler
+    env:
       MYDIR: ./examples/1d.saturn_vla
       INPUT: vla_saturn.tmp
       EXE: ../../bin/saturn_vla.ex
