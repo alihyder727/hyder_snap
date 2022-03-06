@@ -42,7 +42,7 @@ Real solve_thetav(Real rdlnTdlnP, void *aux) {
 
 void update_atm_profiles(MeshBlock *pmb, int k,
     Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample, 
-		std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
+    std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
 {
   std::stringstream &msg = pmb->pdebug->msg;
   pmb->pdebug->Call("update_atm_profiles");
@@ -79,7 +79,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     for (int j = js+1; j <= je; ++j)
       for (int i = is; i <= ie; ++i)
         phydro->w(n,k,j,i) = phydro->w(n,k,js,i);
-	int j1 = js+1, j2 = js+2;
+  int j1 = js+1, j2 = js+2;
   Real Rd = pthermo->GetRd();
 
   // calculate perturbed T profile
@@ -92,18 +92,18 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     TpSample, zlev, stdSample, nsample, Tlen);
 
   // save perturbed T profile to model 1
-	if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
-		msg << "- update temperature" << std::endl;
-		for (int i = is; i <= ie; ++i) {
+  if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
+    msg << "- update temperature" << std::endl;
+    for (int i = is; i <= ie; ++i) {
       // do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
       if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
         continue;
-			Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
-			if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
-			phydro->w(IDN,k,j1,i) = phydro->w(IPR,k,j1,i)/(Rd*(temp + Tp[i-is])*
-					pthermo->RovRd(phydro->w.at(k,j1,i)));
-		}
-	}
+      Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
+      if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
+      phydro->w(IDN,k,j1,i) = phydro->w(IPR,k,j1,i)/(Rd*(temp + Tp[i-is])*
+          pthermo->RovRd(phydro->w.at(k,j1,i)));
+    }
+  }
 
   // calculate perturbed X profile
   for (int i = is; i <= ie; ++i)
@@ -132,15 +132,21 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     // do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
     if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
       continue;
-		ic = 0;
-		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
-			if (*m != 0) {
-				phydro->w(*m,k,j2,i) += Xp[ic][i-is];
-				phydro->w(*m,k,j2,i) = std::max(phydro->w(*m,k,j2,i), 0.);
-				phydro->w(IDN,k,j2,i) = phydro->w(IPR,k,j2,i)/
-					(Rd*temp*pthermo->RovRd(phydro->w.at(k,j2,i)));
-				ic++;
-			}
+    ic = 0;
+    for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
+      if (*m != 0) {
+        phydro->w(*m,k,j2,i) += Xp[ic][i-is];
+        phydro->w(*m,k,j2,i) = std::max(phydro->w(*m,k,j2,i), 0.);
+        if (phydro->w(*m,k,j2,i) > 1.) {
+          msg << "### FATAL ERROR in update_atm_profiles" << std::endl;
+              << "mixing ratio greater than 1 :" << std::endl
+              << "species " << *m << " = " << phydro->w(*m,k,j2,i);
+          ATHENA_ERROR(msg);
+        }
+        phydro->w(IDN,k,j2,i) = phydro->w(IPR,k,j2,i)/
+          (Rd*temp*pthermo->RovRd(phydro->w.at(k,j2,i)));
+        ic++;
+      }
   }
 
   // save convectively adjusted profile to model 3 (j = je)
@@ -148,12 +154,12 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   NewCArray(w2, 2, NHYDRO+2*NVAPOR);
   msg << "- doing convective adjustment" << std::endl;
   // save convectively adjusted profile to model 3 (j = je)
-	for (int i = is+1; i <= ie; ++i) {
+  for (int i = is+1; i <= ie; ++i) {
     if (pcoord->x1v(i) < zlev[0]) continue;
     // copy unadjusted temperature and composition profile to je
     Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
-		for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
-			if (*m != 0) phydro->w(*m,k,je,i) = phydro->w(*m,k,j2,i);
+    for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
+      if (*m != 0) phydro->w(*m,k,je,i) = phydro->w(*m,k,j2,i);
     phydro->w(IDN,k,je,i) = phydro->w(IPR,k,je,i)/
       (Rd*temp*pthermo->RovRd(phydro->w.at(k,je,i)));
 
@@ -170,7 +176,8 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     //std::cout << solve_thetav(1., &solver_data) << std::endl;
     int err = root(0.5, 4., 1.E-4, &rdlnTdlnP, solve_thetav, &solver_data);
     if (err) {
-      msg << "### Root doesn't converge" << std::endl
+      msg << "### FATAL ERROR in update_atm_profiles" << std::endl;
+          << "root solver doesn't converge" << std::endl
           << solve_thetav(0.5, &solver_data) << " " << solve_thetav(4., &solver_data);
       //for (int n = 0; n < NHYDRO+2*NVAPOR; ++n)
       //  msg << "(" << phydro->w(n,k,js,i-1) << "," << phydro->w(n,k,j1,i-1) << "," << phydro->w(n,k,j2,i-1) << ") ";
@@ -189,7 +196,7 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     pthermo->SaturationSurplus(dw, phydro->w.at(k,je,i), VariableType::prim);
     for (int n = 1; n <= NVAPOR; ++n)
       if (dw[n] > 0.) phydro->w(n,k,je,i) -= dw[n];
-	}
+  }
   pmb->pdebug->Leave();
 
   FreeCArray(w2);

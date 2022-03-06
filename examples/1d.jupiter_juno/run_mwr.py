@@ -8,8 +8,8 @@ if __name__ == '__main__':
 # create model input file from template file
     if '.' not in args['input']:
         args['input'] += '.tmp'
-    lat = float(args['lat'])
-    args['grav'] = str(jupiter_gravity(lat))
+    clat = float(args['clat'])
+    args['grav'] = str(jupiter_gravity(clat))
     inpfile = create_inputs(args['input'], args)
 
 # run hard foward

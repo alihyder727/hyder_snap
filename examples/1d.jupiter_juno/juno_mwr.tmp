@@ -115,7 +115,7 @@ differential = [diff]
 
 <problem>
 use_fletcher16_cirs = [M]
-latitude    = [lat]
+clat        = [clat]
 rdlnTdlnP   = [rgradt]
 T0          = 166.
 Tmin        = 110.

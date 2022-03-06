@@ -54,10 +54,10 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   // add boundaries
   Real pmax = pin->GetReal("inversion", "Pmax");
   Real pmin = pin->GetReal("inversion", "Pmin");
-  if (pmax < plevel.front() || pmin > plevel.back()) {
+  if (pmax < (plevel.front()+1.E-6) || pmin > (plevel.back()-1.E-6)) {
     msg << "### FATAL ERROR in RadioObservation::RadioObservation" << std::endl
-        << "Pmax must be greater than the largest value of PrSample" << std::endl
-        << "Pmin must be lesser than the smallest value of PrSample";
+        << "Pmax (" << pmax << ")" << " must be greater than the largest value of PrSample" << std::endl
+        << "Pmin (" << pmin << ")" << " must be lesser than the smallest value of PrSample";
     ATHENA_ERROR(msg);
   }
   plevel.insert(plevel.begin(), pmax);

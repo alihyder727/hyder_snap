@@ -129,7 +129,7 @@ void update_gamma(Real& gamma, Real const q[]) {
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
   static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
-  pdebug->Enter("ProblemGenerator: harp_radio_js");
+  pdebug->Enter("ProblemGenerator: juno_mwr");
   std::stringstream &msg = pdebug->msg;
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
@@ -231,8 +231,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   if (pin->GetOrAddBoolean("problem", "use_fletcher16_cirs", false)) {
     // clat->glat, pa -> bar
     Real glat = jup_centric2graphic(clat);
-    std::cout << "- clat = " << clat << std::endl;
-    std::cout << "- glat = " << glat << std::endl;
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j)
         for (int i = is; i <= ie; ++i) {

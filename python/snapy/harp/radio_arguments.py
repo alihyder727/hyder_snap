@@ -1,6 +1,8 @@
 import argparse, glob
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    formatter_class = argparse.ArgumentDefaultsHelpFormatter
+    )
 parser.add_argument('-d',
     action = 'store_true',
     default = False,
@@ -64,7 +66,7 @@ parser.add_argument('--nodes',
     help = 'number of nodes to use'
     )
 parser.add_argument('--plevel',
-    default = '50:0.6:5',
+    default = '50:0.5:5',
     help = 'pressure divides'
     )
 parser.add_argument('--pmin',
@@ -99,9 +101,9 @@ parser.add_argument('--obs',
     default = 'none',
     help = 'observation file'
     )
-parser.add_argument('--lat',
+parser.add_argument('--clat',
     default = '0.',
-    help = 'latitude'
+    help = 'planetocentric latitude'
     )
 parser.add_argument('--rgradt',
     default = '1.',
