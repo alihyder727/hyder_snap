@@ -7,7 +7,7 @@ on:
     branches:
     - dev
 jobs:
-  dynamics-checkout:
+  straka-2d:
     runs-on: [self-hosted, linux]
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
@@ -17,10 +17,6 @@ jobs:
         uses: actions/checkout@v2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workspace, ${{ github.workspace }}, is now ready to test your code on the runner."
-  straka-2d:
-    runs-on: [self-hosted, linux]
-    needs: dynamics-checkout
-    steps:
       - name: patch code
         run : ./patch.py
       - name: configure problem
@@ -35,9 +31,7 @@ jobs:
         run: ./combine.py -o test
       - name: compare result
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
-      - name: finalize
-        run: rm -f combine_rules straka-test* straka.hst
-      - run: echo "straka case (single core) is a ${{ job.status }}"
+      - run: echo "${{ github.job }} case (single core) is a ${{ job.status }}"
   shallow-water:
     runs-on: [self-hosted, linux]
     needs: straka-2d
@@ -119,7 +113,7 @@ jobs:
         run: cd $MYDIR && ./test.py robert-test-main.nc output-3d.nc
       - run: echo "${{ github.job }} case (parallel, vertical decomposition, 3d) is a ${{ job.status }}."
 # radiation tests
-  radiation-checkout:
+  jupiter-juno: 
     runs-on: [self-hosted, linux]
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
@@ -129,10 +123,6 @@ jobs:
         uses: actions/checkout@v2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workspace, ${{ github.workspace }}, is now ready to test your code on the runner."
-  jupiter-juno: 
-    runs-on: [self-hosted, linux]
-    needs: radiation-checkout
-    steps:
       - name: patch code
         run : ./patch.py jupiter_juno
       - name: configure problem
@@ -147,8 +137,6 @@ jobs:
         run: ./run_radio.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
-      - name: finalize
-        run: rm -f combine_rules run_radio.py juno_mwr-test*
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   jupiter-juno-sampler:
     runs-on: [self-hosted, linux]
@@ -157,6 +145,14 @@ jobs:
       MYDIR: ./examples/1d.jupiter_juno
       INPUT: juno_mwr.tmp
     steps:
+      - name: patch code
+        run : ./patch.py jupiter_juno
+      - name: configure problem
+        run: ./configure.py $(head ./examples/1d.jupiter_juno/juno_mwr.tmp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
       - name: link combine file
         run: ln -s ${{ github.workspace }}/combine.py $MYDIR/
       - name: link run script
@@ -178,6 +174,14 @@ jobs:
       INPUT: juno_mwr.tmp
       EXE: ../../bin/juno_mwr.ex
     steps:
+      - name: patch code
+        run : ./patch.py jupiter_juno
+      - name: configure problem
+        run: ./configure.py $(head ./examples/1d.jupiter_juno/juno_mwr.tmp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
       - name: link run script
         run: ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/
       - name: perturb ammonia concentration at 6 pressure levels
@@ -225,6 +229,14 @@ jobs:
       MYDIR: ./examples/1d.saturn_vla
       INPUT: vla_saturn.tmp
     steps:
+      - name: patch code
+        run : ./patch.py saturn_vla
+      - name: configure problem
+        run: ./configure.py $(head ./examples/1d.saturn_vla/vla_saturn.tmp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
       - name: link combine file
         run: ln -s ${{ github.workspace }}/combine.py $MYDIR/
       - name: link run script
@@ -246,6 +258,14 @@ jobs:
       INPUT: vla_saturn.tmp
       EXE: ../../bin/saturn_vla.ex
     steps:
+      - name: patch code
+        run : ./patch.py saturn_vla
+      - name: configure problem
+        run: ./configure.py $(head ./examples/1d.saturn_vla/vla_saturn.tmp | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
       - name: link run script
         run: ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/
       - name: perturb ammonia concentration at 6 pressure levels
