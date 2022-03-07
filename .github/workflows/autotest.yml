@@ -203,7 +203,7 @@ jobs:
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   saturn-vla: 
     runs-on: [self-hosted, linux]
-    needs: radiation-checkout
+    needs: jupiter-juno
     steps:
       - name: patch code
         run : ./patch.py saturn_vla
