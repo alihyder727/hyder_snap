@@ -31,6 +31,8 @@ jobs:
         run: ./combine.py -o test
       - name: compare result
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
+      - name: clean up outputs
+        run: rm -f combine_rules straka*
       - run: echo "${{ github.job }} case (single core) is a ${{ job.status }}"
   shallow-water:
     runs-on: [self-hosted, linux]
@@ -137,6 +139,8 @@ jobs:
         run: ./run_radio.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
+      - name: clean up outputs
+        run: rm -f combine_rules juno_mwr-test*
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   jupiter-juno-sampler:
     runs-on: [self-hosted, linux]
