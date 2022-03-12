@@ -53,11 +53,13 @@ coeffs = zeros((nwave, 3))
 for i in range(nwave):
   Tb = data[3,i,1:1+nangle]
   coeffs[i] = linalg.solve(dot(B.T,B), dot(B.T,Tb))
+print("Baseline brightness temperature coeffs:")
 print(coeffs)
 
 ndim = nwave*3
 cov = zeros((ndim, ndim))
 # setup covariance matrix
+print("New brightness temerature coeffs:")
 if args['d']: # fit differential
   data = genfromtxt('%s.out' % args['input'])
   data = data.reshape(4, rows//4, cols)

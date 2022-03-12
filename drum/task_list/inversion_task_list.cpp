@@ -11,16 +11,19 @@
 #include "../hydro/hydro.hpp"
 #include "../bvals/bvals.hpp"
 #include "../inversion/inversion.hpp"
+#include "../globals.hpp"
 
 using namespace InversionTaskNames;
 
 InversionTaskList::InversionTaskList(ParameterInput *pin, Mesh *pm)
 {
-  std::cout << std::endl;
-  std::cout << "######################################################" << std::endl;
-  std::cout << "##                 WELCOME TO HARP                  ##" << std::endl;
-  std::cout << "## A High-performance Atmospheric Radiative Package ##" << std::endl;
-  std::cout << "######################################################" << std::endl;
+  if (Globals::my_rank == 0) {
+    std::cout << std::endl;
+    std::cout << "######################################################" << std::endl;
+    std::cout << "##                 WELCOME TO HARP                  ##" << std::endl;
+    std::cout << "## A High-performance Atmospheric Radiative Package ##" << std::endl;
+    std::cout << "######################################################" << std::endl;
+  }
   nstages = 1;
   std::string task = pin->GetString("inversion", "task");
 

@@ -545,6 +545,8 @@ definitions['JACOBIAN'] = args['jacobian']
 definitions['RSOLVER'] = makefile_options['RSOLVER_FILE'] = args['flux']
 
 # --nghost=[value] argument
+if args['task'] == 'InversionTaskList':
+  args['nghost'] = '1'
 definitions['NUMBER_GHOST_CELLS'] = args['nghost']
 
 # --nscalars=[value] argument

@@ -228,12 +228,14 @@ Mesh::Mesh(ParameterInput *pin, int mesh_test) :
         << "the Mesh must be evenly divisible by the MeshBlock" << std::endl;
     ATHENA_ERROR(msg);
   }
+#if MAIN_TASKLIST != InversionTaskList
   if (block_size.nx1 < 4 || (block_size.nx2 < 4 && f2)
       || (block_size.nx3 < 4 && f3)) {
     msg << "### FATAL ERROR in Mesh constructor" << std::endl
         << "block_size must be larger than or equal to 4 cells." << std::endl;
     ATHENA_ERROR(msg);
   }
+#endif
 
   // calculate the number of the blocks
   nrbx1 = mesh_size.nx1/block_size.nx1;

@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-from snapy.harp.radio_model import create_inputs, run_forward, write_observation
+from snapy.harp.radio_model import create_input, run_forward, write_observation
 from snapy.planet_gravity import jupiter_gravity
 from snapy.harp.radio_arguments import *
 import os
@@ -10,7 +10,7 @@ if __name__ == '__main__':
         args['input'] += '.tmp'
     clat = float(args['clat'])
     args['grav'] = str(jupiter_gravity(clat))
-    inpfile = create_inputs(args['input'], args)
+    inpfile = create_input(args['input'], args)
 
 # run hard foward
     pid = run_forward(args['exe'], inpfile)

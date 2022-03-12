@@ -58,11 +58,13 @@ Diagnostics::Diagnostics(MeshBlock *pmb, ParameterInput *pin):
     p = std::strtok(NULL, " ,");
   }
 
+#if MAIN_TASKLIST  != InversionTaskList
   if (NGHOST < 2) {
     msg << "### FATAL ERROR in function Diagnostics::Diagnostics"
         << std::endl << "Most diagnostic variables require at least 2 ghost cells";
     ATHENA_ERROR(msg);
   }
+#endif
 
   //pmb->pdebug->WriteMessage(msg.str());
   pmb->pdebug->Leave();

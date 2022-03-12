@@ -4,7 +4,7 @@ from netCDF4 import Dataset
 from .utils import get_rt_bands, get_ray_out
 import re, subprocess
 
-def create_inputs(tmpfile, args):
+def create_input(tmpfile, args):
     with open(tmpfile, 'r') as file:
       tmpinp = file.read()
 
@@ -50,9 +50,9 @@ def create_inputs(tmpfile, args):
     inpfile = re.sub('\[pmin\]', args['pmin'], inpfile)
     inpfile = re.sub('\[pmax\]', args['pmax'], inpfile)
     inpfile = re.sub('\[nwalker\]', args['nwalker'], inpfile)
+    inpfile = re.sub('\[lwalker\]', str(int(args['nwalker'])//int(args['nodes'])), inpfile)
     inpfile = re.sub('\[nlim\]', args['nlim'], inpfile)
     inpfile = re.sub('\[variables\]', ' '.join(var), inpfile)
-    inpfile = re.sub('\[nodes\]', str(4*int(args['nodes'])), inpfile)
     inpfile = re.sub('\[Tp\]', ' '.join(Tp), inpfile)
     inpfile = re.sub('\[NH3p\]', ' '.join(NH3p), inpfile)
     inpfile = re.sub('\[grav\]', '-' + args['grav'], inpfile)
@@ -102,7 +102,7 @@ def run_forward(exefile, inpfile):
     inp = athinput(inpfile)
     return inp['job']['problem_id']
 
-def write_observation(inpfile, datafile):
+def write_observation(inpfile, datafile, output = 'none'):
     freq = get_rt_bands(inpfile)[:,0]
     num_bands = len(freq)
 
@@ -116,7 +116,10 @@ def write_observation(inpfile, datafile):
     tb = array(tb)
 
 # write to file
-    outfile = '.'.join(inpfile.split('.')[:-1]) + '.out'
+    if output == 'none':
+        outfile = '.'.join(inpfile.split('.')[:-1]) + '.out'
+    else:
+        outfile = output
     with open(outfile, 'w') as file:
         for k in range(tb.shape[2]):
             file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))

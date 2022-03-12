@@ -66,7 +66,7 @@ parser.add_argument('--nodes',
     help = 'number of nodes to use'
     )
 parser.add_argument('--plevel',
-    default = '50:0.5:5',
+    default = '50:0.5:6',
     help = 'pressure divides'
     )
 parser.add_argument('--pmin',
