@@ -78,7 +78,7 @@ RadioObservation::RadioObservation(Inversion *pinvt, ParameterInput *pin):
   msg << "- walkers per block = " << nwalker_ << std::endl;
   msg << "- total number of walkers = " <<  pinvt->pmy_block->pmy_mesh->mesh_size.nx3
       << std::endl;
-  if (nwalker_ < 2) {
+  if ((nwalker_ < 2) && pinvt->pmy_block->pmy_mesh->nlim > 0) {
     msg << "### FATAL ERROR in RadioObservation::RadioObservation"
         << "nwalker (nx3) must be at least " << 2;
     ATHENA_ERROR(msg);
