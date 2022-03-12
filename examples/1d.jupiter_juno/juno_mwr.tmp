@@ -42,7 +42,7 @@ x1max       = 200.E3      # maximum value of X1
 ix1_bc      = reflecting  # Inner-X1 boundary condition flag
 ox1_bc      = reflecting  # Outer-X1 boundary condition flag
 
-nx2         = [nodes]     # Number of zones in X2-direction
+nx2         = 4           # Number of zones in X2-direction
 x2min       = 0.          # minimum value of X2
 x2max       = 1.          # maximum value of X2
 ix2_bc      = reflecting  # Inner-X2 boundary condition flag
@@ -57,7 +57,7 @@ ox3_bc      = periodic    # Outer-X3 boundary condition flag
 <meshblock>
 nx1         = 1600
 nx2         = 4
-nx3         = [nwalker]
+nx3         = [lwalker]
 
 <hydro>
 gamma       = 1.42     # gamma = C_p/C_v
