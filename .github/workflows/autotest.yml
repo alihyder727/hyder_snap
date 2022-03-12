@@ -140,7 +140,7 @@ jobs:
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
       - name: clean up outputs
-        run: rm -f combine_rules juno_mwr-test*
+        run: rm -f combine_rules juno_mwr-test* run_radio.py
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   jupiter-juno-sampler:
     runs-on: [self-hosted, linux]
@@ -186,8 +186,10 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
-      - name: link run script
-        run: ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/
+      - name: link python scripts
+        run: >
+          ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/
+          ln -s ${{ github.workspace }}/run_scripts/create_input.py $MYDIR/
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd $MYDIR &&
@@ -273,8 +275,10 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
-      - name: link run script
-        run: ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/
+      - name: link python scripts
+        run: >
+          ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/
+          ln -s ${{ github.workspace }}/run_scripts/create_input.py $MYDIR/
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd $MYDIR &&
