@@ -141,4 +141,4 @@ if __name__ == '__main__':
   ax.yaxis.tick_right()
   ax.yaxis.set_label_position('right')
 
-  savefig('figs/%s-nh3.png' % os.path.basename(args['input']), bbox_inches = 'tight')
+  savefig('%s-nh3.png' % os.path.basename(args['input']), bbox_inches = 'tight')
