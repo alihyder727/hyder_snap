@@ -12,7 +12,7 @@ if __name__ == '__main__':
     args['grav'] = str(jupiter_gravity(clat))
     inpfile = create_input(args['input'], args)
 
-# run hard foward
+# run harp foward
     pid = run_forward(args['exe'], inpfile)
 
 # write results

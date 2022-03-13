@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-import argparse, glob
+import argparse, glob, os
 from pylab import *
 from netCDF4 import Dataset
 from snapy.harp.utils import get_rt_bands
@@ -7,7 +7,7 @@ from snapy.harp.utils import get_rt_bands
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input',
     required = True,
-    choices = [x[:-8] for x in glob.glob('*.nc')],
+    choices = [x[:-8] for x in glob.glob('*.nc')] + [x[:-8] for x in glob.glob('data/*.nc')],
     help = 'true default atmospheric profiles'
     )
 parser.add_argument('-t', '--truth',
@@ -15,7 +15,16 @@ parser.add_argument('-t', '--truth',
     default = 'none',
     help = 'true atmospheric profiles'
     )
+parser.add_argument('--pmax',
+    default = '100.',
+    help = 'maximum pressure'
+    )
+parser.add_argument('--pmin',
+    default = '0.2',
+    help = 'minimum pressure'
+    )
 args = vars(parser.parse_args())
+pmin, pmax = float(args['pmin']), float(args['pmax'])
 
 if __name__ == '__main__':
 # read atmospheric profiles
@@ -44,7 +53,7 @@ if __name__ == '__main__':
             - data['b%dtoa' % (i+1,)][0,i45,0,0])/tb0[i]*100.
 # tb is the anomaly with respect to the baseline
   tb -= tb0.reshape(nfreq,1,1)
-  #ld -= ld0.reshape(nfreq,1,1)
+  ld -= ld0.reshape(nfreq,1,1)
 
 # mean of all walkers
   nh3_base = nh3[0,:,0]
@@ -61,11 +70,11 @@ if __name__ == '__main__':
         ld_truth[i] = (data['b%dtoa' % (i+1,)][0,0,0,0]
                      - data['b%dtoa' % (i+1,)][0,i45,0,0])/tb_truth[i]*100.
         tb_truth[i] -= tb0[i]
-        #ld_truth[i] -= ld0[i]
+        ld_truth[i] -= ld0[i]
 
   fig, axs = subplots(2, 2, figsize = (12, 10),
     gridspec_kw = {'height_ratios':[1,4], 'width_ratios':[4,1]})
-  subplots_adjust(hspace = 0.08, wspace = 0.08)
+  subplots_adjust(hspace = 0.04, wspace = 0.04)
 
 # brightness temperature anomaly
   ax = axs[0,0]
@@ -97,7 +106,7 @@ if __name__ == '__main__':
   ax.xaxis.set_label_position('top')
   ax.yaxis.tick_right()
   ax.yaxis.set_label_position('right')
-  ax.set_xlabel("L$_d$ (%)")
+  ax.set_xlabel("L$_d$ anomaly (%)")
   ax.set_ylabel("Tb anomaly (K)")
   #ax.plot([0, 0], ax.get_ylim(), color = '0.7')
   #ax.plot(ax.get_xlim(), [0, 0], color = '0.7')
@@ -111,7 +120,7 @@ if __name__ == '__main__':
   ax = axs[1,0]
   ax.contourf(X, Y, nh3_avg.T, 20)
   ax.set_xlim([0, nstep-1])
-  ax.set_ylim([100., 0.2])
+  ax.set_ylim([pmax, pmin])
   ax.set_yscale('log')
   ax.set_xlabel('MCMC step')
   ax.set_ylabel('Pressure (bar)', fontsize = 12)
@@ -125,11 +134,11 @@ if __name__ == '__main__':
   if args['truth'] != 'none':
     ax.plot(nh3_truth, pres, 'C3--')
   ax.fill_betweenx(pres, nh3_avg - nh3_std, nh3_avg + nh3_std, alpha = 0.5)
-  ax.set_ylim([100., 0.2])
+  ax.set_ylim([pmax, pmin])
   ax.set_yscale('log')
   ax.set_xlabel('NH$_3$ mmr (g/kg)')
   ax.set_ylabel('Pressure (bar)', fontsize = 12)
   ax.yaxis.tick_right()
   ax.yaxis.set_label_position('right')
 
-  savefig('%s-nh3.png' % args['input'])
+  savefig('figs/%s-nh3.png' % os.path.basename(args['input']), bbox_inches = 'tight')
