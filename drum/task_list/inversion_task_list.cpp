@@ -29,7 +29,7 @@ InversionTaskList::InversionTaskList(ParameterInput *pin, Mesh *pm)
 
   // Now assemble list of tasks for each step of inversion task
 
-  if (task == "radio") {
+  if (task == "atm_profile") {
     AddTask(SAMPLE,NONE);
   } else {
     std::stringstream msg;
@@ -80,7 +80,7 @@ TaskStatus InversionTaskList::Optimize(MeshBlock *pmb, int step) {
 }
 
 TaskStatus InversionTaskList::Sample(MeshBlock *pmb, int step) {
-  pmb->pinvt->MCMCStep();
+  pmb->pfit->MCMCStep();
   //std::cout << "Sample" << std::endl;
   return TaskStatus::success;
 }

@@ -26,6 +26,7 @@ FITSOutput::FITSOutput(OutputParameters oparams)
 
 void FITSOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
 {
+  // TODO : saftgard for pfit == null
   // create filename: "file_basename"+"."+"file_id"+"."+XXXXX+".fits",
   // where XXXXX = 5-digit file_number
   if (output_params.file_number > 0) {
@@ -44,11 +45,9 @@ void FITSOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     MeshBlock *pmb = pm->pblock;
 
     while (pmb != NULL) {   // loop over MeshBLocks
-      Inversion *pinvt = pmb->pinvt;
-      if (pinvt->task == "radio") {
-        pinvt->MakeMCMCOutputs(fname);
-        pinvt->ResetChain();
-      }
+      Inversion *pfit = pmb->pfit;
+      pfit->MakeMCMCOutputs(fname);
+      pfit->ResetChain();
       pmb = pmb->next;
     }
   }

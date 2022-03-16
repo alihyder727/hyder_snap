@@ -9,7 +9,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input',
     required = True,
     choices = [x[:-8] for x in glob.glob('*.nc')],
-    help = 'true default atmospheric profiles'
+    help = 'mcmc case to plot'
+    )
+parser.add_argument('--var',
+    choices = ['nh3', 'tem'],
+    default = 'nh3',
+    help = 'which variable to plot'
     )
 args = vars(parser.parse_args())
 
@@ -18,7 +23,10 @@ if __name__ == '__main__':
   pres = get_sample_pressure(args['input'] + '.inp')
 
   hdul = fits.open('%s.fits' % args['input'])
-  par = hdul[0].data*1.E3 # kg/kg -> g/kg
+  if args['var'] == 'nh3':
+    par = hdul[0].data*1.E3 # kg/kg -> g/kg
+  else:
+    par = hdul[0].data
   val = hdul[1].data
   lnp = hdul[2].data
   msk = hdul[3].data
@@ -62,7 +70,10 @@ if __name__ == '__main__':
     ax = fig.add_subplot(gs[-(i+1), :-1])
     for j in range(nwalker):
       ax.plot(range(len(par)), par[:,j,i])
-    ax.set_ylabel('%.1f bar (g/kg)' % pres[i])
+    if args['var'] == 'nh3':
+      ax.set_ylabel('%.1f bar (g/kg)' % pres[i])
+    elif args['var'] == 'tem':
+      ax.set_ylabel('%.1f bar (K)' % pres[i])
     ax.set_xlim([0, nstep])
     if i == 0:
       ax.set_xlabel('MCMC Steps')

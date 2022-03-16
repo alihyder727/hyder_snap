@@ -138,7 +138,7 @@ class MeshBlock {
   Diagnostics *pdiag;
   Debugger *pdebug;
   Particles *ppart;
-  Inversion *pinvt;
+  Inversion *pfit;
 
   MeshBlock *prev, *next;
 

@@ -1,4 +1,4 @@
-/** @file log_posterior_probability.cpp
+/** @file pi_log_posterior_probability.cpp
  * @brief
  *
  * @author Cheng Li (chengcli@umich.edu)
@@ -15,12 +15,13 @@
 #include "../hydro/hydro.hpp"
 #include "../radiation/radiation.hpp"
 #include "../debugger/debugger.hpp"
-#include "inversion.hpp"
-#include "radio_observation.hpp"
+#include "../utils/utils.hpp"
+#include "profile_inversion.hpp"
 
-Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int ndim, int nvalue, int kw) const
+Real ProfileInversion::LogPosteriorProbability(Real const *par, Real *val,
+	int ndim_, int nvalue_, int kw) const
 {
-  MeshBlock *pmb = pmy_invt_->pmy_block;
+  MeshBlock *pmb = pmy_block;
   Hydro *phydro = pmb->phydro;
   Radiation *prad = pmb->prad;
   int is = pmb->is, js = pmb->js, ks = pmb->ks;
@@ -29,15 +30,21 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
 
   // check parameter consistency
   if (ndim != ndim_ || nvalue != nvalue_) {
-    msg << "### FATAL ERROR in function RadioObservation::LogPosteriorProbability"
+    msg << "### FATAL ERROR in function ProfileInversion::LogPosteriorProbability"
         << std::endl << "input dimension inconsistent";
     ATHENA_ERROR(msg);
   }
 
   if (ndim % ix.size() != 0) {
-    msg << "### FATAL ERROR in function RadioObservation::LogPosteriorProbability"
+    msg << "### FATAL ERROR in function ProfileInversion::LogPosteriorProbability"
         << std::endl << "inversion dimension (ndim) cannot be divided by number of "
         << "inversion variables";
+    ATHENA_ERROR(msg);
+  }
+
+  if (ndim/ix.size() != plevel.size() - 2) {
+    msg << "### FATAL ERROR in function ProfileInversion::LogPosteriorProbability"
+        << std::endl << "inversion dimension (ndim) and inversion levels do not match";
     ATHENA_ERROR(msg);
   }
 
@@ -45,11 +52,9 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
   pmb->pdebug->Call("LogPosteriorProbability");
   msg << "- I am walker " << kw << std::endl;
 
-  int nsample = ndim/ix.size();
-  Real *TpSample = new Real [nsample+2];
-  Real *XpSample = new Real [ix.size()*(nsample+2)];
-  std::fill(TpSample, TpSample + (nsample+2), 0.);
-  std::fill(XpSample, XpSample + ix.size()*(nsample+2), 0.);
+	Real **XpSample;
+	NewCArray(XpSample, 1+NVAPOR, plevel.size());
+  std::fill(*XpSample, *XpSample + (1+NVAPOR)*plevel.size(), 0.);
 
   // sample temperature, sample composition #1, sample composition #2, ...
   msg << "- parameters: ";
@@ -57,27 +62,16 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
     msg << par[i] << " ";
   msg << std::endl;
 
-  int ic = 0;
-  if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
-    TpSample[0] = 0.;
-    for (int i = 1; i <= nsample; ++i)
-      TpSample[i] = par[i-1];
-    TpSample[nsample+1] = 0.;
-    ic = 1;
-  }
-  for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
-    if (*m != 0) {
-      XpSample[ic*(nsample+2)] = 0.;
-      for (int i = 1; i <= nsample; ++i)
-        XpSample[ic*(nsample+2) + i] = par[ic*nsample+i-1];
-      XpSample[ic*(nsample+2) + nsample+1] = 0.;
-      ic++;
-    }
+  int ip = 0;
+  for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m, ++ip) {
+		XpSample[*m][0] = 0.;
+		for (int i = 1; i <= plevel.size() - 2; ++i)
+			XpSample[*m][i] = par[ip*(plevel.size()-2)+i-1];
+		XpSample[*m][plevel.size() - 1] = 0.;
   }
 
-  // update atmosphere based on TpSample and XpSample
-  update_atm_profiles(pmb, ks+kw, plevel.data(), TpSample, XpSample, nsample+2,
-      ix, Tstd_, Tlen_, Xstd_, Xlen_, chi_);
+  // update atmosphere based on XpSample
+  UpdateProfiles_(ks+kw, plevel.data(), XpSample, plevel.size(), Xstd_, Xlen_, chi_);
 
   // calculate radiation for updated profiles located at j = js+1 ... je
   msg << "- run RT for models 1 to " << je - js << std::endl;
@@ -85,7 +79,7 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
     prad->CalculateRadiances(phydro->w, 0., ks+kw, j, is, ie+1);
 
   // prior probability
-  Real lnprior = LogPriorProbability(TpSample, XpSample, nsample+2);
+  Real lnprior = LogPriorProbability(plevel.data(), XpSample, plevel.size(), Xstd_, Xlen_, chi_);
 
   // posterior probability
   Eigen::VectorXd misfit(nvalue);
@@ -104,8 +98,7 @@ Real RadioObservation::LogPosteriorProbability(Real const *par, Real *val, int n
   msg << "- log posterir probability = " << lnpost << std::endl;
   pmb->pdebug->Leave();
 
-  delete[] TpSample;
-  delete[] XpSample;
+	FreeCArray(XpSample);
 
   return lnprior + lnpost;
 }

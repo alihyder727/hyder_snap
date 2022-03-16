@@ -40,8 +40,7 @@
 #include "../debugger/debugger.hpp"
 #include "../radiation/radiation.hpp"
 #include "../radiation/microwave/mwr_absorbers.hpp"
-#include "../inversion/inversion.hpp"
-#include "../inversion/radio_observation.hpp"
+#include "../inversion/profile_inversion.hpp"
 
 // @sect3{Preamble}
 
@@ -60,6 +59,9 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
     std::string name = "rh" + std::to_string(n);
     SetUserOutputVariableName(3+n, name.c_str(), "relative humidity");
   }
+
+  // define inversion
+  pfit = new ProfileInversion(this, pin);
 }
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
@@ -131,6 +133,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
   pdebug->Enter("ProblemGenerator: juno_mwr");
   std::stringstream &msg = pdebug->msg;
+
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
 
@@ -252,31 +255,24 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   pbval->ApplyPhysicalBoundaries(0., 0.);
 
   // read profile updates from input
-  std::vector<Real> TpSample, XpSample;
-  std::vector<int> ix = {0, iNH3};
+  std::vector<Real> Tp, NH3p;
 
-  Real Tstd = pin->GetReal("inversion", "Tstd");
-  Real Tlen = pin->GetReal("inversion", "Tlen")*1.E3; // km -> m
-  Real Xstd = pin->GetReal("inversion", "Xstd")*1.E-3;  // g/kg -> kg/kg
-  Real Xlen = pin->GetReal("inversion", "Xlen")*1.E3; // km -> m
-  TpSample = Vectorize<Real>(pin->GetString("problem", "Tp").c_str());
-  XpSample = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
-  int nsample = pinvt->pradio->plevel.size();
+  Tp = Vectorize<Real>(pin->GetString("problem", "Tp").c_str());
+  NH3p = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
+  int nsample = pfit->plevel.size() - 2;   // excluding boundary condition
 
-  // add inversion boundary
-  TpSample.insert(TpSample.begin(), 0.);
-  TpSample.push_back(0.);
-  XpSample.insert(XpSample.begin(), 0.);
-  XpSample.push_back(0.);
+  Real **XpSample;
+  NewCArray(XpSample, 1+NVAPOR, nsample+2);
+  std::fill(*XpSample, *XpSample + (1+NVAPOR)*(nsample+2), 0.);
 
-  // update reference model
-  for (int i = 0; i < nsample; ++i)
-    XpSample[i] *= 1.E-3; // g/kg -> kg/kg
+  for (int i = 0; i < nsample; ++i) {
+    XpSample[0][i+1] = Tp[i];
+    XpSample[iNH3][i+1] = NH3p[i]*1.E-3;  // g/kg -> kg/kg
+  }
 
   // Revise atmospheric profiles and store them in position (k,je).
   for (int k = ks; k <= ke; ++k)
-    update_atm_profiles(this, k, pinvt->pradio->plevel.data(), TpSample.data(),
-      XpSample.data(), nsample, ix, Tstd, Tlen, Xstd, Xlen);
+    pfit->UpdateAtmosphere(&XpSample, k);
 
   // Swap the revised profile and baseline profile (k,je) <-> (k,js).
   for (int n = 0; n < NHYDRO; ++n)
@@ -301,6 +297,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   // Clean up temporary memory
   FreeCArray(w1);
+  FreeCArray(XpSample);
   delete[] z1;
   delete[] t1;
 }

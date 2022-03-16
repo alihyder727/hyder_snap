@@ -15,6 +15,11 @@ parser.add_argument('-t', '--truth',
     default = 'none',
     help = 'true atmospheric profiles'
     )
+parser.add_argument('--var',
+    choices = ['nh3', 'tem'],
+    default = 'nh3',
+    help = 'which variable to plot'
+    )
 parser.add_argument('--pmax',
     default = '100.',
     help = 'maximum pressure'
@@ -27,13 +32,19 @@ args = vars(parser.parse_args())
 pmin, pmax = float(args['pmin']), float(args['pmax'])
 
 if __name__ == '__main__':
+# number of burn-in steps
+  nburn = 100
 # read atmospheric profiles
   data = Dataset('%s-mcmc.nc' % args['input'])
-  nh3 = data['vapor2'][:,:,3,:]*1.E3 # kg/kg -> g/kg
+  if args['var'] == 'tem':
+    var = data['temp'][:,:,3,:]
+  elif args['var'] == 'nh3':
+    var = data['vapor2'][:,:,3,:]*1.E3 # kg/kg -> g/kg
   pres = data['press'][0,:,0,0]/1.E5  # par -> bar
   ang = list(map(int, arccos(data['mu_out'][:])/pi*180.))
   i45 = ang.index(45)
-  nstep, nlevel, nwalker = nh3.shape
+
+  nstep, nlevel, nwalker = var.shape
 
 # read auxiliary information from the input file
   radio_bands = get_rt_bands('%s.inp' % args['input'])
@@ -56,13 +67,16 @@ if __name__ == '__main__':
   ld -= ld0.reshape(nfreq,1,1)
 
 # mean of all walkers
-  nh3_base = nh3[0,:,0]
-  nh3_avg = mean(nh3[:,:,:], axis = 2)
+  var_base = var[0,:,0]
+  var_avg = mean(var[:,:,:], axis = 2)
 
 # true ammonia
   if args['truth'] != 'none':
       data = Dataset('%s-main.nc' % args['truth'])
-      nh3_truth = data['vapor2'][0,:,0,0]*1.E3
+      if args['var'] == 'tem':
+        var_truth = data['temp'][0,:,0,0]
+      elif args['var'] == 'nh3':
+        var_truth = data['vapor2'][0,:,0,0]*1.E3
       tb_truth, ld_truth = zeros(nfreq), zeros(nfreq)
       # tb_truth is the anomaly with respect to the baseline
       for i in range(nfreq):
@@ -83,11 +97,11 @@ if __name__ == '__main__':
   for i in range(nfreq):
     ax.plot(range(nstep), tb_avg[i], label = '%.1f GHz' % freq[i])
   ax.set_xlim([0, nstep-1])
-  ax.set_ylabel("Tb' (K)", fontsize = 15)
+  ax.set_ylabel("Tb' (K)", fontsize = 12)
   ax.xaxis.tick_top()
   ax.xaxis.set_label_position('top')
   ax.set_xlabel('MCMC step')
-  ax.legend(ncol = nfreq, fontsize = 8)
+  ax.legend(ncol = nfreq, fontsize = 12)
 
 # brightness temperature vs limb darkening
   ax = axs[0,1]
@@ -115,10 +129,13 @@ if __name__ == '__main__':
   #ax.set_xlim([-10.,10.])
   ax.set_ylim(axs[0,0].get_ylim())
 
-# ammonia profile sequence
+# variable profile sequence
   X, Y = meshgrid(range(nstep), pres)
   ax = axs[1,0]
-  ax.contourf(X, Y, nh3_avg.T, 20)
+  if args['var'] == 'tem':
+    ax.contourf(X, Y, (var_avg - var_base).T, 20)
+  else:
+    ax.contourf(X, Y, var_avg.T, 20)
   ax.set_xlim([0, nstep-1])
   ax.set_ylim([pmax, pmin])
   ax.set_yscale('log')
@@ -127,18 +144,26 @@ if __name__ == '__main__':
 
 # mean of all profiles
   ax = axs[1,1]
-  nh3_std = std(nh3, axis = (0,2))
-  nh3_avg = mean(nh3, axis = (0,2))
-  ax.plot(nh3_base, pres, '0.7')
-  ax.plot(nh3_avg, pres)
+  var_std = std(var[nburn:,:,:], axis = (0,2))
+  var_avg = mean(var[nburn:,:,:], axis = (0,2))
+  if args['var'] == 'tem':
+    var_avg -= var_base
+    var_truth -= var_base
+
+  ax.plot(var_avg, pres)
+  if args['var'] != 'tem':
+    ax.plot(var_base, pres, '0.7')
   if args['truth'] != 'none':
-    ax.plot(nh3_truth, pres, 'C3--')
-  ax.fill_betweenx(pres, nh3_avg - nh3_std, nh3_avg + nh3_std, alpha = 0.5)
+    ax.plot(var_truth, pres, 'C3--')
+  ax.fill_betweenx(pres, var_avg - var_std, var_avg + var_std, alpha = 0.5)
   ax.set_ylim([pmax, pmin])
   ax.set_yscale('log')
-  ax.set_xlabel('NH$_3$ mmr (g/kg)')
+  if args['var'] == 'tem':
+    ax.set_xlabel("T - T$_{ad}$ (K)")
+  elif args['var'] == 'nh3':
+    ax.set_xlabel('NH$_3$ mmr (g/kg)')
   ax.set_ylabel('Pressure (bar)', fontsize = 12)
   ax.yaxis.tick_right()
   ax.yaxis.set_label_position('right')
 
-  savefig('%s-nh3.png' % os.path.basename(args['input']), bbox_inches = 'tight')
+  savefig('%s-%s.png' % (os.path.basename(args['input']), args['var']), bbox_inches = 'tight')

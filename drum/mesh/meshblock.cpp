@@ -196,7 +196,7 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   }
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
-  pinvt = new Inversion(this, pin);
+  pfit = nullptr;
 
   // Create user mesh data
   InitUserMeshBlockData(pin);
@@ -328,7 +328,7 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   }
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
-  pinvt = new Inversion(this, pin);
+  pfit = nullptr;
 
   InitUserMeshBlockData(pin);
 
@@ -453,7 +453,8 @@ MeshBlock::~MeshBlock() {
   }
   delete pchem;
 
-  delete pinvt;
+  if (pfit != nullptr)
+    delete pfit;
 }
 
 //----------------------------------------------------------------------------------------

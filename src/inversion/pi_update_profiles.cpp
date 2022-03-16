@@ -1,4 +1,4 @@
-/** @file update_atm_profiles.cpp
+/** @file pi_update_profiles.cpp
  * @brief
  *
  * @author Cheng Li (chengcli@umich.edu)
@@ -22,6 +22,7 @@
 #include "../math/root.h"
 #include "../debugger/debugger.hpp"
 #include "gaussian_process.hpp"
+#include "profile_inversion.hpp"
 
 struct SolverData {
   Thermodynamics *pthermo;
@@ -40,12 +41,12 @@ Real solve_thetav(Real rdlnTdlnP, void *aux) {
   return thetav1 - thetav0;
 }
 
-void update_atm_profiles(MeshBlock *pmb, int k,
-    Real const *PrSample, Real const *TpSample, Real const *XpSample, int nsample, 
-    std::vector<int> const& ix, Real Tstd, Real Tlen, Real Xstd, Real Xlen, Real chi)
+void ProfileInversion::UpdateProfiles_(int k, Real const *PrSample,
+	Real const* const* XpSample, int nsample, Real const *Xstd, Real const *Xlen, Real chi) const
 {
+	MeshBlock *pmb = pmy_block;
   std::stringstream &msg = pmb->pdebug->msg;
-  pmb->pdebug->Call("update_atm_profiles");
+  pmb->pdebug->Call("UpdateProfile");
   Thermodynamics *pthermo = pmb->pthermo;
   Coordinates *pcoord = pmb->pcoord;
   Hydro *phydro = pmb->phydro;
@@ -66,13 +67,8 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   // calculate the covariance matrix of T
   Real *stdAll = new Real [nlayer];
   Real *stdSample = new Real [nsample];
-  Real *Tp = new Real [nlayer];
   Real **Xp;
-  // if temperature is in the inversion variable
-  if (std::find(ix.begin(), ix.end(), 0) != ix.end())
-    NewCArray(Xp, ix.size() - 1, nlayer);
-  else
-    NewCArray(Xp, ix.size(), nlayer);
+	NewCArray(Xp, 1+NVAPOR, nlayer);
 
   // copy baseline js -> js+1 .. je
   for (int n = 0; n < NHYDRO; ++n)
@@ -84,70 +80,58 @@ void update_atm_profiles(MeshBlock *pmb, int k,
 
   // calculate perturbed T profile
   for (int i = is; i <= ie; ++i)
-    stdAll[i-is] = Tstd*pow(exp(pcoord->x1v(i)/H0), chi);
+    stdAll[i-is] = Xstd[0]*pow(exp(pcoord->x1v(i)/H0), chi);
   for (int i = 0; i < nsample; ++i)
-    stdSample[i] = Tstd*pow(exp(zlev[i]/H0), chi);
+    stdSample[i] = Xstd[0]*pow(exp(zlev[i]/H0), chi);
 
-  gp_predict(SquaredExponential, Tp, &pcoord->x1v(is), stdAll, nlayer,
-    TpSample, zlev, stdSample, nsample, Tlen);
+  gp_predict(SquaredExponential, Xp[0], &pcoord->x1v(is), stdAll, nlayer,
+    XpSample[0], zlev, stdSample, nsample, Xlen[0]);
 
   // save perturbed T profile to model 1
-  if (std::find(ix.begin(), ix.end(), 0) != ix.end()) {
-    msg << "- update temperature" << std::endl;
-    for (int i = is; i <= ie; ++i) {
-      // do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
-      if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
-        continue;
-      Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
-      if (temp + Tp[i-is] < 0.) Tp[i-is] = 1. - temp; // min 1K temperature
-      phydro->w(IDN,k,j1,i) = phydro->w(IPR,k,j1,i)/(Rd*(temp + Tp[i-is])*
-          pthermo->RovRd(phydro->w.at(k,j1,i)));
-    }
-  }
-
-  // calculate perturbed X profile
-  for (int i = is; i <= ie; ++i)
-    stdAll[i-is] = Xstd*pow(exp(pcoord->x1v(i)/H0), chi);
-  for (int i = 0; i < nsample; ++i)
-    stdSample[i] = Xstd*pow(exp(zlev[i]/H0), chi);
-
-  //std::cout << "XpSample = ";
-  //for (int n = 0; n < nsample; ++n)
-  //  std::cout << XpSample[n] << " ";
-  //std::cout << std::endl;
+	msg << "- update temperature" << std::endl;
+	for (int i = is; i <= ie; ++i) {
+		// do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
+		if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
+			continue;
+		Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
+		if (temp + Xp[0][i-is] < 0.) Xp[0][i-is] = 1. - temp; // min 1K temperature
+		phydro->w(IDN,k,j1,i) = phydro->w(IPR,k,j1,i)/(Rd*(temp + Xp[0][i-is])*
+				pthermo->RovRd(phydro->w.at(k,j1,i)));
+	}
     
-  int ic = 0;
-  for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m) {
-    if (*m != 0) {
-      gp_predict(SquaredExponential, Xp[ic], &pcoord->x1v(is), stdAll, nlayer,
-        XpSample + ic*nsample, zlev, stdSample, nsample, Xlen);
-      ic++;
-    }
-  }
+	for (int n = 1; n <= NVAPOR; ++n) {
+		//std::cout << "XpSample = ";
+		//for (int n = 0; n < nsample; ++n)
+		//  std::cout << XpSample[n] << " ";
+		//std::cout << std::endl;
+		for (int i = 0; i < nsample; ++i)
+			stdSample[i] = Xstd[n]*pow(exp(zlev[i]/H0), chi);
+		for (int i = is; i <= ie; ++i)
+			stdAll[i-is] = Xstd[n]*pow(exp(pcoord->x1v(i)/H0), chi);
 
-  // save perturbed X profile to model 2
+		gp_predict(SquaredExponential, Xp[n], &pcoord->x1v(is), stdAll, nlayer,
+			XpSample[n], zlev, stdSample, nsample, Xlen[0]);
+	}
+
+  // save perturbed compositional profiles to model 2
   msg << "- update composition" << std::endl;
   for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(k,j2,i));
     // do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
     if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
       continue;
-    ic = 0;
-    for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
-      if (*m != 0) {
-        phydro->w(*m,k,j2,i) += Xp[ic][i-is];
-        phydro->w(*m,k,j2,i) = std::max(phydro->w(*m,k,j2,i), 0.);
-        //phydro->w(*m,k,j2,i) = std::min(phydro->w(*m,k,j2,i), 2.*phydro->w(*m,k,j2,is));
-        if (phydro->w(*m,k,j2,i) > 1.) {
-          msg << "### FATAL ERROR in update_atm_profiles" << std::endl
-              << "mixing ratio greater than 1 :" << std::endl
-              << "species " << *m << " = " << phydro->w(*m,k,j2,i);
-          ATHENA_ERROR(msg);
-        }
-        phydro->w(IDN,k,j2,i) = phydro->w(IPR,k,j2,i)/
-          (Rd*temp*pthermo->RovRd(phydro->w.at(k,j2,i)));
-        ic++;
-      }
+		for (int n = 1; n <= NVAPOR; ++n) {
+			phydro->w(n,k,j2,i) += Xp[n][i-is];
+			phydro->w(n,k,j2,i) = std::max(phydro->w(n,k,j2,i), 0.);
+			if (phydro->w(n,k,j2,i) > 1.) {
+				msg << "### FATAL ERROR in update_atm_profiles" << std::endl
+						<< "mixing ratio greater than 1 :" << std::endl
+						<< "vapor " << n << " = " << phydro->w(n,k,j2,i);
+				ATHENA_ERROR(msg);
+			}
+		}
+		phydro->w(IDN,k,j2,i) = phydro->w(IPR,k,j2,i)/
+			(Rd*temp*pthermo->RovRd(phydro->w.at(k,j2,i)));
   }
 
   // save convectively adjusted profile to model 3 (j = je)
@@ -159,8 +143,8 @@ void update_atm_profiles(MeshBlock *pmb, int k,
     if (pcoord->x1v(i) < zlev[0]) continue;
     // copy unadjusted temperature and composition profile to je
     Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
-    for (std::vector<int>::const_iterator m = ix.begin(); m != ix.end(); ++m)
-      if (*m != 0) phydro->w(*m,k,je,i) = phydro->w(*m,k,j2,i);
+		for (int n = 1; n <= NVAPOR; ++n)
+      phydro->w(n,k,je,i) = phydro->w(n,k,j2,i);
     phydro->w(IDN,k,je,i) = phydro->w(IPR,k,je,i)/
       (Rd*temp*pthermo->RovRd(phydro->w.at(k,je,i)));
 
@@ -214,6 +198,5 @@ void update_atm_profiles(MeshBlock *pmb, int k,
   delete[] zlev;
   delete[] stdAll;
   delete[] stdSample;
-  delete[] Tp;
   FreeCArray(Xp);
 }
