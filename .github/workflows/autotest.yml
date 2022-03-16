@@ -168,7 +168,7 @@ jobs:
       - name: make mcmc plot
         run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-test
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_ammonia.py -i juno_mwr-test
+        run: cd $MYDIR && ./plot_anomaly2d.py -i juno_mwr-test
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   jupiter-juno-inverter:
     runs-on: [self-hosted, linux]
@@ -208,7 +208,7 @@ jobs:
       - name: make mcmc plot
         run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-n6p6
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_ammonia.py -i juno_mwr-n6p6 --truth=juno_mwr-n6
+        run: cd $MYDIR && ./plot_anomaly2d.py -i juno_mwr-n6p6 --truth=juno_mwr-n6
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   saturn-vla: 
     runs-on: [self-hosted, linux]
@@ -257,7 +257,7 @@ jobs:
       - name: make mcmc plot
         run: cd $MYDIR && ./plot_mcmc.py -i vla_saturn-test
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_ammonia.py -i vla_saturn-test
+        run: cd $MYDIR && ./plot_anomaly2d.py -i vla_saturn-test
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   saturn-vla-inverter:
     runs-on: [self-hosted, linux]
@@ -297,5 +297,5 @@ jobs:
       - name: make mcmc plot
         run: cd $MYDIR && ./plot_mcmc.py -i vla_saturn-n6p8
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_ammonia.py -i vla_saturn-n6p8 --truth=vla_saturn-n6
+        run: cd $MYDIR && ./plot_anomaly2d.py -i vla_saturn-n6p8 --truth=vla_saturn-n6
       - run: echo "${{ github.job }} case is a ${{ job.status }}"

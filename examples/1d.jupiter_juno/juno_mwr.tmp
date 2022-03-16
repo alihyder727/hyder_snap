@@ -1,6 +1,6 @@
 <comment>
 problem   = Juno mwr observation simulator and inversion package
-configure = --task=InversionTaskList --prob=juno_mwr --rt=lambert --nscalars=2 --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf -fits --fits_path=/home/chengcli/opt 
+configure = --task=InversionTaskList --prob=juno_mwr --rt=lambert --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf -fits --fits_path=/home/chengcli/opt -mpi
 
 <job>
 problem_id  = [problem_id]    # problem ID: basename of output filenames
@@ -97,16 +97,18 @@ b5.absorbers = mw_CIA mw_H2O mw_NH3
 b6.absorbers = mw_CIA mw_H2O mw_NH3
 
 <inversion>
-task        = radio
+task        = atm_profile
 print       = 1
 
 logfile     = [logname].log
 obsfile     = [obsname]
 
-Tstd        = [Tstd]
-Xstd        = [Xstd]
-Tlen        = [Tlen]
-Xlen        = [Xlen]
+tem.std     = [Tstd]
+tem.corr.km = [Tlen]
+
+qvapor2.std.gkg = [Xstd]
+qvapor2.corr.km = [Xlen]
+
 Variables   = [variables]
 PrSample    = [plevel]
 Pmin        = [pmin]
@@ -116,7 +118,6 @@ differential = [diff]
 <problem>
 use_fletcher16_cirs = [M]
 clat        = [clat]
-rdlnTdlnP   = [rgradt]
 T0          = 166.
 Tmin        = 110.
 xHe         = 0.135
