@@ -42,11 +42,11 @@ parser.add_argument('--sT',
     help = 'temperature standard deviation'
     )
 parser.add_argument('--zNH3',
-    default = '20',
+    default = '30',
     help = 'ammonia correlation'
     )
 parser.add_argument('--zT',
-    default = '20',
+    default = '30',
     help = 'temperature correlation'
     )
 parser.add_argument('--T0',

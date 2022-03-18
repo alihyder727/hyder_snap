@@ -159,7 +159,9 @@ if __name__ == '__main__':
   ax.set_ylim([pmax, pmin])
   ax.set_yscale('log')
   if args['var'] == 'tem':
+    ax.plot([0., 0.], [pmax, pmin], '0.7', linewidth = 2)
     ax.set_xlabel("T - T$_{ad}$ (K)")
+    ax.set_xlim([-5., 5.])
   elif args['var'] == 'nh3':
     ax.set_xlabel('NH$_3$ mmr (g/kg)')
   ax.set_ylabel('Pressure (bar)', fontsize = 12)

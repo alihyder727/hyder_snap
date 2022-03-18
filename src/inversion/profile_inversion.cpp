@@ -5,6 +5,7 @@
 #include <cassert>
 
 // Athena++ headers
+#include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
 #include "../utils/utils.hpp"
 #include "../debugger/debugger.hpp"
@@ -12,7 +13,7 @@
 #include "profile_inversion.hpp"
 
 ProfileInversion::ProfileInversion(MeshBlock *pmb, ParameterInput *pin):
-	Inversion(pmb, pin)
+  Inversion(pmb, pin)
 {
   std::stringstream &msg = pmb->pdebug->msg;
   pmb->pdebug->Enter("ProfileInversion");
@@ -23,16 +24,16 @@ ProfileInversion::ProfileInversion(MeshBlock *pmb, ParameterInput *pin):
   msg << "- temperature std = " << Xstd_[0] << std::endl;
   msg << "- temperature correlation length = " << Xlen_[0] << std::endl;
 
-	for (int n = 1; n <= NVAPOR; ++n) {
-		Xstd_[n] = pin->GetOrAddReal("inversion", "qvapor" + std::to_string(n) + ".std.gkg", 1.)/1.E3;
-		// km -> m
-		Xlen_[n] = pin->GetOrAddReal("inversion", "qvapor" + std::to_string(n) + ".corr.km", 1.)*1.E3;
-		msg << "- vapor " << n << " std = "  << Xstd_[n] << std::endl;
-		msg << "- vapor " << n << " correlation length = " << Xlen_[n] << std::endl;
-	}
+  for (int n = 1; n <= NVAPOR; ++n) {
+    Xstd_[n] = pin->GetOrAddReal("inversion", "qvapor" + std::to_string(n) + ".std.gkg", 1.)/1.E3;
+    // km -> m
+    Xlen_[n] = pin->GetOrAddReal("inversion", "qvapor" + std::to_string(n) + ".corr.km", 1.)*1.E3;
+    msg << "- vapor " << n << " std = "  << Xstd_[n] << std::endl;
+    msg << "- vapor " << n << " correlation length = " << Xlen_[n] << std::endl;
+  }
 
   // power law coefficient
-  chi_ = pin->GetOrAddReal("inversion", "chi", 0.1);
+  chi_ = pin->GetOrAddReal("inversion", "chi", 0.0);
 
   // composition id
   ix = Vectorize<int>(pin->GetString("inversion", "Variables").c_str());
@@ -71,7 +72,7 @@ ProfileInversion::ProfileInversion(MeshBlock *pmb, ParameterInput *pin):
     msg << "- fit differential" << std::endl;
 
   // output dimension
-  nvalue = 3*pmb->prad->GetNumBands();
+  nvalue = 2*pmb->prad->GetNumBands();
   msg << "- number of output dimension = " << nvalue << std::endl;
 
   // number of walkers
@@ -85,8 +86,8 @@ ProfileInversion::ProfileInversion(MeshBlock *pmb, ParameterInput *pin):
     ATHENA_ERROR(msg);
   }
 
-	// initialize mcmc chain
-	InitializeChain(nwalker, ndim, nvalue);
+  // initialize mcmc chain
+  InitializeChain(nwalker, ndim, nvalue);
 
   // initialize random positions
   msg << "- initialize random positions for walkers" << std::endl;
@@ -95,8 +96,9 @@ ProfileInversion::ProfileInversion(MeshBlock *pmb, ParameterInput *pin):
   for (int n = 0; n < nwalker; ++n) {
     int ip = 0;
     for (std::vector<int>::iterator m = ix.begin(); m != ix.end(); ++m, ++ip)
-			for (int i = 0; i < nsample; ++i)
-				init_pos_[n][ip*nsample + i] = (1.*rand()/RAND_MAX - 0.5)*Xstd_[*m];
+      for (int i = 0; i < nsample; ++i)
+        init_pos_[n][ip*nsample + i] = (1.*rand()/RAND_MAX - 0.5)*Xstd_[*m]
+          *pow(pmb->phydro->reference_pressure/plevel[i+1], chi_);
   }
 
   pmb->pdebug->Leave();

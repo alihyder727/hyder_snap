@@ -134,13 +134,13 @@ jobs:
       - name: compile code
         run: make -j4
       - name: link run script
-        run: ln -s ./run_scripts/run_radio.py ./
+        run: ln -s ./run_scripts/run_juno_mwr.py ./
       - name: run simulation
-        run: ./run_radio.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
+        run: ./run_juno_mwr.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
       - name: clean up outputs
-        run: rm -f combine_rules juno_mwr-test* run_radio.py
+        run: rm -f combine_rules juno_mwr-test* run_juno_mwr.py
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   jupiter-juno-sampler:
     runs-on: [self-hosted, linux]
@@ -160,11 +160,11 @@ jobs:
       - name: link combine file
         run: ln -s ${{ github.workspace }}/combine.py $MYDIR/
       - name: link run script
-        run: ln -s ${{ github.workspace }}/run_scripts/run_radio.py $MYDIR/
+        run: ln -s ${{ github.workspace }}/run_scripts/run_juno_mwr.py $MYDIR/
       - name: link plotting scripts
         run: ln -s ${{ github.workspace }}/run_scripts/plot_*.py $MYDIR/
       - name: run simulation
-        run: cd $MYDIR && ./run_radio.py -i $INPUT --exe=../../bin/juno_mwr.ex --nwalker=10 --nlim=10 -o test
+        run: cd $MYDIR && ./run_juno_mwr.py -i $INPUT --exe=../../bin/juno_mwr.ex --nwalker=10 --nlim=10 -o test
       - name: make mcmc plot
         run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-test
       - name: make ammonia plot
@@ -193,7 +193,7 @@ jobs:
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd $MYDIR &&
-          ./run_radio.py -M -i $INPUT --exe=$EXE --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
+          ./run_juno_mwr.py -M -i $INPUT --exe=$EXE --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
       - name: prepare synthetic differential(d) observation
         run: >
           cd $MYDIR &&

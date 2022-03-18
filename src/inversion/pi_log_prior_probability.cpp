@@ -31,17 +31,17 @@ Real ProfileInversion::LogPriorProbability(Real const *PrSample,
   for (int i = 0; i < nsample; ++i)
     zlev[i] = -H0*log(PrSample[i]/P0);
 
-	Real lnprior = 0.;
-	for (int n = 0; n <= NVAPOR; ++n) {
-		for (int i = 0; i < nsample; ++i)
-			zstd[i] = Xstd[n]*pow(exp(zlev[i]/H0), chi);
-		lnprior += gp_lnprior(SquaredExponential, XpSample[n], zlev, zstd, nsample, Xlen[n]);
-	}
+  Real lnprior = 0.;
+  for (int n = 0; n <= NVAPOR; ++n) {
+    for (int i = 0; i < nsample; ++i)
+      zstd[i] = Xstd[n]*pow(exp(zlev[i]/H0), chi);
+    lnprior += gp_lnprior(SquaredExponential, XpSample[n], zlev, zstd, nsample, Xlen[n]);
+  }
 
   msg << "- Log prior probability = " << lnprior << std::endl;
 
   delete[] zlev;
   delete[] zstd;
 
-	return lnprior;
+  return lnprior;
 }
