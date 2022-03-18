@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------------
- * SNAP Example Program
+ * Saturn VLA inversion Program
  *
  * Contributer:
  * Cheng Li, University of Michigan
@@ -39,14 +39,13 @@
 #include "../debugger/debugger.hpp"
 #include "../radiation/radiation.hpp"
 #include "../radiation/microwave/mwr_absorbers.hpp"
-#include "../inversion/inversion.hpp"
-#include "../inversion/radio_observation.hpp"
+#include "../inversion/profile_inversion.hpp"
 
 // @sect3{Preamble}
 
 // molecules
 enum {iH2O = 1, iNH3 = 2};
-Real grav, P0, T0, Tmin, xHe, xCH4, rdlnTdlnP;
+Real grav, P0, T0, Tmin, xHe, xCH4;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -59,6 +58,9 @@ void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
     std::string name = "rh" + std::to_string(n);
     SetUserOutputVariableName(3+n, name.c_str(), "relative humidity");
   }
+
+  // define inversion
+  pfit = new ProfileInversion(this, pin);
 }
 
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
@@ -85,12 +87,6 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   P0 = pin->GetReal("hydro", "reference_pressure");
   T0 = pin->GetReal("problem", "T0");
   Tmin = pin->GetReal("problem", "Tmin");
-  rdlnTdlnP = pin->GetOrAddReal("problem", "rdlnTdlnP", 1.);
-
-  std::string planet = pin->GetOrAddString("job", "planet", "");
-  Real latitude = pin->GetOrAddReal("job", "latitude", 0.);
-  if (planet != "") // update gravity at specific latitude
-    grav = GetGravity(planet.c_str(), latitude);
 }
 
 void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
@@ -133,7 +129,7 @@ void update_gamma(Real& gamma, Real const q[]) {
 void MeshBlock::ProblemGenerator(ParameterInput *pin)
 {
   static_assert(HYDROSTATIC, "This problem requires turning on hydrostatic option");
-  pdebug->Enter("ProblemGenerator: harp_radio_js");
+  pdebug->Enter("ProblemGenerator: saturn_vla");
   std::stringstream &msg = pdebug->msg;
   //ReadJunoMWRProfile("Juno_MWR_PJ1345689_m24-m16_avgcoeff.fits", coeff, cov);
   //ReadWriteGeminiTEXESMap("Gemini_TEXES_GRS_2017_product.dat", coeff, iNH3);
@@ -172,7 +168,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   if (Globals::my_rank == 0)
     std::cout << "- request T = " << T0 << " at P = " << P0 << std::endl;
   while (iter++ < max_iter) {
-    pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, -dlnp, nx1, Adiabat::pseudo, rdlnTdlnP);
+    pthermo->ConstructAtmosphere(w1, Ts, Ps, grav, -dlnp, nx1, Adiabat::pseudo, 1.);
 
     // Replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
     int ii = 0;
@@ -240,10 +236,10 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
           if (phydro->w(IPR,k,j,i) > max_pres) continue;
           Real temp_ad = pthermo->GetTemp(phydro->w.at(k,j,i));
           // pa -> bar
-          Real temp_lindal = interp1(phydro->w(IPR,k,j,i)/1.E5,
+          Real temp_real = interp1(phydro->w(IPR,k,j,i)/1.E5,
               Saturn::lindal92_T, Saturn::lindal92_P, Saturn::lindal92_num);
           Real R = pthermo->RovRd(phydro->w.at(k,j,i))*Rd;
-          phydro->w(IDN,k,j,i) = phydro->w(IPR,k,j,i)/(R*std::max(temp_lindal, temp_ad));
+          phydro->w(IDN,k,j,i) = phydro->w(IPR,k,j,i)/(R*std::max(temp_real, temp_ad));
         }
   }
 
@@ -257,31 +253,24 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   pbval->ApplyPhysicalBoundaries(0., 0.);
 
   // read profile updates from input
-  std::vector<Real> TpSample, XpSample;
-  std::vector<int> ix = {0, iNH3};
+  std::vector<Real> Tp, NH3p;
 
-  Real Tstd = pin->GetReal("inversion", "Tstd");
-  Real Tlen = pin->GetReal("inversion", "Tlen")*1.E3; // km -> m
-  Real Xstd = pin->GetReal("inversion", "Xstd")*1.E-3;  // g/kg -> kg/kg
-  Real Xlen = pin->GetReal("inversion", "Xlen")*1.E3; // km -> m
-  TpSample = Vectorize<Real>(pin->GetString("problem", "Tp").c_str());
-  XpSample = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
-  int nsample = pinvt->pradio->plevel.size();
+  Tp = Vectorize<Real>(pin->GetString("problem", "Tp").c_str());
+  NH3p = Vectorize<Real>(pin->GetString("problem", "NH3p").c_str());
+  int nsample = pfit->plevel.size() - 2;   // excluding boundary condition
 
-  // add inversion boundary
-  TpSample.insert(TpSample.begin(), 0.);
-  TpSample.push_back(0.);
-  XpSample.insert(XpSample.begin(), 0.);
-  XpSample.push_back(0.);
+  Real **XpSample;
+  NewCArray(XpSample, 1+NVAPOR, nsample+2);
+  std::fill(*XpSample, *XpSample + (1+NVAPOR)*(nsample+2), 0.);
 
-  // update reference model
-  for (int i = 0; i < nsample; ++i)
-    XpSample[i] *= 1.E-3; // g/kg -> kg/kg
+  for (int i = 0; i < nsample; ++i) {
+    XpSample[0][i+1] = Tp[i];
+    XpSample[iNH3][i+1] = NH3p[i]*1.E-3;  // g/kg -> kg/kg
+  }
 
   // Revise atmospheric profiles and store them in position (k,je).
   for (int k = ks; k <= ke; ++k)
-    update_atm_profiles(this, k, pinvt->pradio->plevel.data(), TpSample.data(),
-      XpSample.data(), nsample, ix, Tstd, Tlen, Xstd, Xlen);
+    pfit->UpdateAtmosphere(&XpSample, k);
 
   // Swap the revised profile and baseline profile (k,je) <-> (k,js).
   for (int n = 0; n < NHYDRO; ++n)
@@ -306,6 +295,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   // Clean up temporary memory
   FreeCArray(w1);
+  FreeCArray(XpSample);
   delete[] z1;
   delete[] t1;
 }

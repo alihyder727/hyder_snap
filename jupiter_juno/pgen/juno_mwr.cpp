@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------------
- * Juno MWR Program
+ * Juno MWR inversion Program
  *
  * Contributer:
  * Cheng Li, University of Michigan
@@ -29,7 +29,7 @@
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
 #include "../planet_data/jup_fletcher16_cirs.hpp"
-#include "../planet_data/planets.hpp"
+#include "../planet_data/planets.hpp" // centric2graphic
 
 // Here we include more input files
 #include "../thermodynamics/molecules.hpp"
@@ -239,9 +239,9 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
         for (int i = is; i <= ie; ++i) {
           if (phydro->w(IPR,k,j,i) > 1.E5) continue;
           Real temp_ad = pthermo->GetTemp(phydro->w.at(k,j,i));
-          Real temp_cirs = Jupiter::get_temp_fletcher16_cirs(glat, phydro->w(IPR,k,j,i)/1.E5);
+          Real temp_real = Jupiter::get_temp_fletcher16_cirs(glat, phydro->w(IPR,k,j,i)/1.E5);
           Real R = pthermo->RovRd(phydro->w.at(k,j,i))*Rd;
-          phydro->w(IDN,k,j,i) = phydro->w(IPR,k,j,i)/(R*std::max(temp_cirs, temp_ad));
+          phydro->w(IDN,k,j,i) = phydro->w(IPR,k,j,i)/(R*std::max(temp_real, temp_ad));
         }
   }
 
