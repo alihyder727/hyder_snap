@@ -188,7 +188,7 @@ jobs:
         run: make -j4
       - name: link python scripts
         run: >
-          ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/ &&
+          ln -s ${{ github.workspace }}/run_scripts/prepare_juno_synthetic.py $MYDIR/ &&
           ln -s ${{ github.workspace }}/run_scripts/create_input.py $MYDIR/
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
@@ -197,7 +197,7 @@ jobs:
       - name: prepare synthetic differential(d) observation
         run: >
           cd $MYDIR &&
-          ./prepare_radio_synthetic.py -i juno_mwr-n6 -d
+          ./prepare_juno_synthetic.py -i juno_mwr-n6 -d
       - name: run nh3-inversion model at 6 pressure levels
         run: >
           cd $MYDIR &&
