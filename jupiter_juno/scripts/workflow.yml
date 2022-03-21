@@ -1,0 +1,121 @@
+name: juno mwr inversion workflow
+jobs:
+  mwr-global:
+    steps:
+      - name: prepare global averaged observation
+        run: ./prepare_juno_mwr.py --case=global &> log.mwr_global
+  mwr-zonal:
+    steps:
+      - name: prepare zonally averaged observation
+        run: ./prepare_juno_mwr.py --case=zonal &> log.mwr_zonal
+  global-ammonia:
+    needs: mwr-global
+    env:
+      LEVELS: 10
+      WALKERS: 20
+      NODES: 10
+      NAME: global-nh3-$LEVELS-$NH3
+    strategy:
+      vector: 
+        NH3: [2., 2.25, 2.5, 2.75, 3.]
+      matrix:
+        LEVELS: [8, 10, 12]
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -M -i juno_mwr.tmp
+          --qNH3=$NH3
+          --pmax=300. --plevel=100:0.5:10
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run ammonia inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_anomaly2d.py -i juno_mwr-$NAME --pmax=300. &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  global-temperature:
+    needs: mwr-global
+    env:
+      LEVELS: 10
+      WALKERS: 20
+      NODES: 10
+      NH3: 2.2
+      NAME: global-tem-$LEVELS-$NH3
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -M -i juno_mwr.tmp --var=0 
+          --qNH3=$NH3
+          --pmax=300. --plevel=100:0.5:10
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run temperature inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_anomaly2d.py -i juno_mwr-$NAME --pmax=300. --var=tem &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  global-ammonia-temperature:
+    needs: [global-ammonia, global-temperature]
+    env:
+      LEVELS: 8
+      WALKERS: 64
+      NODES: 32
+      NH3: 2.2
+      NAME: global-tem-nh3-$LEVELS-$NH3
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -M -i juno_mwr.tmp --var="0 2"
+          --qNH3=$NH3
+          --pmax=300. --plevel=100:0.5:8
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run temperature inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc.py -i juno_mwr-$NAME --var=tem,nh3 &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_anomaly2d.py -i juno_mwr-$NAME --pmax=300. --var=tem,nh3 &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  zonal-ammonia:
+    needs: mwr-zonal
+    env:
+      LEVELS: 8
+      WALKERS: 32
+      NODES: 16
+      CLAT: 0
+      NAME: zonal-nh3-$LEVELS-$CLAT
+      #strategy:
+      #vector: 
+      #  FOLDER: cat mwr_PJ1-PJ13_zonal_dirs.txt
+      #  CLAT: cat mwr_PJ1-12_zonal_lats.txt
+    steps:
+      - name: prepare zonally averaged observation
+        run: ./prepare_juno_mwr.py --case=zonal &> log.$NAME
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -dM -i juno_mwr.tmp --clat=$CLAT
+          --pmax=300. --plevel=100:0.5:10
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_zonal_$CLAT.obs -o $NAME &>> log.$NAME
+      - name: run ammonia inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_anomaly2d.py -i juno_mwr-$NAME --pmax=300. &>> log.$NAME

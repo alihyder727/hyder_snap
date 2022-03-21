@@ -3,6 +3,8 @@ import argparse, glob, os
 from pylab import *
 from netCDF4 import Dataset
 from snapy.harp.utils import get_rt_bands
+import matplotlib
+matplotlib.use('Agg')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input',
@@ -148,7 +150,8 @@ if __name__ == '__main__':
   var_avg = mean(var[nburn:,:,:], axis = (0,2))
   if args['var'] == 'tem':
     var_avg -= var_base
-    var_truth -= var_base
+    if args['truth'] != 'none':
+      var_truth -= var_base
 
   ax.plot(var_avg, pres)
   if args['var'] != 'tem':

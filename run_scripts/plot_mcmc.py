@@ -4,6 +4,8 @@ from matplotlib.gridspec import GridSpec
 from pylab import *
 from astropy.io import fits
 from snapy.harp.utils import get_sample_pressure
+import matplotlib
+matplotlib.use('Agg')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input',
