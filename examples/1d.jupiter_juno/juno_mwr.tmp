@@ -22,13 +22,13 @@ dt          = 1.E-9
 
 <output4>
 file_type   = netcdf
-variable    = radtau
-dt          = 1.E-9
-
-<output5>
-file_type   = netcdf
 variable    = radtoa
 dt          = 1.E-9
+
+#<output5>
+#file_type   = netcdf
+#variable    = radtau
+#dt          = 1.E-9
 
 <time>
 cfl_number  = 1.
@@ -67,7 +67,8 @@ reference_pressure = 1.E5
 sfloor      = 0.
 
 <thermodynamics>
-Rd          = 3615.   # mu = 2.3 g/mol
+#Rd          = 3615.   # mu = 2.3 g/mol
+Rd          = 3587.   # mu = 2.3175 g/mol
 eps1        = 8.18    8.18    8.18
 beta1       = 0.      24.845  24.845
 rcp1        = 0.15    0.33    0.33

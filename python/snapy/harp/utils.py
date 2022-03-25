@@ -43,3 +43,11 @@ def get_ray_out(inpfile):
 def get_sample_pressure(inpfile):
   inp = athinput(inpfile)
   return list(map(float, inp['inversion']['PrSample'].split()))
+
+def get_inversion_vars(inpfile):
+  inp = athinput(inpfile)
+  try:
+    vlist = list(map(int, inp['inversion']['Variables'].split()))
+  except AttributeError:
+    vlist = [int(inp['inversion']['Variables'])]
+  return vlist

@@ -161,22 +161,16 @@ if __name__ == '__main__':
         ecal = float(args['ecal']), tref = float(args['tref']))
   elif args['case'] == 'zonal':
     nlat = len(lat)
-    os.system('mkdir -p %s' % zonal_str)
-    with open('%s/%s_lats.txt' % (zonal_str, zonal_str), 'w') as file:
+    with open('%s_lats.txt' % zonal_str, 'w') as file:
       for i in range(nlat):
-        file.write('%8.2f' % lat[i])
+        file.write('%8.2f\n' % lat[i])
       file.write('\n')
-    print('Latitude file written to %s/%s_lats.txt' % (zonal_str, zonal_str))
+    print('Latitude file written to %s_lats.txt' % zonal_str)
     for i in range(nlat):
-      if lat[i] < 0:
-        dir_str = '%s/S%s' % (zonal_str, abs(lat[i]))
-      else:
-        dir_str = '%s/N%s' % (zonal_str, abs(lat[i]))
-      os.system('mkdir -p %s' % dir_str)
-      write_observation_file('%s/%s_%s' % (dir_str, zonal_str, lat[i]),
+      write_observation_file('%s_%.2f' % (zonal_str, lat[i]),
           tb1[:,i,0], tb1[:,i,1], ld1[:,i,0], ld1[:,i,1],
           ecal = 0.)
   elif args['case'] == 'grs':
     pass
-  else:
+  else :
     raise ValueError('Unrecognized case %' % args['case'])

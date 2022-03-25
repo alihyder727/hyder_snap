@@ -3,36 +3,27 @@ import argparse, glob, os
 from matplotlib.gridspec import GridSpec
 from pylab import *
 from astropy.io import fits
-from snapy.harp.utils import get_sample_pressure
+from snapy.harp.utils import get_sample_pressure, get_inversion_vars
 import matplotlib
 matplotlib.use('Agg')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input',
     required = True,
-    choices = [x[:-8] for x in glob.glob('*.nc')],
     help = 'mcmc case to plot'
     )
+parser.add_argument('-d', '--dir',
+    default = '.',
+    help = 'save directory'
+    )
 parser.add_argument('--var',
-    choices = ['nh3', 'tem'],
+    choices = ['nh3', 'tem', 'tem,nh3', 'nh3,tem'],
     default = 'nh3',
     help = 'which variable to plot'
     )
 args = vars(parser.parse_args())
 
-if __name__ == '__main__':
-# read parameters in input file
-  pres = get_sample_pressure(args['input'] + '.inp')
-
-  hdul = fits.open('%s.fits' % args['input'])
-  if args['var'] == 'nh3':
-    par = hdul[0].data*1.E3 # kg/kg -> g/kg
-  else:
-    par = hdul[0].data
-  val = hdul[1].data
-  lnp = hdul[2].data
-  msk = hdul[3].data
-
+def plot_mcmc_sequence(name, par):
   nstep, nwalker, ndim = par.shape
   std_par, avg_par = zeros(ndim), zeros(ndim)
   for i in range(ndim):
@@ -72,9 +63,9 @@ if __name__ == '__main__':
     ax = fig.add_subplot(gs[-(i+1), :-1])
     for j in range(nwalker):
       ax.plot(range(len(par)), par[:,j,i])
-    if args['var'] == 'nh3':
+    if name == 'nh3':
       ax.set_ylabel('%.1f bar (g/kg)' % pres[i])
-    elif args['var'] == 'tem':
+    elif name == 'tem':
       ax.set_ylabel('%.1f bar (K)' % pres[i])
     ax.set_xlim([0, nstep])
     if i == 0:
@@ -90,5 +81,25 @@ if __name__ == '__main__':
     ax.yaxis.tick_right()
     if i != 0:
       ax.set_xticklabels([])
+  outname = '%s/%s-%s-mcmc.png' % (args['dir'], os.path.basename(args['input']), name)
+  print('figure saved to %s' % outname
+  savefig('%s' % outname, bbox_inches = 'tight')
+  close()
 
-  savefig('%s-mcmc.png' % args['input'], bbox_inches = 'tight')
+if __name__ == '__main__':
+# read parameters in input file
+  pres = get_sample_pressure(args['input'] + '.inp')
+  ivar = get_inversion_vars(args['input'] + '.inp')
+
+  hdul = fits.open('%s.fits' % args['input'])
+  if args['var'] == 'nh3':
+    par = hdul[0].data*1.E3 # kg/kg -> g/kg
+    plot_mcmc_sequence('nh3', par)
+  elif args['var'] == 'tem,nh3' or args['var'] == 'nh3,tem':
+    par = hdul[0].data
+    ndim = par.shape[2]
+    plot_mcmc_sequence('tem', par[:,:,:ndim//2])
+    plot_mcmc_sequence('nh3', par[:,:,ndim//2:])
+  else:
+    par = hdul[0].data
+    plot_mcmc_sequence('tem', par[:,:,ndim//2:])

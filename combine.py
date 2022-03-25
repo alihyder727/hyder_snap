@@ -97,11 +97,20 @@ if __name__ == '__main__':
     default = 'None',
     help = 'appending additional name to the output'
     )
-  parser.add_argument('-n', '--no-remove',
+  parser.add_argument('--no-remove',
     action = 'store_true',
     help = 'do not remove original files'
     )
+  parser.add_argument('--no-merge',
+    action = 'store_true',
+    help = 'do not merge different fields'
+    )
+  parser.add_argument('--no-main2mcmc',
+    action = 'store_true',
+    help = 'do not perform main2mcmc change'
+    )
   args = vars(parser.parse_args())
+  print(args)
 
   cases, fields, stamps = ParseOutputFields(args['dir'])
   fields.sort()
@@ -114,7 +123,8 @@ if __name__ == '__main__':
     fitsout = CombineFITS(case, args['output'], path = args['dir'], remove = not args['no_remove'])
     for field in fields:
       CombineTimeseries(case, field, stamps, remove = not args['no_remove'], path = args['dir'])
-    CombineFields(case, fields, args['output'], path = args['dir'])
-    if fitsout:
+    if not args['no_merge']:
+      CombineFields(case, fields, args['output'], path = args['dir'])
+    if not args['no_main2mcmc'] and fitsout:
       main_to_mcmc(fitsout[:-5])
   print('Done.\n')

@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
-import yaml, os, re
+import yaml, os, re, shutil
+
+links = ['combine.py', 'plot_mcmc.py', 'plot_anomaly2d.py', 'create_input.py', 
+         'juno_mwr.ex', 'juno_mwr.tmp', 'snapy']
 
 def replace_environ_var(envs, old_str):
   new_str, count = old_str, 0
@@ -16,12 +19,28 @@ def replace_vector_var(vecs, old_str):
   for key,var in vecs.items():
     new_str = re.sub('\$' + key, str(var), new_str)
 
-def write_job_steps(file, job, detail, major, minor):
+def write_job_steps(file, job, detail, major, minor, hpc = False):
+  print('Processing %s.%s-%s' % (major, job, minor))
   # write header
   file.write('# %d.%d. execute job %s' % (major, minor, job))
   for key, value in detail['strategy']['vector'].items():
     file.write(', %s = %s' % (key, value[minor]))
   file.write('\n')
+
+  # write submission file
+  use_hpc = False
+  if ('NODES' in detail['env']) and hpc: use_hpc = True
+
+  if use_hpc:
+    fsub_name = '%s-%s' % (job, minor)
+    with open('submit-gl.tmp', 'r') as fsub:
+      tmpsub = fsub.read()
+    subfile = re.sub('<name>', fsub_name, tmpsub)
+    subfile = re.sub('<nodes>', str(detail['env']['NODES']), subfile)
+    fsub = open(fsub_name + '.sub', 'w')
+    fsub.write(subfile)
+    original_file = file
+    file = fsub
 
   # write jobs stesp
   for step in detail['steps']:
@@ -31,17 +50,50 @@ def write_job_steps(file, job, detail, major, minor):
 
     # write step command
     step_run = replace_environ_var(detail['env'], step['run'])
+    if use_hpc:
+      step_run = step_run.split('&')[0]
+      step_run = re.sub('mpiexec', 'srun', step_run)
     if step['run'][-1] == '\n':
       file.write('%s' % step_run)
     else:
       file.write('%s\n' % step_run)
     file.write('\n')
 
-def write_all_jobs(file, job, detail, major):
+  if use_hpc:
+    file.close()
+    # create a new case folder
+    os.system('mkdir -p %s' % fsub_name)
+    
+    # move submission file to the case folder
+    if os.path.isfile('%s/%s.sub' % (fsub_name, fsub_name)):
+      os.remove('%s/%s.sub' % (fsub_name, fsub_name))
+    shutil.move(fsub_name + '.sub', fsub_name + '/')
+
+    # link scripts
+    for fname in links:
+      os.system('ln -sf %s %s/' % (os.path.realpath(fname), fsub_name))
+
+    # link observation
+    if 'OBS' in detail['env']:
+      obs_file = replace_environ_var(detail['env'], detail['env']['OBS'])
+      os.system('ln -sf %s %s/' % (os.path.realpath(obs_file), fsub_name))
+
+    # write submission script
+    file = original_file
+    file.write('## submit to hpc\n')
+    file.write('cd %s\n' % fsub_name)
+    file.write('sbatch %s.sub\n' % fsub_name)
+    file.write('cd ..\n\n')
+
+def write_all_jobs(file, job, detail, major, hpc = False):
   keys = list(detail['strategy']['vector'].keys())
   if len(keys) == 0:
     nsub_jobs_vector = 0
   else:
+    for key in keys:
+      if detail['strategy']['vector'][key][-4:] == ".txt":
+        var = os.popen('cat %s' % detail['strategy']['vector'][key]).read()
+        detail['strategy']['vector'][key] = list(map(str, var.split()))[::4]
     nsub_jobs_vector = len(detail['strategy']['vector'][keys[0]])
 
   njobs = nsub_jobs_vector
@@ -51,9 +103,9 @@ def write_all_jobs(file, job, detail, major):
       # set environment variable from vector
       for key, value in detail['strategy']['vector'].items():
         detail['env'][key] = value[minor]
-      write_job_steps(file, job, detail, major, minor)
+      write_job_steps(file, job, detail, major, minor, hpc = hpc)
   else:
-    write_job_steps(file, job, detail, major, 0)
+    write_job_steps(file, job, detail, major, 0, hpc = hpc)
     njobs += 1
 
   return njobs
@@ -77,6 +129,11 @@ if __name__ == '__main__':
       for job, detail in work['jobs'].items():
         # job has been finished
         if job in finished_jobs:
+          continue
+
+        # job was skipped
+        if ('skip' in detail) and detail['skip']:
+          finished_jobs.append(job)
           continue
 
         # job has dependency
@@ -106,12 +163,12 @@ if __name__ == '__main__':
           if 'matrix' not in detail['strategy']:
             detail['strategy']['matrix'] = {}
 
-        njobs += write_all_jobs(file, job, detail, major)
+        njobs += write_all_jobs(file, job, detail, major, hpc = True)
         finished_jobs.append(job)
 
       count += 1
-      if count > 10:
-        raise RuntimeError("Loops count exceeds 1000")
+      if count > 100:
+        raise RuntimeError("Loops count exceeds 100")
     file.write('# Total number of jobs = %d\n' % njobs)
   print('workflow written to %s' % wrk_file)
 

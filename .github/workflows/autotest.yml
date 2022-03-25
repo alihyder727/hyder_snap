@@ -166,9 +166,9 @@ jobs:
       - name: run simulation
         run: cd $MYDIR && ./run_juno_mwr.py -i $INPUT --exe=../../bin/juno_mwr.ex --nwalker=10 --nlim=10 -o test
       - name: make mcmc plot
-        run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-test
+        run: cd $MYDIR && ./plot_mcmc_sqeuence.py -i juno_mwr-test
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_anomaly2d.py -i juno_mwr-test
+        run: cd $MYDIR && ./plot_mcmc_profile.py -i juno_mwr-test
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   jupiter-juno-inverter:
     runs-on: [self-hosted, linux]
@@ -206,9 +206,9 @@ jobs:
       - name: combine outputs
         run: cd $MYDIR && ../../combine.py
       - name: make mcmc plot
-        run: cd $MYDIR && ./plot_mcmc.py -i juno_mwr-n6p6
+        run: cd $MYDIR && ./plot_mcmc_sequence.py -i juno_mwr-n6p6
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_anomaly2d.py -i juno_mwr-n6p6 --truth=juno_mwr-n6
+        run: cd $MYDIR && ./plot_mcmc_profile.py -i juno_mwr-n6p6 --truth=juno_mwr-n6
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   saturn-vla: 
     runs-on: [self-hosted, linux]
@@ -255,9 +255,9 @@ jobs:
       - name: run simulation
         run: cd $MYDIR && ./run_radio.py -i $INPUT --exe=../../bin/saturn_vla.ex --nwalker=10 --nlim=10 -o test
       - name: make mcmc plot
-        run: cd $MYDIR && ./plot_mcmc.py -i vla_saturn-test
+        run: cd $MYDIR && ./plot_mcmc_sqeuence.py -i vla_saturn-test
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_anomaly2d.py -i vla_saturn-test
+        run: cd $MYDIR && ./plot_mcmc_profile.py -i vla_saturn-test
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   saturn-vla-inverter:
     runs-on: [self-hosted, linux]
@@ -295,7 +295,7 @@ jobs:
       - name: combine outputs
         run: cd $MYDIR && ../../combine.py
       - name: make mcmc plot
-        run: cd $MYDIR && ./plot_mcmc.py -i vla_saturn-n6p8
+        run: cd $MYDIR && ./plot_mcmc_squence.py -i vla_saturn-n6p8
       - name: make ammonia plot
-        run: cd $MYDIR && ./plot_anomaly2d.py -i vla_saturn-n6p8 --truth=vla_saturn-n6
+        run: cd $MYDIR && ./plot_mcmc_profile.py -i vla_saturn-n6p8 --truth=vla_saturn-n6
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
