@@ -1,7 +1,7 @@
 <comment>
 problem   = Warm rising bubble test
 reference = Robert et al., 1992
-configure = --prob=robert --nghost=3 -mpi -pnetcdf --pnetcdf_path=/home/chengcli/opt/
+configure = --prob=robert --nghost=3 -mpi -pnetcdf --pnetcdf_path=$HOME/opt/
 
 <job>
 problem_id = robert # problem ID: basename of output filenames
