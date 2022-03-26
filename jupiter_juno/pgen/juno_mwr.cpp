@@ -28,11 +28,11 @@
 #include "../hydro/hydro.hpp"
 #include "../mesh/mesh.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
-#include "../planet_data/jup_fletcher16_cirs.hpp"
-#include "../planet_data/planets.hpp" // centric2graphic
 
 // Here we include more input files
 #include "../thermodynamics/molecules.hpp"
+#include "../thermodynamics/thermodynamic_funcs.hpp"
+#include "../thermodynamics/vapors/sodium_vapors.hpp"
 #include "../globals.hpp"
 #include "../utils/utils.hpp"
 #include "../math/interpolation.h"
@@ -41,12 +41,17 @@
 #include "../radiation/radiation.hpp"
 #include "../radiation/microwave/mwr_absorbers.hpp"
 #include "../inversion/profile_inversion.hpp"
+#include "../planet_data/jup_fletcher16_cirs.hpp"
+#include "../planet_data/planets.hpp" // centric2graphic
+#include "../scalars/scalars.hpp"
 
 // @sect3{Preamble}
 
 // molecules
 enum {iH2O = 1, iNH3 = 2};
+enum {ion = 0, iNa = 1, iKCl = 2};
 Real grav, P0, T0, Tmin, xHe, xCH4, clat;
+Real xH2S, xNa, xKCl, metallicity;
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
 {
@@ -89,6 +94,12 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   T0 = pin->GetReal("problem", "T0");
   Tmin = pin->GetReal("problem", "Tmin");
   clat = pin->GetOrAddReal("problem", "clat", 0.);
+  xH2S = pin->GetReal("problem", "xH2S");
+  metallicity = pin->GetOrAddReal("problem", "metallicity", 0.);
+  xNa = pin->GetReal("problem", "xNa");
+  xNa *= pow(10., metallicity);
+  xKCl = pin->GetReal("problem", "xKCl");
+  xKCl *= pow(10., metallicity);
 }
 
 void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
@@ -104,6 +115,8 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
     pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
   } else if (name == "mw_H2O") {
     pabs->AddAbsorber(MwrAbsorberH2O(this, iH2O, xHe));
+  } else if (name == "mw_electron") {
+    pabs->AddAbsorber(MwrAbsorberElectron(this, ion));
   } else {
     msg << "### FATAL ERROR in RadiationBand::AddAbsorber"
         << std::endl << "unknow absorber: '" << name <<"' ";
@@ -228,6 +241,17 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
             phydro->w(n,k,j,i) = exp(buf[n]);
         }
 
+    // set chemical tracer, electron and Na
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j) {
+        Real temp = pthermo->GetTemp(phydro->w.at(k,j,i));
+        Real pH2S = xH2S*phydro->w(IPR,k,j,i);
+        Real pNa = xNa*phydro->w(IPR,k,j,i);
+        Real svp = sat_vapor_p_Na_H2S_Visscher(temp, pH2S);
+        pNa = std::min(svp, pNa);
+        pscalars->s(iNa,k,j,i) = pNa/(Thermodynamics::kBoltz*temp);
+        pscalars->s(ion,k,j,i) = saha_ionization_electron_density(temp, pscalars->s(iNa,k,j,i), 5.14);
+      }
   }
 
   // replace adiabatic temperature profile with measurement above 1 bar

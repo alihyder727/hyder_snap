@@ -110,7 +110,6 @@ if __name__ == '__main__':
     help = 'do not perform main2mcmc change'
     )
   args = vars(parser.parse_args())
-  print(args)
 
   cases, fields, stamps = ParseOutputFields(args['dir'])
   fields.sort()
