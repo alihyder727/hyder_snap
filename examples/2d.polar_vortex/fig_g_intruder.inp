@@ -1,7 +1,7 @@
 <comment>
 problem   = One layer shallow water model at the pole
 reference = 
-configure = --prob=polar_vortex --eos=shallow_water --nghost=3 -mpi -pnetcdf --pnetcdf_path=/home/chengcli/opt --include=src/tools/
+configure = --prob=polar_vortex --eos=shallow_water --nghost=3 -mpi -pnetcdf --pnetcdf_path=${HOME}/opt --include=src/tools/
 
 <job>
 problem_id = data/intruder # problem ID: basename of output filenames
