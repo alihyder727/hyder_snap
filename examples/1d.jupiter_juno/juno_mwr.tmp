@@ -125,6 +125,7 @@ xHe         = 0.135
 xCH4        = 2.04E-3
 xH2S        = 2.96E-5
 xNa         = 3.97E-6
+xKCl        = 0.
 metallicity = [metallicity]
 karpowicz_scale = [karpowicz_scale]
 hanley_power = [hanley_power]
