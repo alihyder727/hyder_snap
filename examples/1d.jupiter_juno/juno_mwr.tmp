@@ -1,6 +1,6 @@
 <comment>
 problem   = Juno mwr observation simulator and inversion package
-configure = --task=InversionTaskList --prob=juno_mwr --rt=lambert --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf -fits --fits_path=${HOME}/opt -mpi
+configure = --task=InversionTaskList --prob=juno_mwr --rt=lambert --nscalars=2 --nvapor=2 --h2o=1 --nh3=2 -hydrostatic -cp_real -netcdf -fits --fits_path=${HOME}/opt -mpi
 
 <job>
 problem_id  = [problem_id]    # problem ID: basename of output filenames
