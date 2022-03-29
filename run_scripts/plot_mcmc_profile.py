@@ -71,7 +71,7 @@ def read_variable_simulate(name, case, out = 'out2'):
 
 def read_variable_truth(name, case, out = 'out2'):
   try :
-    data = Dataset('%s-main.nc' % args['truth'])
+    data = Dataset('%s-main.nc' % case)
   except FileNotFoundError :
     data = Dataset('%s.%s.nc' % (case, out))
 
@@ -83,6 +83,20 @@ def read_variable_truth(name, case, out = 'out2'):
     raise ValueError("Variable %s not found" % name)
 
   return var
+
+def read_tbld_truth(case, nfreq, i45, out = 'out4'):
+  try :
+    data = Dataset('%s-main.nc' % case)
+  except FileNotFoundError :
+    data = Dataset('%s.%s.nc' % (case, out))
+
+  tb, ld = [], []
+  # tb_truth is the anomaly with respect to the baseline
+  for i in range(nfreq):
+    tb.append(data['b%dtoa' % (i+1,)][0,0,0,0])
+    ld.append((data['b%dtoa' % (i+1,)][0,0,0,0]
+      - data['b%dtoa' % (i+1,)][0,i45,0,0])/tb[i]*100.)
+  return tb, ld
 
 def read_tbld_simulate(case, nfreq, i45, out = 'out4'):
   try :
@@ -115,20 +129,6 @@ def read_tbld_simulate(case, nfreq, i45, out = 'out4'):
 
   return tb_ad, tb_base, tb, ld_ad, ld_base, ld
 
-def read_tbld_truth(case, nfreq, i45, out = 'out4'):
-  try :
-    data = Dataset('%s-main.nc' % case)
-  except FileNotFoundError :
-    data = Dataset('%s.%s.nc' % (case, out))
-
-  tb, ld = [], []
-  # tb_truth is the anomaly with respect to the baseline
-  for i in range(nfreq):
-    tb.append(data['b%dtoa' % (i+1,)][0,0,0,0])
-    ld.append((data['b%dtoa' % (i+1,)][0,0,0,0]
-      - data['b%dtoa' % (i+1,)][0,i45,0,0])/tb[i]*100.)
-  return tb, ld
-
 def plot_mcmc_profile(name, nburn):
   # read atmospheric profiles
   var_ad, var_base, var, pres = read_variable_simulate(name, args['input'])
@@ -146,9 +146,9 @@ def plot_mcmc_profile(name, nburn):
   # true ammonia
   if args['truth'] != 'none':
     # read truth variable
-    var_truth = read_variable_truth(name, args['input'])
+    var_truth = read_variable_truth(name, args['truth'])
     # read truth tbld
-    tb_truth, ld_truth = read_tbld_truth(args['input'], nfreq, i45)
+    tb_truth, ld_truth = read_tbld_truth(args['truth'], nfreq, i45)
 
   obsfile = athinput('%s.inp' % args['input'])['inversion']['obsfile']
   if obsfile != 'none':
