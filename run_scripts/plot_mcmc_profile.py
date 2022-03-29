@@ -116,6 +116,11 @@ def read_tbld_simulate(case, nfreq, i45, out = 'out4'):
   return tb_ad, tb_base, tb, ld_ad, ld_base, ld
 
 def read_tbld_truth(case, nfreq, i45, out = 'out4'):
+  try :
+    data = Dataset('%s-main.nc' % case)
+  except FileNotFoundError :
+    data = Dataset('%s.%s.nc' % (case, out))
+
   tb, ld = [], []
   # tb_truth is the anomaly with respect to the baseline
   for i in range(nfreq):
