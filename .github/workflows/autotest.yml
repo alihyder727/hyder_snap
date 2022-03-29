@@ -212,6 +212,12 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
+      - name: link combine file
+        run: ln -s ${{ github.workspace }}/combine.py $MYDIR/
+      - name: link run script
+        run: ln -s ${{ github.workspace }}/run_scripts/run_juno_mwr.py $MYDIR/
+      - name: link plotting scripts
+        run: ln -s ${{ github.workspace }}/run_scripts/plot_*.py $MYDIR/
       - name: link python scripts
         run: >
           ln -s ${{ github.workspace }}/run_scripts/prepare_juno_synthetic.py $MYDIR/ &&
@@ -307,6 +313,12 @@ jobs:
         run: make clean
       - name: compile code
         run: make -j4
+      - name: link combine file
+        run: ln -s ${{ github.workspace }}/combine.py $MYDIR/
+      - name: link run script
+        run: ln -s ${{ github.workspace }}/run_scripts/run_radio.py $MYDIR/
+      - name: link plotting scripts
+        run: ln -s ${{ github.workspace }}/run_scripts/plot_*.py $MYDIR/
       - name: link python scripts
         run: >
           ln -s ${{ github.workspace }}/run_scripts/prepare_radio_synthetic.py $MYDIR/ &&
