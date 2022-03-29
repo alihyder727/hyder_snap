@@ -82,7 +82,7 @@ def plot_mcmc_sequence(name, par):
     if i != 0:
       ax.set_xticklabels([])
   outname = '%s/%s-%s-mcmc.png' % (args['dir'], os.path.basename(args['input']), name)
-  print('figure saved to %s' % outname
+  print('figure saved to %s' % outname)
   savefig('%s' % outname, bbox_inches = 'tight')
   close()
 
