@@ -31,8 +31,8 @@ jobs:
         run: ./combine.py -o test
       - name: compare result
         run: ./examples/2d.straka/test.py straka-test-main.nc ./examples/2d.straka/output.nc
-      - name: clean up outputs
-        run: rm -f combine_rules straka*
+        #- name: clean up outputs
+        #run: rm -f combine_rules straka*
       - run: echo "${{ github.job }} case (single core) is a ${{ job.status }}"
   shallow-water:
     runs-on: [self-hosted, linux]
@@ -42,6 +42,10 @@ jobs:
       INPUT: shallow_water.inp
       EXE: ../../bin/shallow_water.ex
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: patch code
+        run : ./patch.py
       - name: configure problem
         run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -63,6 +67,10 @@ jobs:
       INPUT: fig_g_intruder.inp
       EXE: ../../bin/polar_vortex.ex
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: patch code
+        run : ./patch.py
       - name: configure problem
         run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -86,6 +94,10 @@ jobs:
       INPUT: robert2d.inp
       EXE: ../../bin/robert.ex
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: patch code
+        run : ./patch.py
       - name: configure problem
         run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
       - name: clean up libraries
@@ -107,6 +119,16 @@ jobs:
       INPUT: robert3d.inp
       EXE: ../../bin/robert.ex
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: patch code
+        run : ./patch.py
+      - name: configure problem
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
       - name: run simulation
         run: cd $MYDIR && mpiexec -n 32 $EXE -i $INPUT
       - name: combile outputs
@@ -139,8 +161,8 @@ jobs:
         run: ./run_juno_mwr.py -i ./examples/1d.jupiter_juno/juno_mwr.tmp --exe ./bin/juno_mwr.ex -o test
       - name: compare result
         run: diff -I ^# juno_mwr-test.out ./examples/1d.jupiter_juno/juno_mwr.out
-      - name: clean up outputs
-        run: rm -f combine_rules juno_mwr-test* run_juno_mwr.py
+        #- name: clean up outputs
+        #run: rm -f combine_rules juno_mwr-test* run_juno_mwr.py
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   jupiter-juno-sampler:
     runs-on: [self-hosted, linux]
@@ -149,6 +171,8 @@ jobs:
       MYDIR: ./examples/1d.jupiter_juno
       INPUT: juno_mwr.tmp
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
       - name: patch code
         run : ./patch.py jupiter_juno
       - name: configure problem
@@ -178,6 +202,8 @@ jobs:
       INPUT: juno_mwr.tmp
       EXE: ../../bin/juno_mwr.ex
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
       - name: patch code
         run : ./patch.py jupiter_juno
       - name: configure problem
@@ -214,6 +240,8 @@ jobs:
     runs-on: [self-hosted, linux]
     needs: jupiter-juno
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
       - name: patch code
         run : ./patch.py saturn_vla
       - name: configure problem
@@ -228,8 +256,8 @@ jobs:
         run: ./run_radio.py -i ./examples/1d.saturn_vla/vla_saturn.tmp --exe ./bin/saturn_vla.ex -o test
       - name: compare result
         run: diff -I ^# vla_saturn-test.out ./examples/1d.saturn_vla/vla_saturn.out
-      - name: finalize
-        run: rm -f combine_rules run_radio.py vla_saturn-test*
+        #- name: finalize
+        #run: rm -f combine_rules run_radio.py vla_saturn-test*
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
   saturn-vla-sampler:
     runs-on: [self-hosted, linux]
@@ -238,6 +266,8 @@ jobs:
       MYDIR: ./examples/1d.saturn_vla
       INPUT: vla_saturn.tmp
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
       - name: patch code
         run : ./patch.py saturn_vla
       - name: configure problem
@@ -267,6 +297,8 @@ jobs:
       INPUT: vla_saturn.tmp
       EXE: ../../bin/saturn_vla.ex
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
       - name: patch code
         run : ./patch.py saturn_vla
       - name: configure problem
