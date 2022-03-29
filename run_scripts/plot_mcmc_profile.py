@@ -111,12 +111,12 @@ def read_tbld_simulate(case, nfreq, i45, out = 'out4'):
     tb.append(data['b%dtoa' % (i+1,)][:,0,3,:])
     ld.append((data['b%dtoa' % (i+1,)][:,0,3,:] 
       - data['b%dtoa' % (i+1,)][:,i45,3,:])/tb[i]*100.)
-  td, ld = array(tb), array(ld)
+  tb, ld = array(tb), array(ld)
 
   return tb_ad, tb_base, tb, ld_ad, ld_base, ld
 
 def read_tbld_truth(case, nfreq, i45, out = 'out4'):
-  td, ld = [], []
+  tb, ld = [], []
   # tb_truth is the anomaly with respect to the baseline
   for i in range(nfreq):
     tb.append(data['b%dtoa' % (i+1,)][0,0,0,0])
