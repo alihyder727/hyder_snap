@@ -152,7 +152,9 @@ def plot_mcmc_profile(name, nburn):
 
   obsfile = athinput('%s.inp' % args['input'])['inversion']['obsfile']
   if obsfile != 'none':
-    data = genfromtxt('%s/%s' % (os.path.dirname(args['input']), obsfile), max_rows = 13)
+    dirname = os.path.dirname(args['input'])
+    if dirname == '': dirname = '.'
+    data = genfromtxt('%s/%s' % (dirname, obsfile), max_rows = 13)
     tb_truth = data[1::2]
     ld_truth = data[2::2]
 
