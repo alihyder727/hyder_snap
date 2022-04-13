@@ -284,7 +284,7 @@ int ImplicitSolver::CreateMPITag(int recvid, int sendid, std::string phys) {
   str += std::to_string(sendid);
   str += "x";
   str += phys;
-  return std::hash<std::string>{}(str)%(1<<24);
+  return std::hash<std::string>{}(str)%Globals::mpi_tag_ub;
 }
 
 #undef MAX_DATA_SIZE

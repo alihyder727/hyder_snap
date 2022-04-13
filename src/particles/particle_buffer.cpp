@@ -37,7 +37,7 @@ int ParticleBuffer::CreateMPITag(int lid, int tid) {
   int TAG_PARTICLE = 15;
   int tag = BoundaryBase::CreateBvalsMPITag(lid, tid, TAG_PARTICLE);
   std::string str = pmy_particle->myname + std::to_string(tag);
-  return std::hash<std::string>{}(str)%(1<<24);
+  return std::hash<std::string>{}(str)%(Globals::mpi_tag_ub);
 }
 
 void ParticleBuffer::SendParticle()
