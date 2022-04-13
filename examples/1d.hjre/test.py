@@ -14,7 +14,7 @@ theta2 = data2['theta'][-1,0,:,:]
 
 diff = sqrt(sum((theta2 - theta1)*(theta2 - theta1)))
 
-if diff < 1.E-6:
+if diff < 1.E-3:
   print('### 1D HJ RE test passed. ###')
 else:
   raise ValueError('ERROR: 1D HJ RE test failed. L2-norm is %.2g' % diff)
