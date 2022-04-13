@@ -13,7 +13,7 @@ public:
   FreedmanMean(RadiationBand *pband):
     Absorber(pband) {}
   virtual ~FreedmanMean() {}
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
 };
 
 #endif

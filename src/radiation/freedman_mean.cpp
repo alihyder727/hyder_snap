@@ -20,12 +20,12 @@
 Real c1 = 10.602, c2 = 2.882, c3 = 6.09e-15, c4 = 2.954, c5 = -2.526, c6 = 0.843, c7 = -5.490;
 Real c8, c9, c10, c11, c12;
 
-Real FreedmanMean::AbsorptionCoefficient(Real wave, Real const chem[]) const
+Real FreedmanMean::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
 { 
   Thermodynamics *pthermo = pmy_band->pmy_rad->pmy_block->pthermo;
 
-  Real p = chem[IPR];
-  Real T = chem[IDN];
+  Real p = q[IPR];
+  Real T = q[IDN];
   if (T < 800.){
     c8  = -14.051;
     c9  = 3.055;

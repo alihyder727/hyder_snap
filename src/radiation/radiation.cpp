@@ -147,6 +147,7 @@ std::vector<Direction> Radiation::GetIncomingRays() {
 void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
   int k, int j, int il, int iu)
 {
+  pmy_block->pdebug->Call("Radiation::CalculateFluxes");
   Coordinates *pcoord = pmy_block->pcoord;
 
   RadiationBand *p = pband;
@@ -163,11 +164,13 @@ void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
     p->RadtranFlux(*rin_, dist_, k, j, il, iu);
     p = p->next;
   }
+  pmy_block->pdebug->Leave();
 }
 
 void Radiation::CalculateRadiances(AthenaArray<Real> const& w, Real time,
   int k, int j, int il, int iu)
 {
+  pmy_block->pdebug->Call("Radiation::CalculateRadiances");
   Coordinates *pcoord = pmy_block->pcoord;
 
   RadiationBand *p = pband;
@@ -184,6 +187,7 @@ void Radiation::CalculateRadiances(AthenaArray<Real> const& w, Real time,
     p->RadtranRadiance(*rin_, rout_, nrout_, dist_, k, j, il, iu);
     p = p->next;
   }
+  pmy_block->pdebug->Leave();
 }
 
 void Radiation::AddRadiativeFluxes(AthenaArray<Real>& x1flux, 
