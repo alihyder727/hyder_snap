@@ -46,6 +46,7 @@
 #include "../debugger/debugger.hpp"
 #include "../particles/particles.hpp"
 #include "../inversion/inversion.hpp"
+#include "../communicator/communicator.hpp"
 
 //----------------------------------------------------------------------------------------
 // MeshBlock constructor: constructs coordinate, boundary condition, hydro, field
@@ -197,6 +198,7 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
   pfit = nullptr;
+  pcomm = new Communicator(this);
 
   // Create user mesh data
   InitUserMeshBlockData(pin);
@@ -329,6 +331,7 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   pchem = new Chemistry(this, pin);
   pdiag = new Diagnostics(this, pin);
   pfit = nullptr;
+  pcomm = new Communicator(this);
 
   InitUserMeshBlockData(pin);
 
@@ -455,6 +458,7 @@ MeshBlock::~MeshBlock() {
 
   if (pfit != nullptr)
     delete pfit;
+  delete pcomm;
 }
 
 //----------------------------------------------------------------------------------------

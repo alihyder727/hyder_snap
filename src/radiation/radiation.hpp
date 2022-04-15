@@ -62,7 +62,7 @@ public:
 #endif
 
 protected:
-  Real **tau_, **ssa_, ***pmom_, *tem_;
+  Real **tau_, **ssa_, ***pmom_, *tem_, *temf_;
   Real **flxup_, **flxdn_;
   Real **toa_;
   Real alpha_;  // T ~ Ts*(\tau/\tau_s)^\alpha at lower boundary

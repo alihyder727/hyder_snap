@@ -5,6 +5,7 @@
 // C/C++ header
 #include <cstdlib>
 #include <sstream>
+#include <algorithm>
 
 // Athena++ headers
 #include "../../reconstruct/interpolation.hpp"
@@ -13,6 +14,8 @@
 #include "../../utils/utils.hpp" // StringToArray, ReadTabular
 #include "../radiation.hpp"
 #include "../../coordinates/coordinates.hpp"
+#include "../../communicator/communicator.hpp"
+#include "../../globals.hpp"
 
 // DISORT headers
 
@@ -28,7 +31,7 @@ void RadiationBand::init_disort(ParameterInput *pin)
   ds = (disort_state*)malloc(sizeof(disort_state));
   ds_out = (disort_output*)malloc(sizeof(disort_output));
 
-  ds->nlyr = pmy_rad->pmy_block->block_size.nx1;
+  ds->nlyr = pmy_rad->pmy_block->pmy_mesh->mesh_size.nx1;
   ds->nmom = pin->GetInteger("radiation", "npmom");
 
   ds->nstr   = pin->GetInteger("disort", "nstr");
@@ -95,7 +98,6 @@ void RadiationBand::free_disort()
   free(ds_out);
 }
 
-
 void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout, int nrout,
   Real dist, int k, int j, int il, int iu)
 {
@@ -111,33 +113,32 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout, 
 
 void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, int il, int iu)
 {
+  MeshBlock *pmb = pmy_rad->pmy_block;
   std::stringstream msg;
   if (ds->flag.ibcnd != 0) {
-    msg << "### FATAL ERROR in RadiationBand::RadiativeTransfer (disort): ";
+    msg << "### FATAL ERROR in RadiationBand::RadtranFlux (disort): ";
     msg << "ibcnd != 0" << std::endl;
     ATHENA_ERROR(msg);
   }
 
-  AthenaArray<Real> farea(iu+1);
-  pmy_rad->pmy_block->pcoord->Face1Area(k, j, il, iu, farea);
-   
+  //AthenaArray<Real> farea(iu+1);
+  //pmy_rad->pmy_block->pcoord->Face1Area(k, j, il, iu, farea);
+  
+  int nblocks = pmb->pmy_mesh->mesh_size.nx1/pmb->block_size.nx1;
+  Real *buf = new Real [(iu-il+1)*nblocks*(ds->nmom_nstr+1)];
   if (ds->flag.planck) {
-    /*ds->temper[iu-il] = interp_weno5(tem_[il+1], tem_[il], tem_[il-1], tem_[il-2], tem_[il-3]);
-    for (int i = il+1; i < iu; ++i)
-      ds->temper[iu-i] = interp_cp6(tem_[i+2], tem_[i+1], tem_[i], tem_[i-1], tem_[i-2], tem_[i-3]);
-    ds->temper[0] = interp_weno5(tem_[iu-2], tem_[iu-1], tem_[iu], tem_[iu+1],
-    tem_[iu+2]);*/
-    ds->temper[iu-il] = interp_weno5(tem_[il-2], tem_[il-1], tem_[il], tem_[il+1], tem_[il+2]);
-    for (int i = il+1; i < iu; ++i)
-      ds->temper[iu-i] = interp_cp4(tem_[i-2], tem_[i-1], tem_[i], tem_[i+1]);
-    ds->temper[0] = interp_weno5(tem_[iu+1], tem_[iu], tem_[iu-1], tem_[iu-2],
-    tem_[iu-3]);
+    pmb->pcomm->gatherData(temf_+il, buf, iu-il+1, X1DIR);
+    for (int i = 0; i < (iu-il+1)*nblocks; ++i) {
+      int m = i/(iu-il+1);
+      ds->temper[m*(iu-il) + i%(iu-il+1)] = buf[i];
+    }
+    std::reverse(ds->temper, ds->temper + ds->nlyr+1);
   }
 
   ds->bc.umu0 = rin.mu > 1.E-3 ? rin.mu : 1.E-3;
   ds->bc.phi0 = rin.phi;
   if (ds->flag.planck) {
-    ds->bc.btemp = ds->temper[iu-il];
+    ds->bc.btemp = ds->temper[ds->nlyr];
     ds->bc.ttemp = ds->temper[0];
   }
 
@@ -145,6 +146,8 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
   for (int i = il; i <= iu; ++i)
     bflxup(k,j,i) = bflxdn(k,j,i) = 0.;
 
+  pmb->pcomm->setColor(X1DIR);
+  int r = pmb->pcomm->getRank(X1DIR);
   // loop over lines in the band
   for (int n = 0; n < nspec; ++n) {
     // stellar source function
@@ -160,31 +163,68 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     // absorption
 #pragma omp simd
     for (int i = il; i < iu; ++i)
-      ds->dtauc[iu-1-i] = tau_[i][n];
+      buf[i-il] = tau_[i][n];
+    pmb->pcomm->gatherData(buf, ds->dtauc, iu-il, X1DIR);
+    std::reverse(ds->dtauc, ds->dtauc + ds->nlyr);
+    /*if (Globals::my_rank == 0)
+      for (int i = 0; i < ds->nlyr; ++i)
+        std::cout << i << " " << ds->dtauc[i] << std::endl;*/
 
     // single scatering albedo
 #pragma omp simd
     for (int i = il; i < iu; ++i)
-      ds->ssalb[iu-1-i] = ssa_[i][n];
+      buf[i-il] = ssa_[i][n];
+    pmb->pcomm->gatherData(buf, ds->ssalb, iu-il, X1DIR);
+    std::reverse(ds->ssalb, ds->ssalb + ds->nlyr);
 
+    //! \bug npmom and nmom_nstr may not be consistent
     // Legendre coefficients
 #pragma omp simd
     for (int i = il; i < iu; ++i)
       for (int p = 0; p <= npmom; ++p)
-        ds->pmom[(iu-1-i)*(ds->nmom_nstr + 1) + p] = pmom_[i][n][p];
+        buf[(i-il)*(ds->nmom_nstr+1) + p] = pmom_[i][n][p];
+    pmb->pcomm->gatherData(buf, ds->pmom, (iu-il)*(ds->nmom_nstr+1), X1DIR);
+    std::reverse(ds->pmom, ds->pmom + ds->nlyr*(ds->nmom_nstr+1));
+    for (int i = 0; i < ds->nlyr; ++i)
+      std::reverse(ds->pmom + i*(ds->nmom_nstr+1), ds->pmom + (i+1)*(ds->nmom_nstr+1));
 
     // run disort
     c_disort(ds, ds_out);
 
+    // Counting index
+    // Example, il = 0, iu = 2, ds->nlyr = 6, partition in to 3 blocks
+    // face id   -> 0 - 1 - 2 - 3 - 4 - 5 - 6
+    // cell id   -> | 0 | 1 | 2 | 3 | 4 | 5 |
+    // disort id -> 6 - 5 - 4 - 3 - 2 - 1 - 0
+    // blocks    -> ---------       *       *
+    //           ->  r = 0  *       *       *
+    //           ->         ---------       *
+    //           ->           r = 1 *       *
+    //           ->                 ---------
+    //           ->                   r = 2
+    // block r = 0 gets, 6 - 5 - 4
+    // block r = 1 gets, 4 - 3 - 2
+    // block r = 2 gets, 2 - 1 - 0
     // accumulate flux from lines
     for (int i = il; i <= iu; ++i) {
-      flxup_[i][n] = ds_out->rad[iu-i].flup*farea(il)/farea(i);   // flux up
-      flxdn_[i][n] = (ds_out->rad[iu-i].rfldir + ds_out->rad[iu-i].rfldn)
-                     *farea(il)/farea(i);  // flux down
+      int m = ds->nlyr - (r*(iu-il) + i - il);
+      /*! \bug does not work for spherical geometry, need to scale area using
+       * farea(il)/farea(i)
+       */
+      // flux up
+      flxup_[i][n] = ds_out->rad[m].flup;
+
+      /*! \bug does not work for spherical geomtry, need to scale area using
+       * farea(il)/farea(i)
+       */
+      // flux down
+      flxdn_[i][n] = ds_out->rad[m].rfldir + ds_out->rad[m].rfldn;
       bflxup(k,j,i) += spec[n].wgt*flxup_[i][n];
       bflxdn(k,j,i) += spec[n].wgt*flxdn_[i][n];
     }
   }
+
+  delete[] buf;
 }
 
 #endif // RT_DISORT

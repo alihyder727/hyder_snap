@@ -14,6 +14,7 @@
 #include "../particles/particles.hpp"
 #include "../scalars/scalars.hpp"
 #include "../debugger/debugger.hpp"
+#include "../reconstruct/interpolation.hpp"
 #include "../utils/utils.hpp" // Vectorize, ReadTabular, ReplaceChar
 
 RadiationBand::RadiationBand(Radiation *prad):
@@ -91,6 +92,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
 
   // spectral properties
   tem_ = new Real [ncells1];
+  temf_ = new Real [ncells1+1];
   NewCArray(tau_, ncells1, nspec);
   std::fill(tau_[0], tau_[0] + ncells1*nspec, 0.);
   NewCArray(ssa_, ncells1, nspec);
@@ -154,6 +156,7 @@ RadiationBand::~RadiationBand()
 
   delete[] spec;
   delete[] tem_;
+  delete[] temf_;
   FreeCArray(tau_);
   FreeCArray(ssa_);
   FreeCArray(pmom_);
@@ -269,6 +272,14 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
     }
     a = a->next;
   }
+
+  // set temperature at cell interface
+  temf_[il] = 3.*tem_[il] - 2.*tem_[il+1];
+  temf_[il+1] = (tem_[il] + tem_[il+1])/2.;
+  for (int i = il+2; i <= iu-1; ++i)
+    temf_[i] = interp_cp4(tem_[i-2], tem_[i-1], tem_[i], tem_[i+1]);
+  temf_[iu] = (tem_[iu] + tem_[iu-1])/2.;
+  temf_[iu+1] = 3.*tem_[iu] - 2.*tem_[iu-1];
 
   delete [] mypmom; 
   delete [] q;
