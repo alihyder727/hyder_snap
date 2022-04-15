@@ -15,6 +15,7 @@ class Absorber;
 class Radiation;
 
 #ifdef RT_DISORT
+#undef SQR
 extern "C" {
   #include "rtsolver/cdisort213/cdisort.h"
 }

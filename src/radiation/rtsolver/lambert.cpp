@@ -23,12 +23,12 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout,
   int nlevels = pmb->ncells1;
 
   Real *taut = new Real [nlevels];
-  Real *temf = new Real [nlevels];  // temperature at cell faces
+  /*Real *temf = new Real [nlevels];  // temperature at cell faces
 
   temf[il] = interp_weno5(tem_[il-2], tem_[il-1], tem_[il], tem_[il+1], tem_[il+2]);
   for (int i = il+1; i < iu; ++i)
     temf[i] = interp_cp4(tem_[i-2], tem_[i-1], tem_[i], tem_[i+1]);
-  temf[iu] = interp_weno5(tem_[iu+1], tem_[iu], tem_[iu-1], tem_[iu-2], tem_[iu-3]);
+  temf[iu] = interp_weno5(tem_[iu+1], tem_[iu], tem_[iu-1], tem_[iu-2], tem_[iu-3]);*/
   //for (int i = il; i <= iu; ++i)
   //  std::cout << i << " " << temf[i] << " " << tem_[i] << " " << temf[i+1] << std::endl;
 
@@ -37,23 +37,23 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout,
     btoa(m,k,j) = 0.;
     for (int n = 0; n < nspec; ++n) {
       taut[iu] = 0.;
-      toa_[m][n] = 0.;
+      toa_[n][m] = 0.;
       for (int i = iu-1; i >= il; --i) {
         taut[i] = taut[i+1] + tau_[i][n]/rout[m].mu;
-        toa_[m][n] += 0.5*(temf[i+1]*exp(-taut[i+1]) + temf[i]*exp(-taut[i]))*tau_[i][n]/rout[m].mu;
+        toa_[n][m] += 0.5*(temf_[i+1]*exp(-taut[i+1]) + temf_[i]*exp(-taut[i]))*tau_[i][n]/rout[m].mu;
         //if (m == 0)
-        //  std::cout << taut[i] << " " << temf[i] << " " << temf[i]*exp(-taut[i]) << " " << tau_[i][n] << std::endl;
+        //  std::cout << taut[i] << " " << temf_[i] << " " << temf_[i]*exp(-taut[i]) << " " << tau_[i][n] << std::endl;
       }
       //  std::cout << taut[il] << " " << gammq(alpha_, taut[il]) << std::endl;
-      toa_[m][n] += temf[il]*exp(-taut[il]);
+      toa_[n][m] += temf_[il]*exp(-taut[il]);
       if ((alpha_ > 0) && (taut[il] < 1000.)) // correction for small optical opacity
-        toa_[m][n] += temf[il]*alpha_*gammq(alpha_, taut[il])*pow(taut[il], -alpha_)*tgamma(alpha_);
-      btoa(m,k,j) += spec[n].wgt*toa_[m][n];
+        toa_[n][m] += temf_[il]*alpha_*gammq(alpha_, taut[il])*pow(taut[il], -alpha_)*tgamma(alpha_);
+      btoa(m,k,j) += spec[n].wgt*toa_[n][m];
     }
   }
 
   delete[] taut;
-  delete[] temf;
+  //delete[] temf;
 }
 
 #endif  // RT_LAMBERT

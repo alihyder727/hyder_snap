@@ -1,8 +1,9 @@
 #ifndef INTERPOLATION_HPP_
 #define INTERPOLATION_HPP_
 #include "../defs.hpp"
+#include "../math/core.h"
 
-#define SQR(x) ( (x)*(x) )
+//#define sqr(x) ( (x)*(x) )
 
 /* 2-nd order plm for non-uniform grid
 template<typename T>
@@ -91,8 +92,8 @@ inline T interp_weno3(T const& phim1, T const& phi, T const& phip1) {
   T beta0 = (phim1 - phi)*(phim1 - phi);
   T beta1 = (phi - phip1)*(phi - phip1);
 
-  T alpha0 = (2.0/3.0)/SQR(beta0 + 1e-10);
-  T alpha1 = (1.0/3.0)/SQR(beta1 + 1e-10);
+  T alpha0 = (2.0/3.0)/sqr(beta0 + 1e-10);
+  T alpha1 = (1.0/3.0)/sqr(beta1 + 1e-10);
 
   return (alpha0*p0 + alpha1*p1)/(alpha0 + alpha1);
 };
@@ -125,13 +126,13 @@ inline T interp_weno5(T const& phim2, T const& phim1, T const& phi, T const& phi
   T p1 = (-1./6.)*phip1 + (5./6.)*phi + (1./3.)*phim1;
   T p2 = (1./3.)*phip2 - (7./6.)*phip1 + (11./6.)*phi;
 
-  T beta0 = 13./12.*SQR(phi - 2.*phim1 + phim2) + .25*SQR(3.*phi - 4.*phim1 + phim2);
-  T beta1 = 13./12.*SQR(phip1 - 2.*phi + phim1) + .25*SQR(phip1 - phim1);
-  T beta2 = 13./12.*SQR(phip2 - 2.*phip1 + phi) + .25*SQR(phip2 - 4.*phip1 + 3.*phi);
+  T beta0 = 13./12.*sqr(phi - 2.*phim1 + phim2) + .25*sqr(3.*phi - 4.*phim1 + phim2);
+  T beta1 = 13./12.*sqr(phip1 - 2.*phi + phim1) + .25*sqr(phip1 - phim1);
+  T beta2 = 13./12.*sqr(phip2 - 2.*phip1 + phi) + .25*sqr(phip2 - 4.*phip1 + 3.*phi);
 
-  T alpha0 = .3/SQR(beta0 + 1e-10);
-  T alpha1 = .6/SQR(beta1 + 1e-10);
-  T alpha2 = .1/SQR(beta2 + 1e-10);
+  T alpha0 = .3/sqr(beta0 + 1e-10);
+  T alpha1 = .6/sqr(beta1 + 1e-10);
+  T alpha2 = .1/sqr(beta2 + 1e-10);
 
   return (alpha0*p0 + alpha1*p1 + alpha2*p2)/(alpha0 + alpha1 + alpha2);
 };
@@ -153,7 +154,5 @@ template<typename T>
 inline T inflection3_cell3(T f1, T f2, T f3) {
   return 10./3.*f1 - 5./3.*f2 - 2./3.*f3;
 }
-
-#undef SQR
 
 #endif
