@@ -15,8 +15,9 @@ class Absorber;
 class Radiation;
 
 #ifdef RT_DISORT
-  struct disort_state;
-  struct disort_output;
+extern "C" {
+  #include "rtsolver/cdisort213/cdisort.h"
+}
 #endif
 
 struct Spectrum {
@@ -68,8 +69,8 @@ protected:
   Real alpha_;  // T ~ Ts*(\tau/\tau_s)^\alpha at lower boundary
 
 #ifdef RT_DISORT
-  disort_state *ds;
-  disort_output *ds_out;
+  disort_state ds;
+  disort_output ds_out;
 #endif
 };
 

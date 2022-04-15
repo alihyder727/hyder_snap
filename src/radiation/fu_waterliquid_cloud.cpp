@@ -9,7 +9,7 @@
 #include "../math/interpolation.h"
 #include "absorber.hpp"
 #include "water_cloud.hpp"
-#include "radiation_utils.hpp"  // GetPhaseMomentum
+#include "radiation_utils.hpp"  // getPhaseMomentum
 
 
 // coefficient from fu and liou
@@ -157,9 +157,9 @@ void FuWaterLiquidCloud::PhaseMomentum(Real wave, Real const prim[], Real *pp, i
   gg = gz[iband-1][j]+(gz[iband-1][j+1]-gz[iband-1][j])/(re[j+1]-re[j])*(pre-re[j]);
   
   if (prim[imol_]<2e-19){
-    GetPhaseMomentum(0, 0.0, np, pp); // 0 for HENYEY_GREENSTEIN
+    getPhaseMomentum(0, 0.0, np, pp); // 0 for HENYEY_GREENSTEIN
   }else{
-    GetPhaseMomentum(0, gg, np, pp);  // 0 for HENYEY_GREENSTEIN
+    getPhaseMomentum(0, gg, np, pp);  // 0 for HENYEY_GREENSTEIN
   }
 }
 

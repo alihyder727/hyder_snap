@@ -22,6 +22,7 @@ public:
   void setColor(CoordinateDirection dir);
   //void reduceData23(Real *send, Real *recv);
   void gatherData(Real *send, Real *recv, int size, CoordinateDirection dir);
+  void gatherDataInPlace(Real *recv, int size, CoordinateDirection dir);
 
 private:
   MeshBlock *pmy_block_;

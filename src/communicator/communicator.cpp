@@ -44,11 +44,20 @@ void Communicator::gatherData(Real *send, Real *recv, int size, CoordinateDirect
 {
 #ifdef MPI_PARALLEL
   MPI_Comm comm;
-  std::fill(color_, color_ + Globals::nranks, -1);
   MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
   MPI_Allgather(send, size, MPI_ATHENA_REAL, recv, size, MPI_ATHENA_REAL, comm);
   MPI_Comm_free(&comm);
 #else
   memcpy(recv, send, size*sizeof(Real));
+#endif
+}
+
+void Communicator::gatherDataInPlace(Real *recv, int size, CoordinateDirection dir)
+{
+#ifdef MPI_PARALLEL
+  MPI_Comm comm;
+  MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
+  MPI_Allgather(MPI_IN_PLACE, 0, 0, recv, size, MPI_ATHENA_REAL, comm);
+  MPI_Comm_free(&comm);
 #endif
 }

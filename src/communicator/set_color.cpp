@@ -50,6 +50,7 @@ void Communicator::setColor(CoordinateDirection dir) {
   brank_[0] = -1;
 #endif
 
+  std::fill(color_, color_ + Globals::nranks, -1);
   int c = 0;
   for (int i = 0; i < Globals::nranks; ++i) {
     //color[i] = brank_[i] == -1 ? color[i] : color[brank_[i]];

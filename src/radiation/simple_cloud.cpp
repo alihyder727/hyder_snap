@@ -9,7 +9,7 @@
 //#include "../math_funcs.hpp"
 #include "absorber.hpp"
 #include "water_cloud.hpp"
-#include "radiation_utils.hpp"  // GetPhaseMomentum
+#include "radiation_utils.hpp"  // getPhaseMomentum
 
 
 // For grey cloud
@@ -43,8 +43,8 @@ void SimpleCloud::PhaseMomentum(Real wave, Real const chem[], Real *pp, int np) 
   Real gg=0.9;
 
   if (chem[IPR] > 1)
-    GetPhaseMomentum(0, gg, np, pp);  // 0 for HENYEY_GREENSTEIN
+    getPhaseMomentum(0, gg, np, pp);  // 0 for HENYEY_GREENSTEIN
   else
-    GetPhaseMomentum(0, 0.0, np, pp);  // 0 for HENYEY_GREENSTEIN
+    getPhaseMomentum(0, 0.0, np, pp);  // 0 for HENYEY_GREENSTEIN
 }
 
