@@ -119,7 +119,7 @@ $(OBJ_DIR)fitsmerge.o : $(TOOLS_DIR)fitsmerge.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(EXE_DIR)fitsmerge : $(OBJ_DIR)fitsmerge.o $(OBJ_DIR)mcmc.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $< $(OBJ_DIR)mcmc.o $(LDFLAGS) -lcfitsio
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $< $(OBJ_DIR)mcmc.o
 
 $(MATH_LIBRARY):
 	make -C src/math CC=$(CXX)
