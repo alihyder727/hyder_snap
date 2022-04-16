@@ -7,30 +7,6 @@ on:
     branches:
     - dev
 jobs:
-  hjre-1d:
-    runs-on: [self-hosted, linux]
-    env:
-      MYDIR: ./examples/1d.hjre
-      INPUT: hjre.inp
-      EXE: ../../bin/dry_rce.ex
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v2
-      - name: patch code
-        run : ./patch.py
-      - name: configure problem
-        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
-      - name: clean up libraries
-        run: make clean
-      - name: compile code
-        run: make -j4
-      - name: run simulation
-        run: cd $MYDIR && $EXE -i $INPUT
-      - name: combile outputs
-        run: cd $MYDIR && ../../combine.py -o test
-      - name: compare result
-        run: cd $MYDIR && ./test.py hjre-test-main.nc output.nc
-      - run: echo "${{ github.job }} case is a ${{ job.status }}."
   straka-2d:
     runs-on: [self-hosted, linux]
     steps:
@@ -367,3 +343,50 @@ jobs:
       - name: make ammonia plot
         run: cd $MYDIR && ./plot_mcmc_profile.py -i vla_saturn-n6p8 --truth=vla_saturn-n6
       - run: echo "${{ github.job }} case is a ${{ job.status }}"
+  hjre-1d:
+    runs-on: [self-hosted, linux]
+    env:
+      MYDIR: ./examples/1d.hjre
+      INPUT: hjre.inp
+      EXE: ../../bin/dry_rce.ex
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: patch code
+        run : ./patch.py
+      - name: configure problem
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: run simulation
+        run: cd $MYDIR && $EXE -i $INPUT
+      - name: combile outputs
+        run: cd $MYDIR && ../../combine.py -o test
+      - name: compare result
+        run: cd $MYDIR && ./test.py hjre-test-main.nc output.nc
+      - run: echo "${{ github.job }} case is a ${{ job.status }}."
+  hot-jupiter-1d:
+    runs-on: [self-hosted, linux]
+    needs: [hjre-1d, straka-2d]
+    env:
+      MYDIR: ./examples/2d.hot_jupiter
+      INPUT: hot_jupiter.inp
+      EXE: ../../bin/dry_rce.ex
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: patch code
+        run : ./patch.py
+      - name: configure problem
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: run simulation
+        run: cd $MYDIR && mpiexec -n 16 $EXE -i $INPUT
+      - name: combile outputs
+        run: cd $MYDIR && ../../combine.py -o test
+      - run: echo "${{ github.job }} case is a ${{ job.status }}."

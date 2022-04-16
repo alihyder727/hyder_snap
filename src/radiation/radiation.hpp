@@ -61,6 +61,8 @@ public:
 #ifdef RT_DISORT
   void init_disort(ParameterInput *pin);
   void free_disort();
+  disort_state ds;
+  disort_output ds_out;
 #endif
 
 protected:
@@ -68,11 +70,6 @@ protected:
   Real **flxup_, **flxdn_;
   Real **toa_;
   Real alpha_;  // T ~ Ts*(\tau/\tau_s)^\alpha at lower boundary
-
-#ifdef RT_DISORT
-  disort_state ds;
-  disort_output ds_out;
-#endif
 };
 
 class Radiation {

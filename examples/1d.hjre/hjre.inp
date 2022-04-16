@@ -60,6 +60,7 @@ nx3         = 1
 <hydro>
 grav_acc1     = -10.0
 gamma         = 1.4         # gamma = C_p/C_v
+min_tem       = 1000.   # isothermal temperature
 implicit_flag = 1
 
 <thermodynamics>
@@ -71,12 +72,12 @@ HJ.parent     = Sun
 HJ.re         = 1.E5      # km
 HJ.rp         = 1.E5      # km
 HJ.obliq      = 0.        # deg
-HJ.omega      = 2.424E-5  # rad/s
+HJ.spinp      = 3.        # day
 HJ.orbit_a    = 0.03      # au
 HJ.orbit_e    = 0.
 HJ.orbit_i    = 0.        # deg
 HJ.orbit_p    = 3.        # day
-HJ.grav_eq    = 10.       # m/s
+HJ.grav_eq    = 10.       # m/s^2
 HJ.equinox    = 0.
 
 Sun.spec_file = ../../src/radiation/spectra/sun.spec
@@ -88,7 +89,7 @@ distance      = 0.03
 indir         = (0,)
 dynamic       = false
 
-b1            = 100. 49100. 500.
+b1            = 100. 50000. 500
 b1.absorbers  = FREEDMAN
 
 <disort>
@@ -101,4 +102,3 @@ planck        = true
 <problem>
 P0            = 1.E5
 T0            = 1500.
-Tmin          = 1000.   # isothermal temperature

@@ -123,11 +123,6 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     }
     std::reverse(ds.temper, ds.temper + ds.nlyr+1);
   }
-  /*if (Globals::my_rank == 0) {
-    for (int i = 0; i <= ds.nlyr; ++i)
-      std::cout << i << " " << ds.temper[i] << std::endl;
-    std::cout << "aa" << std::endl;
-  }*/
 
   ds.bc.umu0 = rin.mu > 1.E-3 ? rin.mu : 1.E-3;
   ds.bc.phi0 = rin.phi;

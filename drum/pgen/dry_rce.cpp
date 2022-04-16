@@ -84,7 +84,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   P0 = pin->GetReal("problem", "P0");
   T0 = pin->GetReal("problem", "T0");
   Z0 = pin->GetOrAddReal("problem", "Z0", 0.);
-  Tmin = pin->GetReal("problem", "Tmin");
+  Tmin = pin->GetReal("hydro", "min_tem");
 
   EnrollUserExplicitSourceFunction(Forcing);
 }
@@ -174,6 +174,11 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
       for (int k = ks; k <= ke; ++k)
         for (int j = js; j <= je; ++j)
           phydro->w(n,k,j,i) = buf[n];
+
+    // add noise
+    for (int k = ks; k <= ke; ++k)
+      for (int j = js; j <= je; ++j)
+      phydro->w(IV1,k,j,i) = 0.01*(1.*rand()/RAND_MAX - 0.5);
   }
 
   // set spectral properties
