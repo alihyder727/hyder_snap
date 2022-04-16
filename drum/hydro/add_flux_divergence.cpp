@@ -16,6 +16,7 @@
 #include "../athena_arrays.hpp"
 #include "../coordinates/coordinates.hpp"
 #include "../mesh/mesh.hpp"
+#include "../debugger/debugger.hpp"
 #include "hydro.hpp"
 
 // OpenMP header
@@ -36,6 +37,8 @@
 // used)
 void Hydro::AddFluxDivergence(const Real wght, AthenaArray<Real> &u_out) {
   MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Hydro::AddFluxDivergence");
+
   AthenaArray<Real> &x1flux = flux[X1DIR];
   AthenaArray<Real> &x2flux = flux[X2DIR];
   AthenaArray<Real> &x3flux = flux[X3DIR];
@@ -89,5 +92,11 @@ void Hydro::AddFluxDivergence(const Real wght, AthenaArray<Real> &u_out) {
       }
     }
   }
+
+#if DEBUG_LEVEL > 2
+  pmb->pdebug->CheckConservation("u_out", u_out, is, ie, js, je, ks, ke);
+#endif
+
+  pmb->pdebug->Leave();
   return;
 }

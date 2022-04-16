@@ -959,6 +959,7 @@ if args['fits']:
   if args['fits_path'] != '':
     makefile_options['PREPROCESSOR_FLAGS'] += ' -I%s/include' % args['fits_path']
     makefile_options['LINKER_FLAGS'] += ' -L%s/lib' % args['fits_path']
+    makefile_options['FITS_DIR'] = args['fits_path']
   if args['cxx'] == 'g++' or args['cxx'] == 'icc' or args['cxx'] == 'cray':
     makefile_options['LIBRARY_FLAGS'] += ' -lcfitsio'
 else:
