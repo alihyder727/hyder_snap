@@ -218,12 +218,14 @@ void Hydro::CheckHydro() {
                 << k << "," << j << "," << i << ") in rank " << myrank;
             ATHENA_ERROR(msg);
           }
+#if NON_BAROTROPIC_EOS == 1
         if (w(IPR,k,j,i) < 0.) {
           msg << "### FATAL ERROR in Hydro::CheckHydro" << std::endl
               << "Pressure is negative at position ("
               << k << "," << j << "," << i << ") in rank " << myrank;
           ATHENA_ERROR(msg);
         }
+#endif
         Real temp = pmb->pthermo->GetTemp(w.at(k,j,i));
         Real grav = -hsrc.GetG1();
         if (grav != 0) {

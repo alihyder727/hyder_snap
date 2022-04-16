@@ -367,9 +367,9 @@ jobs:
       - name: compare result
         run: cd $MYDIR && ./test.py hjre-test-main.nc output.nc
       - run: echo "${{ github.job }} case is a ${{ job.status }}."
-  hot-jupiter-1d:
+  hot-jupiter-2d:
     runs-on: [self-hosted, linux]
-    needs: [hjre-1d, straka-2d]
+    needs: [hjre-1d, robert-2d]
     env:
       MYDIR: ./examples/2d.hot_jupiter
       INPUT: hot_jupiter.inp
