@@ -39,10 +39,10 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout,
       taut[iu] = 0.;
       toa_[n][m] = 0.;
       for (int i = iu-1; i >= il; --i) {
-        taut[i] = taut[i+1] + tau_[i][n]/rout[m].mu;
-        toa_[n][m] += 0.5*(temf_[i+1]*exp(-taut[i+1]) + temf_[i]*exp(-taut[i]))*tau_[i][n]/rout[m].mu;
+        taut[i] = taut[i+1] + tau_[n][i]/rout[m].mu;
+        toa_[n][m] += 0.5*(temf_[i+1]*exp(-taut[i+1]) + temf_[i]*exp(-taut[i]))*tau_[n][i]/rout[m].mu;
         //if (m == 0)
-        //  std::cout << taut[i] << " " << temf_[i] << " " << temf_[i]*exp(-taut[i]) << " " << tau_[i][n] << std::endl;
+        //  std::cout << taut[i] << " " << temf_[i] << " " << temf_[i]*exp(-taut[i]) << " " << tau_[n][i] << std::endl;
       }
       //  std::cout << taut[il] << " " << gammq(alpha_, taut[il]) << std::endl;
       toa_[n][m] += temf_[il]*exp(-taut[il]);
