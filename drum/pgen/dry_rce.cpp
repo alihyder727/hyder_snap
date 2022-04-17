@@ -167,6 +167,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   int ku = block_size.nx3 == 1 ? ke : ke+NGHOST;
   int jl = block_size.nx2 == 1 ? js : js-NGHOST;
   int ju = block_size.nx2 == 1 ? je : je+NGHOST;
+  srand(Globals::my_rank + time(0));
   for (int i = is; i <= ie; ++i) {
     Real buf[NHYDRO];
     interpn(buf, &pcoord->x1v(i), *w1, z1, &nx1, 1, NHYDRO);
