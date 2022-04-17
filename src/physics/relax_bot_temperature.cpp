@@ -17,6 +17,8 @@ TaskStatus Physics::RelaxBotTemperature(AthenaArray<Real> &du,
   int is = pmb->is; int js = pmb->js; int ks = pmb->ks;
   int ie = pmb->ie; int je = pmb->je; int ke = pmb->ke;
 
+
+
   Real Rd = pthermo->GetRd();
   Real gamma = pmb->peos->GetGamma();
 
