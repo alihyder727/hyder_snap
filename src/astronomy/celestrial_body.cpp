@@ -148,10 +148,19 @@ Real CelestrialBody::ParentInsolationFlux(Real wav, Real dist_au)
 
 Real CelestrialBody::ParentInsolationFlux(Real wlo, Real whi, Real dist_au)
 {
+  //! \todo : check whether this is correct
   if (wlo == whi)
     return ParentInsolationFlux(wlo, dist_au);
-  //! \todo : fix this function
-  return 0.;
+  // assuming ascending in wav
+  Real dx;
+  int il = find_place_in_table(parent->nspec_, parent->spec_, wlo, &dx, -1);
+  int iu = find_place_in_table(parent->nspec_, parent->spec_, whi, &dx, il);
+  Real flux = 0.5*parent->spec_[il].y;
+  for (int i = il; i < iu; ++i) {
+    flux += 0.5*(parent->spec_[i].y + parent->spec_[i+1].y)
+               *(parent->spec_[i+1].x - parent->spec_[i].x);
+  }
+  return flux/(dist_au*dist_au);
 }
 
 Real CelestrialBody::ParentDistanceInAu(Real time)
