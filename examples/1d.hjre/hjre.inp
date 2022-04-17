@@ -85,12 +85,12 @@ Sun.spec_file = ../../src/radiation/spectra/sun.spec
 <radiation>
 dt            = 1.
 npmom         = 4
-distance      = 0.03
+distance_au   = 0.03
 indir         = (0,)
-dynamic       = false
+rtype         = fixed
 
 b1            = 100. 50000. 500
-b1.absorbers  = FREEDMAN
+b1.absorbers  = freedman_mean
 
 <disort>
 nstr          = 4

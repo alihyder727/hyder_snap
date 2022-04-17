@@ -29,6 +29,8 @@ struct Direction {
   Real mu, phi;
 };
 
+enum class RadiationType {fixed = 0, dynamic = 1, band = 2};
+
 class RadiationBand {
 public:
   // data
@@ -53,9 +55,9 @@ public:
   void AddAbsorber(std::string name, std::string file, ParameterInput *pin);
   void AddAbsorber(Absorber *pab);
   void SetSpectralProperties(AthenaArray<Real> const& w, int k, int j, int il, int iu);
-  void RadtranFlux(Direction const rin, Real dist,
+  void RadtranFlux(Direction const rin, Real dist_au,
     int k, int j, int il, int iu);
-  void RadtranRadiance(Direction const rin, Direction const *rout, int nrout, Real dist,
+  void RadtranRadiance(Direction const rin, Direction const *rout, int nrout, Real dist_au,
     int k, int j, int il, int iu);
 
 #ifdef RT_DISORT
@@ -77,14 +79,16 @@ public:
   // constants
   static Real const hPlanck;
   static Real const hPlanck_cgs;
-  static Real const c;
-  static Real const c_cgs;
+  static Real const cLight;
+  static Real const cLight_cgs;
+  static Real const stefanBoltzmann;
 
   // data
   MeshBlock *pmy_block;
   RadiationBand *pband;
   Real cooldown, current;
   CelestrialBody *planet;
+  RadiationType rtype;
 
   // functions
   Radiation(MeshBlock *pmb); // delayed initialization
@@ -100,16 +104,12 @@ public:
     int k, int j, int il, int iu);
   void AddRadiativeFluxes(AthenaArray<Real>& x1flux,
     int k, int j, int il, int iu);
-  bool IsDynamic() { return dynamic_; }
-  Real GetBeam() { return beam_; }
 
 protected:
   // reserved incoming and outgoing rays
-  bool dynamic_;
   Direction *rin_, *rout_;
   int nrin_, nrout_;
-  Real dist_;
-  Real beam_;
+  Real stellar_dist_au_;
 };
 
 #endif

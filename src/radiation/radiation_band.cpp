@@ -128,13 +128,14 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   sprintf(astr, "%s.alpha", name.c_str());
   alpha_ = pin->GetOrAddReal("radiation", astr, 0.);
 
+  msg << "- spectral range = " << spec[0].wav << " - " << spec[nspec-1].wav << std::endl
+      << "- number of lines = " << nspec << std::endl;
+
   // initialize radiative transfer solver
 #ifdef RT_DISORT
   init_disort(pin);
 #endif
 
-  msg << "- spectral range = " << spec[0].wav << " - " << spec[nspec-1].wav
-      << " and length = " << nspec << std::endl;
   pdbg->Leave();
 }
 

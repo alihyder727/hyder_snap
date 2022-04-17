@@ -15,24 +15,24 @@
 
 Real const Radiation::hPlanck = 6.63E-34;
 Real const Radiation::hPlanck_cgs = 6.63E-27;
-Real const Radiation::c = 3.E8;
-Real const Radiation::c_cgs = 3.E10;
+Real const Radiation::cLight = 3.E8;
+Real const Radiation::cLight_cgs = 3.E10;
+Real const Radiation::stefanBoltzmann = 5.670374419E-8;
 
 Radiation::Radiation(MeshBlock *pmb):
-  pmy_block(pmb), pband(nullptr), dynamic_(false), beam_(-1.),
-  cooldown(0.), current(0.), nrin_(1), nrout_(1), dist_(1.), planet(nullptr)
+  pmy_block(pmb), pband(nullptr), rtype(RadiationType::fixed),
+  cooldown(0.), current(0.), nrin_(1), nrout_(1), stellar_dist_au_(1.), planet(nullptr)
 {
   rin_ = new Direction [1];
   rout_ = new Direction [1];
 }
 
-Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
+Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin):
+  pmy_block(pmb), pband(nullptr)
 {
   pmb->pdebug->Enter("Radiation");
-  //ATHENA_LOG("Radiation");
-  pmy_block = pmb;
-  pband = nullptr;
   RadiationBand *plast = pband;
+  std::stringstream &msg = pmb->pdebug->msg;
 
   // incoming radiation direction (mu,phi) in degree
   std::string str = pin->GetOrAddString("radiation", "indir", "(0.,0.)");
@@ -61,17 +61,32 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
   }
 
   // distance to parent star
-  dist_ = pin->GetOrAddReal("radiation", "distance", 1.);
+  stellar_dist_au_ = pin->GetOrAddReal("radiation", "distance_au", 1.);
+  msg << "- stellar distance = " << stellar_dist_au_ << " au" << std::endl;
 
+  // radiation type
+  std::string rtype_str = pin->GetOrAddString("radiation", "rtype", "fixed");
+  if (rtype_str == "fixed")
+    rtype = RadiationType::fixed;
+  else if (rtype_str == "dynamic")
+    rtype = RadiationType::dynamic;
+  else if (rtype_str == "band")
+    rtype = RadiationType::band;
+  else {
+    msg << "### FATAL ERROR in function Radiation::Radiation"
+        << std::endl << "rtype: " << rtype_str << "unrecognized"
+        << std::endl;
+    ATHENA_ERROR(msg);
+  }
+  msg << "- radiation type = " << rtype_str << std::endl;
+
+  // radiation band
   int b = 1;
   char name[80];
   while (true) {
     sprintf(name, "b%d", b);
-    try {
-      pin->GetString("radiation", name);
-    } catch (const std::runtime_error& e) {
+    if (!pin->DoesParameterExist("radiation", name))
       break;
-    }
     RadiationBand* p = new RadiationBand(this, name, pin);
     if (plast == nullptr) {
       plast = p;
@@ -85,8 +100,6 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin)
     b++;
   }
 
-  dynamic_ = pin->GetOrAddBoolean("radiation", "dynamic", false);
-  beam_ = pin->GetOrAddReal("radiation", "beam", -1.);
   cooldown = pin->GetOrAddReal("radiation", "dt", 0.);
   current = 0.;
 
@@ -149,19 +162,20 @@ void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
 {
   pmy_block->pdebug->Call("Radiation::CalculateFluxes");
   Coordinates *pcoord = pmy_block->pcoord;
+  Real dist = stellar_dist_au_;
 
   RadiationBand *p = pband;
   if (pband == nullptr) return;
 
-  if (dynamic_) {
+  if (rtype == RadiationType::dynamic) {
     planet->ParentZenithAngle(&rin_->mu, &rin_->phi, time, pcoord->x2v(j), pcoord->x3v(k));
-    dist_ = planet->ParentDistanceInAu(time);
+    dist = planet->ParentDistanceInAu(time);
   }
 
   while (p != nullptr) {
     // iu ~= ie + 1
     p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
-    p->RadtranFlux(*rin_, dist_, k, j, il, iu);
+    p->RadtranFlux(*rin_, dist, k, j, il, iu);
     p = p->next;
   }
   pmy_block->pdebug->Leave();
@@ -172,19 +186,20 @@ void Radiation::CalculateRadiances(AthenaArray<Real> const& w, Real time,
 {
   pmy_block->pdebug->Call("Radiation::CalculateRadiances");
   Coordinates *pcoord = pmy_block->pcoord;
+  Real dist = stellar_dist_au_;
 
   RadiationBand *p = pband;
   if (pband == nullptr) return;
 
-  if (dynamic_) {
+  if (rtype == RadiationType::dynamic) {
     planet->ParentZenithAngle(&rin_->mu, &rin_->phi, time, pcoord->x2v(j), pcoord->x3v(k));
-    dist_ = planet->ParentDistanceInAu(time);
+    dist = planet->ParentDistanceInAu(time);
   }
 
   while (p != nullptr) {
     // iu ~= ie + 1
     p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
-    p->RadtranRadiance(*rin_, rout_, nrout_, dist_, k, j, il, iu);
+    p->RadtranRadiance(*rin_, rout_, nrout_, dist, k, j, il, iu);
     p = p->next;
   }
   pmy_block->pdebug->Leave();

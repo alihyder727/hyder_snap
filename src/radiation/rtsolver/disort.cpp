@@ -15,6 +15,7 @@
 #include "../../coordinates/coordinates.hpp"
 #include "../../communicator/communicator.hpp"
 #include "../../globals.hpp"
+#include "../../debugger/debugger.hpp"
 #include "../radiation_utils.hpp"
 #include "../radiation.hpp"
 
@@ -24,6 +25,10 @@
 
 void RadiationBand::init_disort(ParameterInput *pin)
 {
+  Debugger *pdbg = pmy_rad->pmy_block->pdebug;
+  pdbg->Enter("RadiationBand " + myname + "-disort");
+  std::stringstream &msg = pdbg->msg;
+
   ds.nlyr = pmy_rad->pmy_block->pmy_mesh->mesh_size.nx1;
   ds.nmom = pin->GetInteger("radiation", "npmom");
 
@@ -31,15 +36,65 @@ void RadiationBand::init_disort(ParameterInput *pin)
   ds.nphase = pin->GetInteger("disort", "nphase");
   ds.accur  = pin->GetOrAddReal("disort", "accur", 0.);
 
-  ds.bc.fisot = pin->GetOrAddReal("disort", "fisot", 0.);
-  ds.bc.albedo = pin->GetReal("disort", "albedo");
-  ds.bc.temis = pin->GetReal("disort", "temis");
+  // bottom boundary isotropic radiation
+  if (pin->DoesParameterExist("radiation", myname + ".fluor_K")) {
+    Real Tbot = pin->GetReal("radiation", myname + ".fluor_K");
+    ds.bc.fluor = Radiation::stefanBoltzmann*pow(Tbot, 4.);
+  } else
+    ds.bc.fluor = pin->GetOrAddReal("disort", "fluor", 0.);
+
+  msg << "- fluor = " << ds.bc.fluor << " w/m^2" << std::endl;
+
+  // bottom boundary albedo
+  if (pin->DoesParameterExist("radiation", myname + ".albedo"))
+    ds.bc.albedo = pin->GetReal("disort", "albedo");
+  else
+    ds.bc.albedo = pin->GetOrAddReal("disort", "albedo", 0.);
+
+  msg << "- albedo = " << ds.bc.albedo << std::endl;
+
+  // top boundary isotropic radiation
+  if (pin->DoesParameterExist("radiation", myname + ".fisot_K")) {
+    Real Ttop = pin->GetReal("radiation", myname + ".fisot_K");
+    ds.bc.fisot = Radiation::stefanBoltzmann*pow(Ttop, 4.);
+  } else
+    ds.bc.fisot = pin->GetOrAddReal("disort", "fisot", 0.);
+
+  msg << "- fisot = " << ds.bc.fisot << " w/m^2" << std::endl;
+
+  // top boundary direct beam
+  if (pin->DoesParameterExist("radiation", myname + ".fbeam_K")) {
+    Real Ttop = pin->GetReal("radiation", myname + ".fbeam_K");
+    ds.bc.fbeam = Radiation::stefanBoltzmann*pow(Ttop, 4.);
+  } else
+    ds.bc.fbeam = pin->GetOrAddReal("disort", "fbeam", 0.);
+
+  msg << "- fbeam = " << ds.bc.fbeam << " w/m^2" << std::endl;
+
+  // top boundary emissivity
+  if (pin->DoesParameterExist("radiation", myname + ".temis"))
+    ds.bc.temis = pin->GetReal("radiation", myname + ".temis");
+  else
+    ds.bc.temis = pin->GetOrAddReal("disort", "temis", 0.);
+
+  msg << "- temis = " << ds.bc.temis << std::endl;
 
   ds.flag.ibcnd = pin->GetOrAddBoolean("disort", "ibcnd", false);
   ds.flag.usrtau = pin->GetOrAddBoolean("disort", "usrtau", false);
   ds.flag.usrang = pin->GetOrAddBoolean("disort", "usrang",false);
   ds.flag.lamber = pin->GetOrAddBoolean("disort", "lamber", true);
-  ds.flag.planck = pin->GetOrAddBoolean("disort", "planck", false);
+
+  // calculate planck function
+  if (pin->DoesParameterExist("radiation", myname + ".planck"))
+    ds.flag.planck = pin->GetBoolean("radiation", myname + ".planck");
+  else
+    ds.flag.planck = pin->GetOrAddBoolean("disort", "planck", false);
+
+  if (ds.flag.planck)
+    msg << "- planck = true" << std::endl;
+  else
+    msg << "- planck = false" << std::endl;
+
   ds.flag.spher = pin->GetOrAddBoolean("disort", "spher", false);
   ds.flag.onlyfl = pin->GetOrAddBoolean("disort", "onlyfl", true);
   ds.flag.quiet = pin->GetOrAddBoolean("disort", "quiet", true);
@@ -81,6 +136,8 @@ void RadiationBand::init_disort(ParameterInput *pin)
     ds.umu[i] = umu[i];
   for (int i = 0; i < ds.nphi; ++i)
     ds.phi[i] = phi[i];
+
+  pdbg->Leave();
 }
 
 void RadiationBand::free_disort()
@@ -90,7 +147,7 @@ void RadiationBand::free_disort()
 }
 
 void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout, int nrout,
-  Real dist, int k, int j, int il, int iu)
+  Real dist_au, int k, int j, int il, int iu)
 {
   /* place holder for calculating radiance
   if (!ds.flag.onlyfl) {
@@ -102,7 +159,7 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout, 
   }*/
 }
 
-void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, int il, int iu)
+void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j, int il, int iu)
 {
   MeshBlock *pmb = pmy_rad->pmy_block;
   std::stringstream msg;
@@ -136,14 +193,15 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     bflxup(k,j,i) = bflxdn(k,j,i) = 0.;
 
   int r = pmb->pcomm->getRank(X1DIR);
-  //std::cout << "r = " << r << std::endl;
   // loop over lines in the band
   for (int n = 0; n < nspec; ++n) {
     // stellar source function
-    if (pmy_rad->GetBeam() < 0.)
-      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n].wav, dist);
-    else
-      ds.bc.fbeam = pmy_rad->GetBeam();
+    if (pmy_rad->rtype != RadiationType::band)
+      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n].wav, dist_au);
+    else {
+      ds.bc.fbeam /= dist_au*dist_au;
+      ds.bc.fisot /= dist_au*dist_au;
+    }
 
     // planck source function
     ds.wvnmlo = spec[n].wav;
@@ -153,33 +211,15 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist, int k, int j, in
     int dsize = (npmom+3)*(iu-il);
     packSpectralProperties(buf+r*dsize, tau_[n]+il, ssa_[n]+il, pmom_[n][il], iu-il, npmom+1);
     pmb->pcomm->gatherDataInPlace(buf, dsize, X1DIR);
-    /*if (Globals::my_rank == 0)
-      for (int i = 0; i < ds.nlyr; ++i)
-        std::cout << buf[i] << std::endl;*/
     unpackSpectralProperties(ds.dtauc, ds.ssalb, ds.pmom, buf, iu-il, npmom+1, nblocks, ds.nmom_nstr+1);
 
     // absorption
     std::reverse(ds.dtauc, ds.dtauc + ds.nlyr);
-    //if (Globals::my_rank == 0) {
-    //  for (int i = 0; i < ds.nlyr; ++i)
-    //    std::cout << i << " " << ds.dtauc[i] << std::endl;
-    //  std::cout << "aa" << std::endl;
-    //}
 
     // single scatering albedo
     std::reverse(ds.ssalb, ds.ssalb + ds.nlyr);
-    //if (Globals::my_rank == 0) {
-    //  for (int i = 0; i < ds.nlyr; ++i)
-    //    std::cout << i << " " << ds.ssalb[i] << std::endl;
-    //  std::cout << "aa" << std::endl;
-    //}
 
-    //! \bug npmom and nmom_nstr may not be consistent
     // Legendre coefficients
-    //for (int i = il; i < iu; ++i)
-      //for (int p = 0; p <= npmom; ++p)
-        //buf[(i-il)*(ds.nmom_nstr+1) + p] = pmom_[i][n][p];
-        //ds.pmom[(i-il)*(ds.nmom_nstr+1) + p] = 0.;
     std::reverse(ds.pmom, ds.pmom + ds.nlyr*(ds.nmom_nstr+1));
     for (int i = 0; i < ds.nlyr; ++i)
       std::reverse(ds.pmom + i*(ds.nmom_nstr+1), ds.pmom + (i+1)*(ds.nmom_nstr+1));

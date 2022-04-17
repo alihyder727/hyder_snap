@@ -22,7 +22,7 @@ Real saha_ionization_electron_density(Real T, Real num, Real ion_ev) {
   //Real kBT = T/300.*0.0256; // ev
   Real hbar = hPlanck_ev/(2.*M_PI);
   //Real hbarc = 1973E-8; // ev.cm
-  Real hbarc = hbar*Radiation::c_cgs;  // ev.cm
+  Real hbarc = hbar*Radiation::cLight_cgs;  // ev.cm
   Real mc2 = 0.511E6;   // ev
   Real debroglie_thermal = sqrt(2.*M_PI*hbarc*hbarc/(mc2*kBT)); // cm
   Real coeff = 2./pow(debroglie_thermal, 3)*exp(-ion_ev/kBT);   // cm^{-3}

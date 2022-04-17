@@ -69,7 +69,7 @@ double attenuation_appleton_hartree_nomag(double freq_GHz, double P_bar, double 
 
   double num = P/(Thermodynamics::kBoltz_cgs*T);  // cm^{-3}
   double colli_radius = 1.2E-8; // cm
-  double lambda = Radiation::c_cgs/freq;   // wavelength (cm)
+  double lambda = Radiation::cLight_cgs/freq;   // wavelength (cm)
   double omega = 2.*M_PI*freq;  // angular frequency (rad/s)
   // electron plasma frequency (rad/s)
   double omega_pe = sqrt(4.*M_PI*ne*e_cgs*e_cgs/me_cgs);

@@ -39,6 +39,9 @@ public:
   Absorber(RadiationBand *pband):
     pmy_band(pband), myname("NULL"), prev(nullptr), next(nullptr), imol_(-1), mixr_(0) {}
 
+  Absorber(RadiationBand *pband, std::string name):
+    pmy_band(pband), myname(name), prev(nullptr), next(nullptr), imol_(-1), mixr_(0) {}
+
   Absorber(RadiationBand *pband, std::string name, int imol, Real mixr = 1.): 
     pmy_band(pband), myname(name), prev(nullptr), next(nullptr), imol_(imol), mixr_(mixr)
   {

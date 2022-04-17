@@ -18,6 +18,7 @@
 #include "../radiation/radiation.hpp"
 #include "../radiation/hydrogen_cia.hpp"
 #include "../radiation/freedman_mean.hpp"
+#include "../radiation/freedman_simple.hpp"
 
 // global parameters
 Real grav, P0, T0, Z0, Tmin;
@@ -54,7 +55,9 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   } else if (name == "H2-He") {
     pabs->AddAbsorber(XizH2HeCIA(this, 0, xH2, xHe))
         ->LoadCoefficient(file);
-  } else if (name == "FREEDMAN") {
+  } else if (name == "freedman_simple") {
+    pabs->AddAbsorber(FreedmanSimple(this, pin));
+  } else if (name == "freedman_mean") {
     pabs->AddAbsorber(FreedmanMean(this));
   } else {
     msg << "### FATAL ERROR in RadiationBand::AddAbsorber"
