@@ -20,7 +20,7 @@ FreedmanSimple::FreedmanSimple(RadiationBand *pband, ParameterInput *pin):
   Absorber(pband, "freedman_simple")
 {
   char str[80];
-  sprintf(str, "%s.%s.scale", pband->myname, myname);
+  sprintf(str, "%s.%s.scale", pband->myname.c_str(), myname.c_str());
   scale_ = pin->GetOrAddReal("radiation", str, 1.);
 }
 

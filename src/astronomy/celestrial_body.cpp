@@ -46,20 +46,20 @@ void CelestrialBody::ReadCelestrialData_(ParameterInput *pin, std::string myname
 }
 
 CelestrialBody::CelestrialBody(ParameterInput *pin):
-  parent(NULL), spec_(NULL), il_(-1)
+  parent(nullptr), spec_(nullptr), il_(-1)
 {
   std::stringstream msg;
   name = pin->GetOrAddString("astronomy", "planet", "unknown");
   ReadCelestrialData_(pin, name);
 
-  std::string parent_name = pin->GetOrAddString("astronomy", name + ".parent", "");
-  if (!parent_name.empty())
+  if (pin->DoesParameterExist("astronomy", name + ".parent")) {
+    std::string parent_name = pin->GetString("astronomy", name + ".parent");
     parent = new CelestrialBody(pin, parent_name);
-  else
-    parent = NULL;
+  } else
+    parent = nullptr;
 
-  std::string sfile = pin->GetOrAddString("astronomy", name + ".spec_file", "");
-  if (!sfile.empty()) {
+  if (pin->DoesParameterExist("astronomy", name + ".spec_file")) {
+    std::string sfile = pin->GetString("astronomy", name + ".spec_file");
     if (!FileExists(sfile)) {
       msg << "### FATAL ERROR in initializing CelestrialBody"
           << std::endl << "Cannot open spectral file " << sfile;
@@ -73,19 +73,19 @@ CelestrialBody::CelestrialBody(ParameterInput *pin):
 }
 
 CelestrialBody::CelestrialBody(ParameterInput *pin, std::string myname):
-  parent(NULL), name(myname), spec_(NULL), il_(-1)
+  parent(nullptr), name(myname), spec_(nullptr), il_(-1)
 {
   std::stringstream msg;
   ReadCelestrialData_(pin, name);
 
-  std::string parent_name = pin->GetOrAddString("astronomy", name + ".parent", "");
-  if (!parent_name.empty())
+  if (pin->DoesParameterExist("astronomy", name + ".parent")) {
+    std::string parent_name = pin->GetString("astronomy", name + ".parent");
     parent = new CelestrialBody(pin, parent_name);
-  else
-    parent = NULL;
+  } else
+    parent = nullptr;
 
-  std::string sfile = pin->GetOrAddString("astronomy", name + ".spec_file", "");
-  if (!sfile.empty()) {
+  if (pin->DoesParameterExist("astronomy", name + ".spec_file")) {
+    std::string sfile = pin->GetString("astronomy", name + ".spec_file");
     if (!FileExists(sfile)) {
       msg << "### FATAL ERROR in initializing CelestrialBody"
           << std::endl << "Cannot open spectral file " << sfile;
@@ -100,7 +100,7 @@ CelestrialBody::CelestrialBody(ParameterInput *pin, std::string myname):
 
 CelestrialBody::~CelestrialBody()
 {
-  if (parent != NULL)
+  if (parent != nullptr)
     delete parent;
   delete [] spec_;
 }
@@ -112,7 +112,7 @@ void CelestrialBody::ReadSpectraFile(std::string sfile)
 
   nspec_ = spectrum.GetDim2();
 
-  if (spec_ != NULL) delete [] spec_;
+  if (spec_ != nullptr) delete [] spec_;
   spec_ = new float_triplet [nspec_];
   for (int i = 0; i < nspec_; ++i) {
     spec_[i].x = spectrum(i,0);
@@ -136,14 +136,22 @@ void CelestrialBody::ParentZenithAngle(Real *mu, Real *phi, Real time, Real cola
   *phi = 0.;
 }
 
-Real CelestrialBody::ParentInsolationFlux(Real wav, Real dist)
+Real CelestrialBody::ParentInsolationFlux(Real wav, Real dist_au)
 {
   Real dx;
   // assuming ascending in wav
   if ((il_ >= 0) && (wav < parent->spec_[il_].x)) il_ = -1;
   il_ = find_place_in_table(parent->nspec_, parent->spec_, wav, &dx, il_);
   Real flux = splint(wav, parent->spec_ + il_, dx);
-  return flux/(dist*dist);
+  return flux/(dist_au*dist_au);
+}
+
+Real CelestrialBody::ParentInsolationFlux(Real wlo, Real whi, Real dist_au)
+{
+  if (wlo == whi)
+    return ParentInsolationFlux(wlo, dist_au);
+  //! \todo : fix this function
+  return 0.;
 }
 
 Real CelestrialBody::ParentDistanceInAu(Real time)

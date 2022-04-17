@@ -219,12 +219,12 @@ void getPhaseMomentum(int iphas, Real gg, int npmom, Real *pmom)
 void packSpectralProperties(Real *buf, Real const *tau, Real const *ssa, Real const* pmom, int nlayer, int npmom)
 {
   for (int i = 0; i < nlayer; ++i)
-    *(buf++) = tau[i];
+    *(buf++) += tau[i];
   for (int i = 0; i < nlayer; ++i)
-    *(buf++) = ssa[i];
+    *(buf++) += ssa[i];
   for (int i = 0; i < nlayer; ++i)
     for (int j = 0; j < npmom; ++j)
-      *(buf++) = pmom[i*npmom+j];
+      *(buf++) += pmom[i*npmom+j];
 }
 
 void unpackSpectralProperties(Real *tau, Real *ssa, Real *pmom, Real const *buf, int slyr, int npmom, int nblocks, int npmom_max)

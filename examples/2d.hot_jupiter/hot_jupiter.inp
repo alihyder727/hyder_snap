@@ -8,36 +8,36 @@ problem_id  = hj # problem ID: basename of output filenames
 
 <output0>
 file_type   = rst
-dt          = 1.E6
+dt          = 1.E7
 
 <output1>
 file_type   = hst       # History data dump
-dt          = 1.E5      # time increment between outputs
+dt          = 10.E5      # time increment between outputs
 
 <output2>
 file_type   = pnetcdf    # Binary data dump
 variable    = prim      # variables to be output
-dt          = 1.E5      # time increment between outputs
+dt          = 10.E5      # time increment between outputs
 
 <output3>
 file_type   = pnetcdf
 variable    = uov
-dt          = 1.E5
+dt          = 10.E5
 
 <output4>
 file_type   = pnetcdf
 variable    = rad
-dt          = 1.E5
+dt          = 10.E5
 
 <output5>
 file_type   = pnetcdf
 variable    = diag
-dt          = 1.E5
+dt          = 10.E5
 
 <time>
 cfl_number  = 10.            # The Courant, Friedrichs, & Lewy (CFL) Number
 nlim        = -1            # cycle limit
-tlim        = 5.E5          # time limit
+tlim        = 100.E5          # time limit
 xorder      = 5             # horizontal reconstruction order
 integrator  = rk3           # integration method
 
@@ -94,7 +94,7 @@ HJ.orbit_p    = 3.        # day
 HJ.grav_eq    = 10.       # m/s^2
 HJ.equinox    = 0.
 
-Sun.spec_file = ../../src/radiation/spectra/sun.spec
+#Sun.spec_file = ../../src/radiation/spectra/sun.spec
 
 <radiation>
 dt            = 1000.
@@ -103,12 +103,12 @@ distance_au   = 0.06
 indir         = (0,)
 rtype         = band
 
-b1            = 100.  2000. 2  # IR band
+b1            = 100.  10000. 2  # IR band
 b1.planck     = true
 b1.absorbers  = freedman_simple
 b1.fluor_K    = 0.
 
-b2            = 2000.  50000. 2  # VIS band
+b2            = 10000.  50000. 2  # VIS band
 b2.planck     = false
 b2.absorbers  = freedman_simple
 b2.freedman_simple.scale = 0.5

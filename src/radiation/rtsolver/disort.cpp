@@ -194,22 +194,22 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j,
 
   int r = pmb->pcomm->getRank(X1DIR);
   // loop over lines in the band
-  for (int n = 0; n < nspec; ++n) {
+  for (int n = 1; n < nspec; ++n) {
     // stellar source function
     if (pmy_rad->rtype != RadiationType::band)
-      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n].wav, dist_au);
-    else {
-      ds.bc.fbeam /= dist_au*dist_au;
-      ds.bc.fisot /= dist_au*dist_au;
-    }
+      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n-1].wav, spec[n].wav, dist_au);
 
     // planck source function
-    ds.wvnmlo = spec[n].wav;
+    ds.wvnmlo = spec[n-1].wav;
     ds.wvnmhi = spec[n].wav;
 
     // pack data
     int dsize = (npmom+3)*(iu-il);
+    std::fill(buf + r*dsize, buf + (r+1)*dsize, 0.);
+    packSpectralProperties(buf+r*dsize, tau_[n-1]+il, ssa_[n-1]+il, pmom_[n-1][il], iu-il, npmom+1);
     packSpectralProperties(buf+r*dsize, tau_[n]+il, ssa_[n]+il, pmom_[n][il], iu-il, npmom+1);
+    for (int m = 0; m < dsize; ++m) buf[r*dsize+m] /= 2.;
+
     pmb->pcomm->gatherDataInPlace(buf, dsize, X1DIR);
     unpackSpectralProperties(ds.dtauc, ds.ssalb, ds.pmom, buf, iu-il, npmom+1, nblocks, ds.nmom_nstr+1);
 
@@ -248,19 +248,15 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j,
        * farea(il)/farea(i)
        */
       // flux up
-      flxup_[n][i] = ds_out.rad[m].flup;
+      flxup_[n-1][i] = ds_out.rad[m].flup;
 
       /*! \bug does not work for spherical geomtry, need to scale area using
        * farea(il)/farea(i)
        */
       // flux down
-      flxdn_[n][i] = ds_out.rad[m].rfldir + ds_out.rad[m].rfldn;
-      /*if (Globals::my_rank == 0) {
-        for (int i = 0; i <= ds.nlyr; ++i)
-          std::cout << i << " " << flxup_[n][i] << " " << flxdn_[n][i] << std::endl;
-      }*/
-      bflxup(k,j,i) += spec[n].wgt*flxup_[n][i];
-      bflxdn(k,j,i) += spec[n].wgt*flxdn_[n][i];
+      flxdn_[n-1][i] = ds_out.rad[m].rfldir + ds_out.rad[m].rfldn;
+      bflxup(k,j,i) += flxup_[n-1][i];
+      bflxdn(k,j,i) += flxdn_[n-1][i];
     }
   }
   delete[] buf;

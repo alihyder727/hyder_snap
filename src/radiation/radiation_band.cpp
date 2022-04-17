@@ -93,6 +93,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   std::fill(ssa_[0], ssa_[0] + nspec*ncells1, 0.);
   NewCArray(pmom_, nspec, ncells1, npmom+1);
   std::fill(pmom_[0][0], pmom_[0][0] + nspec*ncells1*(npmom+1), 0.);
+  //! \todo change nspec to nspec-1
   NewCArray(flxup_, nspec, ncells1+1);
   NewCArray(flxdn_, nspec, ncells1+1);
   NewCArray(toa_, nspec, nrout);
