@@ -4,24 +4,8 @@ from matplotlib.gridspec import GridSpec
 from pylab import *
 from astropy.io import fits
 from snapy.harp.utils import get_sample_pressure, get_inversion_vars
-import matplotlib
-matplotlib.use('Agg')
-
-parser = argparse.ArgumentParser()
-parser.add_argument('-i', '--input',
-    required = True,
-    help = 'mcmc case to plot'
-    )
-parser.add_argument('-d', '--dir',
-    default = '.',
-    help = 'save directory'
-    )
-parser.add_argument('--var',
-    choices = ['nh3', 'tem', 'tem,nh3', 'nh3,tem'],
-    default = 'nh3',
-    help = 'which variable to plot'
-    )
-args = vars(parser.parse_args())
+#import matplotlib
+#matplotlib.use('Agg')
 
 def plot_mcmc_sequence(name, par):
   nstep, nwalker, ndim = par.shape
@@ -87,6 +71,22 @@ def plot_mcmc_sequence(name, par):
   close()
 
 if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-i', '--input',
+      required = True,
+      help = 'mcmc case to plot'
+      )
+  parser.add_argument('-d', '--dir',
+      default = '.',
+      help = 'save directory'
+      )
+  parser.add_argument('--var',
+      choices = ['nh3', 'tem', 'tem,nh3', 'nh3,tem'],
+      default = 'nh3',
+      help = 'which variable to plot'
+      )
+  args = vars(parser.parse_args())
+
 # read parameters in input file
   pres = get_sample_pressure(args['input'] + '.inp')
   ivar = get_inversion_vars(args['input'] + '.inp')
@@ -100,6 +100,6 @@ if __name__ == '__main__':
     ndim = par.shape[2]
     plot_mcmc_sequence('tem', par[:,:,:ndim//2])
     plot_mcmc_sequence('nh3', par[:,:,ndim//2:])
-  else:
+  else :
     par = hdul[0].data
-    plot_mcmc_sequence('tem', par[:,:,ndim//2:])
+    plot_mcmc_sequence('tem', par)

@@ -4,44 +4,8 @@ from pylab import *
 from netCDF4 import Dataset
 from snapy.harp.utils import *
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib
-matplotlib.use('Agg')
-
-parser = argparse.ArgumentParser()
-parser.add_argument('-d',
-    action = 'store_true',
-    help = 'plot differential'
-    )
-parser.add_argument('-i', '--input',
-    required = True,
-    help = 'true default atmospheric profiles'
-    )
-parser.add_argument('--truth',
-    default = 'none',
-    help = 'true atmospheric profiles'
-    )
-parser.add_argument('--dir',
-    default = '.',
-    help = 'save directory'
-    )
-parser.add_argument('--var',
-    default = 'nh3',
-    help = 'which variable to plot'
-    )
-parser.add_argument('--pmax',
-    default = '100.',
-    help = 'maximum pressure'
-    )
-parser.add_argument('--pmin',
-    default = '0.2',
-    help = 'minimum pressure'
-    )
-parser.add_argument('--nburn',
-    default= '100',
-    help = 'number of burn-in steps'
-    )
-args = vars(parser.parse_args())
-pmin, pmax = float(args['pmin']), float(args['pmax'])
+#import matplotlib
+#matplotlib.use('Agg')
 
 def read_variable_simulate(name, case, out = 'out2'):
   try :
@@ -158,6 +122,9 @@ def plot_mcmc_profile(name, nburn):
     tb_truth = data[1::2]
     ld_truth = data[2::2]
 
+  tb_truth_err = tb_truth*0.02
+  ld_truth_err = [0.2 for x in ld_truth]
+
   # make plots
   fig, axs = subplots(2, 2, figsize = (12, 10),
     gridspec_kw = {'height_ratios':[1,4], 'width_ratios':[4,1]})
@@ -172,7 +139,7 @@ def plot_mcmc_profile(name, nburn):
   if args['truth'] != 'none':
     tb_truth -= tb_base
     ld_truth -= ld_base
-  if obsfile != 'none':
+  elif obsfile != 'none':
     diff = athinput('%s.inp' % args['input'])['inversion']['differential']
     if diff == 'false':
       tb_truth -= tb_base
@@ -206,12 +173,15 @@ def plot_mcmc_profile(name, nburn):
   ld_avg = mean(ld[:,nburn:,:], axis = (1,2))
   ld_std = std(ld[:,nburn:,:], axis = (1,2))
   for i in range(nfreq):
-    ax.errorbar(ld_avg[i], tb_avg[i], xerr = ld_std[i], yerr = tb_std[i], color = 'C%d' % (i+1))
+    #ax.errorbar(ld_avg[i], tb_avg[i], xerr = ld_std[i], yerr = tb_std[i], color = 'C%d' % (i+1))
+    ax.plot(ld_avg[i], tb_avg[i], 'o', ms = 10, alpha = 0.5, color = 'C%d' % (i+1))
 
   # plot truth or observation
   if args['truth'] != 'none' or obsfile != 'none':
     for i in range(nfreq):
-      ax.plot(ld_truth[i], tb_truth[i], '^', ms = 10, alpha = 0.5, color = 'C%d' % (i+1))
+      #ax.plot(ld_truth[i], tb_truth[i], '^', ms = 10, alpha = 0.5, color = 'C%d' % (i+1))
+      ax.errorbar(ld_truth[i], tb_truth[i], xerr = ld_truth_err[i], yerr = tb_truth_err[i],
+          color = 'C%d' % (i+1), capsize = 5)
 
   ax.xaxis.tick_top()
   ax.xaxis.set_label_position('top')
@@ -272,6 +242,42 @@ def plot_mcmc_profile(name, nburn):
   close()
 
 if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-d',
+      action = 'store_true',
+      help = 'plot differential'
+      )
+  parser.add_argument('-i', '--input',
+      required = True,
+      help = 'true default atmospheric profiles'
+      )
+  parser.add_argument('--truth',
+      default = 'none',
+      help = 'true atmospheric profiles'
+      )
+  parser.add_argument('--dir',
+      default = '.',
+      help = 'save directory'
+      )
+  parser.add_argument('--var',
+      default = 'nh3',
+      help = 'which variable to plot'
+      )
+  parser.add_argument('--pmax',
+      default = '100.',
+      help = 'maximum pressure'
+      )
+  parser.add_argument('--pmin',
+      default = '0.2',
+      help = 'minimum pressure'
+      )
+  parser.add_argument('--nburn',
+      default= '100',
+      help = 'number of burn-in steps'
+      )
+  args = vars(parser.parse_args())
+  pmin, pmax = float(args['pmin']), float(args['pmax'])
+
   # number of burn-in steps
   var_list = args['var'].split(',')
   args['nburn'] = int(args['nburn'])
