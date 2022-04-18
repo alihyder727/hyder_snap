@@ -99,6 +99,13 @@ void FreeCArray(T **a)
 }
 
 template<typename T>
+void FreeCArray2(T **a)
+{
+  delete[] a[0];
+  delete[] a;
+}
+
+template<typename T>
 void NewCArray(T*** &a, int n1, int n2, int n3)
 {
   a = new T** [n1];
@@ -114,6 +121,14 @@ void NewCArray(T*** &a, int n1, int n2, int n3)
 
 template<typename T>
 void FreeCArray(T ***a)
+{
+  delete[] a[0][0];
+  delete[] a[0];
+  delete[] a;
+}
+
+template<typename T>
+void FreeCArray3(T ***a)
 {
   delete[] a[0][0];
   delete[] a[0];
@@ -140,6 +155,15 @@ void NewCArray(T**** &a, int n1, int n2, int n3, int n4)
 
 template<typename T>
 void FreeCArray(T ****a)
+{
+  delete[] a[0][0][0];
+  delete[] a[0][0];
+  delete[] a[0];
+  delete[] a;
+}
+
+template<typename T>
+void FreeCArray4(T ****a)
 {
   delete[] a[0][0][0];
   delete[] a[0][0];

@@ -65,10 +65,10 @@ ImplicitSolver::~ImplicitSolver() {
   //FreeCArray(jacobian_);
 
 #ifdef MPI_PARALLEL
-  FreeCArray(req_send_data1_);
-  FreeCArray(req_send_data2_);
-  FreeCArray(req_send_data6_);
-  FreeCArray(req_send_data7_);
+  FreeCArray2(req_send_data1_);
+  FreeCArray2(req_send_data2_);
+  FreeCArray2(req_send_data6_);
+  FreeCArray2(req_send_data7_);
 #endif
 }
 
