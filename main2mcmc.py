@@ -24,12 +24,15 @@ def single_walker(wid, data, msk):
       else:
         pass
 
-def main_to_mcmc(fname):
+def main_to_mcmc(fname, field = 'main'):
   #fname = 'vla_ideal_saturn-n1000'
   #os.remove('%s-mcmc.nc' % fname)
   #shutil.copy('%s-main.nc' % fname, '%s-tmp.nc' % fname)
 
-  data = Dataset('%s-main.nc' % fname, 'r+')
+  if field == 'main':
+    data = Dataset('%s-main.nc' % fname, 'r+')
+  else:
+    data = Dataset('%s.%s.nc' % (fname, field), 'r+')
   msk = fits.open('%s.fits' % fname)[3].data
   nstep, nwalker = msk.shape
 
@@ -50,5 +53,11 @@ def main_to_mcmc(fname):
 
   data.close()
 
-  check_call('ncks -d time,0,%d %s-main.nc %s-mcmc.nc' % (nstep-1, fname, fname), shell = True)
-  os.remove('%s-main.nc' % fname)
+  if field == 'main':
+    check_call('ncks -d time,0,%d %s-main.nc %s-mcmc.nc' %
+      (nstep-1, fname, fname), shell = True)
+    os.remove('%s-main.nc' % fname)
+  else:
+    check_call('ncks -d time,0,%d %s.%s.nc %s.%s-mcmc.nc' %
+      (nstep-1, fname, field, fname, field), shell = True)
+    os.remove('%s.%s.nc' % (fname, field))
