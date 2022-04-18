@@ -19,6 +19,7 @@
 #include "../radiation/hydrogen_cia.hpp"
 #include "../radiation/freedman_mean.hpp"
 #include "../radiation/freedman_simple.hpp"
+#include "../physics/physics.hpp"
 
 // global parameters
 Real grav, P0, T0, Z0, Tmin;
@@ -195,6 +196,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
 
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
+  pphy->Initialize(phydro->w);
 
   FreeCArray(w1);
   delete[] z1;

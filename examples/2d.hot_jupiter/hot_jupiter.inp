@@ -80,6 +80,10 @@ implicit_flag = 3
 <thermodynamics>
 Rd            = 3779.       # Gas constant
 
+<physics>
+packages = fix_bot_temperature
+fix_bot_temperature.tau = 1000.
+
 <astronomy>
 planet        = HJ 
 HJ.parent     = Sun

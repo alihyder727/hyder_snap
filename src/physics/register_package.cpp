@@ -34,6 +34,7 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       tau_Tbot_ = pin->GetReal("physics", "fix_bot_temperature.tau");
       if (!hydro_bot_.IsAllocated())
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
+      msg << "- tau = " << tau_Tbot_ << " s" << std::endl;
       tem_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1);
     } else if (std::strcmp(p, "fix_bot_velocity") == 0) {
       msg << "- use physcis fix_bot_velocity" << std::endl;
