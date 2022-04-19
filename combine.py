@@ -125,5 +125,9 @@ if __name__ == '__main__':
     if not args['no_merge']:
       CombineFields(case, fields, args['output'], path = args['dir'])
     if not args['no_main2mcmc'] and fitsout:
-      main_to_mcmc(fitsout[:-5])
+      if args['no_merge']:
+        for field in fields:
+          main_to_mcmc(fitsout[:-5], fields)
+      else:
+        main_to_mcmc(fitsout[:-5])
   print('Done.\n')

@@ -113,6 +113,8 @@ def plot_mcmc_profile(name, nburn):
     var_truth = read_variable_truth(name, args['truth'])
     # read truth tbld
     tb_truth, ld_truth = read_tbld_truth(args['truth'], nfreq, i45)
+    tb_truth_err = array(tb_truth)*0.02
+    ld_truth_err = [0.2 for x in ld_truth]
 
   obsfile = athinput('%s.inp' % args['input'])['inversion']['obsfile']
   if obsfile != 'none':
@@ -121,9 +123,8 @@ def plot_mcmc_profile(name, nburn):
     data = genfromtxt('%s/%s' % (dirname, obsfile), max_rows = 13)
     tb_truth = data[1::2]
     ld_truth = data[2::2]
-
-  tb_truth_err = tb_truth*0.02
-  ld_truth_err = [0.2 for x in ld_truth]
+    tb_truth_err = array(tb_truth)*0.02
+    ld_truth_err = [0.2 for x in ld_truth]
 
   # make plots
   fig, axs = subplots(2, 2, figsize = (12, 10),
@@ -146,6 +147,7 @@ def plot_mcmc_profile(name, nburn):
       ld_truth -= ld_base
 
   # plot differential
+  if name == 'tem': args['d'] = True
   if args['d']:
     var -= var_base.reshape(1,nlevel,1)
     if args['truth'] != 'none':

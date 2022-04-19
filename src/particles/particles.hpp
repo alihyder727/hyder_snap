@@ -13,25 +13,34 @@
 class MeshBlock;
 class ParticleBuffer;
 
+//! Particles represent a particle group of sample chemical composition
 class Particles {
   friend class ParticleBuffer;
 public:
 // data
+  //! pointer to parent MeshBlock
   MeshBlock* pmy_block;
+  //! overall name of the particle group
   std::string myname;
+  //! pointers to the previous and the next particle group
   Particles *prev, *next;
+  //! pointer to ParticleBuffer
   ParticleBuffer *ppb;
+  //! aggregated density on Eulerian grid
   AthenaArray<Real> u;
-  //! particle storage. mp1 is for multi-stage integration
+  //! particle storage. mp1 is reserved for multi-stage integration
   std::vector<MaterialPoint> mp, mp1;
 
 // functions
   Particles(MeshBlock *pmb, ParameterInput *pin);
+  //! @param nct number of categories
+  //! @param name name of the particle group
   Particles(MeshBlock *pmb, ParameterInput *pin, std::string name, int nct);
   virtual ~Particles();
   Particles(Particles const& other);
   //Particles& operator=(Particles const& other);
 
+  //! add a new particle group to the linked list
   template<typename T> Particles* AddParticles(T const& other) {
     T* pt = new T(other);
     Particles *p = this;
@@ -41,15 +50,18 @@ public:
     p->next->next = nullptr;
     return p->next;
   }
-
+  
+  //! return category name
   std::string CategoryName(int i) const {
     return cnames_.at(i);
   }
 
+  //! return molecular weight
   Real GetMolecularWeight(int n) const {
     return mu_[n];
   }
 
+  //! return Cv
   Real GetCv(int n) const {
     return cc_[n];
   }
@@ -72,7 +84,9 @@ public:
 
   Particles* FindParticle(std::string name);
   void Initialize();
+  //! aggregate the density of particles to Eulerian grid
   void AggregateDensity(AthenaArray<Real> &c, std::vector<MaterialPoint> &mp);
+
   //! create or destroy particles after chemistry
   void Particulate(std::vector<MaterialPoint> &mp, AthenaArray<Real> const& c);
 
