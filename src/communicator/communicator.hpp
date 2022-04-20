@@ -13,16 +13,20 @@
 #include "../athena.hpp"
 
 class MeshBlock;
+struct NeighborBlock;
 
 class Communicator {
 public:
   Communicator(MeshBlock *pmb);
   ~Communicator();
-  int getRank(CoordinateDirection dir);
+  int getRank(CoordinateDirection dir) const;
   void setColor(CoordinateDirection dir);
   //void reduceData23(Real *send, Real *recv);
-  void gatherData(Real *send, Real *recv, int size, CoordinateDirection dir);
-  void gatherDataInPlace(Real *recv, int size, CoordinateDirection dir);
+  void gatherData(Real *send, Real *recv, int size, CoordinateDirection dir) const;
+  void gatherDataInPlace(Real *recv, int size, CoordinateDirection dir) const;
+
+  NeighborBlock const* findBotNeighbor() const;
+  NeighborBlock const* findTopNeighbor() const;
 
 private:
   MeshBlock *pmy_block_;

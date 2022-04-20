@@ -196,7 +196,6 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   }
 
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
-  pphy->Initialize(phydro->w);
 
   FreeCArray(w1);
   delete[] z1;

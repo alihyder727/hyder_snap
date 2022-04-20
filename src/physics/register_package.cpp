@@ -115,7 +115,7 @@ void Physics::Initialize(AthenaArray<Real> const& w)
 {
   MeshBlock *pmb = pmy_block;
 
-  // find top and bot neighbor
+  /* find top and bot neighbor
   NeighborBlock ntop, nbot;
   bool has_top_neighbor = false;
   bool has_bot_neighbor = false;
@@ -135,7 +135,7 @@ void Physics::Initialize(AthenaArray<Real> const& w)
                   | BOT_HEATING);
 
   if (has_top_neighbor)
-    ptm->RemoveTask(TOP_COOLING);
+    ptm->RemoveTask(TOP_COOLING);*/
 
   for (int k = pmb->ks; k <= pmb->ke; ++k)
     for (int j = pmb->js; j <= pmb->je; ++j) {

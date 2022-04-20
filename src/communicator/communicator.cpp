@@ -29,7 +29,7 @@ Communicator::~Communicator()
   delete[] brank_;
 }
 
-int Communicator::getRank(CoordinateDirection dir)
+int Communicator::getRank(CoordinateDirection dir) const
 {
   int r = 0;
   int b = brank_[Globals::my_rank];
@@ -40,7 +40,7 @@ int Communicator::getRank(CoordinateDirection dir)
   return r;
 }
 
-void Communicator::gatherData(Real *send, Real *recv, int size, CoordinateDirection dir)
+void Communicator::gatherData(Real *send, Real *recv, int size, CoordinateDirection dir) const
 {
 #ifdef MPI_PARALLEL
   MPI_Comm comm;
@@ -52,7 +52,7 @@ void Communicator::gatherData(Real *send, Real *recv, int size, CoordinateDirect
 #endif
 }
 
-void Communicator::gatherDataInPlace(Real *recv, int size, CoordinateDirection dir)
+void Communicator::gatherDataInPlace(Real *recv, int size, CoordinateDirection dir) const
 {
 #ifdef MPI_PARALLEL
   MPI_Comm comm;
@@ -60,4 +60,28 @@ void Communicator::gatherDataInPlace(Real *recv, int size, CoordinateDirection d
   MPI_Allgather(MPI_IN_PLACE, 0, 0, recv, size, MPI_ATHENA_REAL, comm);
   MPI_Comm_free(&comm);
 #endif
+}
+
+NeighborBlock const* Communicator::findBotNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *pbot = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == -1) && (nb->ni.ox2 == 0) && (nb->ni.ox3 == 0))
+      pbot = nb;
+  }
+  return pbot;
+}
+
+NeighborBlock const* Communicator::findTopNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *ptop = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == 1) && (nb->ni.ox2 == 0) && (nb->ni.ox3 == 0))
+      ptop = nb;
+  }
+  return ptop;
 }

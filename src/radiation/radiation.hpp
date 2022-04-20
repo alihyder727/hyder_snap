@@ -105,6 +105,11 @@ public:
   void AddRadiativeFluxes(AthenaArray<Real>& x1flux,
     int k, int j, int il, int iu);
 
+  // restart functions
+  size_t RestartDataSizeInBytes();
+  size_t DumpRestartData(char *pdst);
+  size_t LoadRestartData(char *psrc);
+
 protected:
   // reserved incoming and outgoing rays
   Direction *rin_, *rout_;

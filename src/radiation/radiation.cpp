@@ -224,3 +224,46 @@ void Radiation::AddRadiativeFluxes(AthenaArray<Real>& x1flux,
   }
   pmb->pdebug->Leave();
 }
+
+size_t Radiation::RestartDataSizeInBytes()
+{
+  size_t size = 0;
+
+  RadiationBand *p = pband;
+  while (p != nullptr) {
+    size += p->bflxup.GetSizeInBytes() + p->bflxdn.GetSizeInBytes();
+    p = p->next;
+  }
+
+  return size;
+}
+
+size_t Radiation::DumpRestartData(char *pdst)
+{
+  RadiationBand *p = pband;
+  int offset = 0;
+  while (p != nullptr) {
+    std::memcpy(pdst + offset, p->bflxup.data(), p->bflxup.GetSizeInBytes());
+    offset += p->bflxup.GetSizeInBytes();
+    std::memcpy(pdst + offset, p->bflxdn.data(), p->bflxdn.GetSizeInBytes());
+    offset += p->bflxdn.GetSizeInBytes();
+    p = p->next;
+  }
+
+  return RestartDataSizeInBytes();
+}
+
+size_t Radiation::LoadRestartData(char *psrc)
+{
+  RadiationBand *p = pband;
+  int offset = 0;
+  while (p != nullptr) {
+    std::memcpy(p->bflxup.data(), psrc + offset, p->bflxup.GetSizeInBytes());
+    offset += p->bflxup.GetSizeInBytes();
+    std::memcpy(p->bflxdn.data(), psrc + offset, p->bflxdn.GetSizeInBytes());
+    offset += p->bflxdn.GetSizeInBytes();
+    p = p->next;
+  }
+
+  return RestartDataSizeInBytes();
+}

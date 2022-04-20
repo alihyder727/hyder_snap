@@ -27,6 +27,7 @@
 #include "../mesh/mesh.hpp"
 #include "../parameter_input.hpp"
 #include "../scalars/scalars.hpp"
+#include "../radiation/radiation.hpp"
 #include "../physics/physics.hpp"
 #include "../particles/particles.hpp"
 #include "outputs.hpp"
@@ -201,7 +202,9 @@ void RestartOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool force_wr
                   pmb->ruser_meshblock_data[n].GetSizeInBytes());
       pdata += pmb->ruser_meshblock_data[n].GetSizeInBytes();
     }
-    // physics data:
+    // radiation data
+    pdata += pmb->prad->DumpRestartData(pdata);
+    // physics data
     pdata += pmb->pphy->DumpRestartData(pdata);
     // particle data
     if (pmb->ppart != nullptr)
