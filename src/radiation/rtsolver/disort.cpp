@@ -192,6 +192,11 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j,
   for (int i = il; i <= iu; ++i)
     bflxup(k,j,i) = bflxdn(k,j,i) = 0.;
 
+  Coordinates *pcoord = pmy_rad->pmy_block->pcoord;
+  AthenaArray<Real> farea(iu+1), vol(iu+1);
+  pcoord->Face1Area(k, j, il, iu, farea);
+  pcoord->CellVolume(k, j, il, iu, vol);
+
   int r = pmb->pcomm->getRank(X1DIR);
   // loop over lines in the band
   for (int n = 1; n < nspec; ++n) {
@@ -257,6 +262,25 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j,
       flxdn_[n-1][i] = ds_out.rad[m].rfldir + ds_out.rad[m].rfldn;
       bflxup(k,j,i) += flxup_[n-1][i];
       bflxdn(k,j,i) += flxdn_[n-1][i];
+    }
+
+    // spherical correction by XIZ
+    // xiz 2022 flux scaling so that the heating rate is the same as the plane-parallel scheme
+    // volheating scaling: first calculate flux divergence from DISORT using Plane-parallel in a cell
+    // then mulitpled by the cell volume divided by dx1f
+    // then solve for F using F1*S1-F2*S2 = volheating
+    // the top fluxes are the still the same as the plane-paralell values
+    Real volh, bflxup1 = bflxup(k,j,iu), bflxdn1 = bflxdn(k,j,iu);
+    for (int i = iu-1; i >= il; --i) {
+      // upward
+      volh = (bflxup1 - bflxup(k,j,i))/pcoord->dx1f(i)*vol(i);
+      bflxup1 = bflxup(k,j,i);
+      bflxup(k,j,i) = (bflxup(k,j,i+1)*farea(i+1) - volh)/farea(i);
+
+      // downward
+      volh = (bflxdn1 - bflxdn(k,j,i))/pcoord->dx1f(i)*vol(i);
+      bflxdn1 = bflxdn(k,j,i);
+      bflxdn(k,j,i) = (bflxdn(k,j,i+1)*farea(i+1) - volh)/farea(i);
     }
   }
   delete[] buf;
