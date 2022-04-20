@@ -219,7 +219,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
   //if (ppart != nullptr)
   //ppart->Initialize();
-  pphy->Initialize(phydro->w);
+  //pphy->Initialize(phydro->w);
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
 
   FreeCArray(w1);

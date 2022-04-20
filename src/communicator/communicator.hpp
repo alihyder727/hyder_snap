@@ -22,8 +22,8 @@ public:
   int getRank(CoordinateDirection dir) const;
   void setColor(CoordinateDirection dir);
   //void reduceData23(Real *send, Real *recv);
-  void gatherData(Real *send, Real *recv, int size, CoordinateDirection dir) const;
-  void gatherDataInPlace(Real *recv, int size, CoordinateDirection dir) const;
+  void gatherData(Real *send, Real *recv, int size) const;
+  void gatherDataInPlace(Real *recv, int size) const;
 
   NeighborBlock const* findBotNeighbor() const;
   NeighborBlock const* findTopNeighbor() const;

@@ -40,7 +40,7 @@ int Communicator::getRank(CoordinateDirection dir) const
   return r;
 }
 
-void Communicator::gatherData(Real *send, Real *recv, int size, CoordinateDirection dir) const
+void Communicator::gatherData(Real *send, Real *recv, int size) const
 {
 #ifdef MPI_PARALLEL
   MPI_Comm comm;
@@ -52,7 +52,7 @@ void Communicator::gatherData(Real *send, Real *recv, int size, CoordinateDirect
 #endif
 }
 
-void Communicator::gatherDataInPlace(Real *recv, int size, CoordinateDirection dir) const
+void Communicator::gatherDataInPlace(Real *recv, int size) const
 {
 #ifdef MPI_PARALLEL
   MPI_Comm comm;
