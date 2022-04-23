@@ -10,7 +10,7 @@
 
 Athena++ Atmospheric Dynamics Code
 
-## Coding convections
+## Coding conventions
 1. C++ Function name is a concatenated verb phrase with the verb having all lowercase letters
    and all dependent words capitalizing the first letter.
    - Exception #1: conversion function can named with either capitalized names or
