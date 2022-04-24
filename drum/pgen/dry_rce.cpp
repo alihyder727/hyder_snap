@@ -43,7 +43,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
       }
 }
 
-void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
+void RadiationBand::addAbsorber(std::string name, std::string file, ParameterInput *pin)
 {
   Real xHe = pin->GetOrAddReal("radiation", "xHe", 0.136);
   Real xH2 = 1. - xHe;
@@ -51,17 +51,17 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   std::stringstream msg;
 
   if (name == "H2-H2") {
-    pabs->AddAbsorber(XizH2H2CIA(this, 0, xH2))
-        ->LoadCoefficient(file);
+    pabs->addAbsorber(XizH2H2CIA(this, 0, xH2))
+        ->loadCoefficient(file);
   } else if (name == "H2-He") {
-    pabs->AddAbsorber(XizH2HeCIA(this, 0, xH2, xHe))
-        ->LoadCoefficient(file);
+    pabs->addAbsorber(XizH2HeCIA(this, 0, xH2, xHe))
+        ->loadCoefficient(file);
   } else if (name == "freedman_simple") {
-    pabs->AddAbsorber(FreedmanSimple(this, pin));
+    pabs->addAbsorber(FreedmanSimple(this, pin));
   } else if (name == "freedman_mean") {
-    pabs->AddAbsorber(FreedmanMean(this));
+    pabs->addAbsorber(FreedmanMean(this));
   } else {
-    msg << "### FATAL ERROR in RadiationBand::AddAbsorber"
+    msg << "### FATAL ERROR in RadiationBand::addAbsorber"
         << std::endl << "unknow absorber: '" << name <<"' ";
     ATHENA_ERROR(msg);
   }
@@ -191,7 +191,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   while (p != NULL) {
     for (int k = kl; k <= ku; ++k)
       for (int j = jl; j <= ju; ++j)
-        p->SetSpectralProperties(phydro->w, k, j, is, ie);
+        p->setSpectralProperties(phydro->w, k, j, is, ie);
     p = p->next;
   }
 

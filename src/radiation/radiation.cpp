@@ -12,6 +12,7 @@
 #include "../math/core.h"
 #include "../debugger/debugger.hpp"
 #include "radiation.hpp"
+#include "radiation_utils.hpp"  // setRadiationFlags
 
 Real const Radiation::hPlanck = 6.63E-34;
 Real const Radiation::hPlanck_cgs = 6.63E-27;
@@ -20,69 +21,152 @@ Real const Radiation::cLight_cgs = 3.E10;
 Real const Radiation::stefanBoltzmann = 5.670374419E-8;
 
 Radiation::Radiation(MeshBlock *pmb):
-  pmy_block(pmb), pband(nullptr), rtype(RadiationType::fixed),
-  cooldown(0.), current(0.), nrin_(1), nrout_(1), stellar_dist_au_(1.), planet(nullptr)
-{
-  rin_ = new Direction [1];
-  rout_ = new Direction [1];
-}
+  pmy_block(pmb), pband(nullptr), rflags(0LL),
+  cooldown(0.), current(0.), planet(nullptr), stellarDistance_au_(1.)
+{}
 
 Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin):
-  pmy_block(pmb), pband(nullptr)
+  pmy_block(pmb), pband(nullptr), rflags(0LL)
 {
   pmb->pdebug->Enter("Radiation");
   RadiationBand *plast = pband;
   std::stringstream &msg = pmb->pdebug->msg;
 
-  // incoming radiation direction (mu,phi) in degree
-  std::string str = pin->GetOrAddString("radiation", "indir", "(0.,0.)");
-  std::vector<std::string> dstr = Vectorize<std::string>(str.c_str());
-  nrin_ = dstr.size();
-  rin_ = new Direction [nrin_];
-  for (int i = 0; i < nrin_; ++i) {
-    rin_[i].phi = 0.;
-    sscanf(dstr[i].c_str(), "(%lf,%lf)", &rin_[i].mu, &rin_[i].phi);
-    rin_[i].mu = cos(deg2rad(rin_[i].mu));
-    rin_[i].phi = deg2rad(rin_[i].phi);
-    //std::cout << rout[i].mu << " " << rout[i].phi << std::endl;
-  }
-
-  // outgoing radiation direction (mu,phi) in degree
-  str = pin->GetOrAddString("radiation", "outdir", "(0.,0.)");
-  dstr = Vectorize<std::string>(str.c_str());
-  nrout_ = dstr.size();
-  rout_ = new Direction [nrout_];
-  for (int i = 0; i < nrout_; ++i) {
-    rout_[i].phi = 0.;
-    sscanf(dstr[i].c_str(), "(%lf,%lf)", &rout_[i].mu, &rout_[i].phi);
-    rout_[i].mu = cos(deg2rad(rout_[i].mu));
-    rout_[i].phi = deg2rad(rout_[i].phi);
-    //std::cout << rout[i].mu << " " << rout[i].phi << std::endl;
-  }
+  // radiation flags
+  setRadiationFlags(&rflags, pin->GetOrAddString("radiation", "flags", ""));
 
   // distance to parent star
-  stellar_dist_au_ = pin->GetOrAddReal("radiation", "distance_au", 1.);
-  msg << "- stellar distance = " << stellar_dist_au_ << " au" << std::endl;
+  stellarDistance_au_ = pin->GetOrAddReal("radiation", "distance_au", 1.);
+  msg << "- stellar distance = " << stellarDistance_au_ << " au" << std::endl;
 
-  // radiation type
-  std::string rtype_str = pin->GetOrAddString("radiation", "rtype", "fixed");
-  if (rtype_str == "fixed")
-    rtype = RadiationType::fixed;
-  else if (rtype_str == "dynamic")
-    rtype = RadiationType::dynamic;
-  else if (rtype_str == "band")
-    rtype = RadiationType::band;
-  else {
-    msg << "### FATAL ERROR in function Radiation::Radiation"
-        << std::endl << "rtype: " << rtype_str << "unrecognized"
-        << std::endl;
-    ATHENA_ERROR(msg);
-  }
-  msg << "- radiation type = " << rtype_str << std::endl;
+  // incoming radiation direction (mu,phi) in degree
+  std::string str = pin->GetOrAddString("radiation", "indir", "(0.,0.)");
+  readRadiationDirections(rayInput, str);
 
-  // radiation band
+  // radiation bands
   int b = 1;
+  readRadiationBands(pin, b);
+
+  // time control
+  cooldown = pin->GetOrAddReal("radiation", "dt", 0.);
+  current = 0.;
+
+  planet = new CelestrialBody(pin);
+  pmb->pdebug->Leave();
+}
+
+Radiation::~Radiation()
+{
+  if (pband != nullptr) {
+    while (pband->prev != nullptr) // should not be true
+      delete pband->prev;
+    while (pband->next != nullptr)
+      delete pband->next;
+    delete pband;
+  }
+  delete planet;
+}
+
+RadiationBand* Radiation::getBand(int n) {
+  std::stringstream msg;
+  RadiationBand* p = pband;
+  int b = 0;
+  while (p != nullptr) {
+    if (b++ == n) break;
+    p = p->next;
+  }
+  return p;
+}
+
+int Radiation::getNumBands() {
+  int n = 0;
+  RadiationBand* p = pband;
+  while (p != nullptr) {
+    p = p->next;
+    n++;
+  }
+  return n;
+}
+
+void Radiation::calculateRadiativeFluxes(AthenaArray<Real> const& w, Real time,
+  int k, int j, int il, int iu)
+{
+  pmy_block->pdebug->Call("Radiation::calculateRadiativeFluxes");
+  Coordinates *pcoord = pmy_block->pcoord;
+  Real dist = stellarDistance_au_;
+
+  RadiationBand *p = pband;
+  if (pband == nullptr) return;
+
+  Direction ray;
+  if (rflags & RadiationFlags::Dynamic) {
+    planet->ParentZenithAngle(&ray.mu, &ray.phi, time, pcoord->x2v(j), pcoord->x3v(k));
+    dist = planet->ParentDistanceInAu(time);
+  } else {
+    ray = rayInput[0];
+  }
+
+  while (p != nullptr) {
+    // iu ~= ie + 1
+    p->setSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
+    p->calculateRadiativeFlux(ray, dist, k, j, il, iu);
+    p = p->next;
+  }
+  pmy_block->pdebug->Leave();
+}
+
+void Radiation::calculateRadiances(AthenaArray<Real> const& w, Real time,
+  int k, int j, int il, int iu)
+{
+  pmy_block->pdebug->Call("Radiation::calculateRadiances");
+  Coordinates *pcoord = pmy_block->pcoord;
+  Real dist = stellarDistance_au_;
+
+  RadiationBand *p = pband;
+  if (pband == nullptr) return;
+
+  Direction ray;
+  if (rflags & RadiationFlags::Dynamic) {
+    planet->ParentZenithAngle(&ray.mu, &ray.phi, time, pcoord->x2v(j), pcoord->x3v(k));
+    dist = planet->ParentDistanceInAu(time);
+  }
+
+  while (p != nullptr) {
+    // iu ~= ie + 1
+    p->setSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
+    p->calculateRadiance(ray, dist, k, j, il, iu);
+    p = p->next;
+  }
+  pmy_block->pdebug->Leave();
+}
+
+void Radiation::addRadiativeFluxes(AthenaArray<Real>& x1flux, 
+  int k, int j, int il, int iu)
+{
+  RadiationBand *p = pband;
+  if (pband == nullptr) return;
+
+  MeshBlock *pmb = pmy_block;
+  pmb->pdebug->Call("Radiation::addRadiativeFluxes");
+
+  // x1-flux divergence
+  p = pband;
+  while (p != nullptr) {
+#pragma omp simd
+    for (int i = il; i <= iu; ++i)
+      x1flux(IEN,k,j,i) += p->bflxup(k,j,i) - p->bflxdn(k,j,i);
+    p = p->next;
+  }
+  pmb->pdebug->Leave();
+}
+
+void Radiation::readRadiationBands(ParameterInput *pin, int &b)
+{
   char name[80];
+  RadiationBand *plast = pband;
+  while (plast != nullptr)
+    plast = plast->next;
+
   while (true) {
     sprintf(name, "b%d", b);
     if (!pin->DoesParameterExist("radiation", name))
@@ -100,132 +184,28 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin):
     b++;
   }
 
-  cooldown = pin->GetOrAddReal("radiation", "dt", 0.);
-  current = 0.;
-
-  planet = new CelestrialBody(pin);
-  pmb->pdebug->Leave();
-}
-
-Radiation::~Radiation()
-{
-  if (pband != nullptr) {
-    while (pband->prev != nullptr) // should not be true
-      delete pband->prev;
-    while (pband->next != nullptr)
-      delete pband->next;
-    delete pband;
+  if (pin->DoesParameterExist("radiation", "bands")) {
+    ParameterInput* pin_next = new ParameterInput;
+    IOWrapper infile;
+    infile.Open(pin->GetString("radiation", "bands").c_str(), IOWrapper::FileMode::read);
+    pin_next->LoadFromFile(infile);
+    infile.Close();
+    readRadiationBands(pin_next, b);
+    delete pin_next;
   }
-
-  delete[] rin_;
-  delete[] rout_;
-  delete planet;
 }
 
-RadiationBand* Radiation::GetBand(int n) {
-  std::stringstream msg;
-  RadiationBand* p = pband;
-  int b = 0;
-  while (p != nullptr) {
-    if (b++ == n) break;
-    p = p->next;
-  }
-  return p;
-}
-
-int Radiation::GetNumBands() {
-  int n = 0;
-  RadiationBand* p = pband;
-  while (p != nullptr) {
-    p = p->next;
-    n++;
-  }
-  return n;
-}
-
-std::vector<Direction> Radiation::GetOutgoingRays() {
-  std::vector<Direction> dir;
-  for (int i = 0; i < nrout_; ++i)
-    dir.push_back(rout_[i]);
-  return dir;
-}
-
-std::vector<Direction> Radiation::GetIncomingRays() {
-  std::vector<Direction> dir;
-  for (int i = 0; i < nrin_; ++i)
-    dir.push_back(rin_[i]);
-  return dir;
-}
-
-void Radiation::CalculateFluxes(AthenaArray<Real> const& w, Real time,
-  int k, int j, int il, int iu)
-{
-  pmy_block->pdebug->Call("Radiation::CalculateFluxes");
-  Coordinates *pcoord = pmy_block->pcoord;
-  Real dist = stellar_dist_au_;
-
+int Radiation::getTotalNumberOutgoingRays() {
+  int num = 0;
   RadiationBand *p = pband;
-  if (pband == nullptr) return;
-
-  if (rtype == RadiationType::dynamic) {
-    planet->ParentZenithAngle(&rin_->mu, &rin_->phi, time, pcoord->x2v(j), pcoord->x3v(k));
-    dist = planet->ParentDistanceInAu(time);
-  }
-
   while (p != nullptr) {
-    // iu ~= ie + 1
-    p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
-    p->RadtranFlux(*rin_, dist, k, j, il, iu);
+    num += p->rayOutput.size();
     p = p->next;
   }
-  pmy_block->pdebug->Leave();
+  return num;
 }
 
-void Radiation::CalculateRadiances(AthenaArray<Real> const& w, Real time,
-  int k, int j, int il, int iu)
-{
-  pmy_block->pdebug->Call("Radiation::CalculateRadiances");
-  Coordinates *pcoord = pmy_block->pcoord;
-  Real dist = stellar_dist_au_;
-
-  RadiationBand *p = pband;
-  if (pband == nullptr) return;
-
-  if (rtype == RadiationType::dynamic) {
-    planet->ParentZenithAngle(&rin_->mu, &rin_->phi, time, pcoord->x2v(j), pcoord->x3v(k));
-    dist = planet->ParentDistanceInAu(time);
-  }
-
-  while (p != nullptr) {
-    // iu ~= ie + 1
-    p->SetSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
-    p->RadtranRadiance(*rin_, rout_, nrout_, dist, k, j, il, iu);
-    p = p->next;
-  }
-  pmy_block->pdebug->Leave();
-}
-
-void Radiation::AddRadiativeFluxes(AthenaArray<Real>& x1flux, 
-  int k, int j, int il, int iu)
-{
-  RadiationBand *p = pband;
-  if (pband == nullptr) return;
-
-  MeshBlock *pmb = pmy_block;
-  pmb->pdebug->Call("Radiation::AddRadiativeFluxes");
-
-  // x1-flux divergence
-  p = pband;
-  while (p != nullptr) {
-#pragma omp simd
-    for (int i = il; i <= iu; ++i)
-      x1flux(IEN,k,j,i) += p->bflxup(k,j,i) - p->bflxdn(k,j,i);
-    p = p->next;
-  }
-  pmb->pdebug->Leave();
-}
-
-size_t Radiation::RestartDataSizeInBytes()
+size_t Radiation::getRestartDataSizeInBytes()
 {
   size_t size = 0;
 
@@ -238,7 +218,7 @@ size_t Radiation::RestartDataSizeInBytes()
   return size;
 }
 
-size_t Radiation::DumpRestartData(char *pdst)
+size_t Radiation::dumpRestartData(char *pdst)
 {
   RadiationBand *p = pband;
   int offset = 0;
@@ -250,10 +230,10 @@ size_t Radiation::DumpRestartData(char *pdst)
     p = p->next;
   }
 
-  return RestartDataSizeInBytes();
+  return getRestartDataSizeInBytes();
 }
 
-size_t Radiation::LoadRestartData(char *psrc)
+size_t Radiation::loadRestartData(char *psrc)
 {
   RadiationBand *p = pband;
   int offset = 0;
@@ -265,5 +245,5 @@ size_t Radiation::LoadRestartData(char *psrc)
     p = p->next;
   }
 
-  return RestartDataSizeInBytes();
+  return getRestartDataSizeInBytes();
 }

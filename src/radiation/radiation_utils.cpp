@@ -1,6 +1,12 @@
+// C++ header
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <iomanip>
+
+// Athena++ header
+#include "../utils/utils.hpp" // Vectorize
+#include "../math/core.h" // deg2rad
 #include "radiation_utils.hpp"
 
 /*void Radiation::TotalFlux(AthenaArray<Real>& flux) const
@@ -196,7 +202,35 @@ void WriteHeatingRate(std::string fname, AthenaArray<Real> const& flux,
   }
 }*/
 
-void getPhaseMomentum(int iphas, Real gg, int npmom, Real *pmom)
+void setRadiationFlags(uint64_t *flags, std::string str)
+{
+  std::stringstream msg;
+  std::vector<std::string> dstr = Vectorize<std::string>(str.c_str(), " ,");
+  for (int i = 0; i < dstr.size(); ++i) {
+    if (dstr[i] == "static") {
+      *flags &= !RadiationFlags::Dynamic;
+    } else if (dstr[i] == "dynamic") {
+      *flags |= RadiationFlags::Dynamic;
+    } else if (dstr[i] == "lbl") {
+      *flags &= !RadiationFlags::CorrelatedK;
+    } else if (dstr[i] == "ck") {
+      *flags |= RadiationFlags::CorrelatedK;
+    } else if (dstr[i] == "planck") {
+      *flags |= RadiationFlags::Planck;
+    } else if (dstr[i] == "spher") {
+      *flags |= RadiationFlags::Sphere;
+    } else if (dstr[i] == "only") {
+      *flags |= RadiationFlags::FluxOnly;
+    } else {
+      msg << "### FATAL ERROR in function Radiation::Radiation"
+          << std::endl << "flag:" << dstr[i] << "unrecognized"
+          << std::endl;
+      ATHENA_ERROR(msg);
+    }
+  }
+}
+
+void getPhaseHenyeyGreenstein(Real *pmom, int iphas, Real gg, int npmom)
 {
   pmom[0] = 1.; 
   for (int k =1; k <npmom; k++)
@@ -219,12 +253,12 @@ void getPhaseMomentum(int iphas, Real gg, int npmom, Real *pmom)
 void packSpectralProperties(Real *buf, Real const *tau, Real const *ssa, Real const* pmom, int nlayer, int npmom)
 {
   for (int i = 0; i < nlayer; ++i)
-    *(buf++) += tau[i];
+    *(buf++) = tau[i];
   for (int i = 0; i < nlayer; ++i)
-    *(buf++) += ssa[i];
+    *(buf++) = ssa[i];
   for (int i = 0; i < nlayer; ++i)
     for (int j = 0; j < npmom; ++j)
-      *(buf++) += pmom[i*npmom+j];
+      *(buf++) = pmom[i*npmom+j];
 }
 
 void unpackSpectralProperties(Real *tau, Real *ssa, Real *pmom, Real const *buf, int slyr, int npmom, int nblocks, int npmom_max)
@@ -241,5 +275,19 @@ void unpackSpectralProperties(Real *tau, Real *ssa, Real *pmom, Real const *buf,
       for (int j = npmom; j < npmom_max; ++j)
         pmom[n*slyr*npmom_max + i*npmom_max + j] = 0.;
     }
+  }
+}
+
+void readRadiationDirections(std::vector<Direction> &ray, std::string str)
+{
+  std::vector<std::string> dstr = Vectorize<std::string>(str.c_str());
+  int nray = dstr.size();
+  ray.resize(nray);
+
+  for (int i = 0; i < nray; ++i) {
+    ray[i].phi = 0.;
+    sscanf(dstr[i].c_str(), "(%lf,%lf)", &ray[i].mu, &ray[i].phi);
+    ray[i].mu = cos(deg2rad(ray[i].mu));
+    ray[i].phi = deg2rad(ray[i].phi);
   }
 }

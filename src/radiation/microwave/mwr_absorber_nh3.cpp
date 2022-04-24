@@ -53,7 +53,8 @@ MwrAbsorberNH3::MwrAbsorberNH3(RadiationBand *pband, std::vector<int> imols, Rea
   }
 }
 
-Real MwrAbsorberNH3::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
+Real MwrAbsorberNH3::getAttenuation(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {
   Real P = q[IPR]/1.E5; // pa -> bar
   Real P_idl = q[IPR]/1.E5; // pa -> bar
@@ -80,15 +81,15 @@ Real MwrAbsorberNH3::Attenuation(Real wave, Real const q[], Real const c[], Real
   Real abs;
 
   if (model_name_ == "Bellotti16")
-    abs = attenuation_NH3_Bellotti(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O);
+    abs = attenuation_NH3_Bellotti(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O);
   else if (model_name_ == "BellottiSwitch16")
-    abs = attenuation_NH3_Bellotti_switch(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O);
+    abs = attenuation_NH3_Bellotti_switch(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O);
   else if (model_name_ == "Devaraj")
-    abs = attenuation_NH3_Devaraj(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O);
+    abs = attenuation_NH3_Devaraj(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O);
   else if (model_name_ == "Radtran")
-    abs = attenuation_NH3_radtran(wave, P, T, XH2, XHe, XNH3);
+    abs = attenuation_NH3_radtran(wave1, P, T, XH2, XHe, XNH3);
   else // Hanley09
-    abs = attenuation_NH3_Hanley(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O, power_);
+    abs = attenuation_NH3_Hanley(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O, power_);
 
   return 100.*abs;  // 1/cm -> 1/m
 }

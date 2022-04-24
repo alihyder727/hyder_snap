@@ -85,11 +85,7 @@ void RadiationBand::init_disort(ParameterInput *pin)
   ds.flag.lamber = pin->GetOrAddBoolean("disort", "lamber", true);
 
   // calculate planck function
-  if (pin->DoesParameterExist("radiation", myname + ".planck"))
-    ds.flag.planck = pin->GetBoolean("radiation", myname + ".planck");
-  else
-    ds.flag.planck = pin->GetOrAddBoolean("disort", "planck", false);
-
+  ds.flag.planck = bflags & RadiationFlags::Planck;
   if (ds.flag.planck)
     msg << "- planck = true" << std::endl;
   else
@@ -146,8 +142,8 @@ void RadiationBand::free_disort()
   c_disort_out_free(&ds, &ds_out);
 }
 
-void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout, int nrout,
-  Real dist_au, int k, int j, int il, int iu)
+void RadiationBand::calculateRadiance(Direction ray, Real dist_au,
+    int k, int j, int il, int iu)
 {
   /* place holder for calculating radiance
   if (!ds.flag.onlyfl) {
@@ -159,7 +155,8 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout, 
   }*/
 }
 
-void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j, int il, int iu)
+void RadiationBand::calculateRadiativeFlux(Direction const ray, Real dist_au,
+    int k, int j, int il, int iu)
 {
   MeshBlock *pmb = pmy_rad->pmy_block;
   std::stringstream msg;
@@ -181,8 +178,8 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j,
     std::reverse(ds.temper, ds.temper + ds.nlyr+1);
   }
 
-  ds.bc.umu0 = rin.mu > 1.E-3 ? rin.mu : 1.E-3;
-  ds.bc.phi0 = rin.phi;
+  ds.bc.umu0 = ray.mu > 1.E-3 ? ray.mu : 1.E-3;
+  ds.bc.phi0 = ray.phi;
   if (ds.flag.planck) {
     ds.bc.btemp = ds.temper[ds.nlyr];
     ds.bc.ttemp = ds.temper[0];
@@ -197,24 +194,29 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j,
   pcoord->Face1Area(k, j, il, iu, farea);
   pcoord->CellVolume(k, j, il, iu, vol);
 
-  int r = pmb->pcomm->getRank(X1DIR);
-  // loop over lines in the band
-  for (int n = 1; n < nspec; ++n) {
-    // stellar source function
-    if (pmy_rad->rtype != RadiationType::band)
-      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n-1].wav, spec[n].wav, dist_au);
-
+  if (bflags & RadiationFlags::CorrelatedK) {
+    ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(wmin, wmax, dist_au);
     // planck source function
-    ds.wvnmlo = spec[n-1].wav;
-    ds.wvnmhi = spec[n].wav;
+    ds.wvnmlo = wmin;
+    ds.wvnmhi = wmax;
+  }
+
+  int r = pmb->pcomm->getRank(X1DIR);
+  // loop over bins in the band
+  for (int n = 0; n < num_bins; ++n) {
+    if (!(bflags & RadiationFlags::CorrelatedK)) {
+      // stellar source function
+      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n].wav1, spec[n].wav2, dist_au);
+      // planck source function
+      ds.wvnmlo = spec[n].wav1;
+      ds.wvnmhi = spec[n].wav2;
+    }
 
     // pack data
+    int npmom = bpmom.GetDim4() - 1;
     int dsize = (npmom+3)*(iu-il);
     std::fill(buf + r*dsize, buf + (r+1)*dsize, 0.);
-    packSpectralProperties(buf+r*dsize, tau_[n-1]+il, ssa_[n-1]+il, pmom_[n-1][il], iu-il, npmom+1);
     packSpectralProperties(buf+r*dsize, tau_[n]+il, ssa_[n]+il, pmom_[n][il], iu-il, npmom+1);
-    for (int m = 0; m < dsize; ++m) buf[r*dsize+m] /= 2.;
-
     pmb->pcomm->gatherDataInPlace(buf, dsize);
     unpackSpectralProperties(ds.dtauc, ds.ssalb, ds.pmom, buf, iu-il, npmom+1, nblocks, ds.nmom_nstr+1);
 
@@ -253,15 +255,15 @@ void RadiationBand::RadtranFlux(Direction const rin, Real dist_au, int k, int j,
        * farea(il)/farea(i)
        */
       // flux up
-      flxup_[n-1][i] = ds_out.rad[m].flup;
+      flxup_[n][i] = ds_out.rad[m].flup;
 
       /*! \bug does not work for spherical geomtry, need to scale area using
        * farea(il)/farea(i)
        */
       // flux down
-      flxdn_[n-1][i] = ds_out.rad[m].rfldir + ds_out.rad[m].rfldn;
-      bflxup(k,j,i) += flxup_[n-1][i];
-      bflxdn(k,j,i) += flxdn_[n-1][i];
+      flxdn_[n][i] = ds_out.rad[m].rfldir + ds_out.rad[m].rfldn;
+      bflxup(k,j,i) += spec[n].wght*flxup_[n][i];
+      bflxdn(k,j,i) += spec[n].wght*flxdn_[n][i];
     }
 
     // spherical correction by XIZ

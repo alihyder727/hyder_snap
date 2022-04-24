@@ -12,8 +12,9 @@ public:
   N2N2CIA(RadiationBand *pband, int id, Real mixr):
     Absorber("N2-N2", id, mixr) {}
   virtual ~N2N2CIA() {}
-  void LoadCoefficient(std::string fname);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  void loadCoefficient(std::string fname);
+  Real getAttenuation(Real wave1, Real wave2,
+      Real const q[], Real const c[], Real const s[]) const;
 
 protected:
   int rt_len_[2];

@@ -34,7 +34,8 @@ MwrAbsorberPH3::MwrAbsorberPH3(RadiationBand *pband, Real xHe, Real *xPH3, Real 
   }
 }
 
-Real MwrAbsorberPH3::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
+Real MwrAbsorberPH3::getAttenuation(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {
   Real P = q[IPR]/1.E5; // pa -> bar
   Real T = q[IDN];
@@ -54,9 +55,9 @@ Real MwrAbsorberPH3::Attenuation(Real wave, Real const q[], Real const c[], Real
   Real abs;
 
   if (model_name_ == "Radtran")
-    abs = absorption_coefficient_PH3_radtran(wave, P, T, XH2, XHe, XPH3);
+    abs = absorption_coefficient_PH3_radtran(wave1, P, T, XH2, XHe, XPH3);
   else // Hoffman
-    abs = absorption_coefficient_PH3_Hoffman(wave, P, T, XH2, XHe, XPH3);
+    abs = absorption_coefficient_PH3_Hoffman(wave1, P, T, XH2, XHe, XPH3);
 
   return 100.*abs;  // 1/cm -> 1/m
 }

@@ -5,78 +5,93 @@
 
 // Athena++ header
 #include "../parameter_input.hpp"
-#include "absorber.hpp"
-#include "radiation.hpp"
 #include "../mesh/mesh.hpp"
 #include "../debugger/debugger.hpp"
 #include "../utils/utils.hpp" // Vectorize, ReadTabular, ReplaceChar
+#include "absorber.hpp"
+#include "radiation.hpp"
+#include "radiation_utils.hpp" // readRadiationDirections
 
 RadiationBand::RadiationBand(Radiation *prad):
-  myname(""), npmom(0), nspec(1),
+  myname(""), num_bins(1), bflags(prad->rflags),
   pmy_rad(prad), prev(nullptr), next(nullptr), pabs(nullptr)
-{
-  spec = new Spectrum [1];
-  tem_ = new Real [1];
-}
+{}
 
-RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *pin)
+RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *pin):
+  myname(name), prev(nullptr), next(nullptr), pmy_rad(prad)
 {
   Debugger *pdbg = prad->pmy_block->pdebug;
-  pdbg->Enter("RadiationBand " + name);
+  pdbg->Enter("RadiationBand " + myname);
   std::stringstream &msg = pdbg->msg;
 
-  myname = name;
-  prev = nullptr;
-  next = nullptr;
-  pmy_rad = prad;
+  // band flags
+  setRadiationFlags(&bflags, pin->GetOrAddString("radiation", myname + ".flags", ""));
 
   // number of Legendre moments
-  npmom = pin->GetOrAddInteger("radiation", "npmom", 0);
+  int npmom = pin->GetOrAddInteger("radiation", "npmom", 0);
 
-  // name radiation band in the format of "min_wave max_wave nwave"
-  std::string str = pin->GetString("radiation", name);
+  // name radiation band in the format of "min_wave max_wave nbins"
+  std::string str = pin->GetString("radiation", myname);
   char default_file[80];
   sprintf(default_file, "kcoeff.%s.nc", str.c_str());
   ReplaceChar(default_file, ' ', '-');
 
-  std::vector<Real> v = Vectorize<Real>(str.c_str());
-  if (v.size() != 3) {
+  std::vector<Real> val = Vectorize<Real>(str.c_str());
+  if (val.size() != 3) {
     msg << "### FATAL ERROR in construction function RadiationBand"
-        << std::endl << "Length of '" << name << "' "
+        << std::endl << "Length of '" << myname << "' "
         << "must be 3.";
     ATHENA_ERROR(msg);
   }
 
-  // set default wave number and weights
-  nspec = (int)v[2];
-  if (nspec < 1) {
-    msg << "### FATAL ERROR in construction function RadiationBand"
+  // set wavenumber and weights
+  wmin = val[0];
+  wmax = val[1];
+  num_bins = (int)val[2];
+  if (num_bins < 1) {
+    msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
         << "Length of some spectral band is not a positive number";
     ATHENA_ERROR(msg);
   }
 
-  spec = new Spectrum [nspec];
-  if (nspec == 1) {
-    if (v[0] != v[1]) {
-      msg << "### FATAL ERROR in construction function RadiationBand"
-          << std::endl << "The first spectrum must equal the last spectrum "
-          << "if the length of the spectral band is 1.";
+  spec.resize(num_bins);
+  Real dwave = (val[1] - val[0])/num_bins;
+  for (int i = 0; i < num_bins; ++i) {
+    spec[i].wav1 = val[0] + dwave*i;
+    spec[i].wav2 = val[0] + dwave*(i+1);
+    spec[i].wght = val[0] == val[1] ? 1. : dwave;
+  }
+
+  if (bflags & RadiationFlags::CorrelatedK) {
+    val = Vectorize<Real>(pin->GetString("radiatin", myname + ".gpoints").c_str());
+    if (val.size() != num_bins) {
+      msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
+          << std::endl << "Number of gpoints does not equal " << num_bins;
       ATHENA_ERROR(msg);
     }
-    spec[0].wav = v[0];
-    spec[0].wgt = 1.;
-  } else {
-    Real dwave = (v[1] - v[0])/(nspec - 1);
-    for (int i = 0; i < nspec; ++i) {
-      spec[i].wav = v[0] + dwave*i;
-      spec[i].wgt = (i == 0) || (i == nspec - 1) ? 0.5*dwave : dwave;
+
+    for (int i = 0; i < num_bins; ++i) {
+      spec[i].wav1 = val[i];
+      spec[i].wav2 = val[i];
     }
+
+    val = Vectorize<Real>(pin->GetString("radiatin", myname + ".weights").c_str());
+    if (val.size() != num_bins) {
+      msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
+          << std::endl << "Number of weights does not equal " << num_bins;
+      ATHENA_ERROR(msg);
+    }
+
+    for (int i = 0; i < num_bins; ++i)
+      spec[i].wght = val[i];
   }
 
   // outgoing radiation direction (mu,phi) in degree
-  str = pin->GetOrAddString("radiation", "outdir", "(0.,0.)");
-  std::vector<std::string> dstr = Vectorize<std::string>(str.c_str());
-  Real nrout = dstr.size();
+  if (pin->DoesParameterExist("radiatin", myname + ".outdir")) {
+    str = pin->GetString("radiation", myname + ".outdir");
+  } else
+    str = pin->GetOrAddString("radiation", "outdir", "(0.,0.)");
+  readRadiationDirections(rayOutput, str);
 
   // allocate memory
   MeshBlock *pmb = prad->pmy_block;
@@ -87,16 +102,15 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   // spectral properties
   tem_ = new Real [ncells1];
   temf_ = new Real [ncells1+1];
-  NewCArray(tau_, nspec, ncells1);
-  std::fill(tau_[0], tau_[0] + nspec*ncells1, 0.);
-  NewCArray(ssa_, nspec, ncells1);
-  std::fill(ssa_[0], ssa_[0] + nspec*ncells1, 0.);
-  NewCArray(pmom_, nspec, ncells1, npmom+1);
-  std::fill(pmom_[0][0], pmom_[0][0] + nspec*ncells1*(npmom+1), 0.);
-  //! \todo change nspec to nspec-1
-  NewCArray(flxup_, nspec, ncells1+1);
-  NewCArray(flxdn_, nspec, ncells1+1);
-  NewCArray(toa_, nspec, nrout);
+  NewCArray(tau_, num_bins, ncells1);
+  std::fill(tau_[0], tau_[0] + num_bins*ncells1, 0.);
+  NewCArray(ssa_, num_bins, ncells1);
+  std::fill(ssa_[0], ssa_[0] + num_bins*ncells1, 0.);
+  NewCArray(pmom_, num_bins, ncells1, npmom+1);
+  std::fill(pmom_[0][0], pmom_[0][0] + num_bins*ncells1*(npmom+1), 0.);
+  NewCArray(flxup_, num_bins, ncells1+1);
+  NewCArray(flxdn_, num_bins, ncells1+1);
+  NewCArray(toa_, num_bins, rayOutput.size());
 
   // band properties
   btau.NewAthenaArray(ncells3, ncells2, ncells1);
@@ -104,20 +118,20 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   bpmom.NewAthenaArray(npmom+1, ncells3, ncells2, ncells1);
   bflxup.NewAthenaArray(ncells3, ncells2, ncells1+1);
   bflxdn.NewAthenaArray(ncells3, ncells2, ncells1+1);
-  btoa.NewAthenaArray(nrout, ncells3, ncells2);
+  //! \todo btoa needs to be changed
+  btoa.NewAthenaArray(rayOutput.size(), ncells3, ncells2);
 
   // absorbers
-  char astr[1024];
-  sprintf(astr, "%s.absorbers", name.c_str());
-  str = pin->GetOrAddString("radiation", astr, "");
+  str = pin->GetOrAddString("radiation", name + ".absorbers", "");
   std::vector<std::string> aname = Vectorize<std::string>(str.c_str());
 
   pabs = new Absorber(this);  // first one is empty
 
+  char astr[1024];
   for (int i = 0; i < aname.size(); ++i) {
     sprintf(astr, "%s.%s", name.c_str(), aname[i].c_str());
     std::string afile = pin->GetOrAddString("radiation", astr, default_file);
-    AddAbsorber(aname[i], afile, pin);
+    addAbsorber(aname[i], afile, pin);
   }
 
   if (pabs->next != nullptr) {
@@ -126,11 +140,10 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   }
 
   // band parameters
-  sprintf(astr, "%s.alpha", name.c_str());
-  alpha_ = pin->GetOrAddReal("radiation", astr, 0.);
+  alpha_ = pin->GetOrAddReal("radiation", name + ".alpha", 0.);
 
-  msg << "- spectral range = " << spec[0].wav << " - " << spec[nspec-1].wav << std::endl
-      << "- number of lines = " << nspec << std::endl;
+  msg << "- spectral range = " << wmin << " - " << wmax << std::endl
+      << "- number of spectral bins = " << num_bins << std::endl;
 
   // initialize radiative transfer solver
 #ifdef RT_DISORT
@@ -152,7 +165,6 @@ RadiationBand::~RadiationBand()
     delete pabs;
   }
 
-  delete[] spec;
   delete[] tem_;
   delete[] temf_;
   FreeCArray(tau_);
@@ -168,7 +180,7 @@ RadiationBand::~RadiationBand()
 #endif
 }
 
-void RadiationBand::AddAbsorber(Absorber *pab) {
+void RadiationBand::addAbsorber(Absorber *pab) {
   // detach the current one
   if (pab->prev != nullptr) {
     pab->prev->next = nullptr;
@@ -187,18 +199,31 @@ void RadiationBand::AddAbsorber(Absorber *pab) {
   pab->pmy_band = this;
 }
 
+/*std::vector<Direction> RadiationBand::getOutgoingRays() {
+  std::vector<Direction> dir;
+  for (int i = 0; i < nrayOutput_; ++i)
+    dir.push_back(rayOutput_[i]);
+  return dir;
+}
+
+std::vector<Direction> RadiationBand::getIncomingRays() {
+  std::vector<Direction> dir;
+  for (int i = 0; i < nrayInput_; ++i)
+    dir.push_back(rayInput_[i]);
+  return dir;
+}*/
+
 // overide in the pgen file
-void __attribute__((weak)) RadiationBand::AddAbsorber(
+void __attribute__((weak)) RadiationBand::addAbsorber(
   std::string name, std::string file, ParameterInput *pin)
 {}
 
 // overide in rtsolver folder
-void __attribute__((weak)) RadiationBand::RadtranFlux(
-  Direction const rin, Real dist, int k, int j, int il, int iu)
+void __attribute__((weak)) RadiationBand::calculateRadiativeFlux(
+  Direction rayInput, Real dist, int k, int j, int il, int iu)
 {}
 
 // overide in rtsolver folder
-void __attribute__((weak)) RadiationBand::RadtranRadiance(
-  Direction const rin, Direction const *rout, int nrout, Real dist,
-  int k, int j, int il, int iu)
+void __attribute__((weak)) RadiationBand::calculateRadiance(
+  Direction rayInput, Real dist, int k, int j, int il, int iu)
 {}

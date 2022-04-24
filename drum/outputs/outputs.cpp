@@ -826,7 +826,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       output_params.variable.compare("radtoa") == 0) {
     RadiationBand *p = prad->pband;
     while (p != nullptr) {
-      // toa
+      //! \bug this does not work currently
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->grid = "RCC";

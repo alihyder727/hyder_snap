@@ -203,7 +203,7 @@ void RestartOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool force_wr
       pdata += pmb->ruser_meshblock_data[n].GetSizeInBytes();
     }
     // radiation data
-    pdata += pmb->prad->DumpRestartData(pdata);
+    pdata += pmb->prad->dumpRestartData(pdata);
     // physics data
     pdata += pmb->pphy->DumpRestartData(pdata);
     // particle data

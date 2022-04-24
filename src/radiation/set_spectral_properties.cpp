@@ -18,11 +18,13 @@
 #include "../reconstruct/interpolation.hpp"
 
 // setting optical properties
-void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
+void RadiationBand::setSpectralProperties(AthenaArray<Real> const& w,
   int k, int j, int il, int iu)
 {
   MeshBlock *pmb = pmy_rad->pmy_block;
   int is = pmb->is, ie = pmb->ie;
+  int nspec = spec.size();
+  int npmom = bpmom.GetDim4() - 1;
 
   // set tau, ssalb, pmom, etc...
   int ncells1 = pmy_rad->pmy_block->ncells1;
@@ -35,49 +37,48 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
   Coordinates *pcoord = pmy_rad->pmy_block->pcoord;
   Hydro *phydro = pmy_rad->pmy_block->phydro;
   PassiveScalars *pscalars = pmy_rad->pmy_block->pscalars;
-  Real *mypmom = new Real[1+npmom];
 
+  std::vector<Real> q(NHYDRO), c, s(NSCALARS), mypmom(1+npmom);
   int num_clouds = 0.;
   Particles *ppart = pmb->ppart;
   while (ppart != nullptr) {
     num_clouds += ppart->u.GetDim4();
     ppart = ppart->next;
   }
-  Real *q = new Real [NHYDRO + num_clouds];
-  Real c[1];
-  Real s[NSCALARS];
+  c.resize(num_clouds);
 
   while (a != nullptr) {
     for (int i = il; i <= iu; ++i) {
       for (int n = 0; n < NSCALARS; ++n) s[n] = pscalars->s(n,k,j,i);
-      pthermo->PrimitiveToChemical(q, w.at(k,j,i));
+      pthermo->PrimitiveToChemical(q.data(), w.at(k,j,i));
       //! \todo do we need it?
       // molar concentration to molar mixing ratio
       Real nmols = q[IPR]/(Thermodynamics::Rgas*q[IDN]);
       for (int n = 1; n <= NVAPOR; ++n) q[n] /= nmols;
 
-      // molar density of clouds
+      // molar density of clouds, mol/m^3
       ppart = pmb->ppart;
-      int ip  = 0;
+      int ip = 0;
       while (ppart != nullptr) {
-        for (int n = 0; n < ppart->u.GetDim4(); ++n) {
-          q[NHYDRO + ip] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
-          ip++;
-        }
+        for (int n = 0; n < ppart->u.GetDim4(); ++n)
+          c[ip++] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
         ppart = ppart->next;
       }
 
       tem_[i] = q[IDN];
       //std::cout << i << " " << tem_[i] << std::endl;
       for (int m = 0; m < nspec; ++m) {
-        Real kcoeff = a->Attenuation(spec[m].wav, q, c, s);  // 1/m
-        Real dssalb = a->SingleScatteringAlbedo(spec[m].wav, q)*kcoeff;
+        Real kcoeff = a->getAttenuation(spec[m].wav1, spec[m].wav2,
+            q.data(), c.data(), s.data());  // 1/m
+        Real dssalb = a->getSingleScatteringAlbedo(spec[m].wav1, spec[m].wav2,
+            q.data(), c.data(), s.data())*kcoeff;
         // tau 
         tau_[m][i] += kcoeff;
         // ssalb
         ssa_[m][i] += dssalb;
         // pmom
-        a->PhaseMomentum(spec[m].wav, q, mypmom, npmom);
+        a->getPhaseMomentum(mypmom.data(), spec[m].wav1, spec[m].wav2,
+            q.data(), c.data(), s.data(), npmom);
         for (int p = 0; p <= npmom; ++p)
           pmom_[m][i][p] += mypmom[p]*dssalb;
       }
@@ -92,9 +93,6 @@ void RadiationBand::SetSpectralProperties(AthenaArray<Real> const& w,
     temf_[i] = interp_cp4(tem_[i-2], tem_[i-1], tem_[i], tem_[i+1]);
   temf_[iu] = (tem_[iu] + tem_[iu-1])/2.;
   temf_[iu+1] = 3.*tem_[iu] - 2.*tem_[iu-1];
-
-  delete [] mypmom; 
-  delete [] q;
 
   // absorption coefficiunts -> optical thickness
   for (int m = 0; m < nspec; ++m) {

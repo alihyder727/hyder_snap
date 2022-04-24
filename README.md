@@ -58,3 +58,13 @@ Athena++ Atmospheric Dynamics Code
 
 ### Indentation
 1. Use 2 spaces for indentation.
+
+### Documentation
+1. Block documentation
+1. Function documentation
+1. Variable documentation
+1. Special commands
+    - \todo
+    - \bug
+    - \warning
+    - \deprecated

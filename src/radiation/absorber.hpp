@@ -72,7 +72,7 @@ public:
     if (next != nullptr) next->prev = prev;
   }
 
-  template<typename Ab> Absorber* AddAbsorber(Ab const& a) {
+  template<typename Ab> Absorber* addAbsorber(Ab const& a) {
     Ab* pa = new Ab(a);
     Absorber *p = this;
     while (p->next != nullptr) p = p->next;
@@ -82,14 +82,19 @@ public:
     return p->next;
   }
 
-  virtual void SaveCoefficient(std::string fname) const {}
-  virtual void LoadCoefficient(std::string fname) {}
-  virtual Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const {
-    return 0.; 
-  }
-  virtual Real AbsorptionCoefficient(Real wave, Real const prim[]) { return 0.;}
-  virtual Real SingleScatteringAlbedo(Real wave, Real const prim[]) const { return 0.; }
-  virtual void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const {}
+  //virtual void SaveCoefficient(std::string fname) const {}
+  virtual void loadCoefficient(std::string fname) {}
+  virtual Real getAttenuation(Real wave1, Real wave2, 
+      Real const q[], Real const c[], Real const s[]) const { return 0.; }
+  virtual Real getSingleScatteringAlbedo(Real wave1, Real wave2, 
+      Real const q[], Real const c[], Real const s[]) const { return 0.; }
+  virtual void getPhaseMomentum(Real *pp, Real wave1, Real wave2, 
+      Real const q[], Real const c[], Real const s[], int np) const {}
+
+  //! \deprecated use setAttenuation instead
+  //virtual Real AbsorptionCoefficient(Real wave, Real const prim[]) { return 0.;}
+  //virtual Real SingleScatteringAlbedo(Real wave, Real const prim[]) const { return 0.; }
+  //virtual void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const {}
 
 protected:
   int  imol_;       /**< id of dependent molecule */

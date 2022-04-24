@@ -14,8 +14,8 @@
 
 #ifdef RT_LAMBERT
 
-void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout, 
-  int nrout, Real dist, int k, int j, int il, int iu)
+void RadiationBand::calculateRadiance(Direction rayInput, Real dist,
+    int k, int j, int il, int iu)
 {
   MeshBlock *pmb = pmy_rad->pmy_block;
   Coordinates *pcoord = pmb->pcoord;
@@ -33,7 +33,7 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout,
   //  std::cout << i << " " << temf[i] << " " << tem_[i] << " " << temf[i+1] << std::endl;
 
   // integrate from top to bottom
-  for (int m = 0; m < nrout; ++m) {
+  for (int m = 0; m < rayOutput.size(); ++m) {
     btoa(m,k,j) = 0.;
     for (int n = 0; n < nspec; ++n) {
       taut[iu] = 0.;
@@ -48,7 +48,7 @@ void RadiationBand::RadtranRadiance(Direction const rin, Direction const *rout,
       toa_[n][m] += temf_[il]*exp(-taut[il]);
       if ((alpha_ > 0) && (taut[il] < 1000.)) // correction for small optical opacity
         toa_[n][m] += temf_[il]*alpha_*gammq(alpha_, taut[il])*pow(taut[il], -alpha_)*tgamma(alpha_);
-      btoa(m,k,j) += spec[n].wgt*toa_[n][m];
+      btoa(m,k,j) += spec[n].wght*toa_[n][m];
     }
   }
 

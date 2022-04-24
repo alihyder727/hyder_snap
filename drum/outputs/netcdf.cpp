@@ -106,7 +106,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     int nfaces1 = ncells1; if (ncells1 > 1) nfaces1++;
     int nfaces2 = ncells2; if (ncells2 > 1) nfaces2++;
     int nfaces3 = ncells3; if (ncells3 > 1) nfaces3++;
-    int nrays = pmb->prad->GetOutgoingRays().size();
+    int nrays = pmb->prad->getTotalNumberOutgoingRays();
 
     // 2. define coordinate
     int idt, idx1, idx2, idx3, idx1f, idx2f, idx3f, iray;
@@ -371,14 +371,22 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     }
 
     if (nrays > 0) {
-      std::vector<Direction> ray = pmb->prad->GetOutgoingRays();
-
-      for (int n = 0; n < ray.size(); ++n)
-        data[n] = (float)(ray[n].mu);
+      RadiationBand *p = pmb->prad->pband;
+      int m = 0;
+      while (p != nullptr) {
+        for (int n = 0; n < p->rayOutput.size(); ++n)
+          data[m++] = (float)(p->rayOutput[n].mu);
+        p = p->next;
+      }
       nc_put_var_float(ifile, imu, data);
 
-      for (int n = 0; n < ray.size(); ++n)
-        data[n] = (float)(ray[n].phi);
+      p = pmb->prad->pband;
+      m = 0;
+      while (p != nullptr) {
+        for (int n = 0; n < p->rayOutput.size(); ++n)
+          data[m++] = (float)(p->rayOutput[n].phi);
+        p = p->next;
+      }
       nc_put_var_float(ifile, iphi, data);
     }
 
@@ -393,6 +401,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       else
         nvar = pdata->data.GetDim4();
 
+      //! \todo this isn't working
       if (pdata->grid == "RCC") { // radiation rays
         for (int n = 0; n < nvar; n++) {
           float *it = data;

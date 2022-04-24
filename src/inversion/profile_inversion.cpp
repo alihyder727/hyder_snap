@@ -72,7 +72,7 @@ ProfileInversion::ProfileInversion(MeshBlock *pmb, ParameterInput *pin):
     msg << "- fit differential" << std::endl;
 
   // output dimension
-  nvalue = 2*pmb->prad->GetNumBands();
+  nvalue = 2*pmb->prad->getNumBands();
   msg << "- number of output dimension = " << nvalue << std::endl;
 
   // number of walkers

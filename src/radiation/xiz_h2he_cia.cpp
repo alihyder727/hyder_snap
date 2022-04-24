@@ -9,11 +9,11 @@
 #include "../utils/utils.hpp"
 #include "hydrogen_cia.hpp"
 
-void XizH2HeCIA::LoadCoefficient(std::string fname)
+void XizH2HeCIA::loadCoefficient(std::string fname)
 {
   std::stringstream msg;
   if (!FileExists(fname)) {
-    msg << "### FATAL ERROR in XizH2HeCIA::LoadCoefficient."
+    msg << "### FATAL ERROR in XizH2HeCIA::loadCoefficient."
         << std::endl << "File '" << fname << "' " << "does not exist.";
     throw std::runtime_error(msg.str().c_str());
   }
@@ -36,27 +36,28 @@ void XizH2HeCIA::LoadCoefficient(std::string fname)
     }
     infile.close();
   } else {
-    msg << "### FATAL ERROR in XizH2HeCIA::LoadCoefficient: ";
+    msg << "### FATAL ERROR in XizH2HeCIA::loadCoefficient: ";
     msg << "Cannot open file: " << fname << std::endl;
     throw std::runtime_error(msg.str().c_str());
   }
 }
 
-Real XizH2HeCIA::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real XizH2HeCIA::getAttenuation(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {
   static const Real kBoltz = 1.3806504E-23;
   static const Real Lo = 2.68719E25;
 
   // first axis is wavenumber, second is temperature
-  Real val, coord[2] = {wave, prim[IDN]};
+  Real val, coord[2] = {wave1, q[IDN]};
   interpn(&val, coord, kcoeff_.data(), axis_.data(), len_, 2);
 
-  Real amagat = prim[IPR]/(kBoltz*prim[IDN]*Lo);
+  Real amagat = q[IPR]/(kBoltz*q[IDN]*Lo);
   Real x0 = 1.;
   if (imol_ == 0) 
-    for (int n = 1; n <= NVAPOR; ++n) x0 -= prim[n];
+    for (int n = 1; n <= NVAPOR; ++n) x0 -= q[n];
   else
-    x0 = prim[imol_];
+    x0 = q[imol_];
 
   return 100.*exp(-val)*x0*x0*amagat*amagat*mixr_*mixr2_; // 1/cm -> 1/m
 }

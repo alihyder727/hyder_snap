@@ -34,7 +34,8 @@ MwrAbsorberH2S::MwrAbsorberH2S(RadiationBand *pband, Real xHe, Real *xH2S, Real 
   }
 }
 
-Real MwrAbsorberH2S::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
+Real MwrAbsorberH2S::getAttenuation(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {
   // adapted by cli (Cheng Li), Aug 30
   Real P = q[IPR]/1.E5;
@@ -53,5 +54,5 @@ Real MwrAbsorberH2S::Attenuation(Real wave, Real const q[], Real const c[], Real
   }
 
   // 1/cm -> 1/m
-  return 100.*absorption_coefficient_H2S(wave, P, T, XH2, XHe, XH2S);
+  return 100.*absorption_coefficient_H2S(wave1, P, T, XH2, XHe, XH2S);
 }

@@ -25,7 +25,7 @@ FreedmanSimple::FreedmanSimple(RadiationBand *pband, ParameterInput *pin):
 }
 
 // xiz semigrey
-Real FreedmanSimple::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
+Real FreedmanSimple::getAttenuation(Real wave1, Real wave2, Real const q[], Real const c[], Real const s[]) const
 { 
   static const Real Rgas = 8.314462;
   const Absorber *pabs = this;
