@@ -167,15 +167,6 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     nc_put_att_text(ifile, ivx3, "axis", 1, "X");
     nc_put_att_text(ifile, ivx3, "units", 1, "m");
 
-    if (nrays > 0) {
-      nc_def_var(ifile, "mu_out", NC_FLOAT, 1, &iray, &imu);
-      nc_put_att_text(ifile, imu, "units", 1, "1");
-      nc_put_att_text(ifile, imu, "long_name", 18, "cosine polar angle");
-      nc_def_var(ifile, "phi_out", NC_FLOAT, 1, &iray, &iphi);
-      nc_put_att_text(ifile, iphi, "units", 3, "rad");
-      nc_put_att_text(ifile, iphi, "long_name", 15, "azimuthal angle");
-    }
-
     pos[0] = 1; pos[1] = pmb->pmy_mesh->mesh_size.nx3;
     pos[2] = ncells3*loc[2] + 1; pos[3] = ncells3*(loc[2] + 1);
     nc_put_att_int(ifile, ivx3, "domain_decomposition", NC_INT, 4, pos);
@@ -183,6 +174,15 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       nc_def_var(ifile, "x3f", NC_FLOAT, 1, &idx3f, &ivx3f);
       pos[0]--; pos[2]--;
       nc_put_att_int(ifile, ivx3f, "domain_decomposition", NC_INT, 4, pos);
+    }
+
+    if (nrays > 0) {
+      nc_def_var(ifile, "mu_out", NC_FLOAT, 1, &iray, &imu);
+      nc_put_att_text(ifile, imu, "units", 1, "1");
+      nc_put_att_text(ifile, imu, "long_name", 18, "cosine polar angle");
+      nc_def_var(ifile, "phi_out", NC_FLOAT, 1, &iray, &iphi);
+      nc_put_att_text(ifile, iphi, "units", 3, "rad");
+      nc_put_att_text(ifile, iphi, "long_name", 15, "azimuthal angle");
     }
 
     nc_put_att_int(ifile, NC_GLOBAL, "NumFilesInSet", NC_INT, 1, &pm->nbtotal);
@@ -388,7 +388,6 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     while (pdata != nullptr) {
       int nvar = getNumVariables(pdata->grid, pdata->data);
 
-      //! \todo this isn't working
       if (pdata->grid == "RCC") { // radiation rays
         for (int n = 0; n < nvar; n++) {
           float *it = data;
