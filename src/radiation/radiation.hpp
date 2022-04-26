@@ -32,10 +32,12 @@ struct Direction {
 namespace RadiationFlags {
   const uint64_t None = 0LL;
   const uint64_t Dynamic = 1LL << 0;
-  const uint64_t CorrelatedK = 1LL << 1;
-  const uint64_t Planck = 1LL << 2;
-  const uint64_t Sphere = 1LL << 3;
-  const uint64_t FluxOnly = 1LL << 4;
+  const uint64_t LineByLine = 1LL << 1;
+  const uint64_t CorrelatedK = 1LL << 2;
+  const uint64_t Planck = 1LL << 3;
+  const uint64_t Star = 1LL << 4;
+  const uint64_t Sphere = 1LL << 5;
+  const uint64_t FluxOnly = 1LL << 6;
 }
 
 class RadiationBand {
@@ -55,7 +57,7 @@ public:
   // band radiation results
   AthenaArray<Real> btau, bssa, bpmom;
   AthenaArray<Real> bflxup, bflxdn;
-  //! \todo btoa should be a common variable in Radiation
+  //! btoa is a reference to radiance in Radiation
   AthenaArray<Real> btoa;
 
   // outgoing rays
@@ -102,8 +104,9 @@ public:
   Real cooldown, current;
   CelestrialBody *planet;
 
-  // incomming rays
+  // incomming rays and outgoing radiance
   std::vector<Direction> rayInput;
+  AthenaArray<Real> radiance;
 
   // functions
   Radiation(MeshBlock *pmb); // delayed initialization

@@ -18,14 +18,15 @@ RadiationBand::RadiationBand(Radiation *prad):
 {}
 
 RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *pin):
-  myname(name), prev(nullptr), next(nullptr), pmy_rad(prad)
+  myname(name), bflags(prad->rflags), pmy_rad(prad), prev(nullptr), next(nullptr)
 {
   Debugger *pdbg = prad->pmy_block->pdebug;
   pdbg->Enter("RadiationBand " + myname);
   std::stringstream &msg = pdbg->msg;
 
   // band flags
-  setRadiationFlags(&bflags, pin->GetOrAddString("radiation", myname + ".flags", ""));
+  if (pin->DoesParameterExist("radiation", myname + ".flags"))
+    setRadiationFlags(&bflags, pin->GetString("radiation", myname + ".flags"));
 
   // number of Legendre moments
   int npmom = pin->GetOrAddInteger("radiation", "npmom", 0);
@@ -49,20 +50,31 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   wmax = val[1];
   num_bins = (int)val[2];
   if (num_bins < 1) {
-    msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
+    msg << "### FATAL ERROR in RadiationBand::RadiationBand"
         << "Length of some spectral band is not a positive number";
     ATHENA_ERROR(msg);
   }
+  std::cout << wmin << " " << wmax << std::endl;
 
   spec.resize(num_bins);
-  Real dwave = (val[1] - val[0])/num_bins;
-  for (int i = 0; i < num_bins; ++i) {
-    spec[i].wav1 = val[0] + dwave*i;
-    spec[i].wav2 = val[0] + dwave*(i+1);
-    spec[i].wght = val[0] == val[1] ? 1. : dwave;
-  }
-
-  if (bflags & RadiationFlags::CorrelatedK) {
+  if (bflags & RadiationFlags::LineByLine) {
+    if (num_bins == 1) {
+      if (wmin != wmax) {
+        msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
+            << std::endl << "The first spectrum must equal the last spectrum "
+            << "if the length of the spectral band is 1.";
+        ATHENA_ERROR(msg);
+      }
+      spec[0].wav1 = spec[0].wav2 = wmin;
+      spec[0].wght = 1.;
+    } else {
+      Real dwave = (val[1] - val[0])/(num_bins - 1);
+      for (int i = 0; i < num_bins; ++i) {
+        spec[i].wav1 = spec[i].wav2 = val[0] + dwave*i;
+        spec[i].wght = (i == 0) || (i == num_bins - 1) ? 0.5*dwave : dwave;
+      }
+    }
+  } else if (bflags & RadiationFlags::CorrelatedK) {
     val = Vectorize<Real>(pin->GetString("radiatin", myname + ".gpoints").c_str());
     if (val.size() != num_bins) {
       msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
@@ -70,10 +82,8 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
       ATHENA_ERROR(msg);
     }
 
-    for (int i = 0; i < num_bins; ++i) {
-      spec[i].wav1 = val[i];
-      spec[i].wav2 = val[i];
-    }
+    for (int i = 0; i < num_bins; ++i)
+      spec[i].wav1 = spec[i].wav2 = val[i];
 
     val = Vectorize<Real>(pin->GetString("radiatin", myname + ".weights").c_str());
     if (val.size() != num_bins) {
@@ -84,14 +94,23 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
 
     for (int i = 0; i < num_bins; ++i)
       spec[i].wght = val[i];
+  } else {  // spectral bins
+    Real dwave = (val[1] - val[0])/num_bins;
+    for (int i = 0; i < num_bins; ++i) {
+      spec[i].wav1 = val[0] + dwave*i;
+      spec[i].wav2 = val[0] + dwave*(i+1);
+      spec[i].wght = 1.;
+    }
   }
 
   // outgoing radiation direction (mu,phi) in degree
   if (pin->DoesParameterExist("radiatin", myname + ".outdir")) {
     str = pin->GetString("radiation", myname + ".outdir");
-  } else
-    str = pin->GetOrAddString("radiation", "outdir", "(0.,0.)");
-  readRadiationDirections(rayOutput, str);
+    readRadiationDirections(rayOutput, str);
+  } else if (pin->DoesParameterExist("radiation", "outdir")) {
+    str = pin->GetString("radiation", "outdir");
+    readRadiationDirections(rayOutput, str);
+  }
 
   // allocate memory
   MeshBlock *pmb = prad->pmy_block;
@@ -110,7 +129,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   std::fill(pmom_[0][0], pmom_[0][0] + num_bins*ncells1*(npmom+1), 0.);
   NewCArray(flxup_, num_bins, ncells1+1);
   NewCArray(flxdn_, num_bins, ncells1+1);
-  NewCArray(toa_, num_bins, rayOutput.size());
+  NewCArray(toa_, num_bins, std::max(1, (int)rayOutput.size()));
 
   // band properties
   btau.NewAthenaArray(ncells3, ncells2, ncells1);
@@ -118,8 +137,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   bpmom.NewAthenaArray(npmom+1, ncells3, ncells2, ncells1);
   bflxup.NewAthenaArray(ncells3, ncells2, ncells1+1);
   bflxdn.NewAthenaArray(ncells3, ncells2, ncells1+1);
-  //! \todo btoa needs to be changed
-  btoa.NewAthenaArray(rayOutput.size(), ncells3, ncells2);
+  //! \note btoa is set to a shallow slice to Radiation::radOutput
 
   // absorbers
   str = pin->GetOrAddString("radiation", name + ".absorbers", "");

@@ -106,7 +106,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     int nfaces1 = ncells1; if (ncells1 > 1) nfaces1++;
     int nfaces2 = ncells2; if (ncells2 > 1) nfaces2++;
     int nfaces3 = ncells3; if (ncells3 > 1) nfaces3++;
-    int nrays = pmb->prad->getTotalNumberOutgoingRays();
+    int nrays = pmb->prad->radiance.GetDim3();
 
     // 2. define coordinate
     int idt, idx1, idx2, idx3, idx1f, idx2f, idx3f, iray;
@@ -218,14 +218,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     while (pdata != nullptr) {
       std::string name, attr;
       std::vector<std::string> varnames, longnames, units;
-
-      int nvar;
-      if (pdata->grid == "--C" || pdata->grid == "--F")
-        nvar = pdata->data.GetDim2();
-      else if (pdata->grid == "---")
-        nvar = pdata->data.GetDim1();
-      else
-        nvar = pdata->data.GetDim4();
+      int nvar = getNumVariables(pdata->grid, pdata->data);
 
       // vectorize name
       if (pdata->name.find(',') != std::string::npos) {
@@ -393,13 +386,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     ivar = var_ids;
     pdata = pfirst_data_;
     while (pdata != nullptr) {
-      int nvar;
-      if (pdata->grid == "--C" || pdata->grid == "--F")
-        nvar = pdata->data.GetDim2();
-      else if (pdata->grid == "---")
-        nvar = pdata->data.GetDim1();
-      else
-        nvar = pdata->data.GetDim4();
+      int nvar = getNumVariables(pdata->grid, pdata->data);
 
       //! \todo this isn't working
       if (pdata->grid == "RCC") { // radiation rays

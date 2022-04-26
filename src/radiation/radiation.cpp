@@ -29,7 +29,6 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin):
   pmy_block(pmb), pband(nullptr), rflags(0LL)
 {
   pmb->pdebug->Enter("Radiation");
-  RadiationBand *plast = pband;
   std::stringstream &msg = pmb->pdebug->msg;
 
   // radiation flags
@@ -39,13 +38,32 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin):
   stellarDistance_au_ = pin->GetOrAddReal("radiation", "distance_au", 1.);
   msg << "- stellar distance = " << stellarDistance_au_ << " au" << std::endl;
 
+  // radiation bands
+  int b = 1;
+  readRadiationBands(pin, b);
+
   // incoming radiation direction (mu,phi) in degree
   std::string str = pin->GetOrAddString("radiation", "indir", "(0.,0.)");
   readRadiationDirections(rayInput, str);
 
-  // radiation bands
-  int b = 1;
-  readRadiationBands(pin, b);
+  // output radiation
+  int nout = 0;
+  RadiationBand *p = pband;
+  while (p != nullptr) {
+    nout += p->rayOutput.size();
+    p = p->next;
+  }
+  if (nout > 0) {
+    radiance.NewAthenaArray(nout, pmb->ncells3, pmb->ncells2);
+    // set band toa
+    p = pband;
+    nout = 0;
+    while (p != nullptr) {
+      p->btoa.InitWithShallowSlice(radiance,3,nout,p->rayOutput.size());
+      nout += p->rayOutput.size();
+      p = p->next;
+    }
+  }
 
   // time control
   cooldown = pin->GetOrAddReal("radiation", "dt", 0.);
@@ -98,15 +116,15 @@ void Radiation::calculateRadiativeFluxes(AthenaArray<Real> const& w, Real time,
   RadiationBand *p = pband;
   if (pband == nullptr) return;
 
-  Direction ray;
-  if (rflags & RadiationFlags::Dynamic) {
-    planet->ParentZenithAngle(&ray.mu, &ray.phi, time, pcoord->x2v(j), pcoord->x3v(k));
-    dist = planet->ParentDistanceInAu(time);
-  } else {
-    ray = rayInput[0];
-  }
-
   while (p != nullptr) {
+    Direction ray;
+    if (p->bflags & RadiationFlags::Dynamic) {
+      planet->ParentZenithAngle(&ray.mu, &ray.phi, time, pcoord->x2v(j), pcoord->x3v(k));
+      dist = planet->ParentDistanceInAu(time);
+    } else {
+      ray = rayInput[0];
+    }
+
     // iu ~= ie + 1
     p->setSpectralProperties(w, k, j, il - NGHOST, iu + NGHOST - 1);
     p->calculateRadiativeFlux(ray, dist, k, j, il, iu);

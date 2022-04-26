@@ -211,21 +211,32 @@ void setRadiationFlags(uint64_t *flags, std::string str)
       *flags &= !RadiationFlags::Dynamic;
     } else if (dstr[i] == "dynamic") {
       *flags |= RadiationFlags::Dynamic;
+    } else if (dstr[i] == "bin") {
+      *flags &= !RadiationFlags::LineByLine;
     } else if (dstr[i] == "lbl") {
-      *flags &= !RadiationFlags::CorrelatedK;
+      *flags |= RadiationFlags::LineByLine;
     } else if (dstr[i] == "ck") {
       *flags |= RadiationFlags::CorrelatedK;
     } else if (dstr[i] == "planck") {
       *flags |= RadiationFlags::Planck;
+    } else if (dstr[i] == "star") {
+      *flags |= RadiationFlags::Star;
     } else if (dstr[i] == "spher") {
       *flags |= RadiationFlags::Sphere;
     } else if (dstr[i] == "only") {
       *flags |= RadiationFlags::FluxOnly;
     } else {
-      msg << "### FATAL ERROR in function Radiation::Radiation"
+      msg << "### FATAL ERROR in function setRadiatino"
           << std::endl << "flag:" << dstr[i] << "unrecognized"
           << std::endl;
       ATHENA_ERROR(msg);
+    }
+
+    // check flags consistency
+    if ((*flags & RadiationFlags::LineByLine) && (*flags & RadiationFlags::CorrelatedK)) {
+      msg << "### FATAL ERROR in function setRadiation"
+          << std::endl << "ck cannot be used with lbl."
+          << std::endl;
     }
   }
 }

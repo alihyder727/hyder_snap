@@ -824,23 +824,20 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   // radiation
   if (output_params.variable.compare("rad") == 0 ||
       output_params.variable.compare("radtoa") == 0) {
-    RadiationBand *p = prad->pband;
-    while (p != nullptr) {
-      //! \bug this does not work currently
+    if (prad->radiance.GetDim3() > 0) {
       pod = new OutputData;
       pod->type = "SCALARS";
       pod->grid = "RCC";
-      pod->name = p->myname+"toa";
+      pod->name = "radiance";
       pod->long_name = "top-of-atmosphere radiance";
-      pod->data.InitWithShallowSlice(p->btoa,3,0,p->btoa.GetDim3());
+      pod->data.InitWithShallowSlice(prad->radiance,4,0,1);
       AppendOutputDataNode(pod);
-      num_vars_ += p->btoa.GetDim3();
-
-      p = p->next;
+      num_vars_ += 1;
     }
   }
 
   // mcmc inversion
+  //! \todo shall we remove those
   if (output_params.variable.compare("mcmc")) {
     pod = new OutputData;
     AppendOutputDataNode(pod);

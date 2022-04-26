@@ -30,26 +30,45 @@ void RadiationBand::init_disort(ParameterInput *pin)
   std::stringstream &msg = pdbg->msg;
 
   ds.nlyr = pmy_rad->pmy_block->pmy_mesh->mesh_size.nx1;
-  ds.nmom = pin->GetInteger("radiation", "npmom");
 
-  ds.nstr   = pin->GetInteger("disort", "nstr");
-  ds.nphase = pin->GetInteger("disort", "nphase");
-  ds.accur  = pin->GetOrAddReal("disort", "accur", 0.);
+  // number of legengre moments
+  if (pin->DoesParameterExist("radiation", myname + ".npmom"))
+    ds.nmom = pin->GetInteger("radiation", myname + ".npmom");
+  else
+    ds.nmom = pin->GetInteger("radiation", "npmom");
+
+  // number of streams
+  if (pin->DoesParameterExist("radiation", myname + ".nstr"))
+    ds.nstr = pin->GetInteger("radiation", myname + ".nstr");
+  else
+    ds.nstr = pin->GetInteger("radiation", "nstr");
+
+  // number of phases
+  if (pin->DoesParameterExist("radiation", myname + ".nphase"))
+    ds.nphase = pin->GetInteger("radiation", myname + ".nphase");
+  else
+    ds.nphase = pin->GetInteger("radiation", "nphase");
+
+  // accuracy
+  if (pin->DoesParameterExist("radiation", myname + ".accur"))
+    ds.accur  = pin->GetReal("radiation", myname + ".accur");
+  else
+    ds.accur  = pin->GetOrAddReal("radiation", "accur", 0.);
 
   // bottom boundary isotropic radiation
   if (pin->DoesParameterExist("radiation", myname + ".fluor_K")) {
     Real Tbot = pin->GetReal("radiation", myname + ".fluor_K");
     ds.bc.fluor = Radiation::stefanBoltzmann*pow(Tbot, 4.);
   } else
-    ds.bc.fluor = pin->GetOrAddReal("disort", "fluor", 0.);
+    ds.bc.fluor = pin->GetOrAddReal("radiation", "fluor", 0.);
 
   msg << "- fluor = " << ds.bc.fluor << " w/m^2" << std::endl;
 
   // bottom boundary albedo
   if (pin->DoesParameterExist("radiation", myname + ".albedo"))
-    ds.bc.albedo = pin->GetReal("disort", "albedo");
+    ds.bc.albedo = pin->GetReal("radiation", "albedo");
   else
-    ds.bc.albedo = pin->GetOrAddReal("disort", "albedo", 0.);
+    ds.bc.albedo = pin->GetOrAddReal("radiation", "albedo", 0.);
 
   msg << "- albedo = " << ds.bc.albedo << std::endl;
 
@@ -58,7 +77,7 @@ void RadiationBand::init_disort(ParameterInput *pin)
     Real Ttop = pin->GetReal("radiation", myname + ".fisot_K");
     ds.bc.fisot = Radiation::stefanBoltzmann*pow(Ttop, 4.);
   } else
-    ds.bc.fisot = pin->GetOrAddReal("disort", "fisot", 0.);
+    ds.bc.fisot = pin->GetOrAddReal("radiation", "fisot", 0.);
 
   msg << "- fisot = " << ds.bc.fisot << " w/m^2" << std::endl;
 
@@ -67,7 +86,7 @@ void RadiationBand::init_disort(ParameterInput *pin)
     Real Ttop = pin->GetReal("radiation", myname + ".fbeam_K");
     ds.bc.fbeam = Radiation::stefanBoltzmann*pow(Ttop, 4.);
   } else
-    ds.bc.fbeam = pin->GetOrAddReal("disort", "fbeam", 0.);
+    ds.bc.fbeam = pin->GetOrAddReal("radiation", "fbeam", 0.);
 
   msg << "- fbeam = " << ds.bc.fbeam << " w/m^2" << std::endl;
 
@@ -75,7 +94,7 @@ void RadiationBand::init_disort(ParameterInput *pin)
   if (pin->DoesParameterExist("radiation", myname + ".temis"))
     ds.bc.temis = pin->GetReal("radiation", myname + ".temis");
   else
-    ds.bc.temis = pin->GetOrAddReal("disort", "temis", 0.);
+    ds.bc.temis = pin->GetOrAddReal("radiation", "temis", 0.);
 
   msg << "- temis = " << ds.bc.temis << std::endl;
 
@@ -85,7 +104,7 @@ void RadiationBand::init_disort(ParameterInput *pin)
   ds.flag.lamber = pin->GetOrAddBoolean("disort", "lamber", true);
 
   // calculate planck function
-  ds.flag.planck = bflags & RadiationFlags::Planck;
+  ds.flag.planck = (bflags & RadiationFlags::Planck) > 0 ? true : false;
   if (ds.flag.planck)
     msg << "- planck = true" << std::endl;
   else
@@ -177,6 +196,8 @@ void RadiationBand::calculateRadiativeFlux(Direction const ray, Real dist_au,
     }
     std::reverse(ds.temper, ds.temper + ds.nlyr+1);
   }
+  //for (int i = 0; i <= ds.nlyr; ++i)
+  //  std::cout << ds.temper[i] << std::endl;
 
   ds.bc.umu0 = ray.mu > 1.E-3 ? ray.mu : 1.E-3;
   ds.bc.phi0 = ray.phi;
@@ -195,7 +216,9 @@ void RadiationBand::calculateRadiativeFlux(Direction const ray, Real dist_au,
   pcoord->CellVolume(k, j, il, iu, vol);
 
   if (bflags & RadiationFlags::CorrelatedK) {
-    ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(wmin, wmax, dist_au);
+    // stellar source function
+    if (bflags & RadiationFlags::Star)
+      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(wmin, wmax, dist_au);
     // planck source function
     ds.wvnmlo = wmin;
     ds.wvnmhi = wmax;
@@ -206,7 +229,8 @@ void RadiationBand::calculateRadiativeFlux(Direction const ray, Real dist_au,
   for (int n = 0; n < num_bins; ++n) {
     if (!(bflags & RadiationFlags::CorrelatedK)) {
       // stellar source function
-      ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n].wav1, spec[n].wav2, dist_au);
+      if (bflags & RadiationFlags::Star)
+        ds.bc.fbeam = pmy_rad->planet->ParentInsolationFlux(spec[n].wav1, spec[n].wav2, dist_au);
       // planck source function
       ds.wvnmlo = spec[n].wav1;
       ds.wvnmhi = spec[n].wav2;
