@@ -85,19 +85,17 @@ Sun.spec_file = ../../src/radiation/spectra/sun.spec
 <radiation>
 dt            = 1.
 npmom         = 4
+nstr          = 4
+nphase        = 4
 distance_au   = 0.03
 indir         = (0,)
-rtype         = fixed
+# [static,dynamic,bin,lbl,ck,planck,star]
+flags         = static,star,planck,lbl
+albedo        = 0.
+temis         = 0.
 
 b1            = 100. 50000. 500
 b1.absorbers  = freedman_mean
-
-<disort>
-nstr          = 4
-nphase        = 4
-albedo        = 0.
-temis         = 0.
-planck        = true
 
 <problem>
 P0            = 1.E5

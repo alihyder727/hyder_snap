@@ -109,11 +109,10 @@ def write_observation(inpfile, datafile, output = 'none'):
 # read radiation toa
     data = Dataset(datafile, 'r')
     amu = arccos(data['mu_out'][:])/pi*180.
-    num_dirs = len(amu)
-    tb = []
-    for i in range(num_bands):
-        tb.append(data['b%dtoa' % (i+1,)][0,:,:,0])
-    tb = array(tb)
+    amu = amu.reshape((num_bands, -1))
+    num_dirs = amu.shape[1]
+    tb = data['radiance'][0,:,:,0]
+    tb = tb.reshape((num_bands, num_dirs, -1))
 
 # write to file
     if output == 'none':
@@ -125,7 +124,7 @@ def write_observation(inpfile, datafile, output = 'none'):
             file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))
             file.write('%12s' % '# Freq (GHz)')
             for i in range(num_dirs):
-                file.write('%10.2f' % amu[i])
+                file.write('%10.2f' % amu[0,i])
             file.write('\n')
             for i in range(num_bands):
                 file.write('%12.2f' % freq[i])

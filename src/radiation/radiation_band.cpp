@@ -54,7 +54,6 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
         << "Length of some spectral band is not a positive number";
     ATHENA_ERROR(msg);
   }
-  std::cout << wmin << " " << wmax << std::endl;
 
   spec.resize(num_bins);
   if (bflags & RadiationFlags::LineByLine) {

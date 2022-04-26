@@ -46,7 +46,8 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin):
   std::string str = pin->GetOrAddString("radiation", "indir", "(0.,0.)");
   readRadiationDirections(rayInput, str);
 
-  // output radiation
+  // output radiance
+  radiance_units = pin->GetOrAddString("radiation", "radiance_units", "w/(m^2.cm^{-1}.sr)");
   int nout = 0;
   RadiationBand *p = pband;
   while (p != nullptr) {

@@ -35,12 +35,12 @@ void RadiationBand::calculateRadiance(Direction rayInput, Real dist,
   // integrate from top to bottom
   for (int m = 0; m < rayOutput.size(); ++m) {
     btoa(m,k,j) = 0.;
-    for (int n = 0; n < nspec; ++n) {
+    for (int n = 0; n < num_bins; ++n) {
       taut[iu] = 0.;
       toa_[n][m] = 0.;
       for (int i = iu-1; i >= il; --i) {
-        taut[i] = taut[i+1] + tau_[n][i]/rout[m].mu;
-        toa_[n][m] += 0.5*(temf_[i+1]*exp(-taut[i+1]) + temf_[i]*exp(-taut[i]))*tau_[n][i]/rout[m].mu;
+        taut[i] = taut[i+1] + tau_[n][i]/rayOutput[m].mu;
+        toa_[n][m] += 0.5*(temf_[i+1]*exp(-taut[i+1]) + temf_[i]*exp(-taut[i]))*tau_[n][i]/rayOutput[m].mu;
         //if (m == 0)
         //  std::cout << taut[i] << " " << temf_[i] << " " << temf_[i]*exp(-taut[i]) << " " << tau_[n][i] << std::endl;
       }

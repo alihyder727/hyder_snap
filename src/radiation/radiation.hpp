@@ -103,6 +103,7 @@ public:
   uint64_t rflags;
   Real cooldown, current;
   CelestrialBody *planet;
+  std::string radiance_units;
 
   // incomming rays and outgoing radiance
   std::vector<Direction> rayInput;

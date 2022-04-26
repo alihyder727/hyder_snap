@@ -830,6 +830,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       pod->grid = "RCC";
       pod->name = "radiance";
       pod->long_name = "top-of-atmosphere radiance";
+      pod->units = prad->radiance_units;
       pod->data.InitWithShallowSlice(prad->radiance,4,0,1);
       AppendOutputDataNode(pod);
       num_vars_ += 1;
