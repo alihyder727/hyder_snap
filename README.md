@@ -36,6 +36,8 @@ Athena++ Atmospheric Dynamics Code
 1. Variable names can contain *underscores*.
 1. Private or protected variables must contain an *underscore* at the end of the name.
 1. Variable name for a pointer type must start with letter *p*.
+    - Exception #1: previous or next pointer in a linked list can be named as *prev* or
+      *next.
 
 ### One dimensional arrays
 1. One dimensional array should be a C++ vector container.

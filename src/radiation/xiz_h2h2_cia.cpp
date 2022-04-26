@@ -9,7 +9,7 @@
 #include "../utils/utils.hpp"
 #include "hydrogen_cia.hpp"
 
-void XizH2H2CIA::loadCoefficient(std::string fname)
+void XizH2H2CIA::loadCoefficient(std::string fname, int bid)
 {
   std::stringstream msg;
   if (!FileExists(fname)) {

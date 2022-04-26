@@ -47,7 +47,7 @@ class XuWaterIceCloud: public Absorber {
 public:
   XuWaterIceCloud(RadiationBand *pband, int id):
     Absorber(pband, "H2O_s", id) {}
-  void loadCoefficient(std::string fname);
+  void loadCoefficient(std::string fname, int bid = -1);
   Real getAttenuation(Real wave1, Real wave2,
       Real const q[], Real const c[], Real const s[]) const;
   Real getSingleScateringAlbedo(Real wave1, Real wave2,

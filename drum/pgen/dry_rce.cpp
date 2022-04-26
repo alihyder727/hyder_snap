@@ -12,13 +12,14 @@
 #include "../mesh/mesh.hpp"
 #include "../globals.hpp"
 #include "../math/interpolation.h"
-#include "../utils/utils.hpp"
+#include "../utils/utils.hpp" // replaceChar
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
 #include "../radiation/radiation.hpp"
 #include "../radiation/hydrogen_cia.hpp"
 #include "../radiation/freedman_mean.hpp"
 #include "../radiation/freedman_simple.hpp"
+#include "../radiation/correlatedk_absorber.hpp"
 #include "../physics/physics.hpp"
 
 // global parameters
@@ -60,9 +61,23 @@ void RadiationBand::addAbsorber(std::string name, std::string file, ParameterInp
     pabs->addAbsorber(FreedmanSimple(this, pin));
   } else if (name == "freedman_mean") {
     pabs->addAbsorber(FreedmanMean(this));
+  } else if (strncmp(name.c_str(), "ck-", 3) == 0) {
+    char str[80], aname[80];
+    int bid;
+    strcpy(str, name.c_str());
+    replaceChar(str, '-', ' ');
+    int err = sscanf(str, "ck %s %d", aname, &bid);
+    if (err != EOF) {
+      pabs->addAbsorber(CorrelatedKAbsorber(this, aname))
+          ->loadCoefficient(file, bid);
+    } else {
+      msg << "### FATAL ERROR in RadiationBand::addAbsorber"
+          << std::endl << "Incorrect format for absorber '" << name <<"' ";
+      ATHENA_ERROR(msg);
+    }
   } else {
     msg << "### FATAL ERROR in RadiationBand::addAbsorber"
-        << std::endl << "unknow absorber: '" << name <<"' ";
+        << std::endl << "Unknown absorber: '" << name <<"' ";
     ATHENA_ERROR(msg);
   }
 }

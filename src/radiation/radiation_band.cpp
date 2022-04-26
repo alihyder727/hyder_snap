@@ -7,7 +7,7 @@
 #include "../parameter_input.hpp"
 #include "../mesh/mesh.hpp"
 #include "../debugger/debugger.hpp"
-#include "../utils/utils.hpp" // Vectorize, ReadTabular, ReplaceChar
+#include "../utils/utils.hpp" // Vectorize, ReadTabular, replaceChar
 #include "absorber.hpp"
 #include "radiation.hpp"
 #include "radiation_utils.hpp" // readRadiationDirections
@@ -35,11 +35,11 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   std::string str = pin->GetString("radiation", myname);
   char default_file[80];
   sprintf(default_file, "kcoeff.%s.nc", str.c_str());
-  ReplaceChar(default_file, ' ', '-');
+  replaceChar(default_file, ' ', '-');
 
   std::vector<Real> val = Vectorize<Real>(str.c_str());
   if (val.size() != 3) {
-    msg << "### FATAL ERROR in construction function RadiationBand"
+    msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
         << std::endl << "Length of '" << myname << "' "
         << "must be 3.";
     ATHENA_ERROR(msg);
@@ -50,7 +50,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   wmax = val[1];
   num_bins = (int)val[2];
   if (num_bins < 1) {
-    msg << "### FATAL ERROR in RadiationBand::RadiationBand"
+    msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
         << "Length of some spectral band is not a positive number";
     ATHENA_ERROR(msg);
   }
@@ -74,7 +74,8 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
       }
     }
   } else if (bflags & RadiationFlags::CorrelatedK) {
-    val = Vectorize<Real>(pin->GetString("radiatin", myname + ".gpoints").c_str());
+    str = pin->GetString("radiation", myname + ".gpoints");
+    val = Vectorize<Real>(str.c_str(), ",");
     if (val.size() != num_bins) {
       msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
           << std::endl << "Number of gpoints does not equal " << num_bins;
@@ -84,7 +85,8 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
     for (int i = 0; i < num_bins; ++i)
       spec[i].wav1 = spec[i].wav2 = val[i];
 
-    val = Vectorize<Real>(pin->GetString("radiatin", myname + ".weights").c_str());
+    str = pin->GetString("radiation", myname + ".weights");
+    val = Vectorize<Real>(str.c_str(), ",");
     if (val.size() != num_bins) {
       msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
           << std::endl << "Number of weights does not equal " << num_bins;
@@ -103,7 +105,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   }
 
   // outgoing radiation direction (mu,phi) in degree
-  if (pin->DoesParameterExist("radiatin", myname + ".outdir")) {
+  if (pin->DoesParameterExist("radiation", myname + ".outdir")) {
     str = pin->GetString("radiation", myname + ".outdir");
     readRadiationDirections(rayOutput, str);
   } else if (pin->DoesParameterExist("radiation", "outdir")) {

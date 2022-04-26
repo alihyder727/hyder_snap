@@ -83,7 +83,7 @@ public:
   }
 
   //virtual void SaveCoefficient(std::string fname) const {}
-  virtual void loadCoefficient(std::string fname) {}
+  virtual void loadCoefficient(std::string fname, int bid = -1) {}
   virtual Real getAttenuation(Real wave1, Real wave2, 
       Real const q[], Real const c[], Real const s[]) const { return 0.; }
   virtual Real getSingleScatteringAlbedo(Real wave1, Real wave2, 

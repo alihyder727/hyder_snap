@@ -39,8 +39,8 @@ Radiation::Radiation(MeshBlock *pmb, ParameterInput *pin):
   msg << "- stellar distance = " << stellarDistance_au_ << " au" << std::endl;
 
   // radiation bands
-  int b = 1;
-  readRadiationBands(pin, b);
+  int bid = 1;
+  readRadiationBands(pin, bid);
 
   // incoming radiation direction (mu,phi) in degree
   std::string str = pin->GetOrAddString("radiation", "indir", "(0.,0.)");
@@ -179,7 +179,7 @@ void Radiation::addRadiativeFluxes(AthenaArray<Real>& x1flux,
   pmb->pdebug->Leave();
 }
 
-void Radiation::readRadiationBands(ParameterInput *pin, int &b)
+void Radiation::readRadiationBands(ParameterInput *pin, int &bid)
 {
   char name[80];
   RadiationBand *plast = pband;
@@ -187,7 +187,7 @@ void Radiation::readRadiationBands(ParameterInput *pin, int &b)
     plast = plast->next;
 
   while (true) {
-    sprintf(name, "b%d", b);
+    sprintf(name, "b%d", bid);
     if (!pin->DoesParameterExist("radiation", name))
       break;
     RadiationBand* p = new RadiationBand(this, name, pin);
@@ -200,16 +200,38 @@ void Radiation::readRadiationBands(ParameterInput *pin, int &b)
       plast->next->next = nullptr;
       plast = plast->next;
     }
-    b++;
+    bid++;
   }
 
-  if (pin->DoesParameterExist("radiation", "bands")) {
+  if (pin->DoesParameterExist("radiation", "bands_file")) {
     ParameterInput* pin_next = new ParameterInput;
     IOWrapper infile;
-    infile.Open(pin->GetString("radiation", "bands").c_str(), IOWrapper::FileMode::read);
+    infile.Open(pin->GetString("radiation", "bands_file").c_str(), IOWrapper::FileMode::read);
     pin_next->LoadFromFile(infile);
     infile.Close();
-    readRadiationBands(pin_next, b);
+    InputBlock *pblock = pin->GetPtrToBlock("radiation");
+    InputLine *pline = pblock->pline;
+
+    // remove the bands_file line
+    while (pline->pnext != nullptr) {
+      if (pline->pnext->param_name == "bands_file") {
+        InputLine *pnext = pline->pnext->pnext;
+        delete pline->pnext;
+        pline->pnext = pnext;
+        continue;
+      }
+      pline = pline->pnext;
+    }
+
+    // get the first line of the current input in block radiation
+    pline = pin_next->GetPtrToBlock("radiation")->pline;
+
+    // copy the current lines into the main input
+    while (pline != nullptr) {
+      pin->AddParameter(pblock, pline->param_name, pline->param_value, pline->param_comment);
+      pline = pline->pnext;
+    }
+    readRadiationBands(pin, bid);
     delete pin_next;
   }
 }

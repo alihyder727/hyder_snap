@@ -109,6 +109,7 @@ distance_au   = 0.06
 albedo        = 0.
 temis         = 0.
 indir         = (0,)
+
 # [static,dynamic,bin,lbl,ck,planck,star]
 flags         = static
 

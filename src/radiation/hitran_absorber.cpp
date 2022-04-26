@@ -54,7 +54,7 @@ Real HitranAbsorber::RefTemp_(Real pres) const {
   return result;
 }
 
-void HitranAbsorber::loadCoefficient(std::string fname)
+void HitranAbsorber::loadCoefficient(std::string fname, int bid)
 {
 #ifdef NETCDFOUTPUT
   int fileid, dimid, varid, err;

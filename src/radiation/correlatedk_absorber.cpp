@@ -1,4 +1,5 @@
 // C/C++ headers
+#include <sstream>
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
@@ -14,7 +15,7 @@
   #include <netcdf.h>
 #endif
 
-void CorrelatedKAbsorber::loadCoefficient(std::string fname)
+void CorrelatedKAbsorber::loadCoefficient(std::string fname, int bid)
 {
 #ifdef NETCDFOUTPUT
   int fileid, dimid, varid, err;
@@ -35,8 +36,8 @@ void CorrelatedKAbsorber::loadCoefficient(std::string fname)
   nc_get_var_double(fileid, varid, axis_.data() + len_[0] + len_[1]);
 
   kcoeff_.resize(len_[0]*len_[1]*len_[2]);
-  nc_inq_varid(fileid, "kcoeff", &varid);
-  size_t start[4] = {0, 0, 0, 0};
+  nc_inq_varid(fileid, myname.c_str(), &varid);
+  size_t start[4] = {0, 0, (size_t)bid, 0};
   size_t count[4]  = {(size_t)len_[0], (size_t)len_[1], 1, (size_t)len_[2]};
   nc_get_vara_double(fileid, varid, start, count, kcoeff_.data());
   nc_close(fileid);
@@ -46,6 +47,11 @@ void CorrelatedKAbsorber::loadCoefficient(std::string fname)
 //  for (int i = 1; i < 20; ++i) {
 //	std::cout << " read: "<<kcoeff_[i*100] <<" "<<std::endl;
 //  }
+#else
+  std::stringstream msg;
+  msg << "### FATAL ERROR in function CorrelatedKAbsorber::loadCoefficient"
+      << std::endl << "Corrleated-K absorber requires configuring NETCDF library";
+  ATHENA_ERROR(msg)
 #endif
 }
 
@@ -53,7 +59,7 @@ Real CorrelatedKAbsorber::getAttenuation(Real g1, Real g2, Real const q[], Real 
 {
   // first axis is wavenumber, second is pressure, third is temperature anomaly
   Real val, coord[3] = {log(q[IPR]), q[IDN], g1};
-  interpn(&val, coord, kcoeff_.data(), axis_.data(), len_, 4);
+  interpn(&val, coord, kcoeff_.data(), axis_.data(), len_, 3);
 /*
 //  std::cout << " len: " << len_[0] <<" "<< len_[1] <<" "<< len_[2] <<" "<< len_[3] <<std::endl;
   std::cout << " axis: " << axis_[len_[0] + len_[1] + mw] <<" "<< axis_[len_[0] + len_[1] + len_[2] + mg] <<" "<< mw <<" "<< mg <<std::endl;
