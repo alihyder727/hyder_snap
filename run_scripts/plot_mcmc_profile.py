@@ -75,10 +75,10 @@ def read_tbld_simulate(case, nray, i45, out = 'out4'):
   ld_ad = data['radiance'][0,i45::nray,3,0]
   ld_ad = (tb_ad - ld_ad)/tb_ad*100.
 
-  tb, ld = [], []
-  tb_ad = data['radiance'][:,::nray,3,0]
-  ld_ad = data['radiance'][:,i45::nray,3,0]
-  ld_ad = (tb_ad - ld_ad)/tb_ad*100.
+  # tb is the sampling
+  tb = data['radiance'][:,::nray,3,0]
+  ld = data['radiance'][:,i45::nray,3,0]
+  ld = (tb - ld)/tb*100.
 
   return tb_ad, tb_base, tb, ld_ad, ld_base, ld
 

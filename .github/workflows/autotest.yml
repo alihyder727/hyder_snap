@@ -390,3 +390,31 @@ jobs:
       - name: combile outputs
         run: cd $MYDIR && ../../combine.py -o test
       - run: echo "${{ github.job }} case is a ${{ job.status }}."
+  hot-jupiter-2d-ck:
+    runs-on: [self-hosted, linux]
+    needs: hot-jupiter-2d
+    env:
+      MYDIR: ./examples/2d.hot_jupiter
+      INPUT: hot_jupiter_ck.inp
+      CKFILE: ck8g.nc
+      EXE: ../../bin/dry_rce.ex
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: patch code
+        run : ./patch.py
+      - name: configure problem
+        run: ./configure.py $(head $MYDIR/$INPUT | grep configure | cut -d ' ' -f3-)
+      - name: clean up libraries
+        run: make clean
+      - name: compile code
+        run: make -j4
+      - name: link python scripts
+        run: ln -s ${{ github.workspace }}/run_scripts/write_ck_bands.py $MYDIR/
+      - name: write ck bands info
+        run: cd $MYDIR && ./write_ck_bands.py -i $CKFILE
+      - name: run simulation
+        run: cd $MYDIR && mpiexec -n 16 $EXE -i $INPUT
+      - name: combile outputs
+        run: cd $MYDIR && ../../combine.py -o test
+      - run: echo "${{ github.job }} case is a ${{ job.status }}."
