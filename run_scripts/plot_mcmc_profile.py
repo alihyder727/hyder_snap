@@ -76,8 +76,8 @@ def read_tbld_simulate(case, nray, i45, out = 'out4'):
   ld_ad = (tb_ad - ld_ad)/tb_ad*100.
 
   # tb is the sampling
-  tb = data['radiance'][:,::nray,3,0]
-  ld = data['radiance'][:,i45::nray,3,0]
+  tb = data['radiance'][:,::nray,3,:]
+  ld = data['radiance'][:,i45::nray,3,:]
   ld = (tb - ld)/tb*100.
 
   return tb_ad, tb_base, tb, ld_ad, ld_base, ld
@@ -148,7 +148,7 @@ def plot_mcmc_profile(name, nburn):
   tb_avg = mean(tb, axis = 2)
   ax.plot(range(nstep), zeros(nstep), '0.7', linewidth = 2)
   for i in range(nfreq):
-    ax.plot(range(nstep), tb_avg[i], label = '%.1f GHz' % freq[i], color = 'C%d' % (i+1))
+    ax.plot(range(nstep), tb_avg[:,i], label = '%.1f GHz' % freq[i], color = 'C%d' % (i+1))
   ax.set_xlim([0, nstep-1])
   ax.set_ylabel("Tb' (K)", fontsize = 12)
   ax.xaxis.tick_top()
