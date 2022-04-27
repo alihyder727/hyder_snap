@@ -24,21 +24,23 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
 {
   //ATHENA_LOG("calculate_fit_target");
   std::stringstream &msg = pmb->pdebug->msg;
-  std::vector<Direction> out_dir = pmb->prad->GetOutgoingRays();
-  int ndir = out_dir.size();
-
-  Real *mus = new Real [ndir];
-  Real *tbs = new Real [ndir];
+  Radiation *prad = pmb->prad;
 
   pmb->pdebug->Call("calculate_fit_target");
   msg << "- model " << j - pmb->js << std::endl;
-  for (int i = 0; i < ndir; ++i)
-    mus[i] = out_dir[i].mu;
 
   // 11. log likelihood
+  std::vector<Real> mus, tbs;
   RadiationBand *pband = pmb->prad->pband;
   int i = 0;
   while (pband != NULL) {
+    // emission angles;
+    int ndir = pband->rayOutput.size();
+    mus.resize(ndir);
+    tbs.resize(ndir);
+    for (int n = 0; n < ndir; ++n)
+      mus[n] = pband->rayOutput[n].mu;
+
     // brightness temperatures
     val[i*2] = pband->btoa(0,k,j);
 
@@ -46,7 +48,7 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
     for (int n = 0; n < ndir; ++n)
       tbs[n] = pband->btoa(n,k,j);
     
-    Real tb45 = interp1(cos(45./180.*M_PI), tbs, mus, ndir);
+    Real tb45 = interp1(cos(45./180.*M_PI), tbs.data(), mus.data(), ndir);
     val[i*2+1] = (tbs[0] - tb45)/tbs[0]*100.;
 
     if (differential) {
@@ -57,7 +59,7 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
       for (int n = 0; n < ndir; ++n)
         tbs[n] = pband->btoa(n,k,pmb->js);
 
-      tb45 = interp1(cos(45./180.*M_PI), tbs, mus, ndir);
+      tb45 = interp1(cos(45./180.*M_PI), tbs.data(), mus.data(), ndir);
       val[i*2+1] -= (tbs[0] - tb45)/tbs[0]*100.;
     }
 
@@ -75,9 +77,6 @@ void calculate_fit_target(MeshBlock *pmb, Real *val, int nvalue,
   for (int i = 0; i < nvalue; ++i)
     msg << std::setprecision(5) << val[i] << " ";
   msg << std::endl;
-
-  delete[] mus;
-  delete[] tbs;
 
   pmb->pdebug->Leave();
 }

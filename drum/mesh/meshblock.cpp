@@ -393,7 +393,7 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   }
 
   // load radiation data
-  os += prad->LoadRestartData(&(mbdata[os]));
+  os += prad->loadRestartData(&(mbdata[os]));
 
   // load physics data
   os += pphy->LoadRestartData(&(mbdata[os]));
@@ -565,7 +565,7 @@ std::size_t MeshBlock::GetBlockSizeInBytes() {
     size += ruser_meshblock_data[n].GetSizeInBytes();
 
   // radiation data
-  size += prad->RestartDataSizeInBytes();
+  size += prad->getRestartDataSizeInBytes();
 
   // physics data
   size += pphy->RestartDataSizeInBytes();

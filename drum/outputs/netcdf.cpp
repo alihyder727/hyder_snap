@@ -106,7 +106,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     int nfaces1 = ncells1; if (ncells1 > 1) nfaces1++;
     int nfaces2 = ncells2; if (ncells2 > 1) nfaces2++;
     int nfaces3 = ncells3; if (ncells3 > 1) nfaces3++;
-    int nrays = pmb->prad->GetOutgoingRays().size();
+    int nrays = pmb->prad->radiance.GetDim3();
 
     // 2. define coordinate
     int idt, idx1, idx2, idx3, idx1f, idx2f, idx3f, iray;
@@ -167,15 +167,6 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     nc_put_att_text(ifile, ivx3, "axis", 1, "X");
     nc_put_att_text(ifile, ivx3, "units", 1, "m");
 
-    if (nrays > 0) {
-      nc_def_var(ifile, "mu_out", NC_FLOAT, 1, &iray, &imu);
-      nc_put_att_text(ifile, imu, "units", 1, "1");
-      nc_put_att_text(ifile, imu, "long_name", 18, "cosine polar angle");
-      nc_def_var(ifile, "phi_out", NC_FLOAT, 1, &iray, &iphi);
-      nc_put_att_text(ifile, iphi, "units", 3, "rad");
-      nc_put_att_text(ifile, iphi, "long_name", 15, "azimuthal angle");
-    }
-
     pos[0] = 1; pos[1] = pmb->pmy_mesh->mesh_size.nx3;
     pos[2] = ncells3*loc[2] + 1; pos[3] = ncells3*(loc[2] + 1);
     nc_put_att_int(ifile, ivx3, "domain_decomposition", NC_INT, 4, pos);
@@ -183,6 +174,15 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       nc_def_var(ifile, "x3f", NC_FLOAT, 1, &idx3f, &ivx3f);
       pos[0]--; pos[2]--;
       nc_put_att_int(ifile, ivx3f, "domain_decomposition", NC_INT, 4, pos);
+    }
+
+    if (nrays > 0) {
+      nc_def_var(ifile, "mu_out", NC_FLOAT, 1, &iray, &imu);
+      nc_put_att_text(ifile, imu, "units", 1, "1");
+      nc_put_att_text(ifile, imu, "long_name", 18, "cosine polar angle");
+      nc_def_var(ifile, "phi_out", NC_FLOAT, 1, &iray, &iphi);
+      nc_put_att_text(ifile, iphi, "units", 3, "rad");
+      nc_put_att_text(ifile, iphi, "long_name", 15, "azimuthal angle");
     }
 
     nc_put_att_int(ifile, NC_GLOBAL, "NumFilesInSet", NC_INT, 1, &pm->nbtotal);
@@ -218,14 +218,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     while (pdata != nullptr) {
       std::string name, attr;
       std::vector<std::string> varnames, longnames, units;
-
-      int nvar;
-      if (pdata->grid == "--C" || pdata->grid == "--F")
-        nvar = pdata->data.GetDim2();
-      else if (pdata->grid == "---")
-        nvar = pdata->data.GetDim1();
-      else
-        nvar = pdata->data.GetDim4();
+      int nvar = getNumVariables(pdata->grid, pdata->data);
 
       // vectorize name
       if (pdata->name.find(',') != std::string::npos) {
@@ -371,27 +364,29 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     }
 
     if (nrays > 0) {
-      std::vector<Direction> ray = pmb->prad->GetOutgoingRays();
-
-      for (int n = 0; n < ray.size(); ++n)
-        data[n] = (float)(ray[n].mu);
+      RadiationBand *p = pmb->prad->pband;
+      int m = 0;
+      while (p != nullptr) {
+        for (int n = 0; n < p->rayOutput.size(); ++n)
+          data[m++] = (float)(p->rayOutput[n].mu);
+        p = p->next;
+      }
       nc_put_var_float(ifile, imu, data);
 
-      for (int n = 0; n < ray.size(); ++n)
-        data[n] = (float)(ray[n].phi);
+      p = pmb->prad->pband;
+      m = 0;
+      while (p != nullptr) {
+        for (int n = 0; n < p->rayOutput.size(); ++n)
+          data[m++] = (float)(p->rayOutput[n].phi);
+        p = p->next;
+      }
       nc_put_var_float(ifile, iphi, data);
     }
 
     ivar = var_ids;
     pdata = pfirst_data_;
     while (pdata != nullptr) {
-      int nvar;
-      if (pdata->grid == "--C" || pdata->grid == "--F")
-        nvar = pdata->data.GetDim2();
-      else if (pdata->grid == "---")
-        nvar = pdata->data.GetDim1();
-      else
-        nvar = pdata->data.GetDim4();
+      int nvar = getNumVariables(pdata->grid, pdata->data);
 
       if (pdata->grid == "RCC") { // radiation rays
         for (int n = 0; n < nvar; n++) {

@@ -76,7 +76,7 @@ Real ProfileInversion::LogPosteriorProbability(Real const *par, Real *val,
   // calculate radiation for updated profiles located at j = js+1 ... je
   msg << "- run RT for models 1 to " << je - js << std::endl;
   for (int j = js+1; j <= je; ++j)
-    prad->CalculateRadiances(phydro->w, 0., ks+kw, j, is, ie+1);
+    prad->calculateRadiances(phydro->w, 0., ks+kw, j, is, ie+1);
 
   // prior probability
   Real lnprior = LogPriorProbability(plevel.data(), XpSample, plevel.size(), Xstd_, Xlen_, chi_);

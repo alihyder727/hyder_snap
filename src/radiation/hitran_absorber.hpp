@@ -13,10 +13,11 @@ class HitranAbsorber: public Absorber {
   //  int const *ck_axis, Real const *ck_wave, int nbins);
 public:
   HitranAbsorber(RadiationBand *pband, std::string name, int imol, Real mixr = 1.): 
-    Absorber(pband, name, imol, mixr) {}
+      Absorber(pband, name, imol, mixr) {}
   virtual ~HitranAbsorber() {}
-  void LoadCoefficient(std::string fname);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  void loadCoefficient(std::string fname, int bid = -1);
+  Real getAttenuation(Real wave1, Real wave2,
+      Real const q[], Real const c[], Real const s[]) const;
 
 protected:
   int len_[3];                  /**< length of interpolation axis */

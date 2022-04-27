@@ -92,7 +92,8 @@ Real gz[18][8] = {{.838, .839, .844, .847, .849, .860, .853, .859},
 
 
 
-Real FuWaterLiquidCloud::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real FuWaterLiquidCloud::getAttenuation(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {  
   static const Real Rgas = 8.314462;
   const Real mu = 29.E-3;  // FIXME: hard-wired to Earth
@@ -104,20 +105,21 @@ Real FuWaterLiquidCloud::AbsorptionCoefficient(Real wave, Real const prim[]) con
   int j = locate(re, pre, 8);
   assert(j >= 0 && j <= 7);
 
-  int iband = locate(liquid_wband, wave, 19)+1;
+  int iband = locate(liquid_wband, wave1, 19)+1;
   assert(iband >= 1 && iband <= 18);
   iband = 18 - iband;
 
   Real result=0.;
   Real k = (1.0/re[j+1]-1.0/re[j])/(1.0/pre-1.0/re[j]);
-  Real dens   = prim[IPR]*mu/(Rgas*prim[IDN]);
+  Real dens   = q[IPR]*mu/(Rgas*q[IDN]);
 
   result = bz[iband-1][j]/fl[j] + (bz[iband-1][j+1]/fl[j+1]-bz[iband-1][j]/fl[j]) / k;
   
-  return dens*prim[imol_]*result;     // -> 1/m
+  return dens*q[imol_]*result;     // -> 1/m
 }
 
-Real FuWaterLiquidCloud::SingleScateringAlbedo(Real wave, Real const prim[]) const
+Real FuWaterLiquidCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {
 // from fu & liou code
   Real pre = 10.;
@@ -125,21 +127,22 @@ Real FuWaterLiquidCloud::SingleScateringAlbedo(Real wave, Real const prim[]) con
   int j = locate(re, pre, 8);
   assert(j >= 0 && j <= 7);
     
-  int iband = locate(liquid_wband, wave, 19)+1;
+  int iband = locate(liquid_wband, wave1, 19)+1;
   assert(iband >= 1 && iband <= 18);
   iband = 18 - iband;
     
   Real ww=0.;
   ww = wz[iband-1][j]+(wz[iband-1][j+1]-wz[iband-1][j])/(re[j+1]-re[j])*(pre-re[j]);
 
-  if(prim[imol_]<2e-19){
+  if (q[imol_]<2e-19) {
     return 0.0;
-  }else{
+  } else {
     return ww;
   }
 }
 
-void FuWaterLiquidCloud::PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const
+void FuWaterLiquidCloud::getPhaseMomentum(Real *pp, Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[], int np) const
 {
 // from fu & liou code
     
@@ -148,7 +151,7 @@ void FuWaterLiquidCloud::PhaseMomentum(Real wave, Real const prim[], Real *pp, i
   int j = locate(re, pre, 8);
   assert(j >= 0 && j <= 7);
     
-  int iband = locate(liquid_wband, wave, 19)+1;
+  int iband = locate(liquid_wband, wave1, 19)+1;
   assert(iband >= 1 && iband <= 18);
   iband = 18 - iband;
     
@@ -156,11 +159,9 @@ void FuWaterLiquidCloud::PhaseMomentum(Real wave, Real const prim[], Real *pp, i
     
   gg = gz[iband-1][j]+(gz[iband-1][j+1]-gz[iband-1][j])/(re[j+1]-re[j])*(pre-re[j]);
   
-  if (prim[imol_]<2e-19){
-    getPhaseMomentum(0, 0.0, np, pp); // 0 for HENYEY_GREENSTEIN
-  }else{
-    getPhaseMomentum(0, gg, np, pp);  // 0 for HENYEY_GREENSTEIN
+  if (q[imol_]<2e-19){
+    getPhaseHenyeyGreenstein(pp, 0, 0.0, np); // 0 for HENYEY_GREENSTEIN
+  } else {
+    getPhaseHenyeyGreenstein(pp, 0, gg, np);  // 0 for HENYEY_GREENSTEIN
   }
 }
-
-

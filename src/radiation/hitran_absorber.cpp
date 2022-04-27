@@ -54,7 +54,7 @@ Real HitranAbsorber::RefTemp_(Real pres) const {
   return result;
 }
 
-void HitranAbsorber::LoadCoefficient(std::string fname)
+void HitranAbsorber::loadCoefficient(std::string fname, int bid)
 {
 #ifdef NETCDFOUTPUT
   int fileid, dimid, varid, err;
@@ -101,18 +101,19 @@ void HitranAbsorber::LoadCoefficient(std::string fname)
 #endif
 }
 
-Real HitranAbsorber::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real HitranAbsorber::getAttenuation(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {
   // first axis is wavenumber, second is pressure, third is temperature anomaly
-  Real val, coord[3] = {wave, prim[IPR], prim[IDN] - RefTemp_(prim[IPR])};
+  Real val, coord[3] = {wave1, q[IPR], q[IDN] - RefTemp_(q[IPR])};
   interpn(&val, coord, kcoeff_.data(), axis_.data(), len_, 3);
 
   static const Real Rgas = 8.314462;
-  Real dens = prim[IPR]/(Rgas*prim[IDN]);
+  Real dens = q[IPR]/(Rgas*q[IDN]);
   Real x0 = 1.;
   if (imol_ == 0) 
-    for (int n = 1; n <= NVAPOR; ++n) x0 -= prim[n];
+    for (int n = 1; n <= NVAPOR; ++n) x0 -= q[n];
   else
-    x0 = prim[imol_];
+    x0 = q[imol_];
   return 1.E-3*exp(val)*dens*x0*mixr_; // ln(m*2/kmol) -> 1/m
 }

@@ -89,7 +89,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin)
   Tmin = pin->GetReal("problem", "Tmin");
 }
 
-void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
+void RadiationBand::addAbsorber(std::string name, std::string file, ParameterInput *pin)
 {
   std::stringstream msg;
 
@@ -97,13 +97,13 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   xCH4 = pin->GetReal("problem", "xCH4");
 
   if (name == "mw_CIA") {
-    pabs->AddAbsorber(MwrAbsorberCIA(this, xHe, xCH4));
+    pabs->addAbsorber(MwrAbsorberCIA(this, xHe, xCH4));
   } else if (name == "mw_NH3") {
-    pabs->AddAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
+    pabs->addAbsorber(MwrAbsorberNH3(this, {iNH3, iH2O}, xHe).SetModelHanley());
   } else if (name == "mw_H2O") {
-    pabs->AddAbsorber(MwrAbsorberH2O(this, iH2O, xHe));
+    pabs->addAbsorber(MwrAbsorberH2O(this, iH2O, xHe));
   } else {
-    msg << "### FATAL ERROR in RadiationBand::AddAbsorber"
+    msg << "### FATAL ERROR in RadiationBand::addAbsorber"
         << std::endl << "unknow absorber: '" << name <<"' ";
     ATHENA_ERROR(msg);
   }
@@ -287,7 +287,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
     std::cout << "- running initial RT for all models" << std::endl;
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
-      prad->CalculateRadiances(phydro->w, 0., k, j, is, ie+1);
+      prad->calculateRadiances(phydro->w, 0., k, j, is, ie+1);
 
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
   // Leave debug stack and print out all debug info.

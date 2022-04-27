@@ -9,7 +9,7 @@
 #include "../math/interpolation.h"
 #include "absorber.hpp"
 #include "water_cloud.hpp"
-#include "radiation_utils.hpp"  // getPhaseMomentum
+#include "radiation_utils.hpp"  // getPhaseHenyeyGreenstein
 
 
 // coefficient from fu and liou
@@ -92,19 +92,20 @@ Real cpir[18][4] ={{.79550,     2.524e-3,    -1.022e-5,     0.000e+0},
                      {.22920,     1.724e-2,    -1.573e-4,     4.995e-7}};
 
 
-Real FuWaterIceCloud::AbsorptionCoefficient(Real wave, Real const prim[]) const
+Real FuWaterIceCloud::getAttenuation(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {  
   static const Real Rgas = 8.314462;
   const Real mu = 29.E-3;  // FIXME: hard-wired to Earth
 
 // from fu & liou code
-  int iband = locate(wband, wave, 19) + 1;
+  int iband = locate(wband, wave1, 19) + 1;
   assert(iband >= 1 && iband <= 18);
   iband = 18 - iband;
     
   Real result=0.;
   Real fw1,fw2,pde, T;
-  T = prim[IDN] - 273.15; // K to degree C
+  T = q[IDN] - 273.15; // K to degree C
   if (T > -60.0){
     pde = 326.3 +12.42 * T + 0.197 * T * T +0.0012 * T * T * T; //effective size of ice cloud ( um )
   }else{
@@ -112,23 +113,24 @@ Real FuWaterIceCloud::AbsorptionCoefficient(Real wave, Real const prim[]) const
   }
   fw1 = pde;
   fw2 = fw1*pde;
-  Real dens   = prim[IPR]*mu/(Rgas*prim[IDN]);
+  Real dens   = q[IPR]*mu/(Rgas*q[IDN]);
     
   result =ap[iband-1][0]+ap[iband-1][1]/fw1+ap[iband-1][2]/fw2;
     
-  return 1e3*dens*prim[imol_]*result;
+  return 1e3*dens*q[imol_]*result;
 }
 
-Real FuWaterIceCloud::SingleScateringAlbedo(Real wave, Real const prim[]) const
+Real FuWaterIceCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
+    Real const q[], Real const c[], Real const s[]) const
 {
 // from fu & liou code
-  int iband = locate(wband, wave, 19) + 1;
+  int iband = locate(wband, wave1, 19) + 1;
   assert(iband >= 1 && iband <= 18);
   iband = 18 - iband;
     
   Real wi=0.;
   Real fw1,fw2,fw3,pde,T;
-  T = prim[IDN] - 273.15; // K to degree C
+  T = q[IDN] - 273.15; // K to degree C
   if (T > -60.0){
     pde = 326.3 +12.42 * T + 0.197 * T * T +0.0012 * T * T * T;
   }else{
@@ -141,22 +143,23 @@ Real FuWaterIceCloud::SingleScateringAlbedo(Real wave, Real const prim[]) const
   wi = 1. - (bp[iband-1][0]+bp[iband-1][1]*fw1+bp[iband-1][2]*fw2+bp[iband-1][3]*fw3);
 
     
-  //if (prim[id_[0]]<2e-19){
+  //if (q[id_[0]]<2e-19){
   //  return 0.0;
   //}else{
     return wi;
   //}
 }
 
-void FuWaterIceCloud::PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const
+void FuWaterIceCloud::getPhaseMomentum(Real *pp, Real wave1, Real wave2, 
+    Real const q[], Real const c[], Real const s[], int np) const
 {
 // from fu & liou code
-  int iband = locate(wband, wave, 19) + 1;
+  int iband = locate(wband, wave1, 19) + 1;
   assert(iband >= 1 && iband <= 18);
   iband = 18 - iband;
     
   Real fw1,fw2,fw3,pde,T;
-  T = prim[IDN] - 273.15; // K to degree C
+  T = q[IDN] - 273.15; // K to degree C
   if (T > -60.0 && T< 0.){
     pde = 326.3 +12.42 * T + 0.197 * T * T +0.0012 * T * T * T;
   }else{
@@ -171,11 +174,9 @@ void FuWaterIceCloud::PhaseMomentum(Real wave, Real const prim[], Real *pp, int 
   gg = cpir[iband-1][0]+cpir[iband-1][1]*fw1+cpir[iband-1][2]*fw2+cpir[iband-1][3]*fw3;
     
   //std::cout<<"pde "<<pde<<" "<<T<<" "<<gg<<"ice"<<std::endl;
-  //if (prim[id_[0]]<2e-19){
+  //if (q[id_[0]]<2e-19){
   //  GetMom(0, 0.0, np, pp); // 0 for HENYEY_GREENSTEIN
   //}else{
-    getPhaseMomentum(0, gg, np, pp);
+    getPhaseHenyeyGreenstein(pp, 0, gg, np);
   //}
 }
-
-
