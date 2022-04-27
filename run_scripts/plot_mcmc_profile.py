@@ -124,8 +124,8 @@ def plot_mcmc_profile(name, nburn):
   nstep, nlevel, nwalker = var.shape
 
   # tb -> tb anomaly, ld -> ld anomaly
-  tb -= tb_base.reshape(nfreq,1,1)
-  ld -= ld_base.reshape(nfreq,1,1)
+  tb -= tb_base.reshape(1,nfreq,1)
+  ld -= ld_base.reshape(1,nfreq,1)
   if args['truth'] != 'none':
     tb_truth -= tb_base
     ld_truth -= ld_base
@@ -159,10 +159,10 @@ def plot_mcmc_profile(name, nburn):
   # brightness temperature vs limb darkening
   ax = axs[0,1]
   # average over time and walker, excluding burn-in
-  tb_avg = mean(tb[:,nburn:,:], axis = (1,2))
-  tb_std = std(tb[:,nburn:,:], axis = (1,2))
-  ld_avg = mean(ld[:,nburn:,:], axis = (1,2))
-  ld_std = std(ld[:,nburn:,:], axis = (1,2))
+  tb_avg = mean(tb[nburn:,:,:], axis = (0,2))
+  tb_std = std(tb[nburn:,:,:], axis = (0,2))
+  ld_avg = mean(ld[nburn:,:,:], axis = (0,2))
+  ld_std = std(ld[nburn:,:,:], axis = (0,2))
   for i in range(nfreq):
     #ax.errorbar(ld_avg[i], tb_avg[i], xerr = ld_std[i], yerr = tb_std[i], color = 'C%d' % (i+1))
     ax.plot(ld_avg[i], tb_avg[i], 'o', ms = 10, alpha = 0.5, color = 'C%d' % (i+1))
