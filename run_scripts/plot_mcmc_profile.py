@@ -54,12 +54,9 @@ def read_tbld_truth(case, nfreq, i45, out = 'out4'):
   except FileNotFoundError :
     data = Dataset('%s.%s.nc' % (case, out))
 
-  tb, ld = [], []
-  # tb_truth is the anomaly with respect to the baseline
-  for i in range(nfreq):
-    tb.append(data['b%dtoa' % (i+1,)][0,0,0,0])
-    ld.append((data['b%dtoa' % (i+1,)][0,0,0,0]
-      - data['b%dtoa' % (i+1,)][0,i45,0,0])/tb[i]*100.)
+  tb = data['radiance'][0,::nfreq,0,0]
+  ld = data['radiance'][0,i45::nfreq,0,0]
+  ld = (tb - ld)/tb*100.
   return tb, ld
 
 def read_tbld_simulate(case, nfreq, i45, out = 'out4'):
@@ -69,27 +66,19 @@ def read_tbld_simulate(case, nfreq, i45, out = 'out4'):
     data = Dataset('%s.%s.nc' % (case, out))
 
   # tb_base is the baseline model
-  tb_base, ld_base = [], []
-  for i in range(nfreq):
-    tb_base.append(data['b%dtoa' % (i+1,)][0,0,0,0])
-    ld_base.append((data['b%dtoa' % (i+1,)][0,0,0,0] 
-        - data['b%dtoa' %(i+1,)][0,i45,0,0])/tb_base[i]*100.)
-  tb_base, ld_base = array(tb_base), array(ld_base)
+  tb_base = data['radiance'][0,::nfreq,0,0]
+  ld_base = data['radiance'][0,i45::nfreq,0,0]
+  ld_base = (tb_base - ld_base)/tb_base*100.
 
   # tb_ad is the adiabatic model
-  tb_ad, ld_ad = [], []
-  for i in range(nfreq):
-    tb_ad.append(data['b%dtoa' % (i+1,)][0,0,3,0])
-    ld_ad.append((data['b%dtoa' % (i+1,)][0,0,3,0] 
-        - data['b%dtoa' %(i+1,)][0,i45,3,0])/tb_ad[i]*100.)
-  tb_ad, ld_ad = array(tb_ad), array(ld_ad)
+  tb_ad = data['radiance'][0,::nfreq,3,0]
+  ld_ad = data['radiance'][0,i45::nfreq,3,0]
+  ld_ad = (tb_ad - ld_ad)/tb_ad*100.
 
   tb, ld = [], []
-  for i in range(nfreq):
-    tb.append(data['b%dtoa' % (i+1,)][:,0,3,:])
-    ld.append((data['b%dtoa' % (i+1,)][:,0,3,:] 
-      - data['b%dtoa' % (i+1,)][:,i45,3,:])/tb[i]*100.)
-  tb, ld = array(tb), array(ld)
+  tb_ad = data['radiance'][:,::nfreq,3,0]
+  ld_ad = data['radiance'][:,i45::nfreq,3,0]
+  ld_ad = (tb_ad - ld_ad)/tb_ad*100.
 
   return tb_ad, tb_base, tb, ld_ad, ld_base, ld
 

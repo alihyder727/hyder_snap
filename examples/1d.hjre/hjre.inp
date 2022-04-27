@@ -90,7 +90,7 @@ nphase        = 4
 distance_au   = 0.03
 indir         = (0,)
 # [static,dynamic,bin,lbl,ck,planck,star]
-flags         = static,star,planck,lbl
+flags         = static,star,planck
 albedo        = 0.
 temis         = 0.
 

@@ -51,7 +51,7 @@ RadiationBand::RadiationBand(Radiation *prad, std::string name, ParameterInput *
   num_bins = (int)val[2];
   if (num_bins < 1) {
     msg << "### FATAL ERROR in function RadiationBand::RadiationBand"
-        << "Length of some spectral band is not a positive number";
+        << std::endl << "Length of some spectral band is not a positive number";
     ATHENA_ERROR(msg);
   }
 
