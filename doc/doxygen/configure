@@ -71,17 +71,20 @@ WARN_IF_DOC_ERROR      = YES
 #---------------------------------------------------------------------------
 
 INPUT                  = ../../drum \
-												 ../../src/math/ \
-												 ../../src/coordinates \
-												 ../../src/diagnostics \
-												 ../../src/thermodynamics \
-												 ../../src/eos/eos.hpp \
-												 ../../src/parameter_input.hpp \
-												 ../../src/parameter_input.cpp \
-												 ../examples \
+                         ../../src/math/ \
+                         ../../src/coordinates \
+                         ../../src/diagnostics \
+                         ../../src/thermodynamics \
+                         ../../src/radiation \
+                         ../../src/eos/eos.hpp \
+                         ../../src/parameter_input.hpp \
+                         ../../src/parameter_input.cpp \
+                         ../examples \
                          ../pages
 EXCLUDE                = ../../drum/pgen \
-												 ../../src/math/eigen335
+                         ../../src/math/eigen335 \
+                         ../../src/radiation/opacity \
+                         ../../src/tools
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = *.templates.h
 EXAMPLE_PATH           = ../examples

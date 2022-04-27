@@ -3,7 +3,7 @@
 
 SCRIPT_DIR = scripts/
 EXAMPLE_DIR = examples/
-PGEN_DIR = ../src/pgen/
+PGEN_DIR = ../drum/pgen/
 DOXYGEN_DIR = doxygen/
 IMG_DIR = $(DOXYGEN_DIR)html/img
 MOV_DIR = $(DOXYGEN_DIR)html/mov
