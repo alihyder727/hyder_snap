@@ -187,7 +187,7 @@ void RadiationBand::calculateRadiativeFlux(Direction const ray, Real dist_au,
   pmb->pcomm->setColor(X1DIR);
 
   int nblocks = pmb->pmy_mesh->mesh_size.nx1/pmb->block_size.nx1;
-  Real *buf = new Real [(iu-il)*nblocks*(ds.nmom_nstr+4)];
+  Real *buf = new Real [(iu-il)*nblocks*(ds.nmom_nstr+3)];
   if (ds.flag.planck) {
     pmb->pcomm->gatherData(temf_+il, buf, iu-il+1);
     for (int i = 0; i < (iu-il+1)*nblocks; ++i) {
@@ -241,7 +241,7 @@ void RadiationBand::calculateRadiativeFlux(Direction const ray, Real dist_au,
     int dsize = (npmom+3)*(iu-il);
     std::fill(buf + r*dsize, buf + (r+1)*dsize, 0.);
     packSpectralProperties(buf+r*dsize, tau_[n]+il, ssa_[n]+il, pmom_[n][il], iu-il, npmom+1);
-    pmb->pcomm->gatherDataInPlace(buf, dsize);
+    pmb->pcomm->gatherData(buf+r*dsize, buf, dsize);
     unpackSpectralProperties(ds.dtauc, ds.ssalb, ds.pmom, buf, iu-il, npmom+1, nblocks, ds.nmom_nstr+1);
 
     // absorption

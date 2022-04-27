@@ -48,36 +48,36 @@ def read_variable_truth(name, case, out = 'out2'):
 
   return var
 
-def read_tbld_truth(case, nfreq, i45, out = 'out4'):
+def read_tbld_truth(case, nray, i45, out = 'out4'):
   try :
     data = Dataset('%s-main.nc' % case)
   except FileNotFoundError :
     data = Dataset('%s.%s.nc' % (case, out))
 
-  tb = data['radiance'][0,::nfreq,0,0]
-  ld = data['radiance'][0,i45::nfreq,0,0]
+  tb = data['radiance'][0,::nray,0,0]
+  ld = data['radiance'][0,i45::nray,0,0]
   ld = (tb - ld)/tb*100.
   return tb, ld
 
-def read_tbld_simulate(case, nfreq, i45, out = 'out4'):
+def read_tbld_simulate(case, nray, i45, out = 'out4'):
   try :
     data = Dataset('%s-mcmc.nc' % case)
   except FileNotFoundError :
     data = Dataset('%s.%s.nc' % (case, out))
 
   # tb_base is the baseline model
-  tb_base = data['radiance'][0,::nfreq,0,0]
-  ld_base = data['radiance'][0,i45::nfreq,0,0]
+  tb_base = data['radiance'][0,::nray,0,0]
+  ld_base = data['radiance'][0,i45::nray,0,0]
   ld_base = (tb_base - ld_base)/tb_base*100.
 
   # tb_ad is the adiabatic model
-  tb_ad = data['radiance'][0,::nfreq,3,0]
-  ld_ad = data['radiance'][0,i45::nfreq,3,0]
+  tb_ad = data['radiance'][0,::nray,3,0]
+  ld_ad = data['radiance'][0,i45::nray,3,0]
   ld_ad = (tb_ad - ld_ad)/tb_ad*100.
 
   tb, ld = [], []
-  tb_ad = data['radiance'][:,::nfreq,3,0]
-  ld_ad = data['radiance'][:,i45::nfreq,3,0]
+  tb_ad = data['radiance'][:,::nray,3,0]
+  ld_ad = data['radiance'][:,i45::nray,3,0]
   ld_ad = (tb_ad - ld_ad)/tb_ad*100.
 
   return tb_ad, tb_base, tb, ld_ad, ld_base, ld
@@ -90,18 +90,18 @@ def plot_mcmc_profile(name, nburn):
   radio_bands = get_rt_bands('%s.inp' % args['input'])
   amu, aphi = get_ray_out('%s.inp' % args['input'])
   freq = radio_bands[:,0]
-  nfreq = len(freq)
+  nfreq, nray = len(freq), len(amu)
   i45 = list(map(int, amu)).index(45)
   
   # read mwr tbld
-  tb_ad, tb_base, tb, ld_ad, ld_base, ld = read_tbld_simulate(args['input'], nfreq, i45)
+  tb_ad, tb_base, tb, ld_ad, ld_base, ld = read_tbld_simulate(args['input'], nray, i45)
 
   # true ammonia
   if args['truth'] != 'none':
     # read truth variable
     var_truth = read_variable_truth(name, args['truth'])
     # read truth tbld
-    tb_truth, ld_truth = read_tbld_truth(args['truth'], nfreq, i45)
+    tb_truth, ld_truth = read_tbld_truth(args['truth'], nray, i45)
     tb_truth_err = array(tb_truth)*0.02
     ld_truth_err = [0.2 for x in ld_truth]
 
