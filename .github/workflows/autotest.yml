@@ -414,7 +414,7 @@ jobs:
       - name: write ck bands info
         run: cd $MYDIR && ./write_ck_bands.py -i $CKFILE
       - name: run simulation
-        run: cd $MYDIR && mpiexec -n 16 $EXE -i $INPUT
+        run: cd $MYDIR && mpiexec -n 8 $EXE -i $INPUT
       - name: combile outputs
         run: cd $MYDIR && ../../combine.py -o test
       - run: echo "${{ github.job }} case is a ${{ job.status }}."

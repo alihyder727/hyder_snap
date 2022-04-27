@@ -20,6 +20,9 @@ Communicator::Communicator(MeshBlock *pmb):
   pmb->pdebug->Enter("Communicator");
   color_ = new int [Globals::nranks];
   brank_ = new int [Globals::nranks];
+#ifdef MPI_PARALLEL
+  comm_ = MPI_COMM_WORLD;
+#endif
   pmb->pdebug->Leave();
 }
 
@@ -27,6 +30,11 @@ Communicator::~Communicator()
 {
   delete[] color_;
   delete[] brank_;
+
+#ifdef MPI_PARALLEL
+  if (comm_ != MPI_COMM_WORLD)
+    MPI_Comm_free(&comm_);
+#endif
 }
 
 int Communicator::getRank(CoordinateDirection dir) const
@@ -43,22 +51,17 @@ int Communicator::getRank(CoordinateDirection dir) const
 void Communicator::gatherData(Real *send, Real *recv, int size) const
 {
 #ifdef MPI_PARALLEL
-  MPI_Comm comm;
-  MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
-  MPI_Allgather(send, size, MPI_ATHENA_REAL, recv, size, MPI_ATHENA_REAL, comm);
-  MPI_Comm_free(&comm);
+  MPI_Allgather(send, size, MPI_ATHENA_REAL, recv, size, MPI_ATHENA_REAL, comm_);
 #else
   memcpy(recv, send, size*sizeof(Real));
 #endif
 }
 
+//! \warning this function is unstable to some system.
 void Communicator::gatherDataInPlace(Real *recv, int size) const
 {
 #ifdef MPI_PARALLEL
-  MPI_Comm comm;
-  MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
-  MPI_Allgather(MPI_IN_PLACE, 0, 0, recv, size, MPI_ATHENA_REAL, comm);
-  MPI_Comm_free(&comm);
+  MPI_Allgather(MPI_IN_PLACE, 0, 0, recv, size, MPI_ATHENA_REAL, comm_);
 #endif
 }
 

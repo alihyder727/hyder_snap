@@ -8,36 +8,36 @@ problem_id  = hj # problem ID: basename of output filenames
 
 <output0>
 file_type   = rst
-dt          = 20.E5
+dt          = 10.E5
 
 <output1>
 file_type   = hst       # History data dump
-dt          = 10.E5      # time increment between outputs
+dt          = 2.E5      # time increment between outputs
 
 <output2>
 file_type   = pnetcdf    # Binary data dump
 variable    = prim      # variables to be output
-dt          = 10.E5      # time increment between outputs
+dt          = 2.E5      # time increment between outputs
 
 <output3>
 file_type   = pnetcdf
 variable    = uov
-dt          = 10.E5
+dt          = 2.E5
 
 <output4>
 file_type   = pnetcdf
 variable    = rad
-dt          = 10.E5
+dt          = 2.E5
 
 <output5>
 file_type   = pnetcdf
 variable    = diag
-dt          = 10.E5
+dt          = 2.E5
 
 <time>
 cfl_number  = 10.            # The Courant, Friedrichs, & Lewy (CFL) Number
 nlim        = -1            # cycle limit
-tlim        = 20.E5          # time limit
+tlim        = 10.E5          # time limit
 xorder      = 5             # horizontal reconstruction order
 integrator  = rk3           # integration method
 
@@ -67,7 +67,7 @@ ix3_bc      = periodic      # Inner-X3 boundary condition flag
 ox3_bc      = periodic      # Outer-X3 boundary condition flag
 
 <meshblock>
-nx1         = 20
+nx1         = 40
 nx2         = 20
 nx3         = 1
 

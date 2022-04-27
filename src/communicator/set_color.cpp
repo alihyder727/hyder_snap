@@ -60,4 +60,10 @@ void Communicator::setColor(CoordinateDirection dir) {
     } else
       color_[i] = color_[brank_[i]];
   }
+
+#ifdef MPI_PARALLEL
+  if (comm_ != MPI_COMM_WORLD)
+    MPI_Comm_free(&comm_);
+  MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm_);
+#endif
 }
