@@ -83,6 +83,7 @@ Rd            = 3779.       # Gas constant
 <physics>
 packages = fix_bot_temperature
 fix_bot_temperature.tau = 1000.
+bot_temperature.tau = 1.E4
 
 <astronomy>
 planet        = HJ 
