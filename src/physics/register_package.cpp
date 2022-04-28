@@ -32,7 +32,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       ptm->AddPackage(pkg, "fix_bot_temperature");
 
       tau_Tbot_ = pin->GetReal("physics", "fix_bot_temperature.tau");
-      Tbot_ = pin->GetReal("physics", "bot_temperature");
+      // -1 means to use the initial condition
+      Tbot_ = pin->GetOrAddReal("physics", "bot_temperature", -1);
       if (!hydro_bot_.IsAllocated())
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
       msg << "- tau = " << tau_Tbot_ << " s" << std::endl;
