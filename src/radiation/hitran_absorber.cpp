@@ -102,18 +102,18 @@ void HitranAbsorber::loadCoefficient(std::string fname, int bid)
 }
 
 Real HitranAbsorber::getAttenuation(Real wave1, Real wave2,
-    Real const q[], Real const c[], Real const s[]) const
+    GridData const& gdata) const
 {
   // first axis is wavenumber, second is pressure, third is temperature anomaly
-  Real val, coord[3] = {wave1, q[IPR], q[IDN] - RefTemp_(q[IPR])};
+  Real val, coord[3] = {wave1, gdata.q[IPR], gdata.q[IDN] - RefTemp_(gdata.q[IPR])};
   interpn(&val, coord, kcoeff_.data(), axis_.data(), len_, 3);
 
   static const Real Rgas = 8.314462;
-  Real dens = q[IPR]/(Rgas*q[IDN]);
+  Real dens = gdata.q[IPR]/(Rgas*gdata.q[IDN]);
   Real x0 = 1.;
   if (imol_ == 0) 
-    for (int n = 1; n <= NVAPOR; ++n) x0 -= q[n];
+    for (int n = 1; n <= NVAPOR; ++n) x0 -= gdata.q[n];
   else
-    x0 = q[imol_];
+    x0 = gdata.q[imol_];
   return 1.E-3*exp(val)*dens*x0*mixr_; // ln(m*2/kmol) -> 1/m
 }

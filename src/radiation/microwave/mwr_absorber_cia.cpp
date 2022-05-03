@@ -19,12 +19,12 @@ MwrAbsorberCIA::MwrAbsorberCIA(RadiationBand *pband, Real xHe, Real xCH4, Real f
 }
 
 Real MwrAbsorberCIA::getAttenuation(Real wave1, Real wave2,
-    Real const q[], Real const c[], Real const s[]) const
+    GridData const& gdata) const
 {
-  Real P = q[IPR]/1.E5;  // pa -> bar
-  Real T = q[IDN];
+  Real P = gdata.q[IPR]/1.E5;  // pa -> bar
+  Real T = gdata.q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= gdata.q[i];
   Real XHe = xHe_*xdry;
   Real XCH4 = xCH4_*xdry;
   Real XH2 = (1. - xHe_ - xCH4_)*xdry;

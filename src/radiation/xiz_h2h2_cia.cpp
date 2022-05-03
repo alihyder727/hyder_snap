@@ -43,21 +43,21 @@ void XizH2H2CIA::loadCoefficient(std::string fname, int bid)
 }
 
 Real XizH2H2CIA::getAttenuation(Real wave1, Real wave2,
-    Real const q[], Real const c[], Real const s[]) const
+    GridData const& gdata) const
 {
   static const Real kBoltz = 1.3806504E-23;
   static const Real Lo = 2.68719E25;
 
   // first axis is wavenumber, second is temperature
-  Real val, coord[2] = {wave1, q[IDN]};
+  Real val, coord[2] = {wave1, gdata.q[IDN]};
   interpn(&val, coord, kcoeff_.data(), axis_.data(), len_, 2);
 
-  Real amagat = q[IPR]/(kBoltz*q[IDN]*Lo);
+  Real amagat = gdata.q[IPR]/(kBoltz*gdata.q[IDN]*Lo);
   Real x0 = 1.;
   if (imol_ == 0) 
-    for (int n = 1; n <= NVAPOR; ++n) x0 -= q[n];
+    for (int n = 1; n <= NVAPOR; ++n) x0 -= gdata.q[n];
   else
-    x0 = q[imol_];
+    x0 = gdata.q[imol_];
 
   return 100.*exp(-val)*x0*x0*amagat*amagat*mixr_*mixr_; // 1/cm -> 1/m
 }

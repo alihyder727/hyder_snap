@@ -25,15 +25,15 @@ FreedmanSimple::FreedmanSimple(RadiationBand *pband, ParameterInput *pin):
 }
 
 // xiz semigrey
-Real FreedmanSimple::getAttenuation(Real wave1, Real wave2, Real const q[], Real const c[], Real const s[]) const
+Real FreedmanSimple::getAttenuation(Real wave1, Real wave2, GridData const& gdata) const
 { 
   static const Real Rgas = 8.314462;
   const Absorber *pabs = this;
   Thermodynamics * pthermo = pabs->pmy_band->pmy_rad->pmy_block->pthermo;
   Real mu = Rgas/pthermo->GetRd();
   Real result;
-  Real p = q[IPR];
-  Real T = q[IDN];
+  Real p = gdata.q[IPR];
+  Real T = gdata.q[IDN];
 
 /*xiz semigrey
 //Tan and Komacek 2019 simple fit m^2/kg

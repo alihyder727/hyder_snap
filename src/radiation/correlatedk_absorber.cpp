@@ -50,7 +50,7 @@ void CorrelatedKAbsorber::loadCoefficient(std::string fname, int bid)
 #endif
 }
 
-Real CorrelatedKAbsorber::getAttenuation(Real g1, Real g2, Real const q[], Real const c[], Real const s[]) const
+Real CorrelatedKAbsorber::getAttenuation(Real g1, Real g2, GridData const& gdata) const
 {
 #ifndef NETCDFOUTPUT
   std::stringstream msg;
@@ -59,7 +59,7 @@ Real CorrelatedKAbsorber::getAttenuation(Real g1, Real g2, Real const q[], Real 
   ATHENA_ERROR(msg);
 #endif
   // first axis is wavenumber, second is pressure, third is temperature anomaly
-  Real val, coord[3] = {log(q[IPR]), q[IDN], g1};
+  Real val, coord[3] = {log(gdata.q[IPR]), gdata.q[IDN], g1};
   interpn(&val, coord, kcoeff_.data(), axis_.data(), len_, 3);
 /*
 //  std::cout << " len: " << len_[0] <<" "<< len_[1] <<" "<< len_[2] <<" "<< len_[3] <<std::endl;
@@ -73,7 +73,7 @@ Real CorrelatedKAbsorber::getAttenuation(Real g1, Real g2, Real const q[], Real 
 	std::cout << " test: " << yy <<" "<<exp(val) <<" "<<std::endl;
   }
 */
-  Real dens = q[IPR]/(Thermodynamics::kBoltz*q[IDN]);
+  Real dens = gdata.q[IPR]/(Thermodynamics::kBoltz*gdata.q[IDN]);
 //	std::cout << " test: " << dens <<" "<<exp(val) <<" "<< coord[0] <<" "<< coord[1] <<" "<< coord[2] <<" "<< coord[3] <<std::endl;
 /*
   Real x0 = 1.;

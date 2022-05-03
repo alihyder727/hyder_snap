@@ -35,20 +35,20 @@ MwrAbsorberPH3::MwrAbsorberPH3(RadiationBand *pband, Real xHe, Real *xPH3, Real 
 }
 
 Real MwrAbsorberPH3::getAttenuation(Real wave1, Real wave2,
-    Real const q[], Real const c[], Real const s[]) const
+    GridData const& gdata) const
 {
-  Real P = q[IPR]/1.E5; // pa -> bar
-  Real T = q[IDN];
+  Real P = gdata.q[IPR]/1.E5; // pa -> bar
+  Real T = gdata.q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= gdata.q[i];
   Real XHe = xHe_*xdry;
   Real XH2, XPH3;
 
   if (method_ == 1) {
-    XPH3 = q[imol_];
+    XPH3 = gdata.q[imol_];
     XH2 = xdry - XHe;
   } else {  // method_ == 2
-    XPH3 = interp1(q[IPR], ref_xph3_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
+    XPH3 = interp1(gdata.q[IPR], ref_xph3_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
     XH2 = xdry - XHe - XPH3;
   }
 

@@ -32,15 +32,17 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
   std::strcpy(particle_names, str.c_str());
   p = std::strtok(particle_names, " ,");
 
+  int npart = 0;
   while (p != NULL) {
+    Particles *pnew;
     std::string name;
     char *c = std::strchr(p, '.');
     if (c != NULL) name = c+1;
     else name = p;
     if (std::strncmp(p, "2pcp", 4) == 0) {
-      AddParticles(TwoPhaseCloudParticles(pmb, pin, name));
+      pnew = AddParticles(TwoPhaseCloudParticles(pmb, pin, name));
     } else if (std::strncmp(p, "scp", 3) == 0) {
-      AddParticles(SimpleCloudParticles(pmb, pin, name));
+      pnew = AddParticles(SimpleCloudParticles(pmb, pin, name));
     } else {
       msg << "### FATAL ERROR in function Particles::Particles"
           << std::endl << "Particles '" << p << "' "
@@ -48,7 +50,18 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
       ATHENA_ERROR(msg);
     }
     p = std::strtok(NULL, " ,");
+    npart += pnew->u.GetDim4();
   }
+
+  // safety check
+  if (NHYDRO+NSCALARS+npart > NGRIDMAX) {
+    msg << "### FATAL ERROR in function Particles::Particles"
+        << std::endl << "Total number of grid variables is "
+        << NHYDRO+NSCALARS+npart << std::endl
+        << "Set --ngridmax to this value" << std::endl;
+    ATHENA_ERROR(msg);
+  }
+
   pmb->pdebug->Leave();
 }
 

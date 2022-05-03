@@ -38,47 +38,39 @@ void RadiationBand::setSpectralProperties(AthenaArray<Real> const& w,
   Hydro *phydro = pmy_rad->pmy_block->phydro;
   PassiveScalars *pscalars = pmy_rad->pmy_block->pscalars;
 
-  std::vector<Real> q(NHYDRO), c, s(NSCALARS), mypmom(1+npmom);
-  int num_clouds = 0.;
-  Particles *ppart = pmb->ppart;
-  while (ppart != nullptr) {
-    num_clouds += ppart->u.GetDim4();
-    ppart = ppart->next;
-  }
-  c.resize(num_clouds);
+  std::vector<Real> mypmom(1+npmom);
+  GridData gdata;
+  Particles *ppart;
 
   while (a != nullptr) {
     for (int i = il; i <= iu; ++i) {
-      for (int n = 0; n < NSCALARS; ++n) s[n] = pscalars->s(n,k,j,i);
-      pthermo->PrimitiveToChemical(q.data(), w.at(k,j,i));
+      for (int n = 0; n < NSCALARS; ++n) gdata.s[n] = pscalars->s(n,k,j,i);
+      pthermo->PrimitiveToChemical(gdata.q, w.at(k,j,i));
       //! \todo do we need it?
       // molar concentration to molar mixing ratio
-      Real nmols = q[IPR]/(Thermodynamics::Rgas*q[IDN]);
-      for (int n = 1; n <= NVAPOR; ++n) q[n] /= nmols;
+      Real nmols = gdata.q[IPR]/(Thermodynamics::Rgas*gdata.q[IDN]);
+      for (int n = 1; n <= NVAPOR; ++n) gdata.q[n] /= nmols;
 
       // molar density of clouds, mol/m^3
       ppart = pmb->ppart;
       int ip = 0;
       while (ppart != nullptr) {
         for (int n = 0; n < ppart->u.GetDim4(); ++n)
-          c[ip++] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
+          gdata.c[ip++] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
         ppart = ppart->next;
       }
 
-      tem_[i] = q[IDN];
+      tem_[i] = gdata.q[IDN];
       //std::cout << i << " " << tem_[i] << std::endl;
       for (int m = 0; m < nspec; ++m) {
-        Real kcoeff = a->getAttenuation(spec[m].wav1, spec[m].wav2,
-            q.data(), c.data(), s.data());  // 1/m
-        Real dssalb = a->getSingleScatteringAlbedo(spec[m].wav1, spec[m].wav2,
-            q.data(), c.data(), s.data())*kcoeff;
+        Real kcoeff = a->getAttenuation(spec[m].wav1, spec[m].wav2, gdata);  // 1/m
+        Real dssalb = a->getSingleScatteringAlbedo(spec[m].wav1, spec[m].wav2, gdata)*kcoeff;
         // tau 
         tau_[m][i] += kcoeff;
         // ssalb
         ssa_[m][i] += dssalb;
         // pmom
-        a->getPhaseMomentum(mypmom.data(), spec[m].wav1, spec[m].wav2,
-            q.data(), c.data(), s.data(), npmom);
+        a->getPhaseMomentum(mypmom.data(), spec[m].wav1, spec[m].wav2, gdata, npmom);
         for (int p = 0; p <= npmom; ++p)
           pmom_[m][i][p] += mypmom[p]*dssalb;
       }

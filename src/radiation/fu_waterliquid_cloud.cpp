@@ -93,7 +93,7 @@ Real gz[18][8] = {{.838, .839, .844, .847, .849, .860, .853, .859},
 
 
 Real FuWaterLiquidCloud::getAttenuation(Real wave1, Real wave2,
-    Real const q[], Real const c[], Real const s[]) const
+    GridData const& gdata) const
 {  
   static const Real Rgas = 8.314462;
   const Real mu = 29.E-3;  // FIXME: hard-wired to Earth
@@ -111,15 +111,15 @@ Real FuWaterLiquidCloud::getAttenuation(Real wave1, Real wave2,
 
   Real result=0.;
   Real k = (1.0/re[j+1]-1.0/re[j])/(1.0/pre-1.0/re[j]);
-  Real dens   = q[IPR]*mu/(Rgas*q[IDN]);
+  Real dens   = gdata.q[IPR]*mu/(Rgas*gdata.q[IDN]);
 
   result = bz[iband-1][j]/fl[j] + (bz[iband-1][j+1]/fl[j+1]-bz[iband-1][j]/fl[j]) / k;
   
-  return dens*q[imol_]*result;     // -> 1/m
+  return dens*gdata.q[imol_]*result;     // -> 1/m
 }
 
 Real FuWaterLiquidCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
-    Real const q[], Real const c[], Real const s[]) const
+    GridData const& gdata) const
 {
 // from fu & liou code
   Real pre = 10.;
@@ -134,7 +134,7 @@ Real FuWaterLiquidCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
   Real ww=0.;
   ww = wz[iband-1][j]+(wz[iband-1][j+1]-wz[iband-1][j])/(re[j+1]-re[j])*(pre-re[j]);
 
-  if (q[imol_]<2e-19) {
+  if (gdata.q[imol_]<2e-19) {
     return 0.0;
   } else {
     return ww;
@@ -142,7 +142,7 @@ Real FuWaterLiquidCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
 }
 
 void FuWaterLiquidCloud::getPhaseMomentum(Real *pp, Real wave1, Real wave2,
-    Real const q[], Real const c[], Real const s[], int np) const
+    GridData const& gdata, int np) const
 {
 // from fu & liou code
     
@@ -159,7 +159,7 @@ void FuWaterLiquidCloud::getPhaseMomentum(Real *pp, Real wave1, Real wave2,
     
   gg = gz[iband-1][j]+(gz[iband-1][j+1]-gz[iband-1][j])/(re[j+1]-re[j])*(pre-re[j]);
   
-  if (q[imol_]<2e-19){
+  if (gdata.q[imol_]<2e-19){
     getPhaseHenyeyGreenstein(pp, 0, 0.0, np); // 0 for HENYEY_GREENSTEIN
   } else {
     getPhaseHenyeyGreenstein(pp, 0, gg, np);  // 0 for HENYEY_GREENSTEIN

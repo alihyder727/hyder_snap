@@ -12,11 +12,11 @@ public:
   SimpleCloud(RadiationBand *pband, int id, Real mixr = 1.):
       Absorber(pband, "H2O_l", id, mixr) {}
   Real getAttenuation(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   Real getSingleScateringAlbedo(Real wave1, Real wave2, 
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   void getPhaseMomentum(Real *pp, Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[], int np) const;
+      GridData const& gdata, int np) const;
 };
 
 class FuWaterLiquidCloud: public Absorber {
@@ -24,11 +24,11 @@ public:
   FuWaterLiquidCloud(RadiationBand *pband, int id):
       Absorber(pband, "H2O_l", id) {}
   Real getAttenuation(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   Real getSingleScateringAlbedo(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   void getPhaseMomentum(Real *pp, Real wave1, Real wave2, 
-      Real const q[], Real const c[], Real const s[], int np) const;
+      GridData const& gdata, int np) const;
 };
 
 class FuWaterIceCloud: public Absorber {
@@ -36,11 +36,11 @@ public:
   FuWaterIceCloud(RadiationBand *pband, int id):
       Absorber(pband, "H2O_s", id) {}
   Real getAttenuation(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   Real getSingleScateringAlbedo(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   void getPhaseMomentum(Real *pp, Real wave1, Real wave2, 
-      Real const q[], Real const c[], Real const s[], int np) const;
+      GridData const& gdata, int np) const;
 };
 
 class XuWaterIceCloud: public Absorber {
@@ -49,11 +49,11 @@ public:
     Absorber(pband, "H2O_s", id) {}
   void loadCoefficient(std::string fname, int bid = -1);
   Real getAttenuation(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   Real getSingleScateringAlbedo(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+      GridData const& gdata) const;
   void getPhaseMomentum(Real *pp, Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[], int np) const;
+      GridData const& gdata, int np) const;
 
 protected:
   int len_[2];

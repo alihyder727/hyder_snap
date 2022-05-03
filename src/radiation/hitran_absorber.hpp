@@ -16,8 +16,7 @@ public:
       Absorber(pband, name, imol, mixr) {}
   virtual ~HitranAbsorber() {}
   void loadCoefficient(std::string fname, int bid = -1);
-  Real getAttenuation(Real wave1, Real wave2,
-      Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
 
 protected:
   int len_[3];                  /**< length of interpolation axis */
