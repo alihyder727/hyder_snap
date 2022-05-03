@@ -1,0 +1,39 @@
+---
+symbols:
+  T: gdata.q[IDN]
+  H2: gdata.s[iH2]
+  H: gdata.s[iH]
+  H(+): gdata.s[iHp]
+  H(-): gdata.s[iHm]
+  e(-): gdata.s[ie]
+
+reactions:
+  - formula: H2 <-> H + H
+    function: dissociation
+  - formula: H <-> H(+) + e(-)
+    function: ionization
+  - formula: H(-) <-> H + e(-)
+    fundtion: ionization
+
+functions:
+  dissociation:
+    parameters:
+      - A=
+      - n=
+      - E=
+      - R=
+    rate: |
+      R
+    equilibrium: |
+      A*pow(T,n)*exp(-E/(Thermodynamics::kBoltz*T))
+
+  ionization:
+    parameters:
+      - A=
+      - n=
+      - E=
+      - R=
+    rate: |
+      R
+    equilibrium: |
+      A*pow(T,n)*exp(-E/(Thermodynamics::kBoltz*T))

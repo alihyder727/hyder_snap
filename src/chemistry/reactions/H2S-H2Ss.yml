@@ -1,0 +1,21 @@
+---
+using:
+  - Kessler1994
+
+symbols:
+  T: q[IDN]
+  H2S: q[iH2S]
+  H2S(s,c): c[iH2Sc]
+  H2S(s,p): c[iH2Sp]
+
+reactions:
+  - formula: H2S -> H2S(s,c)
+    function: condensation
+  - formula: H2S(s,c) -> H2S
+    function: sublimation
+  - formula: H2S(s,c) -> H2S(s,p)
+    function: autoconversion
+  - formula: H2S(s,c) + H2S(s,p) -> 2H2S(s,p)
+    function: accretion
+  - formula: H2S(s,p) -> H2S
+    function: re-evaporation

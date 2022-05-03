@@ -1,0 +1,28 @@
+---
+using: 
+  - Kessler1994
+
+symbols:
+  T: gdata.q[IDN]
+  H2O: gdata.q[iH2O]
+  H2O(s,c): gdata.c[iH2Oc]
+  H2O(s,p): gdata.c[iH2Op]
+
+reactions:
+  - formula: H2O -> H2O(s,c)
+    function: condensation:A=10
+  - formula: H2O(s,c) -> H2O
+    function: sublimation:A=10
+  - formula: H2O(s,c) -> H2O(s,p)
+    function: autoconversion:A=0.01
+  - formula: H2O(s,c) + H2O(s,p) -> 2H2O(s,p)
+    function: accretion:A=0
+  - formula: H2O(s,p) -> H2O
+    function: re-evaporation:A=0.1
+
+common: |
+  Real qs = qH2O - dqsat[iH2O];
+  Real Rv = pthermo->GetRd()/pthermo->GetMassRatio(iH2O);
+  Real lf = pthermo->GetLatent(NVAPOR+iH2O,T) - Rv*T;
+  Real dqsdt = qs/T*lf/(Rv*T);
+  Real mols = gdata.q[IPR]/(Thermodynamics::Rgas*T);

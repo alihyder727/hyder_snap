@@ -1,0 +1,28 @@
+---
+using:
+  - Kessler1994
+
+symbols:
+  T: data.q[IDN]
+  NH3: data.q[iNH3]
+  NH3(s,c): data.c[iNH3c]
+  NH3(s,p): data.c[iNH3p]
+
+reactions:
+  - formula: NH3 -> NH3(s,c)
+    function: condensation:A=10
+  - formula: NH3(s,c) -> NH3
+    function: sublimation:A=10
+  - formula: NH3(s,c) -> NH3(s,p)
+    function: autoconversion:A=0.01
+  - formula: NH3(s,c) + NH3(s,p) -> 2NH3(s,p)
+    function: accretion:A=0
+  - formula: NH3(s,p) -> NH3
+    function: re-evaporation:A=0.1
+
+common: |
+  Real qs = qNH3 - dqsat[iNH3];
+  Real Rv = pthermo->GetRd()/pthermo->GetMassRatio(iNH3);
+  Real lf = pthermo->GetLatent(NVAPOR+iNH3,T) - Rv*T;
+  Real dqsdt = qs/T*lf/(Rv*T);
+  Real mols = data.q[IPR]/(Thermodynamics::Rgas*T);

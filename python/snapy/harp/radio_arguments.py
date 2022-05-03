@@ -105,6 +105,34 @@ parser.add_argument('--clat',
     default = '0.',
     help = 'planetocentric latitude'
     )
+parser.add_argument('--glat',
+    default = '0.',
+    help = 'planetographic latitude'
+    )
+parser.add_argument('--b1dir',
+    default = '(0.)',
+    help = 'planetographic latitude'
+    )
+parser.add_argument('--b2dir',
+    default = '(0.)',
+    help = 'planetographic latitude'
+    )
+parser.add_argument('--b3dir',
+    default = '(0.)',
+    help = 'planetographic latitude'
+    )
+parser.add_argument('--b4dir',
+    default = '(0.)',
+    help = 'planetographic latitude'
+    )
+parser.add_argument('--b5dir',
+    default = '(0.)',
+    help = 'planetographic latitude'
+    )
+parser.add_argument('--b6dir',
+    default = '(0.)',
+    help = 'planetographic latitude'
+    )
 parser.add_argument('--rgradt',
     default = '1.',
     help = 'radiative temperature gradient'
