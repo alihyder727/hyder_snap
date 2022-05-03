@@ -61,7 +61,7 @@ protected:
   AthenaArray<Real> tem_bot_, vel_bot_, com_bot_;
 
   // parameters for relax bottom temperature
-  Real tau_Tbot_, tau_Ubot_, tau_Qbot_;
+  Real Tbot_, tau_Tbot_, tau_Ubot_, tau_Qbot_;
 
   // parameters for sponge layer
   Real tau_top_;    /**< top sponge layer time scale [s] */
