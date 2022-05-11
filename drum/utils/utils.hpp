@@ -79,7 +79,7 @@ template<>
 std::vector<std::string> Vectorize(const char* cstr, const char *delimiter);
 
 //! replace a character in a string
-void ReplaceChar(char* buf, char c_old, char c_new);
+void replaceChar(char* buf, char c_old, char c_new);
 
 template<typename T>
 void NewCArray(T** &a, int n1, int n2)

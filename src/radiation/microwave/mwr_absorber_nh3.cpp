@@ -53,42 +53,43 @@ MwrAbsorberNH3::MwrAbsorberNH3(RadiationBand *pband, std::vector<int> imols, Rea
   }
 }
 
-Real MwrAbsorberNH3::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
+Real MwrAbsorberNH3::getAttenuation(Real wave1, Real wave2,
+    GridData const& gdata) const
 {
-  Real P = q[IPR]/1.E5; // pa -> bar
-  Real P_idl = q[IPR]/1.E5; // pa -> bar
-  Real T = q[IDN];
+  Real P = gdata.q[IPR]/1.E5; // pa -> bar
+  Real P_idl = gdata.q[IPR]/1.E5; // pa -> bar
+  Real T = gdata.q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= gdata.q[i];
   Real XHe = xHe_*xdry;
   Real XH2, XNH3, XH2O;
 
   if (method_ == 1) {
-    XNH3 = q[imol_];
+    XNH3 = gdata.q[imol_];
     XH2O = xH2O_*xdry;
     XH2 = xdry - XHe - XH2O;
   } else if (method_ == 2) {
-    XNH3 = q[imol_];
-    XH2O = interp1(q[IPR], ref_xh2o_.data(), ref_pres_.data(), ref_pres_.size())*xdry;
+    XNH3 = gdata.q[imol_];
+    XH2O = interp1(gdata.q[IPR], ref_xh2o_.data(), ref_pres_.data(), ref_pres_.size())*xdry;
     XH2 = xdry - XHe - XH2O;
   } else {  // method_ == 3
-    XNH3 = q[imols_[0]];
-    XH2O = q[imols_[1]];
+    XNH3 = gdata.q[imols_[0]];
+    XH2O = gdata.q[imols_[1]];
     XH2 = xdry - XHe;
   }
 
   Real abs;
 
   if (model_name_ == "Bellotti16")
-    abs = attenuation_NH3_Bellotti(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O);
+    abs = attenuation_NH3_Bellotti(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O);
   else if (model_name_ == "BellottiSwitch16")
-    abs = attenuation_NH3_Bellotti_switch(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O);
+    abs = attenuation_NH3_Bellotti_switch(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O);
   else if (model_name_ == "Devaraj")
-    abs = attenuation_NH3_Devaraj(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O);
+    abs = attenuation_NH3_Devaraj(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O);
   else if (model_name_ == "Radtran")
-    abs = attenuation_NH3_radtran(wave, P, T, XH2, XHe, XNH3);
+    abs = attenuation_NH3_radtran(wave1, P, T, XH2, XHe, XNH3);
   else // Hanley09
-    abs = attenuation_NH3_Hanley(wave, P, P_idl, T, XH2, XHe, XNH3, XH2O, power_);
+    abs = attenuation_NH3_Hanley(wave1, P, P_idl, T, XH2, XHe, XNH3, XH2O, power_);
 
   return 100.*abs;  // 1/cm -> 1/m
 }

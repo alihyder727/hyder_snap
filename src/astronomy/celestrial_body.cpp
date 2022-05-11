@@ -148,7 +148,7 @@ Real CelestrialBody::ParentInsolationFlux(Real wav, Real dist_au)
 
 Real CelestrialBody::ParentInsolationFlux(Real wlo, Real whi, Real dist_au)
 {
-  //! \todo : check whether this is correct
+  //! \todo check whether this is correct
   if (wlo == whi)
     return ParentInsolationFlux(wlo, dist_au);
   // assuming ascending in wav

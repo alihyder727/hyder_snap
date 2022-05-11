@@ -12,8 +12,8 @@ public:
   O2O2CIA(RadiationBand *pband, int id, Real mixr):
     Absorber(pband, "O2-O2", id, mixr) {}
   virtual ~O2O2CIA() {}
-  void LoadCoefficient(std::string fname);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  void loadCoefficient(std::string fname, int bid = -1);
+  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
 
 protected:
   int fd_len_[2];

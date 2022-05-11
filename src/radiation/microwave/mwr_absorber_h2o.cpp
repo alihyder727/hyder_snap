@@ -17,26 +17,27 @@ MwrAbsorberH2O::MwrAbsorberH2O(RadiationBand *pband, int imol, Real xHe, Real sc
   }
 }
 
-Real MwrAbsorberH2O::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
+Real MwrAbsorberH2O::getAttenuation(Real wave1, Real wave2,
+    GridData const& gdata) const
 {
-  Real P = q[IPR]/1.E5; // pa -> bar
-  Real T = q[IDN];
+  Real P = gdata.q[IPR]/1.E5; // pa -> bar
+  Real T = gdata.q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= gdata.q[i];
   Real XHe = xHe_*xdry;
   Real XH2 = xdry - XHe;
-  Real XH2O = q[imol_];
+  Real XH2O = gdata.q[imol_];
 
   Real abs;
 
   if (model_name_ == "deBoer")
-    abs = attenuation_H2O_deBoer(wave, P, T, XH2, XHe, XH2O);
+    abs = attenuation_H2O_deBoer(wave1, P, T, XH2, XHe, XH2O);
   else if (model_name_ == "Waters")
-    abs = attenuation_H2O_Waters(wave, P, T, XH2, XHe, XH2O);
+    abs = attenuation_H2O_Waters(wave1, P, T, XH2, XHe, XH2O);
   else if (model_name_ == "Goodman")
-    abs = attenuation_H2O_Goodman(wave, P, T, XH2, XHe, XH2O);
+    abs = attenuation_H2O_Goodman(wave1, P, T, XH2, XHe, XH2O);
   else // Karpowicz
-    abs = attenuation_H2O_Karpowicz(wave, P, T, XH2, XHe, XH2O, scale_);
+    abs = attenuation_H2O_Karpowicz(wave1, P, T, XH2, XHe, XH2O, scale_);
 
   return 100.*abs;  // 1/cm -> 1/m
 }

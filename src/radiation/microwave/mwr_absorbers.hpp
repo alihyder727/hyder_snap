@@ -29,7 +29,8 @@ public:
     * @param fequal mixing ratio equilibrium hydrogen
     */
   MwrAbsorberCIA(RadiationBand *pband, Real xHe, Real xCH4, Real fequal = 0.);
-  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
 private:
   Real xHe_, xCH4_, fequal_;
 };
@@ -76,7 +77,8 @@ public:
     return *this;
   }
 
-  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
 private:
   std::string model_name_;
   int method_;
@@ -109,7 +111,8 @@ public:
     return *this;
   }
 
-  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
 private:
   std::string model_name_;
   int method_;
@@ -142,7 +145,8 @@ public:
     return *this;
   }
 
-  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
 private:
   std::string model_name_;
   Real xHe_, scale_;
@@ -164,7 +168,8 @@ public:
     */
   MwrAbsorberH2S(RadiationBand *pband, Real xHe, Real *xH2S, Real *pres, int np);
 
-  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
 private:
   int method_;
   Real xHe_;
@@ -190,7 +195,8 @@ public:
     return *this;
   }
 
-  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
 private:
   std::string model_name_;
 };

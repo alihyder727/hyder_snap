@@ -4,15 +4,19 @@
 #include "../debugger/debugger.hpp"
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../coordinates/coordinates.hpp"
+#include "../communicator/communicator.hpp"
 #include "physics.hpp"
 
 TaskStatus Physics::TopCooling(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
   MeshBlock *pmb = pmy_block;
+  NeighborBlock const *ptop = pmb->pcomm->findTopNeighbor();
+  if (ptop != nullptr)
+    return TaskStatus::success;
+
   pmb->pdebug->Call("Physics::TopCooling");
 
-  //Thermodynamics *pthermo = pmb->pthermo;
 	Coordinates *pcoord = pmb->pcoord;
   int is = pmb->is; int js = pmb->js; int ks = pmb->ks;
   int ie = pmb->ie; int je = pmb->je; int ke = pmb->ke;
@@ -36,6 +40,10 @@ TaskStatus Physics::BotHeating(AthenaArray<Real> &du,
   AthenaArray<Real> const& w, Real time, Real dt)
 {
   MeshBlock *pmb = pmy_block;
+  NeighborBlock const *pbot = pmb->pcomm->findBotNeighbor();
+  if (pbot != nullptr)
+    return TaskStatus::success;
+
   pmb->pdebug->Call("Physics::BotHeating");
 
 	Coordinates *pcoord = pmb->pcoord;

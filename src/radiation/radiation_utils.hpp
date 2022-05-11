@@ -6,6 +6,7 @@
 
 // Athena++ header
 #include "../athena.hpp"
+#include "radiation.hpp"
 
 
 /*void WriteTopFlux(std::string fname) const;
@@ -13,7 +14,10 @@ void WriteTopRadiance(std::string fname) const;
 void WriteOpticalDepth(std::string fname) const;
 void WriteHeatingRate(std::string fname, AthenaArray<Real> const& flux,
       AthenaArray<Real> const& hr, Real const* level); */
-void getPhaseMomentum(int iphas, Real gg, int npmom, Real *pmom);
+
+void readRadiationDirections(std::vector<Direction>& ray, std::string str);
+void setRadiationFlags(uint64_t *flags, std::string str);
+void getPhaseHenyeyGreenstein(Real *pmom, int iphas, Real gg, int npmom);
 void packSpectralProperties(Real *buf, Real const *tau, Real const *ssa, Real const* pmom, int nlayer, int npmom);
 void unpackSpectralProperties(Real *tau, Real *ssa, Real *pmom, Real const *buf, int slyr, int npmom, int nblocks, int npmom_max = -1);
 

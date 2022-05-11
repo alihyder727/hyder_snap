@@ -1,0 +1,58 @@
+---
+functions:
+  condensation:
+    parameters:
+      - qs
+      - dqsdt
+      - A=
+    rate: |
+      q1 > qs(T) ? A*(q1 - qs(T)) : 0
+    substitution:
+      - Derivative(qs(T), T) -> dqsdt
+      - qs(T) -> qs
+    refenrece:
+      - Kessler,1994
+
+  sublimation:
+    parameters:
+      - qs
+      - dqsdt
+      - mols
+      - A=
+    rate: |
+      q1 < qs(T) ? A*(qs(T) - q1)/mols : 0
+    substitution:
+      - Derivative(qs(T), T) -> dqsdt
+      - qs(T) -> qs
+    refenrece:
+      - Kessler,1994
+
+  autoconversion:
+    parameters:
+      - A=
+    rate: |
+      A*q1
+    refenrece:
+      - Kessler,1994
+
+  accretion:
+    parameters:
+      - A=
+    rate: |
+      A*q1*q2
+    refenrece:
+      - Kessler,1994
+
+  re-evaporation:
+    parameters:
+      - qs
+      - dqsdt
+      - mols
+      - A=
+    rate: |
+      q1 < qs(T) ? A*(qs(T) - q1)/mols : 0
+    substitution:
+      - Derivative(qs(T), T) -> dqsdt
+      - qs(T) -> qs
+    refenrece:
+      - Kessler,1994

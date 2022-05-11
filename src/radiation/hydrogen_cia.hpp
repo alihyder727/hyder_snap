@@ -13,8 +13,8 @@ public:
   XizH2H2CIA(RadiationBand *pband, int id, Real mixr):
     Absorber(pband, "H2-H2", id, mixr) {}
   virtual ~XizH2H2CIA() {}
-  void LoadCoefficient(std::string fname);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  void loadCoefficient(std::string fname, int bid = -1);
+  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
 
 protected:
   int len_[2];
@@ -28,8 +28,8 @@ public:
   XizH2HeCIA(RadiationBand *pband, int id, Real mixr1, Real mixr2):
     Absorber(pband, "H2-He", id, mixr1), mixr2_(mixr2) {}
   virtual ~XizH2HeCIA() {}
-  void LoadCoefficient(std::string fname);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  void loadCoefficient(std::string fname, int bid = -1);
+  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
 
 protected:
   Real mixr2_;
@@ -43,8 +43,8 @@ public:
   OrtonCIA(RadiationBand *pband, int id, Real mixr):
     Absorber(pband, "H2-H2", id, mixr) {}
   virtual ~OrtonCIA() {}
-  void LoadCoefficient(std::string fname);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
+  void loadCoefficient(std::string fname, int bid = -1);
+  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
 
 protected:
   int len_[2];

@@ -8,21 +8,27 @@ def create_input(tmpfile, args):
     with open(tmpfile, 'r') as file:
       tmpinp = file.read()
 
-    pmax, pmin, np = tuple(map(float, args['plevel'].split(':')))
-    np = int(np)
-    plevel = logspace(log10(pmax), log10(pmin), np)
-    plevel = ['%10.2f'%x for x in plevel]
+    if ':' in args['plevel']:
+      pmax, pmin, np = tuple(map(float, args['plevel'].split(':')))
+      np = int(np)
+      plevel = logspace(log10(pmax), log10(pmin), np)
+      plevel = ['%10.2f'%x for x in plevel]
+    elif ',' in args['plevel']:
+      plevel = args['plevel'].split(',')
+      np = len(plevel)
+      print(plevel)
+      print(np)
 
     if args['tem'] == '0':
-        Tp = ['0.']*np
+      Tp = ['0.']*np
     else:
-        Tp = args['tem'].split(' ')
+      Tp = args['tem'].split(' ')
     assert(len(Tp) == np)
 
     if args['nh3'] == '0':
-        NH3p  = ['0.']*np
+      NH3p  = ['0.']*np
     else:
-        NH3p = args['nh3'].split(' ')
+      NH3p = args['nh3'].split(' ')
     assert(len(NH3p) == np)
 
   # adjust minimum number of walkers
@@ -30,49 +36,41 @@ def create_input(tmpfile, args):
 
     var = [x for x in args['var'].split()]
 
-    print(tmpfile)
     name = tmpfile.split('/')[-1].split('.')[0]
     if args['output'] != '':
-        name += '-' + args['output']
+      name += '-' + args['output']
 
     inpfile = re.sub('\[problem_id\]', name, tmpinp)
     inpfile = re.sub('\[logname\]', name, inpfile)
     inpfile = re.sub('\[obsname\]', args['obs'], inpfile)
-    inpfile = re.sub('\[T0\]', args['T0'], inpfile)
-    inpfile = re.sub('\[Tmin\]', args['Tmin'], inpfile)
-    inpfile = re.sub('\[qH2O\]', args['qH2O'], inpfile)
-    inpfile = re.sub('\[qNH3\]', args['qNH3'], inpfile)
+    inpfile = re.sub('\[grav\]', '-' + args['grav'], inpfile)
+    inpfile = re.sub('\[plevel\]', ' '.join(plevel), inpfile)
+    inpfile = re.sub('\[variables\]', ' '.join(var), inpfile)
+    inpfile = re.sub('\[Tp\]', ' '.join(Tp), inpfile)
+    inpfile = re.sub('\[NH3p\]', ' '.join(NH3p), inpfile)
     inpfile = re.sub('\[Tstd\]', args['sT'], inpfile)
     inpfile = re.sub('\[Xstd\]', args['sNH3'], inpfile)
     inpfile = re.sub('\[Tlen\]', args['zT'], inpfile)
     inpfile = re.sub('\[Xlen\]', args['zNH3'], inpfile)
-    inpfile = re.sub('\[plevel\]', ' '.join(plevel), inpfile)
-    inpfile = re.sub('\[pmin\]', args['pmin'], inpfile)
-    inpfile = re.sub('\[pmax\]', args['pmax'], inpfile)
-    inpfile = re.sub('\[nwalker\]', args['nwalker'], inpfile)
     inpfile = re.sub('\[lwalker\]', str(int(args['nwalker'])//int(args['nodes'])), inpfile)
-    inpfile = re.sub('\[nlim\]', args['nlim'], inpfile)
-    inpfile = re.sub('\[variables\]', ' '.join(var), inpfile)
-    inpfile = re.sub('\[Tp\]', ' '.join(Tp), inpfile)
-    inpfile = re.sub('\[NH3p\]', ' '.join(NH3p), inpfile)
-    inpfile = re.sub('\[grav\]', '-' + args['grav'], inpfile)
-    inpfile = re.sub('\[clat\]', args['clat'], inpfile)
     if args['M']:
         inpfile = re.sub('\[M\]', 'true', inpfile)
     else:
         inpfile = re.sub('\[M\]', 'false', inpfile)
-    inpfile = re.sub('\[rgradt\]', args['rgradt'], inpfile)
-    inpfile = re.sub('\[metallicity\]', args['metallicity'], inpfile)
-    inpfile = re.sub('\[karpowicz_scale\]', args['karpowicz_scale'], inpfile)
-    inpfile = re.sub('\[hanley_power\]', args['hanley_power'], inpfile)
     if args['d']:
         inpfile = re.sub('\[diff\]', 'true', inpfile)
     else:
         inpfile = re.sub('\[diff\]', 'false', inpfile)
 
+    for key in args.keys():
+      try :
+        inpfile = re.sub('\[%s\]' % key, args[key], inpfile)
+      except TypeError :
+        pass
+
     with open(name + '.inp', 'w') as file:
         file.write(inpfile)
-    print('Input file written to %s.inp\n' % name)
+    print('Input file written to %s.inp' % name)
     return name + '.inp'
 
 def run_forward(exefile, inpfile):
@@ -109,28 +107,27 @@ def write_observation(inpfile, datafile, output = 'none'):
 # read radiation toa
     data = Dataset(datafile, 'r')
     amu = arccos(data['mu_out'][:])/pi*180.
-    num_dirs = len(amu)
-    tb = []
-    for i in range(num_bands):
-        tb.append(data['b%dtoa' % (i+1,)][0,:,:,0])
-    tb = array(tb)
+    amu = amu.reshape((num_bands, -1))
+    num_dirs = amu.shape[1]
+    tb = data['radiance'][0,:,:,0]
+    tb = tb.reshape((num_bands, num_dirs, -1))
 
 # write to file
     if output == 'none':
-        outfile = '.'.join(inpfile.split('.')[:-1]) + '.out'
+      outfile = '.'.join(inpfile.split('.')[:-1]) + '.out'
     else:
-        outfile = output
+      outfile = output
     with open(outfile, 'w') as file:
-        for k in range(tb.shape[2]):
-            file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))
-            file.write('%12s' % '# Freq (GHz)')
-            for i in range(num_dirs):
-                file.write('%10.2f' % amu[i])
-            file.write('\n')
-            for i in range(num_bands):
-                file.write('%12.2f' % freq[i])
-                for j in range(num_dirs):
-                    file.write('%10.2f' % tb[i,j,k])
-                file.write('\n')
+      for k in range(tb.shape[2]):
+        file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))
+        file.write('%12s' % '# Freq (GHz)')
+        for i in range(num_dirs):
+          file.write('%10.2f' % amu[0,i])
+        file.write('\n')
+        for i in range(num_bands):
+          file.write('%12.2f' % freq[i])
+          for j in range(num_dirs):
+            file.write('%10.2f' % tb[i,j,k])
+          file.write('\n')
     print('Brightness temperatures written to %s' % outfile)
     return outfile

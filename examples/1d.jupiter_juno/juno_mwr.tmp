@@ -89,6 +89,7 @@ b4          = 5.2   5.2   1
 b5          = 10.   10.   1
 b6          = 22.   22.   1
 outdir      = (0,) (15,) (30,) (45,)
+radiance_units = K
 
 b1.absorbers = mw_CIA mw_H2O mw_NH3 # mw_electron
 b2.absorbers = mw_CIA mw_H2O mw_NH3 # mw_electron

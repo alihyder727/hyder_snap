@@ -85,7 +85,7 @@ std::vector<std::string> Vectorize(const char* cstr, const char *delimiter)
   return arr;
 }
 
-void ReplaceChar(char* buf, char c_old, char c_new)
+void replaceChar(char* buf, char c_old, char c_new)
 {
   int len = strlen(buf);
   for (int i = 0; i < len; ++i)

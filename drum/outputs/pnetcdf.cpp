@@ -20,6 +20,7 @@
 #include "../math/core.h"
 #include "../coordinates/coordinates.hpp"
 #include "../utils/utils.hpp"
+#include "../radiation/radiation.hpp"
 #include "outputs.hpp"
 
 // Only proceed if PNETCDF output enabled
@@ -87,9 +88,11 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   size_t nx1f = nx1; if (nx1 > 1) nx1f++;
   size_t nx2f = nx2; if (nx2 > 1) nx2f++;
   size_t nx3f = nx3; if (nx3 > 1) nx3f++;
+  //! \todo This applies to the first block. Does it work for all blocks?
+  size_t nrays = pm->pblock->prad->radiance.GetDim3();
 
   // 2. define coordinate
-  int idt, idx1, idx2, idx3, idx1f, idx2f, idx3f;
+  int idt, idx1, idx2, idx3, idx1f, idx2f, idx3f, iray;
   int ndims = 0;
 
   ncmpi_def_dim(ifile, "time", NC_UNLIMITED, &idt);
@@ -115,8 +118,13 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     ndims++;
   }
 
+  if (nrays > 0) {
+    ncmpi_def_dim(ifile, "ray", nx3f, &iray);
+    ndims += 2;
+  }
+
   // 3. define variables
-  int ivt, ivx1, ivx2, ivx3, ivx1f, ivx2f, ivx3f;
+  int ivt, ivx1, ivx2, ivx3, ivx1f, ivx2f, ivx3f, imu, iphi;
 
   ncmpi_def_var(ifile, "time", NC_FLOAT, 1, &idt, &ivt);
   ncmpi_put_att_text(ifile, ivt, "axis", 1, "T");
@@ -189,16 +197,28 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     }
   }
 
+  if (nrays > 0) {
+    ncmpi_def_var(ifile, "mu_out", NC_FLOAT, 1, &iray, &imu);
+    ncmpi_put_att_text(ifile, imu, "units", 1, "1");
+    ncmpi_put_att_text(ifile, imu, "long_name", 18, "cosine polar angle");
+    ncmpi_def_var(ifile, "phi_out", NC_FLOAT, 1, &iray, &iphi);
+    ncmpi_put_att_text(ifile, iphi, "units", 3, "rad");
+    ncmpi_put_att_text(ifile, iphi, "long_name", 15, "azimuthal angle");
+  }
+
   MeshBlock *pmb = pm->pblock;
   LoadOutputData(pmb);
   OutputData *pdata = pfirst_data_;
 
   // count total variables (vector variables are expanded into flat scalars)
-  // TODO : nvars is incorrect with other grids like --C, --F
-  //! \bug this file may not work for radiation, consult \ref netcdf.cpp
-  int nvars = 0;
+  int total_vars = 0;
   while (pdata != nullptr) {
-    nvars += pdata->data.GetDim4();
+    if (pdata->grid == "--C" || pdata->grid == "--F")
+      total_vars += pdata->data.GetDim2();
+    else if (pdata->grid == "---")
+      total_vars += pdata->data.GetDim1();
+    else
+      total_vars += pdata->data.GetDim4();
     pdata = pdata->pnext;
   }
 
@@ -206,13 +226,15 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
   int iaxis1[4] = {idt, idx1f, idx2, idx3};
   int iaxis2[4] = {idt, idx1, idx2f, idx3};
   int iaxis3[4] = {idt, idx1, idx2, idx3f};
-  int *var_ids = new int [nvars];
+  int iaxisr[4] = {idt, iray,  idx2, idx3};
+  int *var_ids = new int [total_vars];
   int *ivar = var_ids;
 
   pdata = pfirst_data_;
   while (pdata != nullptr) {
     std::string name, attr;
     std::vector<std::string> varnames, longnames, units;
+    int nvar = getNumVariables(pdata->grid, pdata->data);
     
     // vectorize name
     if (pdata->name.find(',') != std::string::npos) {
@@ -226,9 +248,9 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
         ATHENA_ERROR(msg);
       }
     } else {
-      for (int n = 0; n < pdata->data.GetDim4(); ++n) {
+      for (int n = 0; n < nvar; ++n) {
         size_t pos = pdata->name.find('?');
-        if (pdata->data.GetDim4() == 1) { // SCALARS
+        if (nvar == 1) { // SCALARS
           if (pos < pdata->name.length()) {  // find '?'
             varnames.push_back(pdata->name.substr(0, pos) + pdata->name.substr(pos + 1));
           } else
@@ -269,9 +291,11 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       }
     }
 
-    for (int n = 0; n < pdata->data.GetDim4(); ++n) {
+    for (int n = 0; n < nvar; ++n) {
       name = varnames[n];
-      if (pdata->grid == "CCF")
+      if (pdata->grid == "RCC")  // radiation rays
+        ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxisr, ivar);
+      else if (pdata->grid == "CCF")
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis1, ivar);
       else if ((pdata->grid == "CFC") && (nx2 > 1))
         ncmpi_def_var(ifile, name.c_str(), NC_FLOAT, 4, iaxis2, ivar);
@@ -330,7 +354,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     nmb++;  // number of meshblocks this rank
     pb = pb->next;
   }
-  int nbufs = nmb*(ndims + nvars);
+  int nbufs = nmb*(ndims + total_vars);
   int *reqs = new int [nbufs];
   int *stts = new int [nbufs];
   float **buf = new float* [nbufs];
@@ -354,7 +378,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     out_js=pmb->js; out_je=pmb->je;
     out_ks=pmb->ks; out_ke=pmb->ke;
     
-    // FIXME : include_ghost zones probably doesn't work with grids other than CCC
+    // \todo include_ghost zones probably doesn't work with grids other than CCC
     if (output_params.include_ghost_zones) {
       out_is -= NGHOST; out_ie += NGHOST;
       if (out_js != out_je) {out_js -= NGHOST; out_je += NGHOST;}
@@ -374,10 +398,12 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     MPI_Offset count1[4] = {1, nfaces1, ncells2, ncells3};
     MPI_Offset count2[4] = {1, ncells1, nfaces2, ncells3};
     MPI_Offset count3[4] = {1, ncells1, ncells2, nfaces3};
+    MPI_Offset startr[4] = {0, 0, ncells2*pmb->loc.lx2, ncells3*pmb->loc.lx3};
+    MPI_Offset countr[4] = {1, (MPI_Offset)nrays, ncells2, ncells3};
 
-    MPI_Offset start_ax1[2] = {0, ncells1*pmb->loc.lx1};
-    MPI_Offset count_ax1[2] = {1, ncells1};
-    MPI_Offset count_ax1f[2] = {1, nfaces1};
+    //MPI_Offset start_ax1[2] = {0, ncells1*pmb->loc.lx1};
+    //MPI_Offset count_ax1[2] = {1, ncells1};
+    //MPI_Offset count_ax1f[2] = {1, nfaces1};
 
     if (strcmp(COORDINATE_SYSTEM,"spherical_polar") == 0)
       for (int i = out_is; i <= out_ie; ++i)
@@ -439,11 +465,44 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
       ERR
     }
 
+    if (nrays > 0) {
+      RadiationBand *p = pmb->prad->pband;
+      int m = 0;
+      while (p != nullptr) {
+        for (int n = 0; n < p->rayOutput.size(); ++n)
+          (*ib)[m++] = (float)(p->rayOutput[n].mu);
+        p = p->next;
+      }
+      err = ncmpi_iput_var_float(ifile, imu, *ib++, ir++);
+      ERR
+
+      p = pmb->prad->pband;
+      m = 0;
+      while (p != nullptr) {
+        for (int n = 0; n < p->rayOutput.size(); ++n)
+          (*ib)[m++] = (float)(p->rayOutput[n].phi);
+        p = p->next;
+      }
+      err = ncmpi_iput_var_float(ifile, iphi, *ib++, ir++);
+      ERR
+    }
+
     ivar = var_ids;
     pdata = pfirst_data_;
     while (pdata != nullptr) {
-      int nvar = pdata->data.GetDim4();
-      if (pdata->grid == "CCF") {
+      int nvar = getNumVariables(pdata->grid, pdata->data);
+
+      if (pdata->grid == "RCC") { // radiation rays
+        for (int n = 0; n < nvar; n++) {
+          float *it = *ib;
+          for (int m = 0; m < nrays; ++m)
+            for (int j = out_js; j <= out_je; ++j)
+              for (int k = out_ks; k <= out_ke; ++k)
+                *it++ = (float)pdata->data(n,m,k,j);
+          err = ncmpi_iput_vara_float(ifile, *ivar++, startr, countr, *ib++, ir++);
+          ERR
+        }
+      } else if (pdata->grid == "CCF") {
         for (int n = 0; n < nvar; n++) {
           float *it = *ib;
           for (int i = out_is; i <= out_ie+1; ++i)
@@ -478,7 +537,7 @@ void PnetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
           float *it = *ib;
           for (int i = out_is; i <= out_ie; ++i)
             *it++ = (float)pdata->data(n,i);
-          err = ncmpi_iput_vara_float(ifile, *ivar++, start_ax1, count_ax1, *ib++, ir++);
+          err = ncmpi_iput_vara_float(ifile, *ivar++, start, count, *ib++, ir++);
           ERR
         }
       } else if (pdata->grid == "--F") {

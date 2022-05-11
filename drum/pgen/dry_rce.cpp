@@ -12,13 +12,14 @@
 #include "../mesh/mesh.hpp"
 #include "../globals.hpp"
 #include "../math/interpolation.h"
-#include "../utils/utils.hpp"
+#include "../utils/utils.hpp" // replaceChar
 #include "../thermodynamics/thermodynamics.hpp"
 #include "../thermodynamics/thermodynamic_funcs.hpp"
 #include "../radiation/radiation.hpp"
 #include "../radiation/hydrogen_cia.hpp"
 #include "../radiation/freedman_mean.hpp"
 #include "../radiation/freedman_simple.hpp"
+#include "../radiation/correlatedk_absorber.hpp"
 #include "../physics/physics.hpp"
 
 // global parameters
@@ -43,7 +44,7 @@ void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
       }
 }
 
-void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInput *pin)
+void RadiationBand::addAbsorber(std::string name, std::string file, ParameterInput *pin)
 {
   Real xHe = pin->GetOrAddReal("radiation", "xHe", 0.136);
   Real xH2 = 1. - xHe;
@@ -51,18 +52,32 @@ void RadiationBand::AddAbsorber(std::string name, std::string file, ParameterInp
   std::stringstream msg;
 
   if (name == "H2-H2") {
-    pabs->AddAbsorber(XizH2H2CIA(this, 0, xH2))
-        ->LoadCoefficient(file);
+    pabs->addAbsorber(XizH2H2CIA(this, 0, xH2))
+        ->loadCoefficient(file);
   } else if (name == "H2-He") {
-    pabs->AddAbsorber(XizH2HeCIA(this, 0, xH2, xHe))
-        ->LoadCoefficient(file);
+    pabs->addAbsorber(XizH2HeCIA(this, 0, xH2, xHe))
+        ->loadCoefficient(file);
   } else if (name == "freedman_simple") {
-    pabs->AddAbsorber(FreedmanSimple(this, pin));
+    pabs->addAbsorber(FreedmanSimple(this, pin));
   } else if (name == "freedman_mean") {
-    pabs->AddAbsorber(FreedmanMean(this));
+    pabs->addAbsorber(FreedmanMean(this));
+  } else if (strncmp(name.c_str(), "ck-", 3) == 0) {
+    char str[80], aname[80];
+    int bid;
+    strcpy(str, name.c_str());
+    replaceChar(str, '-', ' ');
+    int err = sscanf(str, "ck %s %d", aname, &bid);
+    if (err != EOF) {
+      pabs->addAbsorber(CorrelatedKAbsorber(this, aname))
+          ->loadCoefficient(file, bid);
+    } else {
+      msg << "### FATAL ERROR in RadiationBand::addAbsorber"
+          << std::endl << "Incorrect format for absorber '" << name <<"' ";
+      ATHENA_ERROR(msg);
+    }
   } else {
-    msg << "### FATAL ERROR in RadiationBand::AddAbsorber"
-        << std::endl << "unknow absorber: '" << name <<"' ";
+    msg << "### FATAL ERROR in RadiationBand::addAbsorber"
+        << std::endl << "Unknown absorber: '" << name <<"' ";
     ATHENA_ERROR(msg);
   }
 }
@@ -191,12 +206,11 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   while (p != NULL) {
     for (int k = kl; k <= ku; ++k)
       for (int j = jl; j <= ju; ++j)
-        p->SetSpectralProperties(phydro->w, k, j, is, ie);
+        p->setSpectralProperties(phydro->w, k, j, is, ie);
     p = p->next;
   }
 
   peos->PrimitiveToConserved(phydro->w, pfield->bcc, phydro->u, pcoord, is, ie, js, je, ks, ke);
-  pphy->Initialize(phydro->w);
 
   FreeCArray(w1);
   delete[] z1;

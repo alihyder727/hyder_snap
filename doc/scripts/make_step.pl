@@ -31,11 +31,12 @@ print
 \@page $step_underscore Example #$count : The $step Problem
 ";
 
-open BF, "$root_dir/examples/$step/builds-on"
-    or die "Can't open builds-on file $root_dir/examples/$step/builds-on";
-my $buildson = <BF>;
-close BF;
-chop $buildson;
+#open BF, "$root_dir/examples/$step/builds-on"
+#    or die "Can't open builds-on file $root_dir/examples/$step/builds-on";
+#my $buildson = <BF>;
+#close BF;
+#chop $buildson;
+$buildson = "";
 
 # At the very top, print which other programs this one builds on. The
 # filter script will replace occurrences of step-XX by the appropriate
@@ -64,17 +65,17 @@ my $file_extension;
 
 my $pgen = substr $step, index($step, ".")+1;
 
-if (-f "$root_dir/src/pgen/$pgen.cpp")
+if (-f "$root_dir/drum/pgen/$pgen.cpp")
 {
   $file_extension = cpp;
 }
 
-if (-f "$root_dir/src/pgen/$pgen.cu")
+if (-f "$root_dir/drum/pgen/$pgen.cu")
 {
   $file_extension = cu;
 }
 
-system $^X, "$root_dir/doc/scripts/program2toc", "$root_dir/src/pgen/$pgen.$file_extension";
+system $^X, "$root_dir/doc/scripts/program2toc", "$root_dir/drum/pgen/$pgen.$file_extension";
 
 print
 "  <li><a href=\"#Results\" class=bold>Results</a></li>
@@ -105,7 +106,7 @@ print " *\n";
 print " * <a name=\"CommProg\"></a>\n";
 print " * <h1> The commented program</h1>\n";
 
-system $^X, "$root_dir/doc/scripts/program2doxygen", "$root_dir/src/pgen/$pgen.$file_extension";
+system $^X, "$root_dir/doc/scripts/program2doxygen", "$root_dir/drum/pgen/$pgen.$file_extension";
 
 system $^X, "$root_dir/doc/scripts/create_anchors", "$root_dir/examples/$step/results.dox";
 

@@ -262,3 +262,6 @@ public:
   void WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag);
   //void CombineBlocks();
 };
+
+//! \return number of output fields in one single variable
+int getNumVariables(std::string grid, AthenaArray<Real> const& data);

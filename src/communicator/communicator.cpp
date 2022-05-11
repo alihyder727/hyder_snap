@@ -20,6 +20,9 @@ Communicator::Communicator(MeshBlock *pmb):
   pmb->pdebug->Enter("Communicator");
   color_ = new int [Globals::nranks];
   brank_ = new int [Globals::nranks];
+#ifdef MPI_PARALLEL
+  comm_ = MPI_COMM_WORLD;
+#endif
   pmb->pdebug->Leave();
 }
 
@@ -27,9 +30,14 @@ Communicator::~Communicator()
 {
   delete[] color_;
   delete[] brank_;
+
+#ifdef MPI_PARALLEL
+  if (comm_ != MPI_COMM_WORLD)
+    MPI_Comm_free(&comm_);
+#endif
 }
 
-int Communicator::getRank(CoordinateDirection dir)
+int Communicator::getRank(CoordinateDirection dir) const
 {
   int r = 0;
   int b = brank_[Globals::my_rank];
@@ -40,24 +48,43 @@ int Communicator::getRank(CoordinateDirection dir)
   return r;
 }
 
-void Communicator::gatherData(Real *send, Real *recv, int size, CoordinateDirection dir)
+void Communicator::gatherData(Real *send, Real *recv, int size) const
 {
 #ifdef MPI_PARALLEL
-  MPI_Comm comm;
-  MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
-  MPI_Allgather(send, size, MPI_ATHENA_REAL, recv, size, MPI_ATHENA_REAL, comm);
-  MPI_Comm_free(&comm);
+  MPI_Allgather(send, size, MPI_ATHENA_REAL, recv, size, MPI_ATHENA_REAL, comm_);
 #else
   memcpy(recv, send, size*sizeof(Real));
 #endif
 }
 
-void Communicator::gatherDataInPlace(Real *recv, int size, CoordinateDirection dir)
+//! \warning this function is unstable to some system.
+void Communicator::gatherDataInPlace(Real *recv, int size) const
 {
 #ifdef MPI_PARALLEL
-  MPI_Comm comm;
-  MPI_Comm_split(MPI_COMM_WORLD, color_[Globals::my_rank], Globals::my_rank, &comm);
-  MPI_Allgather(MPI_IN_PLACE, 0, 0, recv, size, MPI_ATHENA_REAL, comm);
-  MPI_Comm_free(&comm);
+  MPI_Allgather(MPI_IN_PLACE, 0, 0, recv, size, MPI_ATHENA_REAL, comm_);
 #endif
+}
+
+NeighborBlock const* Communicator::findBotNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *pbot = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == -1) && (nb->ni.ox2 == 0) && (nb->ni.ox3 == 0))
+      pbot = nb;
+  }
+  return pbot;
+}
+
+NeighborBlock const* Communicator::findTopNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *ptop = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == 1) && (nb->ni.ox2 == 0) && (nb->ni.ox3 == 0))
+      ptop = nb;
+  }
+  return ptop;
 }

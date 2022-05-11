@@ -1,0 +1,39 @@
+---
+using: 
+  - NH3-NH3s
+  - H2S-H2Ss
+  - Kessler1994
+
+symbols:
+  NH4SH(s,c): c[iNH4SHc]
+  NH4SH(s,p): c[iNH4SHp]
+
+reactions:
+  - formula: NH3 + H2S -> NH4SH(s,c)
+    function: condensation2
+  - formula: NH4SH(s,c) -> NH3 + H2S 
+    function: sublimation
+  - formula: NH4SH(s,c) -> NH4SH(s,p)
+    function: autoconversion
+  - formula: NH4SH(s,c) + NH4SH(s,p) -> 2NH4SH(s,p)
+    function: accretion
+  - formula: NH4SH(s,p) -> NH3 + H2S
+    function: re-evaporation
+
+function:
+  condensation2:
+    parameters:
+      - q1
+      - q2
+      - k1
+    rate: |
+      q1*q2 > qs(T) ? k1*(q1*q2 - qs(T)) : 0
+
+common: |
+  pthermo->SaturationSurplus(dqsat_.data(), q, VariableType::chem);
+  Real dq = dqsat_[iq1];
+  Real qs = q1 - dq;
+  Real Rv = pthermo->GetRd()/pthermo->GetMassRatio(iq1);
+  Real lf = pthermo->GetLatent(NVAPOR+iq1,T) - Rv*T;
+  Real dqsdt = qs/T*lf/(Rv*T);
+  Real mols = q[IPR]/(Thermodynamics::Rgas*q[IDN]);

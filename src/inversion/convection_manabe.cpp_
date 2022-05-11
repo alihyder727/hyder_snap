@@ -1,0 +1,105 @@
+/** @file convection_manabe.cpp
+ * @brief
+ *
+ * @author Cheng Li (chengcli@umich.edu)
+ * @date Thursday Nov 18, 2021 20:55:32 EST
+ * @bug No known bugs.
+ */
+
+#include "convection_manabe.hpp"
+
+void convection_manabe() {
+  /* 8. rectify profile
+  Real **w2;
+  NewCArray(w2, 2, NHYDRO);
+  std::fill(*w2, *w2 + 2*NHYDRO, 0.);
+  w(IDN,j3,is) *= w(IPR,j3,is)/w(IPR,j2,is); 
+  //std::cout << pthermo->Temp(w.at(js,is)) << " " << pthermo->Temp(w.at(j3,is)) << std::endl;
+  for (int i = is; i < ie; ++i) {
+    for (int n = 0; n < NHYDRO; ++n)
+      w2[0][n] = w(n,j3,i);
+    Real T0 = pthermo->GetTemp(w2[0]);
+    Real P0 = w2[0][IPR];
+    Real dz = pcoord->x1v(i+1) - pcoord->x1v(i);
+    
+    // propose an adiabatic move
+    pthermo->ConstructAtmosphere(w2, T0, P0, grav, dz, 2, Adiabat::dry);
+    Real T1 = pthermo->GetTemp(w2[1]);
+    Real T2 = pthermo->GetTemp(w.at(js,i+1)) + Tp[i+1-is];
+    bool isothermal_flag = false;
+
+    if (T1 < 0.) {  // adiabat is not possible using isothermal instead
+      w2[1][IDN] = w2[0][IDN];
+      w2[1][IPR] = w2[0][IPR]*exp(-w2[0][IDN]*grav*dz/w2[0][IPR]);
+      for (int n = 1; n <= NVAPOR; ++n)
+        w2[1][n] = w2[0][n];
+      T1 = pthermo->GetTemp(w2[1]);
+      T2 = std::max(T1, T2);
+      isothermal_flag = true;
+    }
+
+    Real Tv1 = w2[1][IPR]/(w2[1][IDN]*Rd);
+    //std::cout << i << " " << T1 << " " << T2;
+    if (T1 > T2) {  // potentially unstable
+      //std::cout << " potentially unstable" << std::endl;
+      Real eH2O = pthermo->GetMassRatio(iH2O);
+      Real eNH3 = pthermo->GetMassRatio(iNH3);
+      Real f = 1. + w2[1][iNH3]*(1./eNH3 - 1.);
+      Real qmax = T1/T2*w2[0][iH2O] - eH2O/(eH2O - 1.)*(T1 - T2)/T2*f;
+      Real Tv0 = w2[0][IPR]/(w2[0][IDN]*Rd);
+      Real Tv2;
+      //std::cout << Tv0 << " " << qmax << " " << w2[1][iH2O] << std::endl;
+      if ((qmax > 0.) && (T2 > 0.)) { // has enough water
+        w2[1][iH2O] = std::min(w2[1][iH2O], qmax);
+        Tv2 = T2*pthermo->RovRd(w2[1]);
+      } else {  // not enough water
+        //std::cout << " not enough water" << std::endl;
+        w2[1][iH2O] = 0.;
+        //Tv2 = T2*pthermo->Qeps(w2[1]);
+        RootData rd;
+        rd.rho0 = w2[0][IDN];
+        rd.Tv0 = Tv0;
+        rd.dz = dz;
+        rd.Rd = Rd;
+        rd.grav = grav;
+        rd.chi = pthermo->GetChi(w2[0]);
+        rd.p0 = P0;
+        //std::cout << "before Tv2=" << Tv2 << std::endl;
+        if (Tv1 > grav*dz/Rd) {
+          int err = root(Tv1/2, Tv0, 1.E-4, &Tv2, junomwr_root_func, &rd);
+          if (err) {
+            std::stringstream msg;
+            msg << "### Root doesn't converge" << std::endl;
+            msg << Tp[i+1-is] << " " << junomwr_root_func(Tv1/2, &rd) << " " 
+                << junomwr_root_func(Tv0, &rd) << std::endl;
+            std::cerr << msg.str() << std::endl;
+            return NAN;
+            //throw std::runtime_error(msg.str().c_str());
+          }
+        } else Tv2 = Tv0; // using isothermal
+        // std::cout << "after Tv2=" << Tv2 << std::endl;
+      }
+      //std::cout << "before  "<< w2[1][IDN] << " " << w2[1][IPR] << " "
+      //          << pthermo->Temp(w2[1]) << std::endl;
+      w2[1][IDN] = w2[0][IDN]*(Tv0 - grav*dz/(2.*Rd))/(Tv2 + grav*dz/(2.*Rd));
+      w2[1][IPR] = w2[1][IDN]*Rd*Tv2;
+      //std::cout << "after " << w2[1][IDN] << " " << w2[1][IPR] << " "
+      //          << pthermo->Temp(w2[1]) << std::endl;
+    } else { // stable
+      //std::cout << " (T2-T1)/dz=" << (T2-T1)/dz;
+      //std::cout << " stable ";
+      if (!isothermal_flag)
+        pthermo->ConstructAtmosphere(w2, T0, P0, grav, dz, 2, Adiabat::dry, (T2-T1)/dz);
+      //std::cout << pthermo->Temp(w2[1]) << " " << w2[1][IPR] << std::endl;
+    }
+
+    w2[1][iNH3] = std::max(0., w(iNH3,js,i+1) + NH3p[i+1-is]);
+    Real dq[NHYDRO];
+    pthermo->SaturationSurplus(dq, w2[1], VariableType::prim);
+    if (dq[iNH3] > 0.) w2[1][iNH3] -= dq[iNH3];
+
+    for (int n = 0; n < NHYDRO; ++n)
+      w(n,j3,i+1) = w2[1][n];
+  }
+}
+

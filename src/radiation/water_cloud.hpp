@@ -10,38 +10,50 @@
 class SimpleCloud: public Absorber {
 public:
   SimpleCloud(RadiationBand *pband, int id, Real mixr = 1.):
-    Absorber(pband, "H2O_l", id, mixr) {}
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
-  Real SingleScateringAlbedo(Real wave, Real const prim[]) const;
-  void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const;
+      Absorber(pband, "H2O_l", id, mixr) {}
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
+  Real getSingleScateringAlbedo(Real wave1, Real wave2, 
+      GridData const& gdata) const;
+  void getPhaseMomentum(Real *pp, Real wave1, Real wave2,
+      GridData const& gdata, int np) const;
 };
 
 class FuWaterLiquidCloud: public Absorber {
 public:
   FuWaterLiquidCloud(RadiationBand *pband, int id):
-    Absorber(pband, "H2O_l", id) {}
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
-  Real SingleScateringAlbedo(Real wave, Real const prim[]) const;
-  void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const;
+      Absorber(pband, "H2O_l", id) {}
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
+  Real getSingleScateringAlbedo(Real wave1, Real wave2,
+      GridData const& gdata) const;
+  void getPhaseMomentum(Real *pp, Real wave1, Real wave2, 
+      GridData const& gdata, int np) const;
 };
 
 class FuWaterIceCloud: public Absorber {
 public:
   FuWaterIceCloud(RadiationBand *pband, int id):
-    Absorber(pband, "H2O_s", id) {}
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
-  Real SingleScateringAlbedo(Real wave, Real const prim[]) const;
-  void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const;
+      Absorber(pband, "H2O_s", id) {}
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
+  Real getSingleScateringAlbedo(Real wave1, Real wave2,
+      GridData const& gdata) const;
+  void getPhaseMomentum(Real *pp, Real wave1, Real wave2, 
+      GridData const& gdata, int np) const;
 };
 
 class XuWaterIceCloud: public Absorber {
 public:
   XuWaterIceCloud(RadiationBand *pband, int id):
     Absorber(pband, "H2O_s", id) {}
-  void LoadCoefficient(std::string fname);
-  Real AbsorptionCoefficient(Real wave, Real const prim[]) const;
-  Real SingleScateringAlbedo(Real wave, Real const prim[]) const;
-  void PhaseMomentum(Real wave, Real const prim[], Real *pp, int np) const;
+  void loadCoefficient(std::string fname, int bid = -1);
+  Real getAttenuation(Real wave1, Real wave2,
+      GridData const& gdata) const;
+  Real getSingleScateringAlbedo(Real wave1, Real wave2,
+      GridData const& gdata) const;
+  void getPhaseMomentum(Real *pp, Real wave1, Real wave2,
+      GridData const& gdata, int np) const;
 
 protected:
   int len_[2];

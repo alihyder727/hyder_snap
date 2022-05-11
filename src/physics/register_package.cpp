@@ -32,6 +32,8 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       ptm->AddPackage(pkg, "fix_bot_temperature");
 
       tau_Tbot_ = pin->GetReal("physics", "fix_bot_temperature.tau");
+      // -1 means to use the initial condition
+      Tbot_ = pin->GetOrAddReal("physics", "bot_temperature", -1);
       if (!hydro_bot_.IsAllocated())
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
       msg << "- tau = " << tau_Tbot_ << " s" << std::endl;
@@ -115,7 +117,7 @@ void Physics::Initialize(AthenaArray<Real> const& w)
 {
   MeshBlock *pmb = pmy_block;
 
-  // find top and bot neighbor
+  /* find top and bot neighbor
   NeighborBlock ntop, nbot;
   bool has_top_neighbor = false;
   bool has_bot_neighbor = false;
@@ -135,7 +137,7 @@ void Physics::Initialize(AthenaArray<Real> const& w)
                   | BOT_HEATING);
 
   if (has_top_neighbor)
-    ptm->RemoveTask(TOP_COOLING);
+    ptm->RemoveTask(TOP_COOLING);*/
 
   for (int k = pmb->ks; k <= pmb->ke; ++k)
     for (int j = pmb->js; j <= pmb->je; ++j) {

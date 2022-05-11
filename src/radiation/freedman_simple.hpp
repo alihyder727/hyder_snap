@@ -11,7 +11,7 @@ class FreedmanSimple: public Absorber {
 public:
   FreedmanSimple(RadiationBand *pband, ParameterInput *pin);
   virtual ~FreedmanSimple() {}
-  Real Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const;
+  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
 
 private:
   Real scale_;

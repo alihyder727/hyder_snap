@@ -14,6 +14,7 @@
 #   --flux=xxx        use xxx as the Riemann solver
 #   --nghost=xxx      set NGHOST=xxx
 #   --nscalars=xxx    set NSCALARS=xxx
+#   --ngridmax=xxx    set NGRIDMAX=xxx
 #   -eos_table        enable EOS table
 #   -b                enable magnetic fields
 #   -s                enable special relativity
@@ -148,6 +149,11 @@ parser.add_argument('--nghost',
 parser.add_argument('--nscalars',
                     default='0',
                     help='set number of passive scalars')
+
+# --ngridmax=[value] argument
+parser.add_argument('--ngridmax',
+                    default='0',
+                    help='set number of maximum grid variables')
 
 # -hydrostatic argument
 parser.add_argument('-hydrostatic',
@@ -551,6 +557,10 @@ definitions['NUMBER_GHOST_CELLS'] = args['nghost']
 
 # --nscalars=[value] argument
 definitions['NUMBER_PASSIVE_SCALARS'] = args['nscalars']
+
+# --ngridmax=[value] argument
+args['ngridmax'] = max(int(args['ngridmax']), int(definitions['NHYDRO_VARIABLES']) + int(args['nscalars']))
+definitions['NUMBER_GRID_MAXIMUM'] = str(args['ngridmax'])
 
 # -b argument
 # set variety of macros based on whether MHD/hydro or adi/iso are defined

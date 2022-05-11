@@ -34,24 +34,25 @@ MwrAbsorberH2S::MwrAbsorberH2S(RadiationBand *pband, Real xHe, Real *xH2S, Real 
   }
 }
 
-Real MwrAbsorberH2S::Attenuation(Real wave, Real const q[], Real const c[], Real const s[]) const
+Real MwrAbsorberH2S::getAttenuation(Real wave1, Real wave2,
+    GridData const& gdata) const
 {
   // adapted by cli (Cheng Li), Aug 30
-  Real P = q[IPR]/1.E5;
-  Real T = q[IDN];
+  Real P = gdata.q[IPR]/1.E5;
+  Real T = gdata.q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= q[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= gdata.q[i];
   Real XHe = xHe_*xdry;
   Real XH2, XH2S;
 
   if (method_ == 1) {
-    XH2S = q[imol_];
+    XH2S = gdata.q[imol_];
     XH2 = xdry - XHe;
   } else {  // method_ == 2
-    XH2S = interp1(q[IPR], ref_xh2s_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
+    XH2S = interp1(gdata.q[IPR], ref_xh2s_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
     XH2 = xdry - XHe - XH2S;
   }
 
   // 1/cm -> 1/m
-  return 100.*absorption_coefficient_H2S(wave, P, T, XH2, XHe, XH2S);
+  return 100.*absorption_coefficient_H2S(wave1, P, T, XH2, XHe, XH2S);
 }
