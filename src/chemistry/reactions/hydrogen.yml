@@ -9,31 +9,26 @@ symbols:
 
 reactions:
   - formula: H2 <-> H + H
-    function: dissociation
+    function: saha-equation:za=2,zb=2,zab=4
   - formula: H <-> H(+) + e(-)
-    function: ionization
+    function: saha-equation:za=1,zb=2,zab=2
   - formula: H(-) <-> H + e(-)
-    fundtion: ionization
+    fundtion: saha-equation:za=2,zb=2,zab=4
 
 functions:
-  dissociation:
+  saha-equation:
     parameters:
-      - A=
-      - n=
-      - E=
-      - R=
+      - E
+      - ma
+      - mb
+      - za
+      - zb
+      - zab
     rate: |
       R
     equilibrium: |
-      A*pow(T,n)*exp(-E/(Thermodynamics::kBoltz*T))
+      za*zb/zab*pow(2*M_PI*Thermodynamics::kBoltz*T*ma*mb/
+        (Radiation::hPlanck*Radiation::hPlanck*(ma+mb)), 2/3)*exp(-E/Thermodynamics::kBoltz*T)
 
-  ionization:
-    parameters:
-      - A=
-      - n=
-      - E=
-      - R=
-    rate: |
-      R
-    equilibrium: |
-      A*pow(T,n)*exp(-E/(Thermodynamics::kBoltz*T))
+constants:
+  mH2 =
