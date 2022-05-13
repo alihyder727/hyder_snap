@@ -46,6 +46,10 @@ public:
     AthenaArray<Real> const& w, Real time, Real dt);
   TaskStatus BotSpongeLayer(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
+  TaskStatus LeftSpongeLayer(AthenaArray<Real> &du,
+    AthenaArray<Real> const& w, Real time, Real dt);
+  TaskStatus RightSpongeLayer(AthenaArray<Real> &du,
+    AthenaArray<Real> const& w, Real time, Real dt);
 
   TaskStatus TopCooling(AthenaArray<Real> &du,
     AthenaArray<Real> const& w, Real time, Real dt);
@@ -69,11 +73,20 @@ protected:
 
   Real tau_bot_;    /**< bottom sponge layer time scale [s] */
   Real width_bot_;  /**< bottom sponge layer width [m] */
+  
+  Real tau_left_;    /**< left sponge layer time scale [s] */
+  Real width_left_;  /**< left sponge layer width [m] */
+
+  Real tau_right_;    /**< right sponge layer time scale [s] */
+  Real width_right_;  /**< right sponge layer width [m] */
 
   // parameters for heating/cooling
   Real dTdt_;       /**< heating rate [K/s] */
   Real flux_top_;   /**< top heating flux [W/m^2] */
   Real flux_bot_;   /**< bot heating flux [W/m^2] */
+
+  // parameters for friction
+  Real friction_bot_tau_;
 };
 
 //! \brief task to do on a meshblock
@@ -96,8 +109,10 @@ namespace PhysicsPackageNames {
   const uint64_t FIX_BOT_COMPOSITION=1LL << 2;
   const uint64_t TOP_SPONGE_LAYER=1LL << 3;
   const uint64_t BOT_SPONGE_LAYER=1LL << 4;
-  const uint64_t TOP_COOLING=1LL << 5;
-  const uint64_t BOT_HEATING=1LL << 6;
+  const uint64_t LFT_SPONGE_LAYER=1LL << 5;
+  const uint64_t RHT_SPONGE_LAYER=1LL << 6;
+  const uint64_t TOP_COOLING=1LL << 7;
+  const uint64_t BOT_HEATING=1LL << 8;
 }
 
 #endif

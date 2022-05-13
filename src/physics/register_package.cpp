@@ -62,26 +62,46 @@ Physics::Physics(MeshBlock *pmb, ParameterInput *pin):
       if (!hydro_bot_.IsAllocated())
         hydro_bot_.NewAthenaArray(NHYDRO, pmb->ncells3, pmb->ncells2);
       com_bot_.InitWithShallowSlice(hydro_bot_, 3, IDN, 1+NVAPOR);
-    } else if (std::strcmp(p, "top_sponge_layer") == 0) {
-      msg << "- use physcis top_sponge_layer" << std::endl;
+    } else if (std::strcmp(p, "top_sponge") == 0) {
+      msg << "- use physcis top_sponge" << std::endl;
       pkg.id = TOP_SPONGE_LAYER;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
       pkg.Function = &Physics::TopSpongeLayer;
-      ptm->AddPackage(pkg, "top_sponge_layer");
+      ptm->AddPackage(pkg, "top_sponge");
 
-      tau_top_ = pin->GetReal("physics", "top_sponge_layer.tau");
-      width_top_ = pin->GetReal("physics", "top_sponge_layer.width");
-    } else if (std::strcmp(p, "bot_sponge_layer") == 0) {
-      msg << "- use physcis bot_sponge_layer" << std::endl;
+      tau_top_ = pin->GetReal("physics", "top_sponge.tau");
+      width_top_ = pin->GetReal("physics", "top_sponge.width");
+    } else if (std::strcmp(p, "bot_sponge") == 0) {
+      msg << "- use physcis bot_sponge" << std::endl;
       pkg.id = BOT_SPONGE_LAYER;
       pkg.dep = 0LL;
       pkg.conflict = 0LL;
       pkg.Function = &Physics::BotSpongeLayer;
-      ptm->AddPackage(pkg, "bot_sponge_layer");
+      ptm->AddPackage(pkg, "bot_sponge");
 
-      tau_bot_ = pin->GetReal("physics", "bot_sponge_layer.tau");
-      width_bot_ = pin->GetReal("physics", "bot_sponge_layer.width");
+      tau_bot_ = pin->GetReal("physics", "bot_sponge.tau");
+      width_bot_ = pin->GetReal("physics", "bot_sponge.width");
+    } else if (std::strcmp(p, "left_sponge") == 0) {
+      msg << "- use physcis left_sponge" << std::endl;
+      pkg.id = LFT_SPONGE_LAYER;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
+      pkg.Function = &Physics::LeftSpongeLayer;
+      ptm->AddPackage(pkg, "left_sponge");
+
+      tau_left_ = pin->GetReal("physics", "left_sponge.tau");
+      width_left_ = pin->GetReal("physics", "left_sponge.width");
+    } else if (std::strcmp(p, "right_sponge") == 0) {
+      msg << "- use physcis right_sponge" << std::endl;
+      pkg.id = RHT_SPONGE_LAYER;
+      pkg.dep = 0LL;
+      pkg.conflict = 0LL;
+      pkg.Function = &Physics::RightSpongeLayer;
+      ptm->AddPackage(pkg, "right_sponge");
+
+      tau_right_ = pin->GetReal("physics", "right_sponge.tau");
+      width_right_ = pin->GetReal("physics", "right_sponge.width");
     } else if (std::strcmp(p, "top_cooling") == 0) {
       msg << "- use physcis top_cooling" << std::endl;
       pkg.id = TOP_COOLING;
