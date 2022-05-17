@@ -30,6 +30,10 @@ public:
 
   NeighborBlock const* findBotNeighbor() const;
   NeighborBlock const* findTopNeighbor() const;
+  NeighborBlock const* findLeftNeighbor() const;
+  NeighborBlock const* findRightNeighbor() const;
+  NeighborBlock const* findBackNeighbor() const;
+  NeighborBlock const* findFrontNeighbor() const;
 
 private:
   MeshBlock *pmy_block_;

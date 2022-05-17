@@ -88,3 +88,51 @@ NeighborBlock const* Communicator::findTopNeighbor() const
   }
   return ptop;
 }
+
+NeighborBlock const* Communicator::findLeftNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *pleft = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == 0) && (nb->ni.ox2 == -1) && (nb->ni.ox3 == 0))
+      pleft= nb;
+  }
+  return pleft;
+}
+
+NeighborBlock const* Communicator::findRightNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *pright = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == 1) && (nb->ni.ox2 == 1) && (nb->ni.ox3 == 0))
+      pright = nb;
+  }
+  return pright;
+}
+
+NeighborBlock const* Communicator::findBackNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *pback = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == 0) && (nb->ni.ox2 == 0) && (nb->ni.ox3 == -1))
+      pback = nb;
+  }
+  return pback;
+}
+
+NeighborBlock const* Communicator::findFrontNeighbor() const
+{
+  MeshBlock *pmb = pmy_block_;
+  NeighborBlock *pfront = nullptr;
+  for (int n = 0; n < pmb->pbval->nneighbor; ++n) {
+    NeighborBlock* nb = pmb->pbval->neighbor + n;
+    if ((nb->ni.ox1 == 1) && (nb->ni.ox2 == 1) && (nb->ni.ox3 == 1))
+      pfront = nb;
+  }
+  return pfront;
+}

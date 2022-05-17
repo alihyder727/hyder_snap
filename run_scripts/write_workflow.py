@@ -1,8 +1,19 @@
 #! /usr/bin/env python3
-import yaml, os, re, shutil
+import yaml, os, re, argparse, glob, shutil
+from itertools import product
 
-links = ['combine.py', 'plot_mcmc.py', 'plot_anomaly2d.py', 'create_input.py', 
-         'juno_mwr.ex', 'juno_mwr.tmp', 'snapy']
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--input',
+    choices = glob.glob('*.yml'),
+    required = True,
+    help = 'yaml instruction file'
+    )
+parser.add_argument('-hpc',
+    action='store_true',
+    default=False,
+    help = 'enable using hpc'
+    )
+args = vars(parser.parse_args())
 
 def replace_environ_var(envs, old_str):
   new_str, count = old_str, 0
@@ -31,59 +42,78 @@ def write_job_steps(file, job, detail, major, minor, hpc = False):
   use_hpc = False
   if ('NODES' in detail['env']) and hpc: use_hpc = True
 
-  if use_hpc:
-    fsub_name = '%s-%s' % (job, minor)
-    with open('submit-gl.tmp', 'r') as fsub:
-      tmpsub = fsub.read()
-    subfile = re.sub('<name>', fsub_name, tmpsub)
-    subfile = re.sub('<nodes>', str(detail['env']['NODES']), subfile)
-    fsub = open(fsub_name + '.sub', 'w')
-    fsub.write(subfile)
-    original_file = file
-    file = fsub
+  # count matrix jobs
+  sub_jobs_matrix = []
+  for key, value in detail['strategy']['matrix'].items():
+    sub_jobs_matrix.append([(key,x) for x in value])
 
-  # write jobs stesp
-  for step in detail['steps']:
-    # write step name
-    step_name = replace_environ_var(detail['env'], step['name'])
-    file.write('## %s\n' % step_name)
-
-    # write step command
-    step_run = replace_environ_var(detail['env'], step['run'])
+  sub_jobs_list = list(map(dict, product(*sub_jobs_matrix)))
+  for it, mdict in enumerate(sub_jobs_list):
     if use_hpc:
-      step_run = step_run.split('&')[0]
-      step_run = re.sub('mpiexec', 'srun', step_run)
-    if step['run'][-1] == '\n':
-      file.write('%s' % step_run)
-    else:
-      file.write('%s\n' % step_run)
+      fsub_name = '%s-%s-%s' % (job, minor, it)
+      with open('submit-gl.tmp', 'r') as fsub:
+        tmpsub = fsub.read()
+      subfile = re.sub('<name>', fsub_name, tmpsub)
+      subfile = re.sub('<nodes>', str(detail['env']['NODES']), subfile)
+      fsub = open(fsub_name + '.sub', 'w')
+      fsub.write(subfile)
+      original_file = file
+      file = fsub
+
+    file.write('# %d.%d.%d. ' % (major, minor, it))
+
+    # set environment variable from matrix
+    for key, value in mdict.items():
+      detail['env'][key] = mdict[key]
+      file.write('%s = %s ' % (key, value))
     file.write('\n')
 
-  if use_hpc:
-    file.close()
-    # create a new case folder
-    os.system('mkdir -p %s' % fsub_name)
-    
-    # move submission file to the case folder
-    if os.path.isfile('%s/%s.sub' % (fsub_name, fsub_name)):
-      os.remove('%s/%s.sub' % (fsub_name, fsub_name))
-    shutil.move(fsub_name + '.sub', fsub_name + '/')
+    # write jobs stesp
+    for step in detail['steps']:
+      # write step name
+      step_name = replace_environ_var(detail['env'], step['name'])
+      file.write('## %s\n' % step_name)
 
-    # link scripts
-    for fname in links:
-      os.system('ln -sf %s %s/' % (os.path.realpath(fname), fsub_name))
+      # write step command
+      step_run = replace_environ_var(detail['env'], step['run'])
+      if use_hpc:
+        step_run = step_run.split('&')[0]
+        # replace MPI commands
+        step_run = re.sub('mpiexec', 'srun', step_run)
+        # replace mv commands
+        m = re.match(r'\s*mv\s+([\w\.-]+\/*)\s+([\w\.-]+\/*)', step_run)
+        if m:
+          dst = m.group(2)
+          step_run = re.sub(dst, '../../' + dst, step_run)
+      if step['run'][-1] == '\n':
+        file.write('%s' % step_run)
+      else:
+        file.write('%s\n' % step_run)
+      file.write('\n')
 
-    # link observation
-    if 'OBS' in detail['env']:
-      obs_file = replace_environ_var(detail['env'], detail['env']['OBS'])
-      os.system('ln -sf %s %s/' % (os.path.realpath(obs_file), fsub_name))
+    if use_hpc:
+      file.close()
+      # create a new case folder
+      os.system('mkdir -p _work/%s' % fsub_name)
 
-    # write submission script
-    file = original_file
-    file.write('## submit to hpc\n')
-    file.write('cd %s\n' % fsub_name)
-    file.write('sbatch %s.sub\n' % fsub_name)
-    file.write('cd ..\n\n')
+      # move submission file to the case folder
+      if os.path.isfile('_work/%s/%s.sub' % (fsub_name, fsub_name)):
+        os.remove('_work/%s/%s.sub' % (fsub_name, fsub_name))
+      shutil.move(fsub_name + '.sub', '_work/%s/' % fsub_name)
+
+      # link scripts
+      links = glob.glob('*.py') + glob.glob('*.ex') + glob.glob('*.inp')
+      for fname in links:
+        os.system('ln -sf %s _work/%s/' % (os.path.realpath(fname), fsub_name))
+
+      # write submission script
+      file = original_file
+      file.write('## submit to hpc\n')
+      file.write('cd _work/%s\n' % fsub_name)
+      file.write('sbatch %s.sub\n' % fsub_name)
+      file.write('cd ../../\n\n')
+
+  return len(sub_jobs_list)
 
 def write_all_jobs(file, job, detail, major, hpc = False):
   keys = list(detail['strategy']['vector'].keys())
@@ -96,23 +126,22 @@ def write_all_jobs(file, job, detail, major, hpc = False):
         detail['strategy']['vector'][key] = list(map(str, var.split()))[::4]
     nsub_jobs_vector = len(detail['strategy']['vector'][keys[0]])
 
-  njobs = nsub_jobs_vector
+  njobs = 0
   # loop over vector jobs
   if nsub_jobs_vector > 0:
     for minor in range(nsub_jobs_vector):
       # set environment variable from vector
       for key, value in detail['strategy']['vector'].items():
         detail['env'][key] = value[minor]
-      write_job_steps(file, job, detail, major, minor, hpc = hpc)
+      njobs += write_job_steps(file, job, detail, major, minor, hpc = hpc)
   else:
-    write_job_steps(file, job, detail, major, 0, hpc = hpc)
-    njobs += 1
+    njobs += write_job_steps(file, job, detail, major, 0, hpc = hpc)
 
   return njobs
 
 if __name__ == '__main__':
-  yml_file = 'workflow.yml'
-  wrk_file = 'workflow.sh'
+  yml_file = args['input']
+  wrk_file = '%s.sh' % yml_file[:-4]
 
   with open(yml_file, 'r') as file:
     try:
@@ -152,23 +181,29 @@ if __name__ == '__main__':
         if 'env' not in detail:
           detail['env'] = []
 
-        # write job matrix
+        # write job vector and matrix
         if 'strategy' not in detail:
           detail['strategy'] = {}
           detail['strategy']['vector'] = {}
           detail['strategy']['matrix'] = {}
-        else:
+        else :
           if 'vector' not in detail['strategy']:
             detail['strategy']['vector'] = {}
           if 'matrix' not in detail['strategy']:
             detail['strategy']['matrix'] = {}
 
-        njobs += write_all_jobs(file, job, detail, major, hpc = True)
+        # write matrix grid
+        for key in detail['strategy']['matrix']:
+          with open('%s-%s-grid.txt' % (job, key), 'w') as fgrid:
+            for x in detail['strategy']['matrix'][key]:
+              fgrid.write('%s ' % x)
+
+        njobs += write_all_jobs(file, job, detail, major, hpc = args['hpc'])
         finished_jobs.append(job)
 
       count += 1
-      if count > 100:
-        raise RuntimeError("Loops count exceeds 100")
+      if count > 10:
+        raise RuntimeError("Loops count exceeds 1000")
     file.write('# Total number of jobs = %d\n' % njobs)
   print('workflow written to %s' % wrk_file)
 

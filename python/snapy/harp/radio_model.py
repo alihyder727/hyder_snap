@@ -8,21 +8,27 @@ def create_input(tmpfile, args):
     with open(tmpfile, 'r') as file:
       tmpinp = file.read()
 
-    pmax, pmin, np = tuple(map(float, args['plevel'].split(':')))
-    np = int(np)
-    plevel = logspace(log10(pmax), log10(pmin), np)
-    plevel = ['%10.2f'%x for x in plevel]
+    if ':' in args['plevel']:
+      pmax, pmin, np = tuple(map(float, args['plevel'].split(':')))
+      np = int(np)
+      plevel = logspace(log10(pmax), log10(pmin), np)
+      plevel = ['%10.2f'%x for x in plevel]
+    elif ',' in args['plevel']:
+      plevel = args['plevel'].split(',')
+      np = len(plevel)
+      print(plevel)
+      print(np)
 
     if args['tem'] == '0':
-        Tp = ['0.']*np
+      Tp = ['0.']*np
     else:
-        Tp = args['tem'].split(' ')
+      Tp = args['tem'].split(' ')
     assert(len(Tp) == np)
 
     if args['nh3'] == '0':
-        NH3p  = ['0.']*np
+      NH3p  = ['0.']*np
     else:
-        NH3p = args['nh3'].split(' ')
+      NH3p = args['nh3'].split(' ')
     assert(len(NH3p) == np)
 
   # adjust minimum number of walkers
@@ -32,7 +38,7 @@ def create_input(tmpfile, args):
 
     name = tmpfile.split('/')[-1].split('.')[0]
     if args['output'] != '':
-        name += '-' + args['output']
+      name += '-' + args['output']
 
     inpfile = re.sub('\[problem_id\]', name, tmpinp)
     inpfile = re.sub('\[logname\]', name, inpfile)
@@ -108,20 +114,20 @@ def write_observation(inpfile, datafile, output = 'none'):
 
 # write to file
     if output == 'none':
-        outfile = '.'.join(inpfile.split('.')[:-1]) + '.out'
+      outfile = '.'.join(inpfile.split('.')[:-1]) + '.out'
     else:
-        outfile = output
+      outfile = output
     with open(outfile, 'w') as file:
-        for k in range(tb.shape[2]):
-            file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))
-            file.write('%12s' % '# Freq (GHz)')
-            for i in range(num_dirs):
-                file.write('%10.2f' % amu[0,i])
-            file.write('\n')
-            for i in range(num_bands):
-                file.write('%12.2f' % freq[i])
-                for j in range(num_dirs):
-                    file.write('%10.2f' % tb[i,j,k])
-                file.write('\n')
+      for k in range(tb.shape[2]):
+        file.write('# Brightness temperatures of input model %s - model %d\n' % (inpfile, k))
+        file.write('%12s' % '# Freq (GHz)')
+        for i in range(num_dirs):
+          file.write('%10.2f' % amu[0,i])
+        file.write('\n')
+        for i in range(num_bands):
+          file.write('%12.2f' % freq[i])
+          for j in range(num_dirs):
+            file.write('%10.2f' % tb[i,j,k])
+          file.write('\n')
     print('Brightness temperatures written to %s' % outfile)
     return outfile
