@@ -83,19 +83,16 @@ if __name__ == '__main__':
 
   tb, ld = zeros((nfreq, nstep, nwalker)), zeros((nfreq, nstep, nwalker))
   for i in range(nfreq):
-    tb[i,:,:] = data['b%dtoa' % (i+1,)][:,0,3,:]
-    ld[i,:,:] = (data['b%dtoa' % (i+1,)][:,0,3,:] 
-               - data['b%dtoa' % (i+1,)][:,i45,3,:])/tb[i,:,:]*100.
+    tb[i,:,:] = data['radiance'][:,0,3,:]
+
 # tb0 is the baseline model
-  tb0, ld0 = zeros(nfreq), zeros(nfreq)
+  tb0 = zeros(nfreq)
   for i in range(nfreq):
-    tb0[i] = data['b%dtoa' % (i+1,)][0,0,0,0]
-    ld0[i] = (data['b%dtoa' % (i+1,)][0,0,0,0] 
-            - data['b%dtoa' % (i+1,)][0,i45,0,0])/tb0[i]*100.
+    tb0[i] = data['radiance'][0,0,0,0]
+    
 # tb is the anomaly with respect to the baseline
   tb -= tb0.reshape(nfreq,1,1)
-  ld -= ld0.reshape(nfreq,1,1)
-
+ 
 # mean of all walkers
   nh3_base = nh3[0,:,0]
   nh3_avg = mean(nh3[:,:,:], axis = 2)
@@ -104,15 +101,12 @@ if __name__ == '__main__':
   if args['truth'] != 'none':
       data = Dataset('%s-main.nc' % args['truth'])
       nh3_truth = data['vapor2'][0,:,0,0]*1.E3
-      tb_truth, ld_truth = zeros(nfreq), zeros(nfreq)
+      tb_truth = zeros(nfreq)
       # tb_truth is the anomaly with respect to the baseline
       for i in range(nfreq):
-        tb_truth[i] = data['b%dtoa' % (i+1,)][0,0,0,0]
-        ld_truth[i] = (data['b%dtoa' % (i+1,)][0,0,0,0]
-                     - data['b%dtoa' % (i+1,)][0,i45,0,0])/tb_truth[i]*100.
+        tb_truth[i] = data['radiance'][0,0,0,0]
         tb_truth[i] -= tb0[i]
-        ld_truth[i] -= ld0[i]
-
+        
   fig, axs = subplots(2, 2, figsize = (12, 10),
     gridspec_kw = {'height_ratios':[1,4], 'width_ratios':[4,1]})
   subplots_adjust(hspace = 0.16, wspace = 0.04)
@@ -134,15 +128,14 @@ if __name__ == '__main__':
   ax = axs[0,1]
   tb_avg = mean(tb, axis = (1,2))
   tb_std = std(tb, axis = (1,2))
-  ld_avg = mean(ld, axis = (1,2))
-  ld_std = std(ld, axis = (1,2))
+  
 #ax.plot([-10, 12], [-10, 12], '0.7', linewidth = 2)
 # true tb
   if args['truth'] != 'none':
       for i in range(nfreq):
-        ax.plot(ld_truth[i], tb_truth[i], '^', ms = 5, alpha = 0.5, color = 'k')
+        ax.plot(tb_truth[i], '^', ms = 5, alpha = 0.5, color = 'k')
   for i in range(nfreq):
-    ax.errorbar(ld_avg[i], tb_avg[i], xerr = ld_std[i], yerr = tb_std[i])
+    ax.errorbar(tb_avg[i], yerr = tb_std[i])
   ax.xaxis.tick_top()
   ax.xaxis.set_label_position('top')
   ax.yaxis.tick_right()
