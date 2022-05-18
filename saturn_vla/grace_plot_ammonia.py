@@ -134,8 +134,8 @@ if __name__ == '__main__':
   if args['truth'] != 'none':
       for i in range(nfreq):
         ax.plot(tb_truth[i], '^', ms = 5, alpha = 0.5, color = 'k')
-  for i in range(nfreq):
-    ax.errorbar(tb_avg[i], yerr = tb_std[i])
+#  for i in range(nfreq):
+#    ax.errorbar(tb_avg[i], yerr = tb_std[i])
   ax.xaxis.tick_top()
   ax.xaxis.set_label_position('top')
   ax.yaxis.tick_right()
