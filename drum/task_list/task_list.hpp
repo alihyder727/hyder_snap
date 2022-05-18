@@ -184,6 +184,14 @@ class TimeIntegratorTaskList : public TaskList {
   TaskStatus ReceiveScalars(MeshBlock *pmb, int stage);
   TaskStatus SetBoundariesScalars(MeshBlock *pmb, int stage);
 
+  TaskStatus CalculateTurbulenceFlux(MeshBlock *pmb, int stage);
+  TaskStatus SendTurbulenceFlux(MeshBlock *pmb, int stage);
+  TaskStatus ReceiveTurbulenceFlux(MeshBlock *pmb, int stage);
+  TaskStatus IntegrateTurbulence(MeshBlock *pmb, int stage);
+  TaskStatus SendTurbulence(MeshBlock *pmb, int stage);
+  TaskStatus ReceiveTurbulence(MeshBlock *pmb, int stage);
+  TaskStatus SetBoundariesTurbulence(MeshBlock *pmb, int stage);
+
   // implicit tasks
   TaskStatus UpdateHydro(MeshBlock *pmb, int stage);
 
@@ -308,13 +316,22 @@ const TaskID DIFFUSE_SCLR(56);
 // const TaskID RECV_SCLRSH(57);
 // const TaskID SEND_SCLRSH(58);
 
-const TaskID UPDATE_HYD(59);
-const TaskID INT_PART(60);
-const TaskID MESH2PART(61);
-const TaskID SEND_PART(62);
-const TaskID RECV_PART(63);
-const TaskID ATTACH_PART(64);
-const TaskID PART2MESH(65);
+const TaskID CALC_TURBFLX(59);
+const TaskID SEND_TURBFLX(60);
+const TaskID RECV_TURBFLX(61);
+const TaskID INT_TURB(62);
+const TaskID SEND_TURB(63);
+const TaskID RECV_TURB(64);
+const TaskID SETB_TURB(65);
+const TaskID DIFFUSE_TURB(66);
+
+const TaskID UPDATE_HYD(69);
+const TaskID INT_PART(70);
+const TaskID MESH2PART(71);
+const TaskID SEND_PART(72);
+const TaskID RECV_PART(73);
+const TaskID ATTACH_PART(74);
+const TaskID PART2MESH(75);
 
 }  // namespace HydroIntegratorTaskNames
 #endif  // TASK_LIST_TASK_LIST_HPP_
