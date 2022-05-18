@@ -62,6 +62,7 @@ public:
 
   virtual void driveTurbulence(AthenaArray<Real> &s, AthenaArray<Real> const& r,
     AthenaArray<Real> const& w, Real dt) {}
+  virtual void Initialize(AthenaArray<Real> const& w) {}
 
 protected:
   MeshBlock* pmy_block;
@@ -81,6 +82,7 @@ public:
   ~KEpsilonTurbulence() {}
   void driveTurbulence(AthenaArray<Real> &s, AthenaArray<Real> const& r,
     AthenaArray<Real> const& w, Real dt);
+  void Initialize(AthenaArray<Real> const& w);
 
 private:
   Real cmu_, c1_, c2_, sigk_, sige_;

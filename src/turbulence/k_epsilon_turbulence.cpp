@@ -23,6 +23,27 @@ KEpsilonTurbulence::KEpsilonTurbulence(MeshBlock *pmb, ParameterInput *pin):
   c2_ = pin->GetOrAddReal("turbulence", "kepsilon.c2", 1.92);
   sigk_ = pin->GetOrAddReal("turbulence", "kepsilon.sigk", 1.0);
   sige_ = pin->GetOrAddReal("turbulence", "kepsilon.sige", 1.3);
+  Real tke0 = pin->GetOrAddReal("turbulence", "kepsilon.tke0", 1.E-6);
+  Real eps0 = pin->GetOrAddReal("turbulence", "kepsilon.eps0", 1.E-6);
+
+  for (int k = pmb->ks; k <= pmb->ke; ++k)
+    for (int j = pmb->js; j <= pmb->je; ++j)
+      for (int i = pmb->is; i <= pmb->ie; ++i) {
+        r(0,k,j,i) = eps0;
+        r(1,k,j,i) = tke0;
+      }
+}
+
+void KEpsilonTurbulence::Initialize(AthenaArray<Real> const& w)
+{
+  MeshBlock *pmb = pmy_block;
+  for (int k = pmb->ks; k <= pmb->ke; ++k)
+    for (int j = pmb->js; j <= pmb->je; ++j)
+      for (int i = pmb->is; i <= pmb->ie; ++i) {
+        s(0,k,j,i) = r(0,k,j,i)*w(IDN,k,j,i);
+        s(1,k,j,i) = r(1,k,j,i)*w(IDN,k,j,i);
+        mut(k,j,i) = cmu_*w(IDN,k,j,i)*r(1,k,j,i)*r(1,k,j,i)/r(0,k,j,i);
+      }
 }
 
 inline Real Laplace_(AthenaArray<Real> const& mut, AthenaArray<Real> const& v,
@@ -42,7 +63,7 @@ inline Real Laplace_(AthenaArray<Real> const& mut, AthenaArray<Real> const& v,
   if (pm->f2) {
     mut_p = (mut(k,j+1,i) + mut(k,j,i))/2.;
     mut_m = (mut(k,j,i) + mut(k,j-1,i))/2.;
-    gradv_p = (v(k,j+1,i) - v(k,j,i))/(pcoord->x2v(j+1) - pcoord->x2v(i));
+    gradv_p = (v(k,j+1,i) - v(k,j,i))/(pcoord->x2v(j+1) - pcoord->x2v(j));
     gradv_m = (v(k,j,i) - v(k,j-1,i))/(pcoord->x2v(j) - pcoord->x2v(j-1));
     result += (mut_p*gradv_p - mut_m*gradv_m)/pcoord->dx2f(j);
   }
@@ -95,6 +116,7 @@ inline Real ShearProduction_(AthenaArray<Real> const& w,
 void KEpsilonTurbulence::driveTurbulence(AthenaArray<Real> &s,
   AthenaArray<Real> const& r, AthenaArray<Real> const& w, Real dt)
 {
+  //std::cout << "driving turbulence" << std::endl;
   MeshBlock *pmb = pmy_block;
   int ks = pmb->ks, js = pmb->js, is = pmb->is;
   int ke = pmb->ke, je = pmb->je, ie = pmb->ie;
@@ -103,26 +125,38 @@ void KEpsilonTurbulence::driveTurbulence(AthenaArray<Real> &s,
   eps.InitWithShallowSlice(const_cast<AthenaArray<Real>&>(r),4,0,1);
   tke.InitWithShallowSlice(const_cast<AthenaArray<Real>&>(r),4,1,1);
 
+  Real s1, s2, s3;
   for (int k = ks; k <= ke; ++k)
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
         // shear production
         Real shear = ShearProduction_(w,k,j,i,pmb->pcoord);
+        //std::cout << "shear = " << shear << std::endl;
 
         // turbulent dissipation, de/dt, eq2.2-1
-        s(0,k,j,i) += (Laplace_(mut,eps,k,j,i,pmb->pcoord)/sige_
-          + c1_*mut(k,j,i)*eps(k,j,i)/tke(k,j,i)*shear
-          - c2_*eps(k,j,i)*eps(k,j,i)/tke(k,j,i)*w(IDN,k,j,i))*dt;
+        s1 = c1_*mut(k,j,i)*eps(k,j,i)/tke(k,j,i)*shear;
+        s2 = Laplace_(mut,eps,k,j,i,pmb->pcoord)/sige_;
+        s3 = - c2_*eps(k,j,i)*eps(k,j,i)/tke(k,j,i)*w(IDN,k,j,i);
+        s(0,k,j,i) += (s1 + s2)*dt;
+        if (s(0,k,j,i) + s3*dt > 0)
+          s(0,k,j,i) += s3*dt;
+        else
+          s(0,k,j,i) /= 2.;
+        //std::cout << "s = " << s(0,k,j,i) << std::endl;
+
 
         // turbulent kinetic energy, dk/dt, eq 2.2-2
-        s(1,k,j,i) += (Laplace_(mut,tke,k,j,i,pmb->pcoord)/sigk_
-          + mut(k,j,i)*shear
-          - eps(k,j,i)*w(IDN,k,j,i))*dt;
+        s1 = mut(k,j,i)*shear;
+        s2 = Laplace_(mut,tke,k,j,i,pmb->pcoord)/sigk_;
+        s3 = - eps(k,j,i)*w(IDN,k,j,i);
+        s(1,k,j,i) += (s1 + s2)*dt;
+        if (s(1,k,j,i) + s3*dt > 0.)
+          s(1,k,j,i) += s3*dt;
+        else
+          s(1,k,j,i) /= 2.;
 
         // dynamic turbulent viscosity, mu_t = c_mu*k^2/epsilon, eq2.2-3
-        if (eps(k,j,i) > 0.)
-          mut(k,j,i) = cmu_*w(IDN,k,j,i)*tke(k,j,i)*tke(k,j,i)/eps(k,j,i);
-        else
-          mut(k,j,i) = 0.;
+        mut(k,j,i) = cmu_*w(IDN,k,j,i)*tke(k,j,i)*tke(k,j,i)/eps(k,j,i);
+        //std::cout << "mut = " << mut(k,j,i) << std::endl;
       }
 }

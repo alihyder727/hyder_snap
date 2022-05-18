@@ -48,6 +48,7 @@
 #include "../scalars/scalars.hpp"
 #include "../utils/buffer_utils.hpp"
 #include "../physics/physics.hpp"
+#include "../turbulence/turbulence_model.hpp"
 #include "mesh.hpp"
 #include "mesh_refinement.hpp"
 #include "meshblock_tree.hpp"
@@ -1349,6 +1350,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
         pmb->pbval->CheckUserBoundaries();
         pmb->phydro->CheckHydro();
         pmb->pphy->Initialize(pmb->phydro->w);
+        pmb->pturb->Initialize(pmb->phydro->w);
       }
     }
 

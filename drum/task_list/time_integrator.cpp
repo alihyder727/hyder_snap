@@ -758,6 +758,10 @@ void TimeIntegratorTaskList::StartupTaskList(MeshBlock *pmb, int stage) {
       if (integrator == "ssprk5_4")
         ps->s2 = ps->s;
     }
+
+    pmb->pturb->s1.ZeroClear();
+    if (integrator == "ssprk5_4")
+      pmb->pturb->s2 = pmb->pturb->s;
   }
 
   if (SHEARING_BOX) {
