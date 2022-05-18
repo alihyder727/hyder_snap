@@ -25,7 +25,7 @@ class ParameterInput;
 
 class TurbulenceModel {
 public:
-  TurbulenceModel(MeshBlock *pmb, ParameterInput *pin, int nvar = 0);
+  TurbulenceModel(MeshBlock *pmb, ParameterInput *pin, int nvar = 1);
   virtual ~TurbulenceModel() {}
 
   // public data:

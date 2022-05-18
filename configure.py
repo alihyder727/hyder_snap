@@ -15,6 +15,7 @@
 #   --nghost=xxx      set NGHOST=xxx
 #   --nscalars=xxx    set NSCALARS=xxx
 #   --ngridmax=xxx    set NGRIDMAX=xxx
+#   --turb=xxx        use xxx as the turbulence model
 #   -eos_table        enable EOS table
 #   -b                enable magnetic fields
 #   -s                enable special relativity
@@ -139,6 +140,12 @@ parser.add_argument('--flux',
                     default='default',
                     choices=['default', 'hlle', 'hllc', 'hlld', 'roe', 'llf', 'lmars', 'noflux'],
                     help='select Riemann solver')
+
+# --turb=[name] argument
+parser.add_argument('--turb',
+                    default='none',
+                    choices=['none', 'KEpsilon'],
+                    help='select turbulence model')
 
 # --nghost=[value] argument
 parser.add_argument('--nghost',
@@ -507,6 +514,9 @@ makefile_options['PROBLEM'] = args['prob']
 
 # --coord=[name] argument
 definitions['COORDINATE_SYSTEM'] = makefile_options['COORDINATES_FILE'] = args['coord']
+
+# --turb=[name] argument
+definitions['TURBULENCE_MODEL'] = args['turb']
 
 # --eos=[name] argument
 definitions['NON_BAROTROPIC_EOS'] = '0' if args['eos'] == 'isothermal' else '1'
@@ -1044,6 +1054,7 @@ print('  Equation of state:          ' + args['eos'])
 print('  Water vapor id:             ' + args['h2o'])
 print('  Ammonia vapor id:           ' + args['nh3'])
 print('  Riemann solver:             ' + args['flux'])
+print('  Turbulence model:           ' + args['turb'])
 print('  Forcing Jacobian:           ' + args['jacobian'])
 print('  Hydrostatic:                ' + (green+'YES'+end if args['hydrostatic'] else 'NO'))
 print('  Real gas heat capacity:     ' + (green+'YES'+end if args['cp_real'] else 'NO'))

@@ -722,14 +722,16 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
 
   // turbulence
   if (output_params.variable.compare("turbulence") == 0) {
-    pod = new OutputData;
-    pod->type = "VECTORS";
-    pod->name = "eps,tke";
-    pod->long_name = "turbulent dissipation,turbulent kinetic energy";
-    pod->units = "w/kg,J/kg";
-    pod->data.InitWithShallowSlice(pturb->r,4,0,2);
-    AppendOutputDataNode(pod);
-    num_vars_+=2;
+    if (TURBULENCE_MODEL == "KEpsilon") {
+      pod = new OutputData;
+      pod->type = "VECTORS";
+      pod->name = "eps,tke";
+      pod->long_name = "turbulent dissipation,turbulent kinetic energy";
+      pod->units = "w/kg,J/kg";
+      pod->data.InitWithShallowSlice(pturb->r,4,0,2);
+      AppendOutputDataNode(pod);
+      num_vars_+=2;
+    }
 
     pod = new OutputData;
     pod->type = "SCALARS";

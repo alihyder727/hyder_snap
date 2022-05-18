@@ -34,7 +34,7 @@
 #define EQUATION_OF_STATE "@EQUATION_OF_STATE@"
 
 // Turbulence Model
-#define TURBULENCE_MODEL "KEpsilon"
+#define TURBULENCE_MODEL "@TURBULENCE_MODEL@"
 
 // use hydrostatic coordinate default=0 (false)
 #define HYDROSTATIC @HYDROSTATIC@
