@@ -87,10 +87,10 @@ TurbulenceModel::TurbulenceModel(MeshBlock *pmb, ParameterInput *pin, int nvar) 
 }
 
 //----------------------------------------------------------------------------------------
-//! \fn  void Turbulence::CalculateFluxes
+//! \fn  void Turbulence::calculateFluxes
 //  \brief Calculate passive scalar fluxes using reconstruction + weighted upwinding rule
 
-void TurbulenceModel::CalculateFluxes(AthenaArray<Real> &r, const int order) {
+void TurbulenceModel::calculateFluxes(AthenaArray<Real> &r, const int order) {
   MeshBlock *pmb = pmy_block;
 
   // design decision: do not pass Hydro::flux (for mass flux) via function parameters,
@@ -145,7 +145,7 @@ void TurbulenceModel::CalculateFluxes(AthenaArray<Real> &r, const int order) {
         }
       }
 
-      ComputeUpwindFlux(k, j, is, ie+1, rl_, rr_, mass_flux, x1flux);
+      computeUpwindFlux(k, j, is, ie+1, rl_, rr_, mass_flux, x1flux);
     }
   }
 
@@ -202,7 +202,7 @@ void TurbulenceModel::CalculateFluxes(AthenaArray<Real> &r, const int order) {
           }
         }
 
-        ComputeUpwindFlux(k, j, il, iu, rl_, rr_, mass_flux, x2flux);
+        computeUpwindFlux(k, j, il, iu, rl_, rr_, mass_flux, x2flux);
 
         // swap the arrays for the next step
         rl_.SwapAthenaArray(rlb_);
@@ -255,7 +255,7 @@ void TurbulenceModel::CalculateFluxes(AthenaArray<Real> &r, const int order) {
           }
         }
 
-        ComputeUpwindFlux(k, j, il, iu, rl_, rr_, mass_flux, x3flux);
+        computeUpwindFlux(k, j, il, iu, rl_, rr_, mass_flux, x3flux);
 
         // swap the arrays for the next step
         rl_.SwapAthenaArray(rlb_);
@@ -266,7 +266,7 @@ void TurbulenceModel::CalculateFluxes(AthenaArray<Real> &r, const int order) {
   return;
 }
 
-void TurbulenceModel::ComputeUpwindFlux(const int k, const int j, const int il,
+void TurbulenceModel::computeUpwindFlux(const int k, const int j, const int il,
                                        const int iu, // CoordinateDirection dir,
                                        AthenaArray<Real> &rl, AthenaArray<Real> &rr, // 2D
                                        AthenaArray<Real> &mass_flx,  // 3D
@@ -285,8 +285,7 @@ void TurbulenceModel::ComputeUpwindFlux(const int k, const int j, const int il,
 }
 
 void TurbulenceModel::ConservedToPrimitive(AthenaArray<Real> &s,
-  AthenaArray<Real> const& w, AthenaArray<Real> const& r_old,
-  AthenaArray<Real> &r, Coordinates *pco,
+  AthenaArray<Real> const& w, AthenaArray<Real> &r, Coordinates *pco,
   int il, int iu, int jl, int ju, int kl, int ku)
 {
   int nvar = s.GetDim4();
@@ -296,4 +295,101 @@ void TurbulenceModel::ConservedToPrimitive(AthenaArray<Real> &s,
         for (int i = il; i <= iu; ++i) {
           r(n,k,j,i) = s(n,k,j,i)/w(IDN,k,j,i);
         }
+}
+
+void TurbulenceModel::PrimitiveToConserved(AthenaArray<Real> &r,
+  AthenaArray<Real> const& w, AthenaArray<Real> &s, Coordinates *pco,
+  int il, int iu, int jl, int ju, int kl, int ku)
+{
+  int nvar = s.GetDim4();
+  for (int n = 0; n < nvar; ++n)
+    for (int k = kl; k <= ku; ++k)
+      for (int j = jl; j <= ju; ++j)
+        for (int i = il; i <= iu; ++i) {
+          s(n,k,j,i) = r(n,k,j,i)*w(IDN,k,j,i);
+        }
+}
+
+void TurbulenceModel::applyBoundaryCondition(
+  AthenaArray<Real> &r, AthenaArray<Real> &s,
+  AthenaArray<Real> const& w, Coordinates *pco)
+{
+  MeshBlock *pmb = pmy_block;
+  int nvar = r.GetDim4();
+  int bis = pmb->is - NGHOST, bie = pmb->ie + NGHOST,
+      bjs = pmb->js, bje = pmb->je,
+      bks = pmb->ks, bke = pmb->ke;
+
+  // inner x1
+  if (pmb->pbval->isPhysicalBoundary(BoundaryFace::inner_x1)) {
+    for (int n = 0; n < nvar; ++n)
+      for (int k = bks; k <= bke; ++k)
+        for (int j = bjs; j <= bje; ++j)
+          for (int i = pmb->is - NGHOST; i <= pmb->is - 1; ++i) {
+            r(n,k,j,i) = r(n,k,j,pmb->is);
+            s(n,k,j,i) = r(n,k,j,i)*w(IDN,k,j,i);
+          }
+  }
+
+  // outer x1
+  if (pmb->pbval->isPhysicalBoundary(BoundaryFace::outer_x1)) {
+    for (int n = 0; n < nvar; ++n)
+      for (int k = bks; k <= bke; ++k)
+        for (int j = bjs; j <= bje; ++j)
+          for (int i = pmb->ie + 1; i <= pmb->ie + NGHOST; ++i) {
+            r(n,k,j,i) = r(n,k,j,pmb->ie);
+            s(n,k,j,i) = r(n,k,j,i)*w(IDN,k,j,i);
+          }
+  }
+
+  if (pmb->pmy_mesh->f2) {
+    // inner x2
+    if (pmb->pbval->isPhysicalBoundary(BoundaryFace::inner_x2)) {
+      for (int n = 0; n < nvar; ++n)
+        for (int k = bks; k <= bke; ++k)
+          for (int j = pmb->js - NGHOST; j <= pmb->js - 1; ++j)
+            for (int i = bis; i <= bie; ++i) {
+              r(n,k,j,i) = r(n,k,pmb->js,i);
+              s(n,k,j,i) = r(n,k,j,i)*w(IDN,k,j,i);
+            }
+    }
+          
+    // outer x2
+    if (pmb->pbval->isPhysicalBoundary(BoundaryFace::outer_x2)) {
+      for (int n = 0; n < nvar; ++n)
+        for (int k = bks; k <= bke; ++k)
+          for (int j = pmb->je + 1; j <= pmb->je + NGHOST; ++j)
+            for (int i = bis; i <= bie; ++i) {
+              r(n,k,j,i) = r(n,k,pmb->je,i);
+              s(n,k,j,i) = r(n,k,j,i)*w(IDN,k,j,i);
+            }
+    }
+  }
+
+  if (pmb->pmy_mesh->f3) {
+    bjs = pmb->js - NGHOST;
+    bje = pmb->je + NGHOST;
+
+    // inner x3
+    if (pmb->pbval->isPhysicalBoundary(BoundaryFace::inner_x3)) {
+      for (int n = 0; n < nvar; ++n)
+        for (int k = pmb->ks - NGHOST; k <= pmb->js - 1; ++k)
+          for (int j = bjs; j <= bje; ++j)
+            for (int i = bis; i <= bie; ++i) {
+              r(n,k,j,i) = r(n,pmb->ks,j,i);
+              s(n,k,j,i) = r(n,k,j,i)*w(IDN,k,j,i);
+            }
+    }
+          
+    // outer x3
+    if (pmb->pbval->isPhysicalBoundary(BoundaryFace::outer_x3)) {
+      for (int n = 0; n < nvar; ++n)
+        for (int k = pmb->ke + 1; k <= pmb->ke + NGHOST; ++k)
+            for (int j = bjs; j <= bje; ++j)
+            for (int i = bis; i <= bie; ++i) {
+              r(n,k,j,i) = r(n,pmb->ke,j,i);
+              s(n,k,j,i) = r(n,k,j,i)*w(IDN,k,j,i);
+            }
+    }
+  }
 }

@@ -323,7 +323,6 @@ const TaskID INT_TURB(62);
 const TaskID SEND_TURB(63);
 const TaskID RECV_TURB(64);
 const TaskID SETB_TURB(65);
-const TaskID DIFFUSE_TURB(66);
 
 const TaskID UPDATE_HYD(69);
 const TaskID INT_PART(70);

@@ -11,9 +11,9 @@
 #include "../turbulence/turbulence_model.hpp"
 
 TaskStatus TimeIntegratorTaskList::CalculateTurbulenceFlux(MeshBlock *pmb, int stage) {
-  std::cout << "calculate turbulence flux" << std::endl;
+  //std::cout << "calculate turbulence flux" << std::endl;
   if (stage <= nstages) {
-    pmb->pturb->CalculateFluxes(pmb->pturb->r, 2);
+    pmb->pturb->calculateFluxes(pmb->pturb->r, 2);
     return TaskStatus::next;
   }
   return TaskStatus::fail;
@@ -21,14 +21,14 @@ TaskStatus TimeIntegratorTaskList::CalculateTurbulenceFlux(MeshBlock *pmb, int s
 
 
 TaskStatus TimeIntegratorTaskList::SendTurbulenceFlux(MeshBlock *pmb, int stage) {
-  std::cout << "send turbulence flux" << std::endl;
+  //std::cout << "send turbulence flux" << std::endl;
   pmb->pturb->sbvar.SendFluxCorrection();
   return TaskStatus::success;
 }
 
 
 TaskStatus TimeIntegratorTaskList::ReceiveTurbulenceFlux(MeshBlock *pmb, int stage) {
-  std::cout << "receive turbulence flux" << std::endl;
+  //std::cout << "receive turbulence flux" << std::endl;
   if (pmb->pturb->sbvar.ReceiveFluxCorrection()) {
     return TaskStatus::next;
   } else {
@@ -38,7 +38,7 @@ TaskStatus TimeIntegratorTaskList::ReceiveTurbulenceFlux(MeshBlock *pmb, int sta
 
 
 TaskStatus TimeIntegratorTaskList::IntegrateTurbulence(MeshBlock *pmb, int stage) {
-  std::cout << "integrate turbulence" << std::endl;
+  //std::cout << "integrate turbulence" << std::endl;
   TurbulenceModel *pturb = pmb->pturb;
   if (stage <= nstages) {
     // This time-integrator-specific averaging operation logic is identical to
@@ -58,7 +58,7 @@ TaskStatus TimeIntegratorTaskList::IntegrateTurbulence(MeshBlock *pmb, int stage
       pmb->WeightedAve(pturb->s, pturb->s1, pturb->s2, ave_wghts);
 
     const Real wght = stage_wghts[stage-1].beta*pmb->pmy_mesh->dt;
-    pturb->AddFluxDivergence(wght, pturb->s);
+    pturb->addFluxDivergence(wght, pturb->s);
 
     // Hardcode an additional flux divergence weighted average for the penultimate
     // stage of SSPRK(5,4) since it cannot be expressed in a 3S* framework
@@ -71,12 +71,12 @@ TaskStatus TimeIntegratorTaskList::IntegrateTurbulence(MeshBlock *pmb, int stage
       const Real wght_ssp = beta*pmb->pmy_mesh->dt;
       // writing out to s2 register
       pmb->WeightedAve(pturb->s2, pturb->s1, pturb->s2, ave_wghts);
-      pturb->AddFluxDivergence(wght_ssp, pturb->s2);
+      pturb->addFluxDivergence(wght_ssp, pturb->s2);
     }
 
     // turbulence forcing
     Real dt = (stage_wghts[(stage-1)].beta)*(pmb->pmy_mesh->dt);
-    pturb->DriveTurbulence(pturb->s, pturb->r, pmb->phydro->w, dt);
+    pturb->driveTurbulence(pturb->s, pturb->r, pmb->phydro->w, dt);
     return TaskStatus::next;
   }
   return TaskStatus::fail;
@@ -84,7 +84,7 @@ TaskStatus TimeIntegratorTaskList::IntegrateTurbulence(MeshBlock *pmb, int stage
 
 
 TaskStatus TimeIntegratorTaskList::SendTurbulence(MeshBlock *pmb, int stage) {
-  std::cout << "send turbulence" << std::endl;
+  //std::cout << "send turbulence" << std::endl;
   if (stage <= nstages) {
     // Swap TurbulenceModel quantity in BoundaryVariable interface back to conserved var
     // formulation (also needed in SetBoundariesTurbulence() since the tasks are independent)
@@ -98,7 +98,7 @@ TaskStatus TimeIntegratorTaskList::SendTurbulence(MeshBlock *pmb, int stage) {
 
 
 TaskStatus TimeIntegratorTaskList::ReceiveTurbulence(MeshBlock *pmb, int stage) {
-  std::cout << "recv turbulence" << std::endl;
+  //std::cout << "recv turbulence" << std::endl;
   bool ret;
   if (stage <= nstages) {
     ret = pmb->pturb->sbvar.ReceiveBoundaryBuffers();
@@ -115,7 +115,7 @@ TaskStatus TimeIntegratorTaskList::ReceiveTurbulence(MeshBlock *pmb, int stage) 
 
 
 TaskStatus TimeIntegratorTaskList::SetBoundariesTurbulence(MeshBlock *pmb, int stage) {
-  std::cout << "set turbulence boundary" << std::endl;
+  //std::cout << "set turbulence boundary" << std::endl;
   if (stage <= nstages) {
     // Set Turbulence quantity in BoundaryVariable interface to cons var formulation
     pmb->pturb->sbvar.var_cc = &(pmb->pturb->s);

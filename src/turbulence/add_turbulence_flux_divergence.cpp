@@ -40,7 +40,7 @@
 // TODO(felker): remove the following unnecessary private class member?
 // field_diffusion.cpp:66:    cell_volume_.NewAthenaArray(nc1);
 
-void TurbulenceModel::AddFluxDivergence(const Real wght, AthenaArray<Real> &s_out) {
+void TurbulenceModel::addFluxDivergence(const Real wght, AthenaArray<Real> &s_out) {
   MeshBlock *pmb = pmy_block;
   AthenaArray<Real> &x1flux = s_flux[X1DIR];
   AthenaArray<Real> &x2flux = s_flux[X2DIR];

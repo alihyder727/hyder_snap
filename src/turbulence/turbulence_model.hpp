@@ -44,19 +44,23 @@ public:
   CellCenteredBoundaryVariable sbvar;
 
   // public functions:
-  // KGF: use inheritance for these functions / overall class?
-  void AddFluxDivergence(const Real wght, AthenaArray<Real> &s_out);
-  void CalculateFluxes(AthenaArray<Real> &s, const int order);
+  void addFluxDivergence(const Real wght, AthenaArray<Real> &s_out);
+  void calculateFluxes(AthenaArray<Real> &s, const int order);
   void ConservedToPrimitive(AthenaArray<Real> &s, AthenaArray<Real> const& w,
-    AthenaArray<Real> const& r_old, AthenaArray<Real> &r, Coordinates *pco,
+    AthenaArray<Real> &r, Coordinates *pco,
     int il, int iu, int jl, int ju, int kl, int ku);
-  void ComputeUpwindFlux(const int k, const int j, const int il,
+  void PrimitiveToConserved(AthenaArray<Real> &r, AthenaArray<Real> const& w,
+    AthenaArray<Real> &s, Coordinates *pco,
+    int il, int iu, int jl, int ju, int kl, int ku);
+  void computeUpwindFlux(const int k, const int j, const int il,
                          const int iu, // CoordinateDirection dir,
                          AthenaArray<Real> &rl, AthenaArray<Real> &rr,
                          AthenaArray<Real> &mass_flx,
                          AthenaArray<Real> &flx_out);
+  void applyBoundaryCondition(AthenaArray<Real> &r, AthenaArray<Real> &s,
+    AthenaArray<Real> const& w, Coordinates *pco);
 
-  virtual void DriveTurbulence(AthenaArray<Real> &s, AthenaArray<Real> const& r,
+  virtual void driveTurbulence(AthenaArray<Real> &s, AthenaArray<Real> const& r,
     AthenaArray<Real> const& w, Real dt) {}
 
 protected:
@@ -75,7 +79,7 @@ class KEpsilonTurbulence: public TurbulenceModel {
 public:
   KEpsilonTurbulence(MeshBlock *pmb, ParameterInput *pin);
   ~KEpsilonTurbulence() {}
-  void DriveTurbulence(AthenaArray<Real> &s, AthenaArray<Real> const& r,
+  void driveTurbulence(AthenaArray<Real> &s, AthenaArray<Real> const& r,
     AthenaArray<Real> const& w, Real dt);
 
 private:

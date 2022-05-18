@@ -1190,7 +1190,7 @@ TaskStatus TimeIntegratorTaskList::Primitives(MeshBlock *pmb, int stage) {
     pmb->peos->ConservedToPrimitive(ph->u, ph->w, pf->b,
                                     ph->w1, pf->bcc, pmb->pcoord,
                                     il, iu, jl, ju, kl, ku);
-    pmb->pturb->ConservedToPrimitive(pturb->s, ph->w, pturb->r, pturb->r,
+    pmb->pturb->ConservedToPrimitive(pturb->s, ph->w, pturb->r,
                                     pmb->pcoord, il, iu, jl, ju, kl, ku);
     if (NSCALARS > 0) {
       // r1/r_old for GR is currently unused:
@@ -1232,6 +1232,7 @@ TaskStatus TimeIntegratorTaskList::Primitives(MeshBlock *pmb, int stage) {
 TaskStatus TimeIntegratorTaskList::PhysicalBoundary(MeshBlock *pmb, int stage) {
   Hydro *ph = pmb->phydro;
   PassiveScalars *ps = pmb->pscalars;
+  TurbulenceModel *pturb = pmb->pturb;
   BoundaryValues *pbval = pmb->pbval;
 
   if (stage <= nstages) {
@@ -1245,6 +1246,7 @@ TaskStatus TimeIntegratorTaskList::PhysicalBoundary(MeshBlock *pmb, int stage) {
     if (NSCALARS > 0)
       ps->sbvar.var_cc = &(ps->r);
     pbval->ApplyPhysicalBoundaries(t_end_stage, dt);
+    pturb->applyBoundaryCondition(pturb->r, pturb->s, ph->w, pmb->pcoord);
   } else {
     return TaskStatus::fail;
   }

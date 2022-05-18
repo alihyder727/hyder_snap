@@ -59,7 +59,7 @@ inline Real Laplace_(AthenaArray<Real> const& mut, AthenaArray<Real> const& v,
   return result;
 }
 
-inline Real ShearProduction(AthenaArray<Real> const& w,
+inline Real ShearProduction_(AthenaArray<Real> const& w,
   int k, int j, int i, Coordinates *pcoord)
 {
   Real result = 0.;
@@ -92,7 +92,7 @@ inline Real ShearProduction(AthenaArray<Real> const& w,
   return result;
 }
 
-void KEpsilonTurbulence::DriveTurbulence(AthenaArray<Real> &s,
+void KEpsilonTurbulence::driveTurbulence(AthenaArray<Real> &s,
   AthenaArray<Real> const& r, AthenaArray<Real> const& w, Real dt)
 {
   MeshBlock *pmb = pmy_block;
@@ -107,7 +107,7 @@ void KEpsilonTurbulence::DriveTurbulence(AthenaArray<Real> &s,
     for (int j = js; j <= je; ++j)
       for (int i = is; i <= ie; ++i) {
         // shear production
-        Real shear = ShearProduction(w,k,j,i,pmb->pcoord);
+        Real shear = ShearProduction_(w,k,j,i,pmb->pcoord);
 
         // turbulent dissipation, de/dt, eq2.2-1
         s(0,k,j,i) += (Laplace_(mut,eps,k,j,i,pmb->pcoord)/sige_
