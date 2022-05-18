@@ -23,14 +23,17 @@ KEpsilonTurbulence::KEpsilonTurbulence(MeshBlock *pmb, ParameterInput *pin):
   c2_ = pin->GetOrAddReal("turbulence", "kepsilon.c2", 1.92);
   sigk_ = pin->GetOrAddReal("turbulence", "kepsilon.sigk", 1.0);
   sige_ = pin->GetOrAddReal("turbulence", "kepsilon.sige", 1.3);
-  Real tke0 = pin->GetOrAddReal("turbulence", "kepsilon.tke0", 1.E-6);
-  Real eps0 = pin->GetOrAddReal("turbulence", "kepsilon.eps0", 1.E-6);
+  // velocity scale, v ~ 1 m/s, tke ~ v^2 ~ 1 m^2/s^2
+  Real tke0 = pin->GetOrAddReal("turbulence", "kepsilon.tke0", 1.);
 
   for (int k = pmb->ks; k <= pmb->ke; ++k)
     for (int j = pmb->js; j <= pmb->je; ++j)
       for (int i = pmb->is; i <= pmb->ie; ++i) {
-        r(0,k,j,i) = eps0;
         r(1,k,j,i) = tke0;
+        // eps ~ tke/T ~ v^2/(dx/v) ~ v^3/dx
+        Real volume = pmb->pcoord->GetCellVolume(k,j,i);
+        Real eps0 = pow(tke0, 1.5)/pow(volume, 1./3.);
+        r(0,k,j,i) = eps0;
       }
 }
 

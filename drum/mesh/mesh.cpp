@@ -1402,6 +1402,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
         // and (conserved variable) passive scalar masses:
         if (NSCALARS > 0)
           pmb->pscalars->sbvar.SendBoundaryBuffers();
+        pmb->pturb->sbvar.SendBoundaryBuffers();
       }
 
       // wait to receive conserved variables
@@ -1413,6 +1414,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
           pmb->pfield->fbvar.ReceiveAndSetBoundariesWithWait();
         if (NSCALARS > 0)
           pmb->pscalars->sbvar.ReceiveAndSetBoundariesWithWait();
+        pmb->pturb->sbvar.ReceiveAndSetBoundariesWithWait();
         if (SHEARING_BOX) {
           pmb->phydro->hbvar.AddHydroShearForInit();
         }
@@ -1516,6 +1518,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
         ph->hbvar.SwapHydroQuantity(ph->w, HydroBoundaryQuantity::prim);
         if (NSCALARS > 0)
           ps->sbvar.var_cc = &(ps->r);
+        pmb->pturb->sbvar.var_cc = &(pmb->pturb->r);
 
         pbval->ApplyPhysicalBoundaries(time, 0.0);
       }
@@ -1768,6 +1771,7 @@ void Mesh::CorrectMidpointInitialCondition(std::vector<MeshBlock*> &pmb_array, i
     // and (conserved variable) passive scalar masses:
     if (NSCALARS > 0)
       pmb->pscalars->sbvar.SendBoundaryBuffers();
+    pmb->pturb->sbvar.SendBoundaryBuffers();
   }
 
   // wait to receive conserved variables
@@ -1781,6 +1785,7 @@ void Mesh::CorrectMidpointInitialCondition(std::vector<MeshBlock*> &pmb_array, i
       pmb->pfield->fbvar.ReceiveAndSetBoundariesWithWait();
     if (NSCALARS > 0)
       pmb->pscalars->sbvar.ReceiveAndSetBoundariesWithWait();
+    pmb->pturb->sbvar.ReceiveAndSetBoundariesWithWait();
     if (SHEARING_BOX) {
       pmb->phydro->hbvar.AddHydroShearForInit();
     }
