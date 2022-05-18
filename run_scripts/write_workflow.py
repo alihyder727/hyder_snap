@@ -2,9 +2,6 @@
 import yaml, os, re, argparse, glob, shutil
 from itertools import product
 
-links = ['combine.py', 'plot_mcmc.py', 'plot_anomaly2d.py', 'create_input.py', 
-         'juno_mwr.ex', 'juno_mwr.tmp', 'snapy']
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input',
     choices = glob.glob('*.yml'),
@@ -45,17 +42,6 @@ def write_job_steps(file, job, detail, major, minor, hpc = False):
   use_hpc = False
   if ('NODES' in detail['env']) and hpc: use_hpc = True
 
-  if use_hpc:
-    fsub_name = '%s-%s' % (job, minor)
-    with open('submit-gl.tmp', 'r') as fsub:
-      tmpsub = fsub.read()
-    subfile = re.sub('<name>', fsub_name, tmpsub)
-    subfile = re.sub('<nodes>', str(detail['env']['NODES']), subfile)
-    fsub = open(fsub_name + '.sub', 'w')
-    fsub.write(subfile)
-    original_file = file
-    file = fsub
-
   # count matrix jobs
   sub_jobs_matrix = []
   for key, value in detail['strategy']['matrix'].items():
@@ -63,6 +49,17 @@ def write_job_steps(file, job, detail, major, minor, hpc = False):
 
   sub_jobs_list = list(map(dict, product(*sub_jobs_matrix)))
   for it, mdict in enumerate(sub_jobs_list):
+    if use_hpc:
+      fsub_name = '%s-%s-%s' % (job, minor, it)
+      with open('submit-gl.tmp', 'r') as fsub:
+        tmpsub = fsub.read()
+      subfile = re.sub('<name>', fsub_name, tmpsub)
+      subfile = re.sub('<nodes>', str(detail['env']['NODES']), subfile)
+      fsub = open(fsub_name + '.sub', 'w')
+      fsub.write(subfile)
+      original_file = file
+      file = fsub
+
     file.write('# %d.%d.%d. ' % (major, minor, it))
 
     # set environment variable from matrix
@@ -79,37 +76,42 @@ def write_job_steps(file, job, detail, major, minor, hpc = False):
 
       # write step command
       step_run = replace_environ_var(detail['env'], step['run'])
+      if use_hpc:
+        step_run = step_run.split('&')[0]
+        # replace MPI commands
+        step_run = re.sub('mpiexec', 'srun', step_run)
+        # replace mv commands
+        m = re.match(r'\s*mv\s+([\w\.-]+\/*)\s+([\w\.-]+\/*)', step_run)
+        if m:
+          dst = m.group(2)
+          step_run = re.sub(dst, '../../' + dst, step_run)
       if step['run'][-1] == '\n':
         file.write('%s' % step_run)
       else:
         file.write('%s\n' % step_run)
       file.write('\n')
 
-  if use_hpc:
-    file.close()
-    # create a new case folder
-    os.system('mkdir -p %s' % fsub_name)
-    
-    # move submission file to the case folder
-    if os.path.isfile('%s/%s.sub' % (fsub_name, fsub_name)):
-      os.remove('%s/%s.sub' % (fsub_name, fsub_name))
-    shutil.move(fsub_name + '.sub', fsub_name + '/')
+    if use_hpc:
+      file.close()
+      # create a new case folder
+      os.system('mkdir -p _work/%s' % fsub_name)
 
-    # link scripts
-    for fname in links:
-      os.system('ln -sf %s %s/' % (os.path.realpath(fname), fsub_name))
+      # move submission file to the case folder
+      if os.path.isfile('_work/%s/%s.sub' % (fsub_name, fsub_name)):
+        os.remove('_work/%s/%s.sub' % (fsub_name, fsub_name))
+      shutil.move(fsub_name + '.sub', '_work/%s/' % fsub_name)
 
-    # link observation
-    if 'OBS' in detail['env']:
-      obs_file = replace_environ_var(detail['env'], detail['env']['OBS'])
-      os.system('ln -sf %s %s/' % (os.path.realpath(obs_file), fsub_name))
+      # link scripts
+      links = glob.glob('*.py') + glob.glob('*.ex') + glob.glob('*.inp')
+      for fname in links:
+        os.system('ln -sf %s _work/%s/' % (os.path.realpath(fname), fsub_name))
 
-    # write submission script
-    file = original_file
-    file.write('## submit to hpc\n')
-    file.write('cd %s\n' % fsub_name)
-    file.write('sbatch %s.sub\n' % fsub_name)
-    file.write('cd ..\n\n')
+      # write submission script
+      file = original_file
+      file.write('## submit to hpc\n')
+      file.write('cd _work/%s\n' % fsub_name)
+      file.write('sbatch %s.sub\n' % fsub_name)
+      file.write('cd ../../\n\n')
 
   return len(sub_jobs_list)
 
@@ -118,6 +120,10 @@ def write_all_jobs(file, job, detail, major, hpc = False):
   if len(keys) == 0:
     nsub_jobs_vector = 0
   else:
+    for key in keys:
+      if detail['strategy']['vector'][key][-4:] == ".txt":
+        var = os.popen('cat %s' % detail['strategy']['vector'][key]).read()
+        detail['strategy']['vector'][key] = list(map(str, var.split()))[::4]
     nsub_jobs_vector = len(detail['strategy']['vector'][keys[0]])
 
   njobs = 0
