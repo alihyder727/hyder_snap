@@ -1,0 +1,108 @@
+name : Saturn VLA image processing workflow
+jobs:
+  sat-s-witb-may:
+    env:
+      ORIGIN: ../Saturn_2015/fits_smeared/150528
+      FILE: sat-s-witb
+      SHIFT: -30
+      BV: 100
+    steps:
+      - name: write ephemerides
+        run: ./write_ephemerides.py --dir=$ORIGIN --fits=$FILE --obs=vla --shift=$SHIFT
+      - name: detect planet
+        run: ./detect_planet.py --dir=$ORIGIN --fits=$FILE -v=$BV
+      - name: extract latitude and longitude
+        run: ./extract_latlon.py --fits=$FILE
+      - name: make map of cylindrical projection
+        run: ./cylindrical_projection.py --fits=$FILE
+  sat-c-witb-may:
+    env:
+      ORIGIN: ../Saturn_2015/fits_smeared/150528
+      FILE: sat-c-witb
+      SHIFT: -10
+      BV: 100
+    steps:
+      - name: write ephemerides
+        run: ./write_ephemerides.py --dir=$ORIGIN --fits=$FILE --obs=vla --shift=$SHIFT
+      - name: detect planet
+        run: ./detect_planet.py --dir=$ORIGIN --fits=$FILE -v=$BV
+      - name: extract latitude and longitude
+        run: ./extract_latlon.py --fits=$FILE
+      - name: make map of cylindrical projection
+        run: ./cylindrical_projection.py --fits=$FILE
+  sat-x-ictb-may:
+    env:
+      ORIGIN: ../Saturn_2015/fits_smeared/150528
+      PROCESSED: ../saturn_2015_processed/
+      FILE: sat-x-ictb
+      SHIFT: -6
+      BV: 0.9
+    steps:
+      - name: write ephemerides
+        run: ./write_ephemerides.py --dir=$ORIGIN --fits=$FILE --obs=vla --shift=$SHIFT
+      - name: make a link to masked file
+        run: ln -sf ../dat/$FILE.info ../dat/$FILE-msk.info
+      - name: detect planet
+        run: ./detect_planet.py --dir=$PROCESSED --fits=$FILE-msk -v=$BV
+      - name: extract latitude and longitude
+        run: ./extract_latlon.py --fits=$FILE
+      - name: make map of cylindrical projection
+        run: ./cylindrical_projection.py --fits=$FILE
+  sat-u-ictb-may:
+    env:
+      ORIGIN: ../Saturn_2015/fits_smeared/150528
+      PROCESSED: ../saturn_2015_processed/
+      FILE: sat-u-ictb
+      SHIFT: -6
+      BV: 0.9
+    steps:
+      - name: write ephemerides
+        run: ./write_ephemerides.py --dir=$ORIGIN --fits=$FILE --obs=vla --shift=$SHIFT
+      - name: make a link to masked file
+        run: ln -sf ../dat/$FILE.info ../dat/$FILE-msk.info
+      - name: detect planet
+        run: ./detect_planet.py --dir=$PROCESSED --fits=$FILE-msk -v=$BV
+      - name: extract latitude and longitude
+        run: ./extract_latlon.py --fits=$FILE
+      - name: make map of cylindrical projection
+        run: ./cylindrical_projection.py --fits=$FILE
+  sat-k-witb-jan:
+    env:
+      ORIGIN: ../Saturn_2015/fits_smeared/150125
+      FILE: sat-k-witb
+      SHIFT: -5
+      BV: 80
+    steps:
+      - name: write ephemerides
+        run: ./write_ephemerides.py --dir=$ORIGIN --fits=$FILE --obs=vla --shift=$SHIFT
+      - name: detect planet
+        run: ./detect_planet.py --dir=$ORIGIN --fits=$FILE -v=$BV
+      - name: extract latitude and longitude
+        run: ./extract_latlon.py --fits=$FILE
+      - name: make map of cylindrical projection
+        run: ./cylindrical_projection.py --fits=$FILE
+  sat-q-witb-jan:
+    env:
+      ORIGIN: ../Saturn_2015/fits_smeared/150125
+      FILE: sat-q-witb
+      SHIFT: -5
+      BV: 80
+    steps:
+      - name: write ephemerides
+        run: ./write_ephemerides.py --dir=$ORIGIN --fits=$FILE --obs=vla --shift=$SHIFT
+      - name: detect planet
+        run: ./detect_planet.py --dir=$ORIGIN --fits=$FILE -v=$BV
+      - name: extract latitude and longitude
+        run: ./extract_latlon.py --fits=$FILE
+      - name: make map of cylindrical projection
+        run: ./cylindrical_projection.py --fits=$FILE
+  write-vla-data:
+    steps:
+      - name: write tb data channel by channel
+        run: ./write_saturn_nh_tb.py 
+      - name: write tb data collecting all channels
+        run: ./write_saturn_nh_all.py
+  plot-vla-data:
+    steps:
+      - name: plot saturn brightness temperature as a function of latitude
+        run: ./plot_saturn_latitude.py

@@ -1,0 +1,39 @@
+name: Saturn VLA spectral inversionn workflow
+jobs:
+  test-sampling:
+    skip: true
+    env:
+      PROBLEM: saturn_vla
+      NLIM: 100
+      NODES: 8
+      NWALKER: 16
+    steps:
+      - name: create an input file based on the template
+        run: >
+          ./create_input.py -M -i $PROBLEM.tmp --nwalker=$NWALKER --nodes=$NODES --nlim=$NLIM 
+          -o $NLIM-$NWALKER &> log.$NLIM-$NWALKER
+      - name: run program
+        run: mpiexec -n $NODES ./$PROBLEM.ex -i $PROBLEM-$NLIM-$NWALKER.inp &>> log.$NLIM-$NWALKER
+      - name: combine outputs
+        run: ./combine.py &>> log.$NLIM-$NWALKER
+
+  vla-inversion:
+    env:
+      PROBLEM: saturn_vla
+      NLIM: 1000
+      NODES: 8
+      NWALKER: 16
+      NAME: $LATITUDE-$NLIM-$NWALKER
+    strategy:
+      vector:
+        LATITUDE: [10]
+    steps:
+      - name: prepare vla observation
+        run: >
+          ./prepare_saturn_vla.py -M -i $PROBLEM.tmp --glat=$LATITUDE 
+          --nwalker=$NWALKER --nodes=$NODES --nlim=$NLIM
+          -o $NAME &> log.$NAME
+      - name: run program
+        run: mpiexec -n $NODES ./$PROBLEM.ex -i $PROBLEM-$NAME.inp &> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
