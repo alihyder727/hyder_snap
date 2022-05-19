@@ -15,7 +15,7 @@
 #include "../globals.hpp"
 
 //! \brief apply implicit correction and physics package
-enum TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
+TaskStatus TimeIntegratorTaskList::UpdateHydro(MeshBlock *pmb, int stage) {
   Hydro *ph = pmb->phydro;
   Real dt = pmb->pmy_mesh->dt;
 

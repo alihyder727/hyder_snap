@@ -47,6 +47,7 @@
 #include "../particles/particles.hpp"
 #include "../inversion/inversion.hpp"
 #include "../communicator/communicator.hpp"
+#include "../turbulence/turbulence_model.hpp"
 
 //----------------------------------------------------------------------------------------
 // MeshBlock constructor: constructs coordinate, boundary condition, hydro, field
@@ -199,6 +200,11 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   pdiag = new Diagnostics(this, pin);
   pfit = nullptr;
   pcomm = new Communicator(this);
+  if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
+    pturb = new KEpsilonTurbulence(this, pin);
+  } else {
+    pturb = new TurbulenceModel(this, pin);
+  }
 
   // Create user mesh data
   InitUserMeshBlockData(pin);
@@ -332,6 +338,11 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   pdiag = new Diagnostics(this, pin);
   pfit = nullptr;
   pcomm = new Communicator(this);
+  if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
+    pturb = new KEpsilonTurbulence(this, pin);
+  } else {
+    pturb = new TurbulenceModel(this, pin);
+  }
 
   InitUserMeshBlockData(pin);
 
@@ -462,6 +473,7 @@ MeshBlock::~MeshBlock() {
   if (pfit != nullptr)
     delete pfit;
   delete pcomm;
+  delete pturb;
 }
 
 //----------------------------------------------------------------------------------------

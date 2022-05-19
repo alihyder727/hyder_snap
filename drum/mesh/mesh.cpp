@@ -48,6 +48,7 @@
 #include "../scalars/scalars.hpp"
 #include "../utils/buffer_utils.hpp"
 #include "../physics/physics.hpp"
+#include "../turbulence/turbulence_model.hpp"
 #include "mesh.hpp"
 #include "mesh_refinement.hpp"
 #include "meshblock_tree.hpp"
@@ -290,6 +291,9 @@ Mesh::Mesh(ParameterInput *pin, int mesh_test) :
 
   if (EOS_TABLE_ENABLED) peos_table = new EosTable(pin);
   InitUserMeshData(pin);
+  if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
+    EnrollViscosityCoefficient(KEpsilonViscosity);
+  }
 
   if (multilevel) {
     if (block_size.nx1 % 2 == 1 || (block_size.nx2 % 2 == 1 && f2)
@@ -694,6 +698,9 @@ Mesh::Mesh(ParameterInput *pin, IOWrapper& resfile, int mesh_test) :
 
   if (EOS_TABLE_ENABLED) peos_table = new EosTable(pin);
   InitUserMeshData(pin);
+  if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
+    EnrollViscosityCoefficient(KEpsilonViscosity);
+  }
 
   // read user Mesh data
   IOWrapperSizeT udsize = 0;
@@ -1349,6 +1356,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
         pmb->pbval->CheckUserBoundaries();
         pmb->phydro->CheckHydro();
         pmb->pphy->Initialize(pmb->phydro->w);
+        pmb->pturb->Initialize(pmb->phydro->w);
       }
     }
 
@@ -1400,6 +1408,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
         // and (conserved variable) passive scalar masses:
         if (NSCALARS > 0)
           pmb->pscalars->sbvar.SendBoundaryBuffers();
+        pmb->pturb->sbvar.SendBoundaryBuffers();
       }
 
       // wait to receive conserved variables
@@ -1411,6 +1420,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
           pmb->pfield->fbvar.ReceiveAndSetBoundariesWithWait();
         if (NSCALARS > 0)
           pmb->pscalars->sbvar.ReceiveAndSetBoundariesWithWait();
+        pmb->pturb->sbvar.ReceiveAndSetBoundariesWithWait();
         if (SHEARING_BOX) {
           pmb->phydro->hbvar.AddHydroShearForInit();
         }
@@ -1514,6 +1524,7 @@ void Mesh::Initialize(int res_flag, ParameterInput *pin) {
         ph->hbvar.SwapHydroQuantity(ph->w, HydroBoundaryQuantity::prim);
         if (NSCALARS > 0)
           ps->sbvar.var_cc = &(ps->r);
+        pmb->pturb->sbvar.var_cc = &(pmb->pturb->r);
 
         pbval->ApplyPhysicalBoundaries(time, 0.0);
       }
@@ -1766,6 +1777,7 @@ void Mesh::CorrectMidpointInitialCondition(std::vector<MeshBlock*> &pmb_array, i
     // and (conserved variable) passive scalar masses:
     if (NSCALARS > 0)
       pmb->pscalars->sbvar.SendBoundaryBuffers();
+    pmb->pturb->sbvar.SendBoundaryBuffers();
   }
 
   // wait to receive conserved variables
@@ -1779,6 +1791,7 @@ void Mesh::CorrectMidpointInitialCondition(std::vector<MeshBlock*> &pmb_array, i
       pmb->pfield->fbvar.ReceiveAndSetBoundariesWithWait();
     if (NSCALARS > 0)
       pmb->pscalars->sbvar.ReceiveAndSetBoundariesWithWait();
+    pmb->pturb->sbvar.ReceiveAndSetBoundariesWithWait();
     if (SHEARING_BOX) {
       pmb->phydro->hbvar.AddHydroShearForInit();
     }

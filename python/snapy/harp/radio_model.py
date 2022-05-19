@@ -16,19 +16,17 @@ def create_input(tmpfile, args):
     elif ',' in args['plevel']:
       plevel = args['plevel'].split(',')
       np = len(plevel)
-      print(plevel)
-      print(np)
 
     if args['tem'] == '0':
       Tp = ['0.']*np
     else:
-      Tp = args['tem'].split(' ')
+      Tp = args['tem'].split(',')
     assert(len(Tp) == np)
 
     if args['nh3'] == '0':
       NH3p  = ['0.']*np
     else:
-      NH3p = args['nh3'].split(' ')
+      NH3p = args['nh3'].split(',')
     assert(len(NH3p) == np)
 
   # adjust minimum number of walkers

@@ -97,6 +97,7 @@
 #include "../mesh/mesh.hpp"
 #include "../parameter_input.hpp"
 #include "../scalars/scalars.hpp"
+#include "../turbulence/turbulence_model.hpp"
 #include "../diagnostics/diagnostics.hpp"
 #include "../radiation/radiation.hpp"
 #include "../particles/particles.hpp"
@@ -365,6 +366,7 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
   Hydro *phyd = pmb->phydro;
   Field *pfld = pmb->pfield;
   PassiveScalars *psclr = pmb->pscalars;
+  TurbulenceModel *pturb = pmb->pturb;
   Gravity *pgrav = pmb->pgrav;
   Diagnostics *pdiag = pmb->pdiag;
   Radiation *prad = pmb->prad;
@@ -716,6 +718,29 @@ void OutputType::LoadOutputData(MeshBlock *pmb) {
       AppendOutputDataNode(pod);
       num_vars_+=NVAPOR;
     }
+  }
+
+  // turbulence
+  if (output_params.variable.compare("turbulence") == 0) {
+    if (TURBULENCE_MODEL == "KEpsilon") {
+      pod = new OutputData;
+      pod->type = "VECTORS";
+      pod->name = "eps,tke";
+      pod->long_name = "turbulent dissipation,turbulent kinetic energy";
+      pod->units = "w/kg,J/kg";
+      pod->data.InitWithShallowSlice(pturb->r,4,0,2);
+      AppendOutputDataNode(pod);
+      num_vars_+=2;
+    }
+
+    pod = new OutputData;
+    pod->type = "SCALARS";
+    pod->name = "mut";
+    pod->long_name = "dynamic turbulent viscosity";
+    pod->units = "kg/(m.s)";
+    pod->data.InitWithShallowSlice(pturb->mut,4,0,1);
+    AppendOutputDataNode(pod);
+    num_vars_+=1;
   }
 
   // particles

@@ -33,6 +33,7 @@
 #include "../physics/physics.hpp"
 #include "../particles/particles.hpp"
 #include "../particles/particle_buffer.hpp"
+#include "../turbulence/turbulence_model.hpp"
 //#include "../debugger/debugger.hpp"
 #include "task_list.hpp"
 
@@ -260,13 +261,20 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       if (NSCALARS > 0)
         AddTask(CALC_SCLRFLX,CALC_HYDFLX);
     }
+    AddTask(CALC_TURBFLX,NONE);
+
     if (pm->multilevel) { // SMR or AMR
       AddTask(SEND_HYDFLX,CALC_HYDFLX);
       AddTask(RECV_HYDFLX,CALC_HYDFLX);
       AddTask(INT_HYD,RECV_HYDFLX);
+      AddTask(SEND_TURBFLX,CALC_TURBFLX);
+      AddTask(RECV_TURBFLX,CALC_TURBFLX);
+      AddTask(INT_TURB,RECV_TURBFLX);
     } else {
       AddTask(INT_HYD, (CALC_HYDFLX|CALC_RADFLX));
+      AddTask(INT_TURB,CALC_TURBFLX);
     }
+
     AddTask(SRCTERM_HYD,INT_HYD);
     AddTask(INT_PART,SRCTERM_HYD);
     AddTask(SEND_PART,INT_PART);
@@ -302,6 +310,10 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       //   AddTask(RECV_SCLRSH,SETB_SCLR);
       // }
     }
+
+    AddTask(SEND_TURB,INT_TURB);
+    AddTask(RECV_TURB,NONE);
+    AddTask(SETB_TURB,(RECV_TURB|INT_TURB));
 
     if (MAGNETIC_FIELDS_ENABLED) { // MHD
       // compute MHD fluxes, integrate field
@@ -346,9 +358,9 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
           }
         } else {
           if (NSCALARS > 0) {
-            AddTask(CONS2PRIM,(SETB_HYD|SETB_FLD|SETB_SCLR));
+            AddTask(CONS2PRIM,(SETB_TURB|SETB_HYD|SETB_FLD|SETB_SCLR));
           } else {
-            AddTask(CONS2PRIM,(SETB_HYD|SETB_FLD));
+            AddTask(CONS2PRIM,(SETB_TURB|SETB_HYD|SETB_FLD));
           }
         }
       }
@@ -370,9 +382,9 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
           }
         } else {
           if (NSCALARS > 0) {
-            AddTask(CONS2PRIM,(SETB_HYD|SETB_SCLR));
+            AddTask(CONS2PRIM,(SETB_TURB|SETB_HYD|SETB_SCLR));
           } else {
-            AddTask(CONS2PRIM,(SETB_HYD));
+            AddTask(CONS2PRIM,(SETB_TURB|SETB_HYD));
           }
         }
       }
@@ -620,6 +632,41 @@ void TimeIntegratorTaskList::AddTask(const TaskID& id, const TaskID& dep) {
         static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
         (&TimeIntegratorTaskList::DiffuseScalars);
     task_list_[ntasks].lb_time = true;
+  } else if (id == CALC_TURBFLX) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::CalculateTurbulenceFlux);
+    task_list_[ntasks].lb_time = true;
+  } else if (id == SEND_TURBFLX) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::SendTurbulenceFlux);
+    task_list_[ntasks].lb_time = true;
+  } else if (id == RECV_TURBFLX) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::ReceiveTurbulenceFlux);
+    task_list_[ntasks].lb_time = false;
+  } else if (id == INT_TURB) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::IntegrateTurbulence);
+    task_list_[ntasks].lb_time = true;
+  } else if (id == SEND_TURB) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::SendTurbulence);
+    task_list_[ntasks].lb_time = true;
+  } else if (id == RECV_TURB) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::ReceiveTurbulence);
+    task_list_[ntasks].lb_time = false;
+  } else if (id == SETB_TURB) {
+    task_list_[ntasks].TaskFunc=
+        static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
+        (&TimeIntegratorTaskList::SetBoundariesTurbulence);
+    task_list_[ntasks].lb_time = true;
   } else if (id == MESH2PART) {
     task_list_[ntasks].TaskFunc=
         static_cast<TaskStatus (TaskList::*)(MeshBlock*,int)>
@@ -711,6 +758,10 @@ void TimeIntegratorTaskList::StartupTaskList(MeshBlock *pmb, int stage) {
       if (integrator == "ssprk5_4")
         ps->s2 = ps->s;
     }
+
+    pmb->pturb->s1.ZeroClear();
+    if (integrator == "ssprk5_4")
+      pmb->pturb->s2 = pmb->pturb->s;
   }
 
   if (SHEARING_BOX) {
@@ -1122,6 +1173,7 @@ TaskStatus TimeIntegratorTaskList::Primitives(MeshBlock *pmb, int stage) {
   Hydro *ph = pmb->phydro;
   Field *pf = pmb->pfield;
   PassiveScalars *ps = pmb->pscalars;
+  TurbulenceModel *pturb = pmb->pturb;
   BoundaryValues *pbval = pmb->pbval;
 
   int il = pmb->is, iu = pmb->ie, jl = pmb->js, ju = pmb->je, kl = pmb->ks, ku = pmb->ke;
@@ -1142,6 +1194,8 @@ TaskStatus TimeIntegratorTaskList::Primitives(MeshBlock *pmb, int stage) {
     pmb->peos->ConservedToPrimitive(ph->u, ph->w, pf->b,
                                     ph->w1, pf->bcc, pmb->pcoord,
                                     il, iu, jl, ju, kl, ku);
+    pmb->pturb->ConservedToPrimitive(pturb->s, ph->w, pturb->r,
+                                    pmb->pcoord, il, iu, jl, ju, kl, ku);
     if (NSCALARS > 0) {
       // r1/r_old for GR is currently unused:
       pmb->peos->PassiveScalarConservedToPrimitive(ps->s, ph->w1, // ph->u, (updated rho)
@@ -1182,6 +1236,7 @@ TaskStatus TimeIntegratorTaskList::Primitives(MeshBlock *pmb, int stage) {
 TaskStatus TimeIntegratorTaskList::PhysicalBoundary(MeshBlock *pmb, int stage) {
   Hydro *ph = pmb->phydro;
   PassiveScalars *ps = pmb->pscalars;
+  TurbulenceModel *pturb = pmb->pturb;
   BoundaryValues *pbval = pmb->pbval;
 
   if (stage <= nstages) {
@@ -1195,6 +1250,7 @@ TaskStatus TimeIntegratorTaskList::PhysicalBoundary(MeshBlock *pmb, int stage) {
     if (NSCALARS > 0)
       ps->sbvar.var_cc = &(ps->r);
     pbval->ApplyPhysicalBoundaries(t_end_stage, dt);
+    pturb->applyBoundaryCondition(pturb->r, pturb->s, ph->w, pmb->pcoord);
   } else {
     return TaskStatus::fail;
   }

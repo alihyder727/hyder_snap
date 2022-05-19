@@ -142,10 +142,4 @@ public:
   //void TimeIntegrate(std::vector<MaterialPoint> &mp, Real time, Real dt);
 };
 
-class KEpsilonTurbulence: public Particles {
-public:
-  KEpsilonTurbulence(MeshBlock *pmb, ParameterInput *pin, std::string name);
-  ~KEpsilonTurbulence() {}
-};
-
 #endif
