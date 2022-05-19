@@ -88,4 +88,8 @@ private:
   Real cmu_, c1_, c2_, sigk_, sige_;
 };
 
+void KEpsilonViscosity(HydroDiffusion *phdif, MeshBlock *pmb, 
+  const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
+  int is, int ie, int js, int je, int ks, int ke);
+
 #endif // TURBULENCE_MODEL_HPP_
