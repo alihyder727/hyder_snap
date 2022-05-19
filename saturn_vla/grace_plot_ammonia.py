@@ -36,7 +36,7 @@ if __name__ == '__main__':
   i45 = ang.index(45)
   nstep, nlevel, nwalker = nh3.shape
   dtau1 = data['b1tau'][0,::-1,0,0]
-  dtau2 = data['b2tau'][0,::-1,0,0]
+  dtau2 = data['radiance'][0,::-1,0,0]
   dtau3 = data['b3tau'][0,::-1,0,0]
   dtau4 = data['b4tau'][0,::-1,0,0]
   dtau5 = data['b5tau'][0,::-1,0,0]
@@ -83,12 +83,12 @@ if __name__ == '__main__':
 
   tb, ld = zeros((nfreq, nstep, nwalker)), zeros((nfreq, nstep, nwalker))
   for i in range(nfreq):
-    tb[i,:,:] = data['radiance'][:,0,3,:]
+    tb[i,:,:] = data['radiance'][:,i,3,:]
 
 # tb0 is the baseline model
   tb0 = zeros(nfreq)
   for i in range(nfreq):
-    tb0[i] = data['radiance'][0,0,0,0]
+    tb0[i] = data['radiance'][0,i,0,0]
     
 # tb is the anomaly with respect to the baseline
   tb -= tb0.reshape(nfreq,1,1)
@@ -104,7 +104,7 @@ if __name__ == '__main__':
       tb_truth = zeros(nfreq)
       # tb_truth is the anomaly with respect to the baseline
       for i in range(nfreq):
-        tb_truth[i] = data['radiance'][0,0,0,0]
+        tb_truth[i] = data['radiance'][0,i,0,0]
         tb_truth[i] -= tb0[i]
         
   fig, axs = subplots(2, 2, figsize = (12, 10),
