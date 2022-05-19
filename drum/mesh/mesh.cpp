@@ -291,6 +291,9 @@ Mesh::Mesh(ParameterInput *pin, int mesh_test) :
 
   if (EOS_TABLE_ENABLED) peos_table = new EosTable(pin);
   InitUserMeshData(pin);
+  if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
+    EnrollViscosityCoefficient(KEpsilonViscosity);
+  }
 
   if (multilevel) {
     if (block_size.nx1 % 2 == 1 || (block_size.nx2 % 2 == 1 && f2)
@@ -695,6 +698,9 @@ Mesh::Mesh(ParameterInput *pin, IOWrapper& resfile, int mesh_test) :
 
   if (EOS_TABLE_ENABLED) peos_table = new EosTable(pin);
   InitUserMeshData(pin);
+  if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
+    EnrollViscosityCoefficient(KEpsilonViscosity);
+  }
 
   // read user Mesh data
   IOWrapperSizeT udsize = 0;
