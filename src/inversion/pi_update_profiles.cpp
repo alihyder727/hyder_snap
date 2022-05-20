@@ -87,19 +87,36 @@ void ProfileInversion::UpdateProfiles_(int k, Real const *PrSample,
   gp_predict(SquaredExponential, Xp[0], &pcoord->x1v(is), stdAll, nlayer,
     XpSample[0], zlev, stdSample, nsample, Xlen[0]);
 
+  // find the bottom level
+  int ib = is;
+  while (pcoord->x1v(++ib) < zlev[1]);
+  Real **w2;
+  NewCArray(w2, 2, NHYDRO+2*NVAPOR);
+
+  // adiabatically extrapolates to levels lower than zlev[1]
+  Real btemp = pthermo->GetTemp(phydro->w.at(k,j1,ib)) + std::max(-10., XpSample[0][1]);
+  Real bpres = phydro->w(IPR,k,j1,ib);
+  Real grav = -pmb->phydro->hsrc.GetG1();
+  for (int i = ib; i > is; --i) {
+    for (int n = 0; n < NHYDRO; ++n)
+      w2[0][n] = phydro->w(n,k,j1,i);
+    for (int n = NHYDRO; n < NHYDRO+2*NVAPOR; ++n)
+      w2[0][n] = phydro->w(n,k,j1,i);
+    Real dlnp = (pcoord->x1v(i) - pcoord->x1v(i-1))/H0;
+    //Real dlnp = log(phydro->w(IPR,k,j1,i-1)/phydro->w(IPR,k,j1,i));
+    pthermo->ConstructAtmosphere(w2, btemp, bpres, grav, dlnp, 2, Adiabat::pseudo, 1.);
+    for (int n = 0; n <= NVAPOR; ++n)
+      phydro->w(n,k,j1,i-1) = w2[1][n];
+    btemp = pthermo->GetTemp(phydro->w.at(k,j1,i-1));
+    bpres = phydro->w(IPR,k,j1,i-1);
+  }
+
   // save perturbed T profile to model 1
   msg << "- update temperature" << std::endl;
   for (int i = is; i <= ie; ++i) {
     Real temp = pthermo->GetTemp(phydro->w.at(k,j1,i));
-    // set levels lower than zlev[0] to the deep amount
-    if (pcoord->x1v(i) < zlev[1]) {
-      phydro->w(IDN,k,j1,i) = phydro->w(IPR,k,j1,i)/(Rd*(temp + std::max(-20., XpSample[0][1]))*
-          pthermo->RovRd(phydro->w.at(k,j1,i)));
-      continue;
-    }
-
-    // do not alter levels lower than zlev[0] or higher than zlev[nsample-1]
-    if (pcoord->x1v(i) < zlev[0] || pcoord->x1v(i) > zlev[nsample-1])
+    // do not alter levels lower than zlev[1] or higher than zlev[nsample-1]
+    if (pcoord->x1v(i) < zlev[1] || pcoord->x1v(i) > zlev[nsample-1])
       continue;
     if (temp + Xp[0][i-is] < 0.) Xp[0][i-is] = 1. - temp; // min 1K temperature
     phydro->w(IDN,k,j1,i) = phydro->w(IPR,k,j1,i)/(Rd*(temp + Xp[0][i-is])*
@@ -152,10 +169,15 @@ void ProfileInversion::UpdateProfiles_(int k, Real const *PrSample,
   }
 
   // save convectively adjusted profile to model 3 (j = je)
-  Real **w2, dw[1+NVAPOR];
-  NewCArray(w2, 2, NHYDRO+2*NVAPOR);
+  Real dw[1+NVAPOR];
   msg << "- doing convective adjustment" << std::endl;
+
   // save convectively adjusted profile to model 3 (j = je)
+  btemp = pthermo->GetTemp(phydro->w.at(k,j1,is));
+  for (int n = 1; n <= NVAPOR; ++n)
+    phydro->w(n,k,je,is) = phydro->w(n,k,j2,is);
+  phydro->w(IDN,k,je,is) = phydro->w(IPR,k,je,is)/
+    (Rd*btemp*pthermo->RovRd(phydro->w.at(k,je,is)));
   for (int i = is+1; i <= ie; ++i) {
     //if (pcoord->x1v(i) < zlev[0]) continue;
     // copy unadjusted temperature and composition profile to je
@@ -181,16 +203,17 @@ void ProfileInversion::UpdateProfiles_(int k, Real const *PrSample,
       msg << "### FATAL ERROR in update_atm_profiles" << std::endl
           << "root solver doesn't converge" << std::endl
           << solve_thetav(0.5, &solver_data) << " " << solve_thetav(4., &solver_data);
-      /*msg << "0:" << std::endl;
+      /*msg << "I'm rank " << Globals::my_rank << std::endl;
+      msg << "0:" << std::endl;
       for (int n = 0; n < NHYDRO; ++n) msg << w2[0][n] << ", ";
       msg << std::endl;
       msg << "1:" << std::endl;
       for (int n = 0; n < NHYDRO; ++n) msg << w2[1][n] << ", ";
       //  msg << "(" << phydro->w(n,k,js,i-1) << "," << phydro->w(n,k,j1,i-1) << "," << phydro->w(n,k,j2,i-1) << ") ";
       msg << std::endl;
-      std::cout << "XpSample = ";
+      msg << "XpSample = ";
       for (int n = 0; n < nsample; ++n)
-        std::cout << zlev[n] << " " << XpSample[n] << std::endl;
+        msg << zlev[n] << " " << XpSample[0][n] << std::endl;
       std::cout << "Xp = ";
       for (int i = is; i <= ie; ++i)
         std::cout << pcoord->x1v(i) << " " << Xp[0][i-is] << std::endl;*/
