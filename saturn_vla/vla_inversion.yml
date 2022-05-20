@@ -13,7 +13,7 @@ jobs:
           ./create_input.py -M -i $PROBLEM.tmp --nwalker=$NWALKER --nodes=$NODES --nlim=$NLIM 
           -o $NLIM-$NWALKER &> log.$NLIM-$NWALKER
       - name: run program
-        run: mpiexec -n $NODES ./$PROBLEM.ex -i $PROBLEM-$NLIM-$NWALKER.inp &>> log.$NLIM-$NWALKER
+        run: mpiexec -n $NODES ./$PROBLEM.ex -i $PROBLEM-$NLIM-$NWALKER.inp < /dev/null &>> log.$NLIM-$NWALKER
       - name: combine outputs
         run: ./combine.py &>> log.$NLIM-$NWALKER
 
@@ -34,6 +34,6 @@ jobs:
           --nwalker=$NWALKER --nodes=$NODES --nlim=$NLIM
           -o $NAME &> log.$NAME
       - name: run program
-        run: mpiexec -n $NODES ./$PROBLEM.ex -i $PROBLEM-$NAME.inp &> log.$NAME
+        run: mpiexec -n $NODES ./$PROBLEM.ex -i $PROBLEM-$NAME.inp < /dev/null &> log.$NAME
       - name: combine outputs
         run: ./combine.py &>> log.$NAME
