@@ -54,7 +54,7 @@ if __name__ == '__main__':
     temp = data['temp'][0,:,0,0]
     temp_propose = data['temp'][0,:,1,0]
     nh3 = data['vapor2'][0,:,0,0]*1.E3 # kg/kg -> g/kg
-    pres = data['press'][0,:,0,0]/1.E5  # par -> bar
+    pres = data['press'][0,:,0,0]/1.E5  # pa -> bar
     ivar = []
   elif args['mode'] == 'best':
     psample = get_sample_pressure(args['input'] + '.inp')
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     istep, iwalker = unravel_index(argmax(lnp), lnp.shape)
     temp = data['temp'][istep,:,3,iwalker]
     nh3 = data['vapor2'][istep,:,3,iwalker]*1.E3 # kg/kg -> g/kg
-    pres = data['press'][istep,:,3,iwalker]/1.E5  # par -> bar
+    pres = data['press'][istep,:,3,iwalker]/1.E5  # pa -> bar
     nburn = int(args['nburn'])
 
     print(par[istep,iwalker,:])
