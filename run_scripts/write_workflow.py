@@ -18,6 +18,13 @@ args = vars(parser.parse_args())
 def replace_environ_var(envs, old_str):
   new_str, count = old_str, 0
   while '$' in new_str:
+    # replace environment variables
+    m = re.search('\${{\s*([^\s]*)\s*}}', new_str)
+    if m:
+      src = m.group(0)
+      dst = m.group(1)
+      new_str = re.sub('\${{\s*([^\s]*)\s*}}', os.environ[dst], new_str)
+    # replace user defined variables
     for key,var in envs.items(): 
       new_str = re.sub('\$' + key, str(var), new_str)
     count += 1
@@ -81,7 +88,7 @@ def write_job_steps(file, job, detail, major, minor, hpc = False):
         # replace MPI commands
         step_run = re.sub('mpiexec', 'srun', step_run)
         # replace mv commands
-        m = re.match(r'\s*mv\s+([\w\.-]+\/*)\s+([\w\.-]+\/*)', step_run)
+        m = re.match('\s*mv\s+([^\s]+)\s+([^\s]+)', step_run)
         if m:
           dst = m.group(2)
           step_run = re.sub(dst, '../../' + dst, step_run)
@@ -102,7 +109,7 @@ def write_job_steps(file, job, detail, major, minor, hpc = False):
       shutil.move(fsub_name + '.sub', '_work/%s/' % fsub_name)
 
       # link scripts
-      links = glob.glob('*.py') + glob.glob('*.ex') + glob.glob('*.inp')
+      links = glob.glob('*.py') + glob.glob('*.ex') + glob.glob('*.inp') + glob.glob('*.tmp')
       for fname in links:
         os.system('ln -sf %s _work/%s/' % (os.path.realpath(fname), fsub_name))
 

@@ -141,10 +141,12 @@ jobs:
       - name: make ammonia plot
         run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. &>> log.$NAME
   zonal-ammonia-temperature:
+    needs: mwr-zonal
     env:
       ID: zonal-tem-nh3-$LEVELS-$NH3-$THETA-$CLAT
       INPUT: juno_mwr
       EXE: juno_mwr.ex
+      OBS: mwr_PJ1-12_zonal_$CLAT.obs
       LEVELS: 8
       WALKERS: 64
       NODES: 32
@@ -156,14 +158,16 @@ jobs:
       vector:
         CLAT: [-40.23]
     steps:
+      - name: link observation file
+        run: ln -sf ${{ JUNO_ROOT_DIR }}/_work/$OBS .
       - name: create inversion input file at $LEVELS levels with $WALKERS walkers
         run: >
           ./create_input.py -d -i $INPUT.tmp --clat=$CLAT --var="0 2"
           --T0=$THETA --qNH3=$NH3
           --pmax=300. --plevel=100:0.5:$LEVELS
           --tem=$TP --nh3=$NP
-          --nwalker=$WALKERS --nodes=$NODES --nlim=1000
-          --obs=mwr_PJ1-12_zonal_$CLAT.obs -o $ID &> log.$ID
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=$OBS -o $ID &> log.$ID
       - name: run temperature inversion model using $NODES cores in parallel
         run: mpiexec -n $NODES ./$EXE -i $INPUT-$ID.inp < /dev/null &>> log.$ID
       - name: combine outputs
