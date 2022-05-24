@@ -36,7 +36,7 @@ if __name__ == '__main__':
   i45 = ang.index(45)
   nstep, nlevel, nwalker = nh3.shape
   dtau1 = data['b1tau'][0,::-1,0,0]
-  dtau2 = data['radiance'][0,::-1,0,0]
+  dtau2 = data['b2tau'][0,::-1,0,0]
   dtau3 = data['b3tau'][0,::-1,0,0]
   dtau4 = data['b4tau'][0,::-1,0,0]
   dtau5 = data['b5tau'][0,::-1,0,0]
