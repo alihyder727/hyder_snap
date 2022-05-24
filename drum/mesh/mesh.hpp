@@ -60,6 +60,7 @@ class Debugger;
 class Particles;
 class Inversion;
 class Communicator;
+class TurbulenceModel;
 
 FluidFormulation GetFluidFormulation(const std::string& input_string);
 
@@ -141,6 +142,7 @@ class MeshBlock {
   Particles *ppart;
   Inversion *pfit;
   Communicator *pcomm;
+  TurbulenceModel *pturb;
 
   MeshBlock *prev, *next;
 

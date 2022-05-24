@@ -225,7 +225,7 @@ jobs:
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd $MYDIR &&
-          ./run_juno_mwr.py -M -i $INPUT --exe=$EXE --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
+          ./run_juno_mwr.py -M -i $INPUT --exe=$EXE --nh3="-0.1,-0.2,-0.3,-0.4,-0.3,-0.2" -o n6
       - name: prepare synthetic differential(d) observation
         run: >
           cd $MYDIR &&
@@ -326,7 +326,7 @@ jobs:
       - name: perturb ammonia concentration at 6 pressure levels
         run: >
           cd $MYDIR &&
-          ./run_radio.py -M -i $INPUT --exe=$EXE --plevel=50:0.5:6 --nh3="-0.1 -0.2 -0.3 -0.4 -0.3 -0.2" -o n6
+          ./run_radio.py -M -i $INPUT --exe=$EXE --plevel=50:0.5:6 --nh3="-0.1,-0.2,-0.3,-0.4,-0.3,-0.2" -o n6
       - name: prepare synthetic differential(d) observation
         run: >
           cd $MYDIR &&
