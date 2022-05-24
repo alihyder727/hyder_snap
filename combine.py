@@ -109,10 +109,31 @@ if __name__ == '__main__':
     action = 'store_true',
     help = 'do not perform main2mcmc change'
     )
+  parser.add_argument('--fields',
+    default = 'none',
+    help = 'override combine fields'
+    )
+  parser.add_argument('--cases',
+    default = 'none',
+    help = 'override combine cases'
+    )
+  parser.add_argument('--fitsout',
+    default = 'none',
+    help = 'override fitsout cases'
+    )
   args = vars(parser.parse_args())
 
   cases, fields, stamps = ParseOutputFields(args['dir'])
   fields.sort()
+
+  if args['fields'] != 'none':
+    fields = args['fields'].split(',')
+
+  if args['cases'] != 'none':
+    cases = args['cases'].split(',')
+
+  if args['fitsout'] != 'none':
+    fitsout = args['fitsout']
 
   print('##########################')
   print('## Combine output files ##')
@@ -122,12 +143,10 @@ if __name__ == '__main__':
     fitsout = CombineFITS(case, args['output'], path = args['dir'], remove = not args['no_remove'])
     for field in fields:
       CombineTimeseries(case, field, stamps, remove = not args['no_remove'], path = args['dir'])
+
     if not args['no_merge']:
       CombineFields(case, fields, args['output'], path = args['dir'])
+
     if not args['no_main2mcmc'] and fitsout:
-      if args['no_merge']:
-        for field in fields:
-          main_to_mcmc(fitsout[:-5], fields)
-      else:
-        main_to_mcmc(fitsout[:-5])
+      main_to_mcmc(fitsout[:-5])
   print('Done.\n')

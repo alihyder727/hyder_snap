@@ -1,0 +1,210 @@
+name: juno mwr inversion workflow
+jobs:
+  mwr-global:
+    skip: true
+    steps:
+      - name: prepare global averaged observation
+        run: ./prepare_juno_mwr.py --case=global &> log.mwr_global
+  mwr-zonal:
+    skip: true
+    steps:
+      - name: prepare zonally averaged observation
+        run: ./prepare_juno_mwr.py --case=zonal &> log.mwr_zonal
+  global-ammonia:
+    skip: true
+    needs: mwr-global
+    env:
+      LEVELS: 10
+      WALKERS: 20
+      NODES: 10
+      THETA: 169
+      NAME: global-nh3-$LEVELS-$NH3
+    strategy:
+      vector: 
+        NH3: [2.5, 2.7]
+      #matrix:
+      #  LEVELS: [8, 10, 12]
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -M -i juno_mwr.tmp
+          --T0=$THETA --qNH3=$NH3
+          --pmax=300. --plevel=100:0.5:$LEVELS
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run ammonia inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. &>> log.$NAME
+      - name: make chi2 plot
+        run: ./plot_mcmc_chi2.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: make pdf plot
+        run: ./plot_mcmc_pdf.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  global-temperature:
+    skip: true
+    needs: mwr-global
+    env:
+      LEVELS: 10
+      WALKERS: 20
+      NODES: 10
+      NH3: 2.38
+      NAME: global-tem-$LEVELS-$THETA
+    strategy:
+      vector: 
+        THETA: [166., 169.]
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -i juno_mwr.tmp --var=0 
+          --T0=$THETA --qNH3=$NH3
+          --pmax=300. --plevel=100:0.5:10
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run temperature inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -d -i juno_mwr-$NAME --pmax=300. --var=tem &>> log.$NAME
+      - name: make chi2 plot
+        run: ./plot_mcmc_chi2.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
+      - name: make pdf plot
+        run: ./plot_mcmc_pdf.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  global-ammonia-temperature:
+    skip: true
+    #needs: [global-ammonia, global-temperature]
+    env:
+      #LEVELS: 9
+      LEVELS: 8
+      WALKERS: 64
+      NODES: 32
+      THETA: 169
+      NH3: 2.38
+      #PLEVEL: 100.00,46.91,22.01,10.32,4.84,2.27,1.07,0.80,0.50
+      #NAME: global3-tem-nh3-$LEVELS-$NH3-$THETA
+      NAME: global2-tem-nh3-$LEVELS-$NH3-$THETA
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -i juno_mwr.tmp --var="0 2"
+          --T0=$THETA --qNH3=$NH3
+          --pmax=300. --plevel=100:0.5:$LEVELS
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run temperature inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc sequence plot
+        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME --var=tem,nh3 &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. --var=tem,nh3 --nburn=1000 &>> log.$NAME
+      - name: make 1d profile plot
+        run: ./plot_profiles.py -i juno_mwr-$NAME --mode=best --pmax=300 &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  zonal-ammonia:
+    skip: true
+    needs: mwr-zonal
+    env:
+      LEVELS: 10
+      WALKERS: 20
+      NODES: 10
+      NH3: 2.38
+      THETA: 173.2
+      NAME: zonal-nh3-$LEVELS-$NH3-$THETA
+    strategy:
+      vector:
+        CLAT: mwr_PJ1-12_zonal_lats.txt
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -dM -i juno_mwr.tmp --clat=$CLAT
+          --pmax=300. --plevel=100:0.5:10
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_zonal_$CLAT.obs -o $NAME &>> log.$NAME
+      - name: run ammonia inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. &>> log.$NAME
+  zonal-ammonia-temperature:
+    needs: mwr-zonal
+    env:
+      ID: zonal-tem-nh3-$LEVELS-$NH3-$THETA-$CLAT
+      INPUT: juno_mwr
+      EXE: juno_mwr.ex
+      OBS: mwr_PJ1-12_zonal_$CLAT.obs
+      LEVELS: 8
+      WALKERS: 64
+      NODES: 32
+      THETA: 169
+      NH3: 2.38
+      TP: -0.05432,0.1967,1.753,1.954,3.707,5.082,3.652,1.342
+      NP: 3.598e-02,-7.716e-02,-0.1799,-0.1998,-0.192,-0.1231,-1.295e-02,1.035e-02
+    strategy:
+      vector:
+        #CLAT: [-40.23, -36.42]
+        CLAT: _work/mwr_PJ1-12_zonal_lats.txt
+    steps:
+      - name: link observation file
+        run: ln -sf ${{ JUNO_ROOT_DIR }}/_work/$OBS .
+      - name: link data folder
+        run: ln -sf ${{ JUNO_RROT_DIR }}/data .
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -d -i $INPUT.tmp --clat=$CLAT --var="0 2"
+          --T0=$THETA --qNH3=$NH3
+          --pmax=300. --plevel=100:0.5:$LEVELS
+          --tem=$TP --nh3=$NP
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=$OBS -o $ID &> log.$ID
+      - name: run temperature inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./$EXE -i $INPUT-$ID.inp < /dev/null &>> log.$ID
+      - name: combine outputs
+        run: ./combine.py &>> log.$ID
+      - name: make mcmc sequence plot
+        run: ./plot_mcmc_sequence.py -i $INPUT-$ID --var=tem,nh3 &>> log.$ID
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i $INPUT-$ID --pmax=300. --var=tem,nh3 --nburn=1000 &>> log.$ID
+      - name: make 1d profile plot
+        run: ./plot_profiles.py -i $INPUT-$ID --mode=best --pmax=300 &>> log.$ID
+      - name: move results to archive
+        run: mv $INPUT-$ID* data/
+  post-process:
+  #zonal-ammonia-temperature:
+    skip: true
+    env:
+      INPUT: juno_mwr
+      LEVELS: 8
+      THETA: 169
+      NH3: 2.38
+      ID: zonal-tem-nh3-$LEVELS-$NH3-$THETA-$CLAT
+      NODES: 1
+    strategy:
+      vector:
+        CLAT: _work/mwr_PJ1-12_zonal_lats.txt
+    steps:
+      - name: combine
+        run: ./combine.py --no-merge --cases=$INPUT-$ID --fitsout=$INPUT-$ID.fits &>> log.$ID
+      - name: make mcmc sequence plot
+        run: ./plot_mcmc_sequence.py -i $INPUT-$ID --var=tem,nh3 &>> log.$ID
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i $INPUT-$ID --pmax=300. --var=tem,nh3 --nburn=1000 &>> log.$ID
+      - name: make 1d profile plot
+        run: ./plot_profiles.py -i $INPUT-$ID --mode=best --pmax=300 &>> log.$ID
+      - name: move results to archive
+        run: mv $INPUT-$ID* data/

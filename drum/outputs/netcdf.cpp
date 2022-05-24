@@ -97,7 +97,7 @@ void NetcdfOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool flag)
     std::stringstream msg;
     int ifile;
 
-    nc_create(fname.c_str(), NC_CLASSIC_MODEL, &ifile);
+    nc_create(fname.c_str(), NC_NETCDF4, &ifile);
 
     // 2. coordinate structure
     int ncells1 = out_ie - out_is + 1;
