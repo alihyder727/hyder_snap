@@ -6,6 +6,7 @@ jobs:
       - name: prepare global averaged observation
         run: ./prepare_juno_mwr.py --case=global &> log.mwr_global
   mwr-zonal:
+    skip: true
     steps:
       - name: prepare zonally averaged observation
         run: ./prepare_juno_mwr.py --case=zonal &> log.mwr_zonal
@@ -156,10 +157,13 @@ jobs:
       NP: 3.598e-02,-7.716e-02,-0.1799,-0.1998,-0.192,-0.1231,-1.295e-02,1.035e-02
     strategy:
       vector:
-        CLAT: [-40.23]
+        #CLAT: [-40.23, -36.42]
+        CLAT: _work/mwr_PJ1-12_zonal_lats.txt
     steps:
       - name: link observation file
         run: ln -sf ${{ JUNO_ROOT_DIR }}/_work/$OBS .
+      - name: link data folder
+        run: ln -sf ${{ JUNO_RROT_DIR }}/data .
       - name: create inversion input file at $LEVELS levels with $WALKERS walkers
         run: >
           ./create_input.py -d -i $INPUT.tmp --clat=$CLAT --var="0 2"
@@ -172,6 +176,30 @@ jobs:
         run: mpiexec -n $NODES ./$EXE -i $INPUT-$ID.inp < /dev/null &>> log.$ID
       - name: combine outputs
         run: ./combine.py &>> log.$ID
+      - name: make mcmc sequence plot
+        run: ./plot_mcmc_sequence.py -i $INPUT-$ID --var=tem,nh3 &>> log.$ID
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i $INPUT-$ID --pmax=300. --var=tem,nh3 --nburn=1000 &>> log.$ID
+      - name: make 1d profile plot
+        run: ./plot_profiles.py -i $INPUT-$ID --mode=best --pmax=300 &>> log.$ID
+      - name: move results to archive
+        run: mv $INPUT-$ID* data/
+  post-process:
+  #zonal-ammonia-temperature:
+    skip: true
+    env:
+      INPUT: juno_mwr
+      LEVELS: 8
+      THETA: 169
+      NH3: 2.38
+      ID: zonal-tem-nh3-$LEVELS-$NH3-$THETA-$CLAT
+      NODES: 1
+    strategy:
+      vector:
+        CLAT: _work/mwr_PJ1-12_zonal_lats.txt
+    steps:
+      - name: combine
+        run: ./combine.py --no-merge --cases=$INPUT-$ID --fitsout=$INPUT-$ID.fits &>> log.$ID
       - name: make mcmc sequence plot
         run: ./plot_mcmc_sequence.py -i $INPUT-$ID --var=tem,nh3 &>> log.$ID
       - name: make ammonia plot

@@ -3,26 +3,9 @@ from astropy.io import fits
 #from multiprocessing import Process
 from tqdm import tqdm
 from subprocess import check_call
+from numpy import zeros
+from multiprocessing import Pool
 import shutil, os
-
-def single_walker(wid, data, msk):
-  nstep, _ = msk.shape
-  for i in tqdm(range(nstep)):
-    # i1 records the most recent new state
-    if msk[i,wid] == 1:
-      i1 = i
-      continue
-
-    # copy previous state in chaine
-    for key in data.variables.keys():
-      if data[key].dimensions == ('time', 'x1', 'x2', 'x3'):
-        data[key][i,:,:,wid] = data[key][i1,:,:,wid]
-      elif data[key].dimensions == ('time', 'x2', 'x3'):
-        data[key][i,:,wid] = data[key][i1,:,wid]
-      elif data[key].dimensions == ('time', 'x3'):
-        data[key][i,wid] = data[key][i1,wid]
-      else:
-        pass
 
 def main_to_mcmc(fname, field = 'main'):
   #fname = 'vla_ideal_saturn-n1000'
@@ -46,10 +29,43 @@ def main_to_mcmc(fname, field = 'main'):
   data['x3'].long_name = "walker"
   data['x3'].units = "1"
 
-  pid = []
-  for j in range(nwalker):
-    print('- processing walker %d/%d' % (j,nwalker))
-    single_walker(j, data, msk)
+  for key in data.variables.keys():
+    print('processing %s ...' % key)
+    dimensions = data[key].dimensions
+
+    # copy new state variable
+    # i1 records the most recent new state
+    i1 = 0
+    if dimensions == ('time', 'x1', 'x2', 'x3'):
+      new_data = data[key][:,:,:,:]
+      for j in tqdm(range(nwalker)):
+        for i2 in range(1,nstep):
+          if msk[i2,j] == 1:
+            new_data[i1:i2,:,:,j] = new_data[i1,:,:,j]
+            i1 = i2
+        new_data[i1:,:,:,j] = new_data[i1,:,:,j]
+      # save data
+      data[key][:] = new_data
+    elif dimensions == ('time', 'x2', 'x3'):
+      new_data = data[key][:,:,:]
+      for j in tqdm(range(nwalker)):
+        for i2 in range(1,nstep):
+          if msk[i2,j] == 1:
+            new_data[i1:i2,:,:,j] = new_data[i1,:,:,j]
+            i1 = i2
+        new_data[i1:,:,j] = new_data[i1,:,j]
+      # save data
+      data[key][:] = new_data
+    elif dimensions == ('time', 'x3'):
+      new_data = data[key][:,:]
+      for j in tqdm(range(nwalker)):
+        for i2 in range(1,nstep):
+          if msk[i2,j] == 1:
+            new_data[i1:i2,:,:,j] = new_data[i1,:,:,j]
+            i1 = i2
+        new_data[i1:,j] = new_data[i1,j]
+      # save data
+      data[key][:] = new_data
 
   data.close()
 

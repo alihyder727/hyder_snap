@@ -91,7 +91,7 @@ def write_job_steps(file, job, detail, major, minor, hpc = False):
         m = re.match('\s*mv\s+([^\s]+)\s+([^\s]+)', step_run)
         if m:
           dst = m.group(2)
-          step_run = re.sub(dst, '../../' + dst, step_run)
+          #step_run = re.sub(dst, '../../' + dst, step_run)
       if step['run'][-1] == '\n':
         file.write('%s' % step_run)
       else:
