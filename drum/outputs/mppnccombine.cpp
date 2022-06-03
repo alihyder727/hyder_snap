@@ -189,7 +189,7 @@ int mppnccombine(int argc, char *argv[])
          fprintf(stderr,"Error: output file seems to exist already!\n");
          free(ncoutfile); return(1);
         }
-      if ((ncoutfile->ncfid=nccreate(outfilename,format))==(-1))
+      if ((ncoutfile->ncfid=nccreate(outfilename,NC_NETCDF4))==(-1))
         {
          fprintf(stderr,"Error: cannot create the output netCDF file!\n");
          free(ncoutfile); return(1);
