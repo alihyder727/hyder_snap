@@ -92,4 +92,8 @@ void KEpsilonViscosity(HydroDiffusion *phdif, MeshBlock *pmb,
   const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
   int is, int ie, int js, int je, int ks, int ke);
 
+void KEpsilonConductivity(HydroDiffusion *phdif, MeshBlock *pmb, 
+  const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
+  int is, int ie, int js, int je, int ks, int ke);
+
 #endif // TURBULENCE_MODEL_HPP_

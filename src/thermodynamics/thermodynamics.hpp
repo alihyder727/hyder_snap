@@ -288,8 +288,10 @@ public:
     return (gamma - 1.)/gamma*feps/qsig;
   }
 
+  //! c_p = c_{pd}*(1 + \sum_i (q_i*(\hat{c}_{pi} - 1.)))
+  //!   = \gamma_d/(\gamma_d - 1.)*R_d*T*(1 + \sum_i (q_i*(\hat{c}_{pi} - 1.)))
   template<typename T>
-  Real GetMeanCp(T w) const {
+  Real getSpecificCp(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real tem[1] = {GetTemp(w)};
     update_gamma(gamma, tem);
@@ -299,8 +301,10 @@ public:
     return gamma/(gamma - 1.)*Rd_*qsig;
   }
 
+  //! c_v = c_{vd}*(1 + \sum_i (q_i*(\hat{c}_{vi} - 1.)))
+  //!   = \gamma_d/(\gamma_d - 1.)*R_d*T*(1 + \sum_i (q_i*(\hat{c}_{vi} - 1.)))
   template<typename T>
-  Real GetMeanCv(T w) const {
+  Real getSpecificCv(T w) const {
     Real gamma = pmy_block->peos->GetGamma();
     Real tem[1] = {GetTemp(w)};
     update_gamma(gamma, tem);
@@ -308,6 +312,19 @@ public:
     for (int n = 1; n <= NVAPOR; ++n)
       qsig += w[n]*(cv_ratios_[n] - 1.);
     return 1./(gamma - 1.)*Rd_*qsig;
+  }
+
+  //! h = c_{pd}*T*(1 + \sum_i (q_i*(\hat{c}_{pi} - 1.)))
+  //!   = \gamma_d/(\gamma_d - 1.)*R_d*T*(1 + \sum_i (q_i*(\hat{c}_{pi} - 1.)))
+  template<typename T>
+  Real getSpecificEnthalpy(T w) const {
+    Real gamma = pmy_block->peos->GetGamma();
+    Real tem[1] = {GetTemp(w)};
+    update_gamma(gamma, tem);
+    Real qsig = 1.;
+    for (int n = 1; n <= NVAPOR; ++n)
+      qsig += w[n]*(cp_ratios_[n] - 1.);
+    return gamma/(gamma - 1.)*Rd_*qsig*tem[1];
   }
 
   template<typename T>

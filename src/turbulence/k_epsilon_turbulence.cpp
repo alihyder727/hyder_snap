@@ -177,3 +177,17 @@ void KEpsilonViscosity(HydroDiffusion *phdif, MeshBlock *pmb,
     }
   }
 }
+
+void KEpsilonConductivity(HydroDiffusion *phdif, MeshBlock *pmb, 
+  const AthenaArray<Real> &prim, const AthenaArray<Real> &bcc, 
+  int is, int ie, int js, int je, int ks, int ke)
+{
+  for (int k=ks; k<=ke; ++k) {
+    for (int j=js; j<=je; ++j) {
+#pragma omp simd
+      for (int i=is; i<=ie; ++i)
+        phdif->kappa(HydroDiffusion::DiffProcess::iso,k,j,i) =
+          pmb->pturb->mut(k,j,i)/prim(IDN,k,j,i);
+    }
+  }
+}

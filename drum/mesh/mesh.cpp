@@ -293,6 +293,7 @@ Mesh::Mesh(ParameterInput *pin, int mesh_test) :
   InitUserMeshData(pin);
   if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
     EnrollViscosityCoefficient(KEpsilonViscosity);
+    EnrollConductionCoefficient(KEpsilonViscosity);
   }
 
   if (multilevel) {
@@ -700,6 +701,7 @@ Mesh::Mesh(ParameterInput *pin, IOWrapper& resfile, int mesh_test) :
   InitUserMeshData(pin);
   if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
     EnrollViscosityCoefficient(KEpsilonViscosity);
+    EnrollConductionCoefficient(KEpsilonViscosity);
   }
 
   // read user Mesh data

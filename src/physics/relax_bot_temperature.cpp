@@ -29,14 +29,14 @@ TaskStatus Physics::RelaxBotTemperature(AthenaArray<Real> &du,
   if (Tbot_ < 0.){
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j) {
-        cv = pthermo->GetMeanCv(w.at(k,j,ie));
+        cv = pthermo->getSpecificCv(w.at(k,j,ie));
         tem = pthermo->GetTemp(w.at(k,j,js));
         du(IEN,k,j,is) += dt/tau_Tbot_*(tem_bot_(k,j) - tem)*cv;
     }
    } else {
     for (int k = ks; k <= ke; ++k)
       for (int j = js; j <= je; ++j) {
-       cv = pthermo->GetMeanCv(w.at(k,j,ie));
+       cv = pthermo->getSpecificCv(w.at(k,j,ie));
        tem = pthermo->GetTemp(w.at(k,j,js));
        du(IEN,k,j,is) += dt/tau_Tbot_*(Tbot_ - tem)*cv;
    }

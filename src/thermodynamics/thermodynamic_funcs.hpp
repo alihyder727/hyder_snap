@@ -24,7 +24,7 @@ Real PotentialTemp(T w, Real p0, Thermodynamics *pthermo) {
 template<typename T>
 Real MoistStaticEnergy(T w, Real gz, Thermodynamics *pthermo) {
   Real temp = pthermo->GetTemp(w);
-  Real IE = w[IDN]*pthermo->GetMeanCp(w)*temp;
+  Real IE = w[IDN]*pthermo->getSpecificCp(w)*temp;
   Real rho = w[IDN];
   /*if (ppart != nullptr) {
     for (int n = 0; n < NVAPOR; ++n) {
