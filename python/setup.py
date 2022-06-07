@@ -74,7 +74,7 @@ with open("README", "r") as fh:
 
 setup(
   name="snapy", # Replace with your own username
-  version="0.0.6",
+  version="0.0.7",
   author="Cheng Li",
   author_email="chengcli@umich.edu",
   description="python extension for SNAP model",
