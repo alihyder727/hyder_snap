@@ -101,7 +101,7 @@ void ProfileInversion::UpdateProfiles_(int k, Real const *PrSample,
     for (int n = 0; n < NHYDRO; ++n)
       w2[0][n] = phydro->w(n,k,j1,i);
     for (int n = NHYDRO; n < NHYDRO+2*NVAPOR; ++n)
-      w2[0][n] = phydro->w(n,k,j1,i);
+      w2[0][n] = 0.;
     Real dlnp = (pcoord->x1v(i) - pcoord->x1v(i-1))/H0;
     //Real dlnp = log(phydro->w(IPR,k,j1,i-1)/phydro->w(IPR,k,j1,i));
     pthermo->ConstructAtmosphere(w2, btemp, bpres, grav, dlnp, 2, Adiabat::pseudo, 1.);
