@@ -64,7 +64,8 @@ print(tb1)
 print("New limb darkening")
 print(ld1)
 
-ndim = nwave*2
+#ndim = nwave*2
+ndim = nwave
 cov = zeros((ndim, ndim))
 # setup covariance matrix
 print("New brightness temerature coeffs:")
@@ -73,16 +74,16 @@ if args['d']: # fit differential
   ld1 -= ld0
   for i in range(nwave):
     # tb
-    cov[i*2, i*2] = etb*etb
+    cov[i, i] = etb*etb
     # ld
-    cov[i*2+1, i*2+1] = eld*eld
+    #cov[i*2+1, i*2+1] = eld*eld
   outname = '%s.dobs' % args['input']
 else:   
   for i in range(nwave):
     # tb
     cov[i*2,j*2] = etb*etb + (tb1[i]-300.)*(tb1[i]-300.)*ecal*ecal
     # ld
-    cov[i*2+1, j*2+1] = eld*eld
+    #cov[i*2+1, j*2+1] = eld*eld
   outname = '%s.obs' % args['input']
 icov = linalg.inv(cov)
 
@@ -93,7 +94,7 @@ with open(outname, 'w') as file:
   # write brightness temperature
   for i in range(nwave):
     file.write('%-.2f\n' % tb1[i])
-    file.write('%-.3f\n' % ld1[i])
+    #file.write('%-.3f\n' % ld1[i])
 
   # write inverse covariance matrix
   for i in range(ndim):
