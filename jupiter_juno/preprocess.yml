@@ -88,7 +88,7 @@ jobs:
       - data/gravity_correction_factor.txt
       - figs/fig_gravity_correction.png
   anomaly-filtering:
-    skip: true
+    #skip: true
     needs:
       files:
         - fao_ess_2020_data.h5
@@ -115,7 +115,7 @@ jobs:
         - data/ch4_gfilter.txt
         - data/ch5_gfilter.txt
         - data/ch6_gfilter.txt
-  plot-tbld-latitude:
+  plot-tbld-eps:
     skip: true
     needs:
       files:
@@ -127,159 +127,81 @@ jobs:
         - data/ch5_gfilter.txt
         - data/ch6_gfilter.txt
         - plot_tbld_eps.py
-        - plot_tb_gfilter.py
-        - plot_ld_gfilter.py
       jobs:
         - anomaly-filtering
         - model-A-eq
     steps:
       - name: plot Tb and Ld eps map
         run: ./plot_tbld_eps.py
+    outputs:
+      - figs/fig_eps_tb.png
+      - figs/fig_eps_ld.png
+  plot-tbld-latitude:
+    skip: true
+    needs:
+      files:
+        - data/juno_mwr-modelA.nc
+        - data/ch1_gfilter.txt
+        - data/ch2_gfilter.txt
+        - data/ch3_gfilter.txt
+        - data/ch4_gfilter.txt
+        - data/ch5_gfilter.txt
+        - data/ch6_gfilter.txt
+        - plot_tb_gfilter.py
+        - plot_ld_gfilter.py
+      jobs:
+        - anomaly-filtering
+        - model-A-eq
+    steps:
       - name: plot filtered Tb
         run: ./plot_tb_gfilter.py
       - name: plot filtered ld
         run: ./plot_ld_gfilter.py
     outputs:
-      - figs/fig_eps_tb.png
-      - figs/fig_eps_ld.png
       - figs/fig_tb_gfilter.png
       - figs/fig_ld_gfilter.png
   write-mwr-decomposition:
     skip: true
     needs:
       files:
+        - data/ch1_gfilter.txt
+        - data/ch2_gfilter.txt
+        - data/ch3_gfilter.txt
+        - data/ch4_gfilter.txt
+        - data/ch5_gfilter.txt
+        - data/ch6_gfilter.txt
+        - global_average.py
+        - zonal_anomaly.py
+        - perijove_average.py
       jobs:
+        - anomaly-filtering
     steps:
+      - name: calculate area-weighted global average
+        run: ./global_average.py
+      - name: calculate zonal anomaly for each perijove based on global average
+        run: ./zonal_anomaly.py
+      - name: calculate zonal average based on all perijoves
+        run: ./perijove_average.py
+      - name: write flagged zonal anomaly data
+        run: ./zona_anomaly_flag.py
     outputs:
-  mwr-global:
+      - data/mwr_global_average.txt
+      - data/mwr_zonal_anomaly.txt
+      - data/mwr_zonal_average.txt
+      - data/mwr_zonal_anomaly_flag.txt
+  plot-mwr-filtered:
     skip: true
     needs:
       files:
-        - data/mwr_zonal_average.txt
-        - prepare_juno_mwr.py
+        - data/mwr_zonal_anomaly_flag.txt
+      jobs:
+        - write-mwr-decomposition
     steps:
-      - name: prepare global averaged observation
-        run: ./prepare_juno_mwr.py --case=global
-      - name: move output to data folder
-        run: mv mwr_PJ1-12_global.obs data/
+      - name: plot filtered zonal anomaly
+        run: ./plot_filtered_zonal_anomaly.py
     outputs:
-      - data/mwr_PJ1-12_global.obs
-  global-ammonia:
-    skip: true
-    needs:
-      files: &inversion-files
-        - create_input.py
-        - juno_mwr.ex
-        - combine.py
-        - plot_mcmc_sequence.py
-        - plot_mcmc_profile.py
-        - plot_mcmc_chi2.py
-        - plot_mcmc_pdf.py
-      jobs:
-        - mwr-global
-    env:
-      LEVELS: 8
-      WALKERS: 16
-      NODES: 8
-      THETA: 169
-      NH3: 2.38
-      NAME: global-nh3-$LEVELS-$NH3
-      METALLICITY: -2
-    steps:
-      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
-        run: >
-          ./create_input.py -i juno_mwr.tmp
-          --T0=$THETA --qNH3=$NH3
-          --metallicity=$METALLICITY
-          --pmax=300. --plevel=100:0.5:$LEVELS
-          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
-          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
-      - name: run ammonia inversion model using $NODES cores in parallel
-        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
-      - name: combine outputs
-        run: ./combine.py &>> log.$NAME
-      - name: make mcmc plot
-        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME &>> log.$NAME
-      - name: make ammonia plot
-        run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. &>> log.$NAME
-      - name: make chi2 plot
-        run: ./plot_mcmc_chi2.py -i juno_mwr-$NAME &>> log.$NAME
-      - name: make pdf plot
-        run: ./plot_mcmc_pdf.py -i juno_mwr-$NAME &>> log.$NAME
-      - name: move results to archive
-        run: mv juno_mwr-$NAME* data/
-  global-temperature:
-    skip: true
-    needs:
-      files: *inversion-files
-      jobs:
-        - mwr-global
-    env:
-      LEVELS: 8
-      WALKERS: 16
-      NODES: 8
-      THETA: 169
-      NH3: 2.38
-      NAME: global-tem-$LEVELS-$THETA
-      METALLICITY: -2
-    steps:
-      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
-        run: >
-          ./create_input.py -i juno_mwr.tmp --var=0 
-          --T0=$THETA --qNH3=$NH3
-          --metallicity=$METALLICITY
-          --pmax=300. --plevel=100:0.5:$LEVELS
-          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
-          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
-      - name: run temperature inversion model using $NODES cores in parallel
-        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
-      - name: combine outputs
-        run: ./combine.py &>> log.$NAME
-      - name: make mcmc plot
-        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
-      - name: make ammonia plot
-        run: ./plot_mcmc_profile.py -d -i juno_mwr-$NAME --pmax=300. --var=tem &>> log.$NAME
-      - name: make chi2 plot
-        run: ./plot_mcmc_chi2.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
-      - name: make pdf plot
-        run: ./plot_mcmc_pdf.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
-      - name: move results to archive
-        run: mv juno_mwr-$NAME* data/
-  global-ammonia-temperature:
-    skip: true
-    needs:
-      files: *inversion-files
-      jobs:
-        - mwr-global
-    env:
-      LEVELS: 8
-      WALKERS: 64
-      NODES: 32
-      THETA: 169
-      NH3: 2.38
-      NAME: global-tem-nh3-$LEVELS-$NH3-$THETA
-      METALLICITY: -2
-    steps:
-      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
-        run: >
-          ./create_input.py -i juno_mwr.tmp --var="0 2"
-          --T0=$THETA --qNH3=$NH3
-          --metallicity=$METALLICITY
-          --pmax=300. --plevel=100:0.5:$LEVELS
-          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
-          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
-      - name: run temperature inversion model using $NODES cores in parallel
-        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
-      - name: combine outputs
-        run: ./combine.py &>> log.$NAME
-      - name: make mcmc sequence plot
-        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME --var=tem,nh3 &>> log.$NAME
-      - name: make ammonia plot
-        run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. --var=tem,nh3 --nburn=1000 &>> log.$NAME
-      - name: make 1d profile plot
-        run: ./plot_profiles.py -i juno_mwr-$NAME --mode=best --pmax=300 &>> log.$NAME
-      - name: move results to archive
-        run: mv juno_mwr-$NAME* data/
+      - figs/fig_filtered_zonal_tb_anomaly.png
+      - figs/fig_filtered_zonal_ld_anomaly.png
   global-chi2:
     skip: true
     needs:

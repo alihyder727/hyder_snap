@@ -85,25 +85,25 @@ with open('data/ch%d_gfilter.txt' % mwr_channel, 'w') as file:
   file.write('# CH1 filtered data\n')
   file.write('# Tb\n')
   for i in range(len(lat)):
-    file.write('%8.2f' % lat[i])
+    file.write('%10.4f' % lat[i])
     for j in range(len(pjs)):
-      file.write('%8.2f' % tb[i,j])
+      file.write('%10.4f' % tb[i,j])
     file.write('\n')
   file.write('# eps Tb\n')
   for i in range(len(lat)):
-    file.write('%8.2f' % lat[i])
+    file.write('%10.4f' % lat[i])
     for j in range(len(pjs)):
-      file.write('%8.2f' % eps_tb[i,j])
+      file.write('%10.4f' % eps_tb[i,j])
     file.write('\n')
   file.write('# ld\n')
   for i in range(len(lat)):
-    file.write('%8.2f' % lat[i])
+    file.write('%10.4f' % lat[i])
     for j in range(len(pjs)):
-      file.write('%8.2f' % ld[i,j])
+      file.write('%10.4f' % ld[i,j])
     file.write('\n')
   file.write('# eps ld\n')
   for i in range(len(lat)):
-    file.write('%8.2f' % lat[i])
+    file.write('%10.4f' % lat[i])
     for j in range(len(pjs)):
-      file.write('%8.2f' % eps_ld[i,j])
+      file.write('%10.4f' % eps_ld[i,j])
     file.write('\n')

@@ -3,10 +3,22 @@ from pylab import *
 from netCDF4 import Dataset
 import argparse
 import matplotlib, re
+import matplotlib.patches as mpatches
 
 latmin, latmax = -60., 60.
 pjs = [1,3,4,5,6,7,8,9,12]
 freqs = [0.6, 1.25, 2.6, 5.2, 10., 22.]
+
+patches = []
+patches.append(mpatches.Patch(color='C0', label='PJ1'))
+patches.append(mpatches.Patch(color='C1', label='PJ3'))
+patches.append(mpatches.Patch(color='C2', label='PJ4'))
+patches.append(mpatches.Patch(color='C3', label='PJ5'))
+patches.append(mpatches.Patch(color='C4', label='PJ6'))
+patches.append(mpatches.Patch(color='C5', label='PJ7'))
+patches.append(mpatches.Patch(color='C6', label='PJ8'))
+patches.append(mpatches.Patch(color='C7', label='PJ9'))
+patches.append(mpatches.Patch(color='C8', label='PJ12'))
 
 fig, axs = subplots(6, 1, figsize = (12, 8), sharex = True)
 
@@ -43,7 +55,8 @@ for j in range(6):
 ax = axs[5]
 ax.set_xlabel('Planetocentric latitude (degree)', fontsize = 12)
 ax.set_xlim([latmax, latmin])
-ax = axs[4]
-ax.legend(ncol = 5, fontsize = 8)
+axs[0].legend(bbox_to_anchor = (0.,1.02,1.,0.2), ncol = len(pjs),
+  fontsize = 12, loc = 'lower left', handles = patches, mode = 'expand')
 
+#show()
 savefig('figs/fig_tb_gfilter.png', bbox_inches = 'tight')
