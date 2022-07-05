@@ -1,0 +1,343 @@
+name: steps to make graphs in publication
+jobs:
+  model-A-eq:
+    skip: true
+    needs:
+      files:
+        - juno_mwr-modelA.inp
+        - juno_mwr.ex
+        - combine.py
+    steps:
+      - name: run mwr model
+        run: ./juno_mwr.ex -i juno_mwr-modelA.inp
+      - name: combine outputs
+        run: ./combine.py
+      - name: move model output to data folder
+        run: mv juno_mwr-main.nc data/juno_mwr-modelA.nc
+      - name: remove unused files
+        run: rm juno_mwr.log combine_rules
+    outputs:
+      - data/juno_mwr-modelA.nc
+  jupiter-gravity:
+    skip: true
+    needs:
+      files:
+        - jup_lat_grav_grid.py
+    steps:
+      - name: calculate jupiter gravity as a function planetocentric latitude
+        run: ./jup_lat_grav_grid.py
+    output:
+      - data/jup_latitude_grid.txt
+      - data/jup_gravity_grid.txt
+  model-A-lat:
+    skip: true
+    needs:
+      files:
+        - juno_mwr-modelA.inp
+        - juno_mwr.ex
+        - combine.py
+        - data/jup_latitude_grid.txt
+        - data/jup_gravity_grid.txt
+      jobs:
+        - jupiter-gravity
+    strategy:
+      vector:
+        CLAT: data/jup_latitude_grid.txt
+        GRAV: data/jup_gravity_grid.txt
+    steps:
+      - name: run mwr model
+        run: ./juno_mwr.ex -i juno_mwr-modelA.inp hydro/grav_acc1=-$GRAV
+      - name: combine outputs
+        run: ./combine.py -o $CLAT
+      - name: move model output to data folder
+        run: mv juno_mwr-$CLAT-main.nc data/juno_mwr-modelA-$CLAT.nc
+      - name: remove unused files
+        run: rm juno_mwr.log combine_rules
+    outputs:
+      - data/juno_mwr-modelA-$CLAT.nc
+  plot-model-A-lat:
+    skip: true
+    needs:
+      files:
+        - plot_modelA_lat.py
+        - data/juno_mwr-modelA-*.nc
+        - data/jup_latitude_grid.txt
+      jobs:
+        - model-A-lat
+    steps:
+      - name: plot model-A-lat
+        run: ./plot_modelA_lat.py
+    outputs:
+      - figs/fig_modelA_lat.png
+  gravity-correction:
+    skip: true
+    needs:
+      files:
+        - gravity_correction.py
+        - plot_gravity_correction.py
+        - data/juno_mwr-modelA-*.nc
+        - data/jup_latitude_grid.txt
+      jobs:
+        - model-A-lat
+    steps:
+      - name: write gravity correction factor
+        run: ./gravity_correction.py
+      - name: plot gravity correction factor
+        run: ./plot_gravity_correction.py
+    outputs:
+      - data/gravity_correction_factor.txt
+      - figs/fig_gravity_correction.png
+  anomaly-filtering:
+    skip: true
+    needs:
+      files:
+        - fao_ess_2020_data.h5
+        - data/gravity_correction_factor.txt
+      jobs:
+        - gravity-correction
+    steps:
+      - name: filter CH1
+        run: ./write_tbld_gfilter.py --ch=1
+      - name: filter CH2
+        run: ./write_tbld_gfilter.py --ch=2
+      - name: filter CH3
+        run: ./write_tbld_gfilter.py --ch=3
+      - name: filter CH4
+        run: ./write_tbld_gfilter.py --ch=4
+      - name: filter CH5
+        run: ./write_tbld_gfilter.py --ch=5
+      - name: filter CH6
+        run: ./write_tbld_gfilter.py --ch=6
+    outputs:
+        - data/ch1_gfilter.txt
+        - data/ch2_gfilter.txt
+        - data/ch3_gfilter.txt
+        - data/ch4_gfilter.txt
+        - data/ch5_gfilter.txt
+        - data/ch6_gfilter.txt
+  plot-tbld-latitude:
+    skip: true
+    needs:
+      files:
+        - data/juno_mwr-modelA.nc
+        - data/ch1_gfilter.txt
+        - data/ch2_gfilter.txt
+        - data/ch3_gfilter.txt
+        - data/ch4_gfilter.txt
+        - data/ch5_gfilter.txt
+        - data/ch6_gfilter.txt
+        - plot_tbld_eps.py
+        - plot_tb_gfilter.py
+        - plot_ld_gfilter.py
+      jobs:
+        - anomaly-filtering
+        - model-A-eq
+    steps:
+      - name: plot Tb and Ld eps map
+        run: ./plot_tbld_eps.py
+      - name: plot filtered Tb
+        run: ./plot_tb_gfilter.py
+      - name: plot filtered ld
+        run: ./plot_ld_gfilter.py
+    outputs:
+      - figs/fig_eps_tb.png
+      - figs/fig_eps_ld.png
+      - figs/fig_tb_gfilter.png
+      - figs/fig_ld_gfilter.png
+  write-mwr-decomposition:
+    skip: true
+    needs:
+      files:
+      jobs:
+    steps:
+    outputs:
+  mwr-global:
+    skip: true
+    needs:
+      files:
+        - data/mwr_zonal_average.txt
+        - prepare_juno_mwr.py
+    steps:
+      - name: prepare global averaged observation
+        run: ./prepare_juno_mwr.py --case=global
+      - name: move output to data folder
+        run: mv mwr_PJ1-12_global.obs data/
+    outputs:
+      - data/mwr_PJ1-12_global.obs
+  global-ammonia:
+    skip: true
+    needs:
+      files: &inversion-files
+        - create_input.py
+        - juno_mwr.ex
+        - combine.py
+        - plot_mcmc_sequence.py
+        - plot_mcmc_profile.py
+        - plot_mcmc_chi2.py
+        - plot_mcmc_pdf.py
+      jobs:
+        - mwr-global
+    env:
+      LEVELS: 8
+      WALKERS: 16
+      NODES: 8
+      THETA: 169
+      NH3: 2.38
+      NAME: global-nh3-$LEVELS-$NH3
+      METALLICITY: -2
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -i juno_mwr.tmp
+          --T0=$THETA --qNH3=$NH3
+          --metallicity=$METALLICITY
+          --pmax=300. --plevel=100:0.5:$LEVELS
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run ammonia inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. &>> log.$NAME
+      - name: make chi2 plot
+        run: ./plot_mcmc_chi2.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: make pdf plot
+        run: ./plot_mcmc_pdf.py -i juno_mwr-$NAME &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  global-temperature:
+    skip: true
+    needs:
+      files: *inversion-files
+      jobs:
+        - mwr-global
+    env:
+      LEVELS: 8
+      WALKERS: 16
+      NODES: 8
+      THETA: 169
+      NH3: 2.38
+      NAME: global-tem-$LEVELS-$THETA
+      METALLICITY: -2
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -i juno_mwr.tmp --var=0 
+          --T0=$THETA --qNH3=$NH3
+          --metallicity=$METALLICITY
+          --pmax=300. --plevel=100:0.5:$LEVELS
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run temperature inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc plot
+        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -d -i juno_mwr-$NAME --pmax=300. --var=tem &>> log.$NAME
+      - name: make chi2 plot
+        run: ./plot_mcmc_chi2.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
+      - name: make pdf plot
+        run: ./plot_mcmc_pdf.py -i juno_mwr-$NAME --var=tem &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  global-ammonia-temperature:
+    skip: true
+    needs:
+      files: *inversion-files
+      jobs:
+        - mwr-global
+    env:
+      LEVELS: 8
+      WALKERS: 64
+      NODES: 32
+      THETA: 169
+      NH3: 2.38
+      NAME: global-tem-nh3-$LEVELS-$NH3-$THETA
+      METALLICITY: -2
+    steps:
+      - name: create inversion input file at $LEVELS levels with $WALKERS walkers
+        run: >
+          ./create_input.py -i juno_mwr.tmp --var="0 2"
+          --T0=$THETA --qNH3=$NH3
+          --metallicity=$METALLICITY
+          --pmax=300. --plevel=100:0.5:$LEVELS
+          --nwalker=$WALKERS --nodes=$NODES --nlim=2000
+          --obs=mwr_PJ1-12_global.obs -o $NAME &> log.$NAME
+      - name: run temperature inversion model using $NODES cores in parallel
+        run: mpiexec -n $NODES ./juno_mwr.ex -i juno_mwr-$NAME.inp < /dev/null &>> log.$NAME
+      - name: combine outputs
+        run: ./combine.py &>> log.$NAME
+      - name: make mcmc sequence plot
+        run: ./plot_mcmc_sequence.py -i juno_mwr-$NAME --var=tem,nh3 &>> log.$NAME
+      - name: make ammonia plot
+        run: ./plot_mcmc_profile.py -i juno_mwr-$NAME --pmax=300. --var=tem,nh3 --nburn=1000 &>> log.$NAME
+      - name: make 1d profile plot
+        run: ./plot_profiles.py -i juno_mwr-$NAME --mode=best --pmax=300 &>> log.$NAME
+      - name: move results to archive
+        run: mv juno_mwr-$NAME* data/
+  global-chi2:
+    skip: true
+    needs:
+      files:
+        - data/mwr_PJ1-12_global.obs
+        - data/juno_mwr-global-nh3-8-2.38.fits
+        - data/juno_mwr-global-tem-8-169.fits
+        - data/juno_mwr-global-tem-nh3-8-2.38-169.fits
+        - plot_chi2_globa.py
+      jobs:
+        - global-ammonia
+        - global-temperature
+        - global-ammonia-temperature
+    steps:
+      - name: plot Model N, Model T and Model NT
+        run: ./plot_chi2_global.py
+    outputs:
+      - name:
+  global-profile:
+    skip: true
+    needs:
+      files:
+        - data/juno_mwr-global-nh3-8-2.38-mcmc.nc
+        - data/juno_mwr-global-tem-8-169-mcmc.nc
+        - data/juno_mwr-global-tem-nh3-8-2.38-169-mcmc.nc
+        - plot_profile_global.py
+      jobs:
+        - global-ammonia
+        - global-temperature
+        - global-ammonia-temperature
+    steps:
+      - name: plot Model N, Model T and Model NT
+        run: ./plot_profile_global.py
+    outputs:
+      - name: figs/global_profiles.png
+  zonal-stack:
+    skip: true
+    needs:
+      files:
+        - data/mwr_zonal_average.txt
+        - jup_zone_belts.py
+        - plot_zonal_stack2.py
+        - u_vs_lat.jupiter.cassini
+    steps:
+      - name: plot 2d map of tb and ld anomaly as a function of frequency and latitude
+        run: ./plot_zonal_stack2.py
+    outputs:
+      - figs/zonal_stack_tbld.png
+  zonal-profile:
+    skip: true
+    needs:
+      files:
+        - juno_mwr-zonal-tem-nh3-8-2.38-169-2.99-mcmc.nc
+        - juno_mwr-zonal-tem-nh3-8-2.38-169-8.99-mcmc.nc
+        - juno_mwr-zonal-tem-nh3-8-2.38-169-50.48-mcmc.nc
+        - juno_mwr-zonal-tem-nh3-8-2.38-169--22.67-mcmc.nc
+        - plot_profile_zonal4.py
+    steps:
+      - name: plot 4 zonal vertical profiles
+        run: ./plot_profile_zonal4.py
+    outputs:
