@@ -18,15 +18,15 @@ MwrAbsorberH2O::MwrAbsorberH2O(RadiationBand *pband, int imol, Real xHe, Real sc
 }
 
 Real MwrAbsorberH2O::getAttenuation(Real wave1, Real wave2,
-    GridData const& gdata) const
+    CellVariables const& var) const
 {
-  Real P = gdata.q[IPR]/1.E5; // pa -> bar
-  Real T = gdata.q[IDN];
+  Real P = var.q[IPR]/1.E5; // pa -> bar
+  Real T = var.q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= gdata.q[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= var.q[i];
   Real XHe = xHe_*xdry;
   Real XH2 = xdry - XHe;
-  Real XH2O = gdata.q[imol_];
+  Real XH2O = var.q[imol_];
 
   Real abs;
 

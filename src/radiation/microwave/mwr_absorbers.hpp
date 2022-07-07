@@ -30,7 +30,7 @@ public:
     */
   MwrAbsorberCIA(RadiationBand *pband, Real xHe, Real xCH4, Real fequal = 0.);
   Real getAttenuation(Real wave1, Real wave2,
-      GridData const& gdata) const;
+      CellVariables const& var) const;
 private:
   Real xHe_, xCH4_, fequal_;
 };
@@ -78,7 +78,7 @@ public:
   }
 
   Real getAttenuation(Real wave1, Real wave2,
-      GridData const& gdata) const;
+      CellVariables const& var) const;
 private:
   std::string model_name_;
   int method_;
@@ -112,7 +112,7 @@ public:
   }
 
   Real getAttenuation(Real wave1, Real wave2,
-      GridData const& gdata) const;
+      CellVariables const& var) const;
 private:
   std::string model_name_;
   int method_;
@@ -146,7 +146,7 @@ public:
   }
 
   Real getAttenuation(Real wave1, Real wave2,
-      GridData const& gdata) const;
+      CellVariables const& var) const;
 private:
   std::string model_name_;
   Real xHe_, scale_;
@@ -169,7 +169,7 @@ public:
   MwrAbsorberH2S(RadiationBand *pband, Real xHe, Real *xH2S, Real *pres, int np);
 
   Real getAttenuation(Real wave1, Real wave2,
-      GridData const& gdata) const;
+      CellVariables const& var) const;
 private:
   int method_;
   Real xHe_;
@@ -196,7 +196,7 @@ public:
   }
 
   Real getAttenuation(Real wave1, Real wave2,
-      GridData const& gdata) const;
+      CellVariables const& var) const;
 private:
   std::string model_name_;
 };

@@ -13,7 +13,7 @@ public:
     Absorber(pband, "O2-O2", id, mixr) {}
   virtual ~O2O2CIA() {}
   void loadCoefficient(std::string fname, int bid = -1);
-  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
+  Real getAttenuation(Real wave1, Real wave2, CellVariables const& var) const;
 
 protected:
   int fd_len_[2];

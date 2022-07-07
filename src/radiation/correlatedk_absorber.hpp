@@ -14,7 +14,7 @@ public:
   virtual ~CorrelatedKAbsorber() {}
   void loadCoefficient(std::string fname, int bid);
   //Real ckAbsorptionCoefficient(int mw, int mg, Real const prim[]) const;
-  Real getAttenuation(Real g1, Real g2, GridData const& gdata) const;
+  Real getAttenuation(Real g1, Real g2, CellVariables const& var) const;
 
 protected:
   int len_[3];                  /**< length of interpolation axis */

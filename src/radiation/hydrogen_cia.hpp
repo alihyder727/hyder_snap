@@ -14,7 +14,7 @@ public:
     Absorber(pband, "H2-H2", id, mixr) {}
   virtual ~XizH2H2CIA() {}
   void loadCoefficient(std::string fname, int bid = -1);
-  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
+  Real getAttenuation(Real wave1, Real wave2, CellVariables const& var) const;
 
 protected:
   int len_[2];
@@ -29,7 +29,7 @@ public:
     Absorber(pband, "H2-He", id, mixr1), mixr2_(mixr2) {}
   virtual ~XizH2HeCIA() {}
   void loadCoefficient(std::string fname, int bid = -1);
-  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
+  Real getAttenuation(Real wave1, Real wave2, CellVariables const& var) const;
 
 protected:
   Real mixr2_;
@@ -44,7 +44,7 @@ public:
     Absorber(pband, "H2-H2", id, mixr) {}
   virtual ~OrtonCIA() {}
   void loadCoefficient(std::string fname, int bid = -1);
-  Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const;
+  Real getAttenuation(Real wave1, Real wave2, CellVariables const& var) const;
 
 protected:
   int len_[2];

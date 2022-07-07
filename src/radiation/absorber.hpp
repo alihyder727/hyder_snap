@@ -11,7 +11,7 @@
 #include "../athena.hpp"
 #include "../debugger/debugger.hpp"
 #include "../mesh/mesh.hpp"
-#include "../mesh/grid_data.hpp"
+#include "../mesh/cell_variables.hpp"
 #include "radiation.hpp"
 
 /**@file
@@ -85,9 +85,9 @@ public:
 
   //virtual void SaveCoefficient(std::string fname) const {}
   virtual void loadCoefficient(std::string fname, int bid = -1) {}
-  virtual Real getAttenuation(Real wave1, Real wave2, GridData const& gdata) const { return 0.; }
-  virtual Real getSingleScatteringAlbedo(Real wave1, Real wave2, GridData const& gdata) const { return 0.; }
-  virtual void getPhaseMomentum(Real *pp, Real wave1, Real wave2, GridData const& gdata, int np) const {}
+  virtual Real getAttenuation(Real wave1, Real wave2, CellVariables const& var) const { return 0.; }
+  virtual Real getSingleScatteringAlbedo(Real wave1, Real wave2, CellVariables const& var) const { return 0.; }
+  virtual void getPhaseMomentum(Real *pp, Real wave1, Real wave2, CellVariables const& var, int np) const {}
 
   //! \deprecated use setAttenuation instead
   //virtual Real AbsorptionCoefficient(Real wave, Real const prim[]) { return 0.;}

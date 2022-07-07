@@ -39,38 +39,38 @@ void RadiationBand::setSpectralProperties(AthenaArray<Real> const& w,
   PassiveScalars *pscalars = pmy_rad->pmy_block->pscalars;
 
   std::vector<Real> mypmom(1+npmom);
-  GridData gdata;
+  CellVariables var(pmb->GetNumVariablesInCell());
   Particles *ppart;
 
   while (a != nullptr) {
     for (int i = il; i <= iu; ++i) {
-      for (int n = 0; n < NSCALARS; ++n) gdata.s[n] = pscalars->s(n,k,j,i);
-      pthermo->PrimitiveToChemical(gdata.q, w.at(k,j,i));
+      for (int n = 0; n < NSCALARS; ++n) var.s[n] = pscalars->s(n,k,j,i);
+      pthermo->PrimitiveToChemical(var.q, w.at(k,j,i));
       //! \todo do we need it?
       // molar concentration to molar mixing ratio
-      Real nmols = gdata.q[IPR]/(Thermodynamics::Rgas*gdata.q[IDN]);
-      for (int n = 1; n <= NVAPOR; ++n) gdata.q[n] /= nmols;
+      Real nmols = var.q[IPR]/(Thermodynamics::Rgas*var.q[IDN]);
+      for (int n = 1; n <= NVAPOR; ++n) var.q[n] /= nmols;
 
       // molar density of clouds, mol/m^3
       ppart = pmb->ppart;
       int ip = 0;
       while (ppart != nullptr) {
         for (int n = 0; n < ppart->u.GetDim4(); ++n)
-          gdata.c[ip++] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
+          var.c[ip++] = ppart->u(n,k,j,i)/ppart->GetMolecularWeight(n);
         ppart = ppart->next;
       }
 
-      tem_[i] = gdata.q[IDN];
+      tem_[i] = var.q[IDN];
       //std::cout << i << " " << tem_[i] << std::endl;
       for (int m = 0; m < nspec; ++m) {
-        Real kcoeff = a->getAttenuation(spec[m].wav1, spec[m].wav2, gdata);  // 1/m
-        Real dssalb = a->getSingleScatteringAlbedo(spec[m].wav1, spec[m].wav2, gdata)*kcoeff;
+        Real kcoeff = a->getAttenuation(spec[m].wav1, spec[m].wav2, var);  // 1/m
+        Real dssalb = a->getSingleScatteringAlbedo(spec[m].wav1, spec[m].wav2, var)*kcoeff;
         // tau 
         tau_[m][i] += kcoeff;
         // ssalb
         ssa_[m][i] += dssalb;
         // pmom
-        a->getPhaseMomentum(mypmom.data(), spec[m].wav1, spec[m].wav2, gdata, npmom);
+        a->getPhaseMomentum(mypmom.data(), spec[m].wav1, spec[m].wav2, var, npmom);
         for (int p = 0; p <= npmom; ++p)
           pmom_[m][i][p] += mypmom[p]*dssalb;
       }

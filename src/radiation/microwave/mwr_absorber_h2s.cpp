@@ -35,21 +35,21 @@ MwrAbsorberH2S::MwrAbsorberH2S(RadiationBand *pband, Real xHe, Real *xH2S, Real 
 }
 
 Real MwrAbsorberH2S::getAttenuation(Real wave1, Real wave2,
-    GridData const& gdata) const
+    CellVariables const& var) const
 {
   // adapted by cli (Cheng Li), Aug 30
-  Real P = gdata.q[IPR]/1.E5;
-  Real T = gdata.q[IDN];
+  Real P = var.q[IPR]/1.E5;
+  Real T = var.q[IDN];
   Real xdry = 1.;
-  for (int i = 1; i <= NVAPOR; ++i) xdry -= gdata.q[i];
+  for (int i = 1; i <= NVAPOR; ++i) xdry -= var.q[i];
   Real XHe = xHe_*xdry;
   Real XH2, XH2S;
 
   if (method_ == 1) {
-    XH2S = gdata.q[imol_];
+    XH2S = var.q[imol_];
     XH2 = xdry - XHe;
   } else {  // method_ == 2
-    XH2S = interp1(gdata.q[IPR], ref_xh2s_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
+    XH2S = interp1(var.q[IPR], ref_xh2s_.data(), ref_pres_.data(), ref_pres_.size())*xdry;;
     XH2 = xdry - XHe - XH2S;
   }
 

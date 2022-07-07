@@ -53,15 +53,6 @@ Particles::Particles(MeshBlock *pmb, ParameterInput *pin):
     npart += pnew->u.GetDim4();
   }
 
-  // safety check
-  if (NHYDRO+NSCALARS+npart > NGRIDMAX) {
-    msg << "### FATAL ERROR in function Particles::Particles"
-        << std::endl << "Total number of grid variables is "
-        << NHYDRO+NSCALARS+npart << std::endl
-        << "Set --ngridmax to this value" << std::endl;
-    ATHENA_ERROR(msg);
-  }
-
   pmb->pdebug->Leave();
 }
 

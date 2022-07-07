@@ -93,7 +93,7 @@ Real cpir[18][4] ={{.79550,     2.524e-3,    -1.022e-5,     0.000e+0},
 
 
 Real FuWaterIceCloud::getAttenuation(Real wave1, Real wave2,
-    GridData const& gdata) const
+    CellVariables const& var) const
 {  
   static const Real Rgas = 8.314462;
   const Real mu = 29.E-3;  // FIXME: hard-wired to Earth
@@ -105,7 +105,7 @@ Real FuWaterIceCloud::getAttenuation(Real wave1, Real wave2,
     
   Real result=0.;
   Real fw1,fw2,pde, T;
-  T = gdata.q[IDN] - 273.15; // K to degree C
+  T = var.q[IDN] - 273.15; // K to degree C
   if (T > -60.0){
     pde = 326.3 +12.42 * T + 0.197 * T * T +0.0012 * T * T * T; //effective size of ice cloud ( um )
   }else{
@@ -113,15 +113,15 @@ Real FuWaterIceCloud::getAttenuation(Real wave1, Real wave2,
   }
   fw1 = pde;
   fw2 = fw1*pde;
-  Real dens   = gdata.q[IPR]*mu/(Rgas*gdata.q[IDN]);
+  Real dens   = var.q[IPR]*mu/(Rgas*var.q[IDN]);
     
   result =ap[iband-1][0]+ap[iband-1][1]/fw1+ap[iband-1][2]/fw2;
     
-  return 1e3*dens*gdata.q[imol_]*result;
+  return 1e3*dens*var.q[imol_]*result;
 }
 
 Real FuWaterIceCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
-    GridData const& gdata) const
+    CellVariables const& var) const
 {
 // from fu & liou code
   int iband = locate(wband, wave1, 19) + 1;
@@ -130,7 +130,7 @@ Real FuWaterIceCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
     
   Real wi=0.;
   Real fw1,fw2,fw3,pde,T;
-  T = gdata.q[IDN] - 273.15; // K to degree C
+  T = var.q[IDN] - 273.15; // K to degree C
   if (T > -60.0){
     pde = 326.3 +12.42 * T + 0.197 * T * T +0.0012 * T * T * T;
   }else{
@@ -151,7 +151,7 @@ Real FuWaterIceCloud::getSingleScateringAlbedo(Real wave1, Real wave2,
 }
 
 void FuWaterIceCloud::getPhaseMomentum(Real *pp, Real wave1, Real wave2, 
-    GridData const& gdata, int np) const
+    CellVariables const& var, int np) const
 {
 // from fu & liou code
   int iband = locate(wband, wave1, 19) + 1;
@@ -159,7 +159,7 @@ void FuWaterIceCloud::getPhaseMomentum(Real *pp, Real wave1, Real wave2,
   iband = 18 - iband;
     
   Real fw1,fw2,fw3,pde,T;
-  T = gdata.q[IDN] - 273.15; // K to degree C
+  T = var.q[IDN] - 273.15; // K to degree C
   if (T > -60.0 && T< 0.){
     pde = 326.3 +12.42 * T + 0.197 * T * T +0.0012 * T * T * T;
   }else{

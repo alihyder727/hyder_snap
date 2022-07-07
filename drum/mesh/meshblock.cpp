@@ -649,6 +649,16 @@ void MeshBlock::RegisterMeshBlockData(FaceField &pvar_fc) {
   return;
 }
 
+int MeshBlock::GetNumVariablesInCell() {
+  int nvar = NHYDRO + NSCALARS;
+  Particles *p = ppart;
+  while (p != nullptr) {
+    nvar += p->u.GetDim4();
+    p = p->next;
+  }
+  return nvar;
+}
+
 
 // TODO(felker): consider merging the MeshRefinement::pvars_cc/fc_ into the
 // MeshBlock::pvars_cc/fc_. Would need to weaken the MeshBlock std::vector to use tuples
