@@ -182,7 +182,7 @@ Hydro::Hydro(MeshBlock *pmb, ParameterInput *pin) :
   }
 
   pimp = new ImplicitSolver(this, n3max, n2max);
-  pfilter = new RingFilter(this);
+  //pfilter = new RingFilter(this);
 
   pmb->pdebug->Leave();
 }
@@ -200,7 +200,7 @@ Real Hydro::GetWeightForCT(Real dflx, Real rhol, Real rhor, Real dx, Real dt) {
 Hydro::~Hydro() {
   delete pdec;
   delete pimp;
-  delete pfilter;
+  //delete pfilter;
 }
 
 void Hydro::CheckHydro() {
