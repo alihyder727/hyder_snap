@@ -18,6 +18,7 @@
 #include "../../field/field.hpp"
 #include "../../mesh/mesh.hpp"
 #include "../../parameter_input.hpp"
+#include "../../turbulence/turbulence_model.hpp"
 #include "../hydro.hpp"
 #include "hydro_diffusion.hpp"
 
@@ -214,12 +215,14 @@ void HydroDiffusion::SetDiffusivity(AthenaArray<Real> &w, AthenaArray<Real> &bc)
     kl -= NGHOST; ku += NGHOST;
   }
 
-  // set viscosity using func ptr
+  /* set viscosity using func ptr
   if (nu_iso > 0.0 || nu_aniso > 0.0)
     CalcViscCoeff_(this, pmb_, w, bc, il, iu, jl, ju, kl, ku);
   // set thermal conduction using func ptr
   if (kappa_iso > 0.0 || kappa_aniso > 0.0)
-    CalcCondCoeff_(this, pmb_, w, bc, il, iu, jl, ju, kl, ku);
+    CalcCondCoeff_(this, pmb_, w, bc, il, iu, jl, ju, kl, ku);*/
+
+  pmb_->pturb->setDiffusivity(nu, kappa, w, bc, il, iu, jl, ju, kl, ku);
 
   return;
 }

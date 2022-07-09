@@ -26,9 +26,18 @@ KEpsilonTurbulence::KEpsilonTurbulence(MeshBlock *pmb, ParameterInput *pin):
   // velocity scale, v ~ 1 m/s, tke ~ v^2 ~ 1 m^2/s^2
   Real tke0 = pin->GetOrAddReal("turbulence", "kepsilon.tke0", 1.);
 
-  for (int k = pmb->ks; k <= pmb->ke; ++k)
-    for (int j = pmb->js; j <= pmb->je; ++j)
-      for (int i = pmb->is; i <= pmb->ie; ++i) {
+  int il = pmb->is - NGHOST; int jl = pmb->js; int kl = pmb->ks;
+  int iu = pmb->ie + NGHOST; int ju = pmb->je; int ku = pmb->ke;
+  if (pmb->block_size.nx2 > 1) {
+    jl -= NGHOST; ju += NGHOST;
+  }
+  if (pmb->block_size.nx3 > 1) {
+    kl -= NGHOST; ku += NGHOST;
+  }
+
+  for (int k = kl; k <= ku; ++k)
+    for (int j = jl; j <= ju; ++j)
+      for (int i = il; i <= iu; ++i) {
         r(1,k,j,i) = tke0;
         // eps ~ tke/T ~ v^2/(dx/v) ~ v^3/dx
         Real volume = pmb->pcoord->GetCellVolume(k,j,i);
@@ -49,7 +58,7 @@ void KEpsilonTurbulence::Initialize(AthenaArray<Real> const& w)
       }
 }
 
-inline Real Laplace_(AthenaArray<Real> const& mut, AthenaArray<Real> const& v,
+inline Real Laplace_(AthenaArray<Real> const& mut, AthenaArray<Real> const& v, 
   int k, int j, int i, Coordinates *pcoord)
 {
   Real result = 0.;
@@ -157,37 +166,29 @@ void KEpsilonTurbulence::driveTurbulence(AthenaArray<Real> &s,
           s(1,k,j,i) += s3*dt;
         else
           s(1,k,j,i) /= 2.;
-
-        // dynamic turbulent viscosity, mu_t = c_mu*k^2/epsilon, eq2.2-3
-        mut(k,j,i) = cmu_*w(IDN,k,j,i)*tke(k,j,i)*tke(k,j,i)/eps(k,j,i);
-        //std::cout << "mut = " << mut(k,j,i) << std::endl;
       }
 }
 
-void KEpsilonViscosity(HydroDiffusion *phdif, MeshBlock *pmb, 
+void KEpsilonTurbulence::setDiffusivity(AthenaArray<Real> &nu, AthenaArray<Real> &kappa, 
   const AthenaArray<Real> &prim, const AthenaArray<Real> &bcc, 
-  int is, int ie, int js, int je, int ks, int ke)
+  int il, int iu, int jl, int ju, int kl, int ku)
 {
-  for (int k=ks; k<=ke; ++k) {
-    for (int j=js; j<=je; ++j) {
-#pragma omp simd
-      for (int i=is; i<=ie; ++i)
-        phdif->nu(HydroDiffusion::DiffProcess::iso,k,j,i) =
-          pmb->pturb->mut(k,j,i)/prim(IDN,k,j,i);
-    }
-  }
-}
+  AthenaArray<Real> eps, tke;
+  eps.InitWithShallowSlice(r,4,0,1);
+  tke.InitWithShallowSlice(r,4,1,1);
 
-void KEpsilonConductivity(HydroDiffusion *phdif, MeshBlock *pmb, 
-  const AthenaArray<Real> &prim, const AthenaArray<Real> &bcc, 
-  int is, int ie, int js, int je, int ks, int ke)
-{
-  for (int k=ks; k<=ke; ++k) {
-    for (int j=js; j<=je; ++j) {
+  for (int k=kl; k<=ku; ++k) {
+    for (int j=jl; j<=ju; ++j) {
 #pragma omp simd
-      for (int i=is; i<=ie; ++i)
-        phdif->kappa(HydroDiffusion::DiffProcess::iso,k,j,i) =
-          pmb->pturb->mut(k,j,i)/prim(IDN,k,j,i);
+      for (int i=il; i<=iu; ++i) {
+        // dynamic turbulent diffusivity
+        mut(k,j,i) = cmu_*prim(IDN,k,j,i)*tke(k,j,i)*tke(k,j,i)/eps(k,j,i);
+
+        // kinematic turbulent viscosity, mu_t = c_mu*k^2/epsilon, eq2.2-3
+        nu(HydroDiffusion::DiffProcess::iso,k,j,i) = mut(k,j,i)/prim(IDN,k,j,i);
+        //kappa(HydroDiffusion::DiffProcess::iso,k,j,i) =
+        //  nu(HydroDiffusion::DiffProcess::iso,k,j,i);
+      }
     }
   }
 }

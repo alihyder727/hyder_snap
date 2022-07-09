@@ -84,6 +84,9 @@ TurbulenceModel::TurbulenceModel(MeshBlock *pmb, ParameterInput *pin, int nvar) 
   dflx_.NewAthenaArray(nvar, nc1);
 
   mut.ZeroClear();
+  s.ZeroClear();
+  s1.ZeroClear();
+  r.ZeroClear();
 }
 
 //----------------------------------------------------------------------------------------

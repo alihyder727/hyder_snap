@@ -64,6 +64,10 @@ public:
     AthenaArray<Real> const& w, Real dt) {}
   virtual void Initialize(AthenaArray<Real> const& w) {}
 
+  virtual void setDiffusivity(AthenaArray<Real> &nu, AthenaArray<Real> &kappa,
+    const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
+    int il, int iu, int jl, int ju, int kl, int ku) {}
+
 protected:
   MeshBlock* pmy_block;
   // scratch space used to compute fluxes
@@ -84,16 +88,13 @@ public:
     AthenaArray<Real> const& w, Real dt);
   void Initialize(AthenaArray<Real> const& w);
 
+  void setDiffusivity(AthenaArray<Real> &nu, AthenaArray<Real> &kappa,
+    const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
+    int il, int iu, int jl, int ju, int kl, int ku);
+
 private:
   Real cmu_, c1_, c2_, sigk_, sige_;
 };
 
-void KEpsilonViscosity(HydroDiffusion *phdif, MeshBlock *pmb, 
-  const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
-  int is, int ie, int js, int je, int ks, int ke);
-
-void KEpsilonConductivity(HydroDiffusion *phdif, MeshBlock *pmb, 
-  const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
-  int is, int ie, int js, int je, int ks, int ke);
 
 #endif // TURBULENCE_MODEL_HPP_

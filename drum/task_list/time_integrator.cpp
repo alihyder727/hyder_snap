@@ -261,7 +261,7 @@ TimeIntegratorTaskList::TimeIntegratorTaskList(ParameterInput *pin, Mesh *pm) {
       if (NSCALARS > 0)
         AddTask(CALC_SCLRFLX,CALC_HYDFLX);
     }
-    AddTask(CALC_TURBFLX,NONE);
+    AddTask(CALC_TURBFLX,CALC_HYDFLX);
 
     if (pm->multilevel) { // SMR or AMR
       AddTask(SEND_HYDFLX,CALC_HYDFLX);

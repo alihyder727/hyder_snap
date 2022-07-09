@@ -202,6 +202,7 @@ MeshBlock::MeshBlock(int igid, int ilid, LogicalLocation iloc, RegionSize input_
   pcomm = new Communicator(this);
   if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
     pturb = new KEpsilonTurbulence(this, pin);
+    pbval->AdvanceCounterPhysID(CellCenteredBoundaryVariable::max_phys_id);
   } else {
     pturb = new TurbulenceModel(this, pin);
   }
@@ -340,6 +341,7 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   pcomm = new Communicator(this);
   if (std::strcmp(TURBULENCE_MODEL, "KEpsilon") == 0) {
     pturb = new KEpsilonTurbulence(this, pin);
+    pbval->AdvanceCounterPhysID(CellCenteredBoundaryVariable::max_phys_id);
   } else {
     pturb = new TurbulenceModel(this, pin);
   }

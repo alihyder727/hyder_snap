@@ -134,6 +134,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
   Real Ps = P0*pow(Ts/T0, cp/Rd);
   int max_iter = 200, iter = 0;
 
+
   for (int n = 1; n <= NVAPOR; ++n) {
     Real qv = pin->GetReal("problem", "qvapor" + std::to_string(n))/1.E3;
     w1[0][n] = qv;
@@ -150,7 +151,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin)
 
     // 1.2 replace adiabatic atmosphere with isothermal atmosphere if temperature is too low
     int ii = 0;
-    for (; ii < nx1; ++ii)
+    for (; ii < nx1-1; ++ii)
       if (pthermo->GetTemp(w1[ii]) < Tmin) break;
     Real Tv = w1[ii][IPR]/(w1[ii][IDN]*Rd);
     for (int i = ii; i < nx1; ++i) {
