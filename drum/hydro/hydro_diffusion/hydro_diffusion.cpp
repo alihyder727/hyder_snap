@@ -34,7 +34,7 @@ HydroDiffusion::HydroDiffusion(Hydro *phyd, ParameterInput *pin) :
   int nc1 = pmb_->ncells1, nc2 = pmb_->ncells2, nc3 = pmb_->ncells3;
 
   // Check if viscous process are active
-  if (nu_iso > 0.0 || nu_aniso  > 0.0) {
+  if (nu_iso > 0.0 || nu_aniso  > 0.0 || TURBULENCE_MODEL != "none") {
     hydro_diffusion_defined = true;
     // Allocate memory for fluxes
     visflx[X1DIR].NewAthenaArray(NHYDRO, nc3, nc2, nc1+1);
@@ -62,7 +62,7 @@ HydroDiffusion::HydroDiffusion(Hydro *phyd, ParameterInput *pin) :
   if (NON_BAROTROPIC_EOS) {
     kappa_iso  = pin->GetOrAddReal("problem", "kappa_iso", 0.0); // iso thermal conduction
     kappa_aniso  = pin->GetOrAddReal("problem", "kappa_aniso", 0.0); // aniso conduction
-    if (kappa_iso > 0.0 || kappa_aniso > 0.0) {
+    if (kappa_iso > 0.0 || kappa_aniso > 0.0 || TURBULENCE_MODEL != "none") {
       hydro_diffusion_defined = true;
       cndflx[X1DIR].NewAthenaArray(nc3, nc2, nc1+1);
       cndflx[X2DIR].NewAthenaArray(nc3, nc2+1, nc1);
@@ -215,14 +215,16 @@ void HydroDiffusion::SetDiffusivity(AthenaArray<Real> &w, AthenaArray<Real> &bc)
     kl -= NGHOST; ku += NGHOST;
   }
 
-  /* set viscosity using func ptr
-  if (nu_iso > 0.0 || nu_aniso > 0.0)
-    CalcViscCoeff_(this, pmb_, w, bc, il, iu, jl, ju, kl, ku);
-  // set thermal conduction using func ptr
-  if (kappa_iso > 0.0 || kappa_aniso > 0.0)
-    CalcCondCoeff_(this, pmb_, w, bc, il, iu, jl, ju, kl, ku);*/
-
-  pmb_->pturb->setDiffusivity(nu, kappa, w, bc, il, iu, jl, ju, kl, ku);
+  if (TURBULENCE_MODEL != "none")
+    pmb_->pturb->setDiffusivity(nu, kappa, w, bc, il, iu, jl, ju, kl, ku);
+  else {
+    // set viscosity using func ptr
+    if (nu_iso > 0.0 || nu_aniso > 0.0)
+      CalcViscCoeff_(this, pmb_, w, bc, il, iu, jl, ju, kl, ku);
+    // set thermal conduction using func ptr
+    if (kappa_iso > 0.0 || kappa_aniso > 0.0)
+      CalcCondCoeff_(this, pmb_, w, bc, il, iu, jl, ju, kl, ku);
+  }
 
   return;
 }

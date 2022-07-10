@@ -186,8 +186,7 @@ void KEpsilonTurbulence::setDiffusivity(AthenaArray<Real> &nu, AthenaArray<Real>
 
         // kinematic turbulent viscosity, mu_t = c_mu*k^2/epsilon, eq2.2-3
         nu(HydroDiffusion::DiffProcess::iso,k,j,i) = mut(k,j,i)/prim(IDN,k,j,i);
-        //kappa(HydroDiffusion::DiffProcess::iso,k,j,i) =
-        //  nu(HydroDiffusion::DiffProcess::iso,k,j,i);
+        kappa(HydroDiffusion::DiffProcess::iso,k,j,i) = nu(HydroDiffusion::DiffProcess::iso,k,j,i);
       }
     }
   }

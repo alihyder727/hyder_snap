@@ -38,7 +38,7 @@ void HydroDiffusion::ThermalFluxIso(
   Hydro *phydro = pmb_->phydro;
 
   // i-direction
-  jl = js, ju = je, kl = ks, ku = ke;
+  il = is, iu = ie+1, jl = js, ju = je, kl = ks, ku = ke;
   if (MAGNETIC_FIELDS_ENABLED) {
     if (f2) {
       if (!f3) // 2D
@@ -47,13 +47,19 @@ void HydroDiffusion::ThermalFluxIso(
         jl = js - 1, ju = je + 1, kl = ks - 1, ku = ke + 1;
     }
   }
+
+  //! \todo there gonna be a better way to do this
+  if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::inner_x1)) il++;
+  if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::outer_x1)) iu--;
+
   // x1flux = kappa/gamma*rho*dhdx
   for (int k=kl; k<=ku; ++k) {
     for (int j=jl; j<=ju; ++j) {
 #pragma omp simd
-      for (int i=is; i<=ie+1; ++i) {
+      for (int i=il; i<=iu; ++i) {
         kappaf = 0.5*(kappa(DiffProcess::iso,k,j,i) + kappa(DiffProcess::iso,k,j,i-1));
         denf = 0.5*(prim(IDN,k,j,i) + prim(IDN,k,j,i-1));
+        Real temp = pthermo->GetTemp(prim.at(k,j,i));
         Real h1 = pthermo->getSpecificEnthalpy(prim.at(k,j,i));
         Real h2 = pthermo->getSpecificEnthalpy(prim.at(k,j,i-1));
         dhdx = (h1 - h2)/pco_->dx1v(i-1) - phydro->hsrc.GetG1();
@@ -63,17 +69,20 @@ void HydroDiffusion::ThermalFluxIso(
   }
 
   // j-direction
-  il = is, iu = ie, kl = ks, ku = ke;
+  il = is, iu = ie, jl = js, ju = je+1, kl = ks, ku = ke;
   if (MAGNETIC_FIELDS_ENABLED) {
     if (!f3) // 2D
       il = is - 1, iu = ie + 1, kl = ks, ku = ke;
     else // 3D
       il = is - 1, iu = ie + 1, kl = ks - 1, ku = ke + 1;
   }
+  if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::inner_x2)) jl++;
+  if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::outer_x2)) ju--;
+
   if (f2) { // 2D or 3D
     AthenaArray<Real> &x2flux = cndflx[X2DIR];
     for (int k=kl; k<=ku; ++k) {
-      for (int j=js; j<=je+1; ++j) {
+      for (int j=jl; j<=ju; ++j) {
 #pragma omp simd
         for (int i=il; i<=iu; ++i) {
           kappaf = 0.5*(kappa(DiffProcess::iso,k,j,i) + kappa(DiffProcess::iso,k,j-1,i));
@@ -88,16 +97,19 @@ void HydroDiffusion::ThermalFluxIso(
   } // zero flux for 1D
 
   // k-direction
-  il = is, iu = ie, jl = js, ju = je;
+  il = is, iu = ie, jl = js, ju = je, kl = ks, ku = ke+1;
   if (MAGNETIC_FIELDS_ENABLED) {
     if (f2) // 2D or 3D
       il = is - 1, iu = ie + 1, jl = js - 1, ju = je + 1;
     else // 1D
       il = is - 1, iu = ie + 1;
   }
+  if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::inner_x3)) kl++;
+  if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::outer_x3)) ku--;
+
   if (f3) { // 3D
     AthenaArray<Real> &x3flux = cndflx[X3DIR];
-    for (int k=ks; k<=ke+1; ++k) {
+    for (int k=kl; k<=ku; ++k) {
       for (int j=jl; j<=ju; ++j) {
 #pragma omp simd
         for (int i=il; i<=iu; ++i) {

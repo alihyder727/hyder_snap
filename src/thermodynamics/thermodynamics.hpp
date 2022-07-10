@@ -324,7 +324,7 @@ public:
     Real qsig = 1.;
     for (int n = 1; n <= NVAPOR; ++n)
       qsig += w[n]*(cp_ratios_[n] - 1.);
-    return gamma/(gamma - 1.)*Rd_*qsig*tem[1];
+    return gamma/(gamma - 1.)*Rd_*qsig*tem[0];
   }
 
   template<typename T>
