@@ -30,6 +30,7 @@
 #include "../radiation/radiation.hpp"
 #include "../physics/physics.hpp"
 #include "../particles/particles.hpp"
+#include "../turbulence/turbulence_model.hpp"
 #include "outputs.hpp"
 
 
@@ -209,6 +210,8 @@ void RestartOutput::WriteOutputFile(Mesh *pm, ParameterInput *pin, bool force_wr
     // particle data
     if (pmb->ppart != nullptr)
       pdata += pmb->ppart->DumpRestartData(pdata);
+    // turbulence data
+    pdata += pmb->pturb->dumpRestartData(pdata);
 
     pmb = pmb->next;
   }

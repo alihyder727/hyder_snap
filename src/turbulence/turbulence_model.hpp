@@ -68,6 +68,11 @@ public:
     const AthenaArray<Real> &w, const AthenaArray<Real> &bc,
     int il, int iu, int jl, int ju, int kl, int ku) {}
 
+  // restart functions
+  size_t getRestartDataSizeInBytes();
+  size_t dumpRestartData(char *pdst);
+  size_t loadRestartData(char *psrc);
+
 protected:
   MeshBlock* pmy_block;
   // scratch space used to compute fluxes

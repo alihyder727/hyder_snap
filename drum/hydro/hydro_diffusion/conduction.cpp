@@ -32,7 +32,7 @@ void HydroDiffusion::ThermalFluxIso(
   int il, iu, jl, ju, kl, ku;
   int is = pmb_->is; int js = pmb_->js; int ks = pmb_->ks;
   int ie = pmb_->ie; int je = pmb_->je; int ke = pmb_->ke;
-  Real kappaf, denf, dhdx, dhdy, dhdz;
+  Real kappaf, denf, dhdx, dhdy, dhdz, dTdx, dTdy, dTdz;
   Real gamma = pmb_->peos->GetGamma();
   Thermodynamics *pthermo = pmb_->pthermo;
   Hydro *phydro = pmb_->phydro;
@@ -51,6 +51,7 @@ void HydroDiffusion::ThermalFluxIso(
   //! \todo there gonna be a better way to do this
   if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::inner_x1)) il++;
   if (pmb_->pbval->isPhysicalBoundary(BoundaryFace::outer_x1)) iu--;
+  Real Rd = pthermo->GetRd();
 
   // x1flux = kappa/gamma*rho*dhdx
   for (int k=kl; k<=ku; ++k) {
@@ -59,11 +60,14 @@ void HydroDiffusion::ThermalFluxIso(
       for (int i=il; i<=iu; ++i) {
         kappaf = 0.5*(kappa(DiffProcess::iso,k,j,i) + kappa(DiffProcess::iso,k,j,i-1));
         denf = 0.5*(prim(IDN,k,j,i) + prim(IDN,k,j,i-1));
-        Real temp = pthermo->GetTemp(prim.at(k,j,i));
-        Real h1 = pthermo->getSpecificEnthalpy(prim.at(k,j,i));
-        Real h2 = pthermo->getSpecificEnthalpy(prim.at(k,j,i-1));
-        dhdx = (h1 - h2)/pco_->dx1v(i-1) - phydro->hsrc.GetG1();
-        x1flux(k,j,i) -= kappaf*denf*dhdx/gamma;
+        //Real temp = pthermo->GetTemp(prim.at(k,j,i));
+        //Real h1 = pthermo->getSpecificEnthalpy(prim.at(k,j,i));
+        //Real h2 = pthermo->getSpecificEnthalpy(prim.at(k,j,i-1));
+        //dhdx = (h1 - h2)/pco_->dx1v(i-1)
+        Real T1 = pthermo->GetTemp(prim.at(k,j,i));
+        Real T2 = pthermo->GetTemp(prim.at(k,j,i-1));
+        dTdx = (T1 - T2)/pco_->dx1v(i-1);
+        x1flux(k,j,i) -= kappaf*denf*dTdx*Rd/(gamma - 1.);
       }
     }
   }
@@ -87,10 +91,14 @@ void HydroDiffusion::ThermalFluxIso(
         for (int i=il; i<=iu; ++i) {
           kappaf = 0.5*(kappa(DiffProcess::iso,k,j,i) + kappa(DiffProcess::iso,k,j-1,i));
           denf = 0.5*(prim(IDN,k,j,i) + prim(IDN,k,j-1,i));
-          Real h1 = pthermo->getSpecificEnthalpy(prim.at(k,j,i));
-          Real h2 = pthermo->getSpecificEnthalpy(prim.at(k,j-1,i));
-          dhdy = (h1 - h2)/pco_->h2v(i)/pco_->h2v(i)/pco_->dx2v(j-1) - phydro->hsrc.GetG2();
-          x2flux(k,j,i) -= kappaf*denf*dhdy/gamma;
+          //Real h1 = pthermo->getSpecificEnthalpy(prim.at(k,j,i));
+          //Real h2 = pthermo->getSpecificEnthalpy(prim.at(k,j-1,i));
+          //dhdy = (h1 - h2)/pco_->h2v(i)/pco_->h2v(i)/pco_->dx2v(j-1) - phydro->hsrc.GetG2();
+          //x2flux(k,j,i) -= kappaf*denf*dhdy/gamma;
+          Real T1 = pthermo->GetTemp(prim.at(k,j,i));
+          Real T2 = pthermo->GetTemp(prim.at(k,j-1,i));
+          dTdy = (T1 - T2)/pco_->h2v(i)/pco_->h2v(i)/pco_->dx2v(j-1);
+          x2flux(k,j,i) -= kappaf*denf*dTdy*Rd/(gamma - 1.);
         }
       }
     }
@@ -115,11 +123,15 @@ void HydroDiffusion::ThermalFluxIso(
         for (int i=il; i<=iu; ++i) {
           kappaf = 0.5*(kappa(DiffProcess::iso,k,j,i) + kappa(DiffProcess::iso,k-1,j,i));
           denf = 0.5*(prim(IDN,k,j,i) + prim(IDN,k-1,j,i));
-          Real h1 = pthermo->getSpecificEnthalpy(prim.at(k,j,i));
-          Real h2 = pthermo->getSpecificEnthalpy(prim.at(k-1,j,i));
-          dhdz = (h1 - h2)/pco_->dx3v(k-1)/pco_->h31v(i)/pco_->h32v(j) -
-            phydro->hsrc.GetG3();
-          x3flux(k,j,i) -= kappaf*denf*dhdz/gamma;
+          //Real h1 = pthermo->getSpecificEnthalpy(prim.at(k,j,i));
+          //Real h2 = pthermo->getSpecificEnthalpy(prim.at(k-1,j,i));
+          //dhdz = (h1 - h2)/pco_->dx3v(k-1)/pco_->h31v(i)/pco_->h32v(j) -
+          //  phydro->hsrc.GetG3();
+          //x3flux(k,j,i) -= kappaf*denf*dhdz/gamma;
+          Real T1 = pthermo->GetTemp(prim.at(k,j,i));
+          Real T2 = pthermo->GetTemp(prim.at(k-1,j,i));
+          dTdz = (T1 - T2)/pco_->dx3v(k-1)/pco_->h31v(i)/pco_->h32v(j);
+          x3flux(k,j,i) -= kappaf*denf*dTdz*Rd/(gamma - 1.);
         }
       }
     }

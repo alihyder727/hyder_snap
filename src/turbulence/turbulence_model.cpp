@@ -396,3 +396,22 @@ void TurbulenceModel::applyBoundaryCondition(
     }
   }
 }
+
+size_t TurbulenceModel::getRestartDataSizeInBytes()
+{
+  return s.GetSizeInBytes();
+}
+
+size_t TurbulenceModel::dumpRestartData(char *pdst)
+{
+  std::memcpy(pdst, s.data(), s.GetSizeInBytes());
+  return s.GetSizeInBytes();
+}
+
+size_t TurbulenceModel::loadRestartData(char *psrc)
+{
+  std::memcpy(s.data(), psrc, s.GetSizeInBytes());
+  // load it into the other memory register(s) too
+  std::memcpy(s1.data(), psrc, s1.GetSizeInBytes());
+  return s.GetSizeInBytes();
+}

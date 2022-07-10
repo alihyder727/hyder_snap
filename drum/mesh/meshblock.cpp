@@ -415,6 +415,9 @@ MeshBlock::MeshBlock(int igid, int ilid, Mesh *pm, ParameterInput *pin,
   if (ppart != nullptr)
     os += ppart->LoadRestartData(&(mbdata[os]));
 
+  // load turbulence data
+  os += pturb->loadRestartData(&(mbdata[os]));
+
   return;
 }
 
@@ -587,6 +590,9 @@ std::size_t MeshBlock::GetBlockSizeInBytes() {
   // particle data
   if (ppart != nullptr)
     size += ppart->RestartDataSizeInBytes();
+
+  // turbulence data
+  size += pturb->getRestartDataSizeInBytes();
 
   return size;
 }
