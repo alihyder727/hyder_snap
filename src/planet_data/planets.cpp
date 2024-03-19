@@ -9,15 +9,17 @@
 #include "../math/core.h"
 #include "planets.hpp"
 
+using namespace std;
+
 double centric2graphic(double clat_deg, double rerp) {
-  if (std::abs(clat_deg) == 90.)
+  if (abs(clat_deg) == 90.)
     return clat_deg;
   else
     return rad2deg(atan(tan(deg2rad(clat_deg))*(rerp*rerp)));
 }
 
 double graphic2centric(double glat_deg, double rerp) {
-  if (std::abs(glat_deg) == 90.)
+  if (abs(glat_deg) == 90.)
     return glat_deg;
   else
     return rad2deg(atan(tan(deg2rad(glat_deg))/(rerp*rerp)));

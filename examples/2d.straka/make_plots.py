@@ -39,5 +39,5 @@ for i, t in enumerate(tslice):
   ax.text(14., 3.2, 'max T = %.2f K' % theta.max(), fontsize = 12)
   ax.set_ylabel('Z (km)', fontsize = 15)
 ax.set_xlabel('X (km)', fontsize = 15)
-savefig('2d.straka-theta.png' % case, bbox_inches = 'tight')
+savefig('2d.straka-theta.png' , bbox_inches = 'tight')
 close()

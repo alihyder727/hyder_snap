@@ -33,6 +33,7 @@ void EquationOfState::PassiveScalarConservedToPrimitive(
     AthenaArray<Real> &s, const AthenaArray<Real> &w, const AthenaArray<Real> &r_old,
     AthenaArray<Real> &r,
     Coordinates *pco, int il, int iu, int jl, int ju, int kl, int ku) {
+  std::cout << "Reached" << std::endl;
   Thermodynamics *pthermo = pmy_block_->pthermo;
   for (int n=0; n<NSCALARS; ++n) {
     for (int k=kl; k<=ku; ++k) {
@@ -45,11 +46,13 @@ void EquationOfState::PassiveScalarConservedToPrimitive(
 
           //for (int n=0; n<NSCALARS; ++n) {
           Real& s_n  = s(n,k,j,i);
+          std::cout << s_n << std::endl;
           Real& r_n  = r(n,k,j,i);
           // apply passive scalars floor to conserved variable first, then transform:
           // (multi-D fluxes may have caused it to drop below floor)
           s_n = (s_n < scalar_floor_*w_d) ?  scalar_floor_*w_d : s_n;
           r_n = s_n*di;
+          std::cout << r_n << std::endl;
           // TODO(felker): continue to monitor the acceptability of this absolute 0. floor
           // (may create very large global conservation violations, e.g. the first few
           // cycles of the slotted cylinder test)
